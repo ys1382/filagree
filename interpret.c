@@ -38,6 +38,8 @@ void repl()
         if (!setjmp(trying))
             run(context, program, NULL, true);
     }
+    
+    context_del(context);
 }
 
 void interpret_file(const struct byte_array *filename, find_c_var *find)
@@ -63,10 +65,15 @@ void run_file(const char* str, find_c_var *find, struct map *env)
     }
     struct byte_array *dotfg = byte_array_from_string(EXTENSION_SRC);
     int fg = byte_array_find(filename, dotfg, 0);
-    if (fg > 0)
+
+     if (fg > 0)
         interpret_file(filename, find);
     else
-        printf("invalid file name\n");
+        fprintf(stderr, "invalid file name\n");
+    
+    byte_array_del(filename);
+    byte_array_del(dotfg);
+    byte_array_del(dotfgbc);
 }
 
 void interpret_string(const char *str, find_c_var *find)
@@ -100,11 +107,16 @@ int main (int argc, char** argv)
 	act.sa_flags = 0;
 	sigaction(SIGINT, &act, &oact);
 
+    for (;;) {
+    
     switch (argc) {
         case 1:     repl();                         break;
         case 2:     run_file(argv[1], NULL, NULL);  break;
         case 3:     compile_file(argv[1]);          break;
         default:    exit_message(ERROR_USAGE);      break;
+    }
+        
+        sleep(1);
     }
 }
 #endif // EXECUTABLE

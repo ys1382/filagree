@@ -33,7 +33,7 @@ struct variable *sys_print(struct context *context)
     assert_message(args && args->type==VAR_SRC && args->list, "bad print arg");
     for (int i=1; i<args->list->length; i++) {
         struct variable *arg = (struct variable*)array_get(args->list, i);
-        DEBUGPRINT("%s\n", variable_value_str(context, arg));
+        log_print("%s\n", variable_value_str(context, arg));
     }
     return NULL;
 }
@@ -339,6 +339,7 @@ struct string_func builtin_funcs[] = {
     {"run",         &sys_run},
     {"interpret",   &sys_interpret},
     {"listen",      &sys_listen},
+    {"send",        &sys_send},
     {"connect",     &sys_connect},
     {"disconnect",  &sys_disconnect},
 #ifndef NO_UI

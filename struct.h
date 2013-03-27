@@ -77,6 +77,7 @@ struct stack {
 };
 
 struct stack* stack_new();
+void stack_del(struct stack *s);
 struct stack_node* stack_node_new();
 void fifo_push(struct stack* fifo, void* data);
 void stack_push(struct stack* stack, void* data);

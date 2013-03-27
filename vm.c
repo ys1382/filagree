@@ -89,6 +89,15 @@ struct program_state *program_state_new(struct context *context, struct map *env
     return state;
 }
 
+void program_state_del(struct program_state *state)
+{
+    if (state->args != NULL)
+        array_del(state->args);
+    map_del(state->named_variables);
+    array_del(state->all_variables);
+    free(state);
+}
+
 static inline void cfnc_length(struct context *context) {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *indexable = (struct variable*)array_get(args->list, 0);
@@ -109,8 +118,21 @@ struct context *context_new(bool state)
     context->runtime = true;
     context->num_vars = 0;
     context->indent = 0;
+    context->error = NULL;
 
     return context;
+}
+
+void context_del(struct context *context)
+{
+    while (!stack_empty(context->program_stack))
+    {
+        struct program_state *s = (struct program_state *)stack_pop(context->program_stack);
+        program_state_del(s);
+    }
+    stack_del(context->program_stack);
+    stack_del(context->operand_stack);
+    free(context);
 }
 
 // garbage collection //////////////////////////////////////////////////////
@@ -222,6 +244,7 @@ void display_program(struct byte_array *program)
     DEBUGPRINT("%sprogram instructions:\n", indentation(context));
     byte_array_reset(program);
     display_code(context, program);
+    context_del(context);
 
     UNDENT
     UNDENT
@@ -243,6 +266,7 @@ void display_code(struct context *context, struct byte_array *code)
 #else // not DEBUG
 
 const char* indentation(struct context *context) { return ""; }
+void display_code(struct context *context, struct byte_array *code) {}
 
 #endif // DEBUG
 
@@ -1153,6 +1177,7 @@ bool run(struct context *context,
          struct map *env,
          bool in_context)
 {
+    bool local_state = false;
     null_check(context);
     null_check(program);
     program = byte_array_copy(program);
@@ -1165,8 +1190,10 @@ bool run(struct context *context,
                 state = (struct program_state*)stack_peek(context->program_stack, 0);
             env = state->named_variables; // use the caller's variable set in the new state
         }
-        else
+        else {
+            local_state = true;
             state = program_state_new(context, env);
+        }
     }
 
     while (program->current < program->data + program->length) {
@@ -1238,6 +1265,8 @@ bool run(struct context *context,
 done:
     if (!in_context)
         stack_pop(context->program_stack);
+    if (local_state)
+        program_state_del(state);
     return inst == VM_RET;
 }
 
@@ -1260,5 +1289,8 @@ void execute(struct byte_array *program, find_c_var *find)
     if (!setjmp(trying))
         run(context, program, NULL, false);
 
+    if (context->error)
+        DEBUGPRINT("error: %s\n", context->error->str->data);
     assert_message(stack_empty(context->operand_stack), "operand stack not empty");
+    context_del(context);
 }

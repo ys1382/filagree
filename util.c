@@ -52,15 +52,15 @@ char *strnstr(const char *s, const char *find, size_t slen)
 
 void log_print(const char *format, ...)
 {
-    static char log_message[MESSAGE_MAX+1] = "";
+    /* static char log_message[MESSAGE_MAX+1] = "";
     char one_line[MESSAGE_MAX];
 
-    char *newline;
+    char *newline;*/
     va_list list;
     va_start(list, format);
     const char *message = make_message(format, list);
     va_end(list);
-    size_t log_len = strnlen(log_message, MESSAGE_MAX);
+    /*size_t log_len = strnlen(log_message, MESSAGE_MAX);
     strncat(log_message, message, MESSAGE_MAX - log_len);
     log_len = strnlen(log_message, MESSAGE_MAX);
     if (log_len == MESSAGE_MAX)
@@ -69,19 +69,19 @@ void log_print(const char *format, ...)
         return;
     size_t line_len = newline - log_message;
     memcpy(one_line, log_message, line_len);
-    one_line[line_len] = 0;
+    one_line[line_len] = 0;*/
 
 #ifdef ANDROID
-    __android_log_write(ANDROID_LOG_ERROR, TAG, one_line);
+    __android_log_write(ANDROID_LOG_ERROR, TAG, message);
 #elif defined IOS
-    NSLog(@"%s", one_line);
+    NSLog(@"%s", message);
 #elifdef MBED
-    usbTxRx.printf("%s\n", one_line);    
+    usbTxRx.printf("%s", message);    
 #else
-    printf("%s\n", one_line);    
+    printf("%s", message);    
 #endif
 
-    memmove(log_message, newline+1, log_len-line_len);
+   // memmove(log_message, newline+1, log_len-line_len);
 }
 
 const char *make_message(const char *format, va_list ap)
@@ -94,7 +94,7 @@ const char *make_message(const char *format, va_list ap)
 void exit_message2(const char *format, va_list list)
 {
     const char *message = make_message(format, list);
-    log_print("\n%s\n", message);
+    log_print("%s\n", message);
     va_end(list);
     exit(1);
 }
@@ -152,10 +152,12 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
     uint8_t *str;
     long size;
     
-    const char* filename_str = byte_array_to_string(filename_ba);
+    char* filename_str = byte_array_to_string(filename_ba);
 
     if (!(file = fopen(filename_str, "rb")))
-        exit_message(ERROR_FOPEN);
+        exit_message("\nCould not open file %s", filename_str);
+    free(filename_str);
+
     if ((size = fsize(file)) < 0)
         exit_message(ERROR_FSIZE);
     else if (size > INPUT_MAX_LEN)

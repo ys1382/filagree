@@ -6,7 +6,7 @@ server_listener = [
 
     'messaged' : function(self, id, msg)
         sys.print('server: message from ' + id + ': ' + msg)
-        id.send(msg + 2)
+        sys.send(id, msg + 2)
     end
 
 ]
@@ -27,9 +27,9 @@ client_listener = [
 server = sys.listen(8080, server_listener)
 
 client = sys.connect('localhost', 8080, client_listener)
-client.send('hi')
+sys.send(client, 'hi')
 
-client.disconnect('localhost', 8080)
-server.disconnect() # from all
+sys.disconnect(client, 'localhost', 8080)
+sys.disconnect(server) # from all
 
 sys.print('result = ' + client.result)

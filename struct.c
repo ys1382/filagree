@@ -310,6 +310,11 @@ struct stack* stack_new() {
     return (struct stack*)calloc(sizeof(struct stack), 1);
 }
 
+void stack_del(struct stack *s)
+{
+    free(s);
+}
+
 struct stack_node* stack_node_new() {
     return (struct stack_node*)calloc(sizeof(struct stack_node), 1);
 }

@@ -3,6 +3,7 @@
 
 struct variable *sys_listen(struct context *context);
 struct variable *sys_connect(struct context *context);
+struct variable *sys_send(struct context *context);
 struct variable *sys_disconnect(struct context *context);
 
 #endif // NODE_H

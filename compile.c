@@ -491,6 +491,11 @@ struct symbol *symbol_new(enum Nonterminal nonterminal)
     return s;
 }
 
+void symbol_del(struct symbol *s)
+{
+    free(s);
+}
+
 struct symbol *symbol_add(struct symbol *s, struct symbol *t)
 {
     null_check(s);
@@ -1066,8 +1071,10 @@ struct symbol *statements()
 
 struct symbol *parse(struct array *list, uint32_t index)
 {
+    if (!list->length)
+        return NULL;
     DEBUGPRINT("parse:\n");
-    assert_message(list!=0, ERROR_NULL);
+    assert_message(list, ERROR_NULL);
     assert_message(index<list->length, ERROR_INDEX);
 
     parse_list = list;
@@ -1500,12 +1507,19 @@ struct byte_array *build_string(const struct byte_array *input) {
     struct array* list = lex(input_copy);
     struct symbol *tree = parse(list, 0);
     return generate_program(tree);
+
+    array_del(lex_list);
+    map_del(imports);
+    byte_array_del(input_copy);
+    symbol_del(tree);
 }
 
 struct byte_array *build_file(const struct byte_array* filename)
 {
     struct byte_array *input = read_file(filename);
-    return build_string(input);
+    struct byte_array * result = build_string(input);
+    byte_array_del(input);
+    return result;
 }
 
 void compile_file(const char* str)

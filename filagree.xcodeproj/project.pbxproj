@@ -108,6 +108,7 @@
 				88C760B015428A5100A4F8E7 /* interpret.h */,
 				88C760B215428A5F00A4F8E7 /* interpret.c */,
 				882E4C3516F045AE00AE6B61 /* node.c */,
+				88D5124016F15D5A00A0D28D /* node.h */,
 				88A65D9B147757400055DACF /* serial.c */,
 				88A65D96147757400055DACF /* serial.h */,
 				88A65D9C147757400055DACF /* struct.c */,
@@ -120,7 +121,6 @@
 				88E65DE41510F46F00E6207D /* variable.c */,
 				88A65D9F147757400055DACF /* vm.c */,
 				88A65D99147757400055DACF /* vm.h */,
-				88D5124016F15D5A00A0D28D /* node.h */,
 			);
 			name = source;
 			sourceTree = "<group>";
@@ -247,6 +247,7 @@
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_CFLAGS = "-DCLI";
+				OTHER_LDFLAGS = "-lcyassl";
 				PRODUCT_NAME = filagree;
 			};
 			name = Release;
@@ -261,7 +262,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = /usr/local/include/;
 				"LIBRARY_SEARCH_PATHS[arch=*]" = /usr/local/lib/;
-				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MACOSX_DEPLOYMENT_TARGET = "";
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-DCLI",
@@ -280,7 +281,8 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = /usr/local/include/;
-				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				"LIBRARY_SEARCH_PATHS[arch=*]" = /usr/local/lib;
+				MACOSX_DEPLOYMENT_TARGET = "";
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-DCLI",
