@@ -1255,10 +1255,13 @@ bool run(struct context *context,
             case VM_MET:    method(context, program, really);               break;
             default:
                 vm_exit_message(context, ERROR_OPCODE);
-                return false;
+                break;
         }
         program->current += pc_offset;
     }
+
+    byte_array_del(program);
+    program = NULL;
 
     if (!context->runtime)
         return false;
@@ -1267,6 +1270,8 @@ done:
         stack_pop(context->program_stack);
     if (local_state)
         program_state_del(state);
+   // if (program != NULL)
+     //   byte_array_del(program);
     return inst == VM_RET;
 }
 
@@ -1293,4 +1298,5 @@ void execute(struct byte_array *program, find_c_var *find)
         DEBUGPRINT("error: %s\n", context->error->str->data);
     assert_message(stack_empty(context->operand_stack), "operand stack not empty");
     context_del(context);
+    byte_array_del(program);
 }

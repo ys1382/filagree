@@ -46,6 +46,7 @@ void interpret_file(const struct byte_array *filename, find_c_var *find)
 {
     struct byte_array *program = build_file(filename);
     execute(program, find);
+    byte_array_del(program);
 }
 
 void execute_file(const struct byte_array* filename, find_c_var *find)
@@ -58,19 +59,20 @@ void run_file(const char* str, find_c_var *find, struct map *env)
 {
     struct byte_array *filename = byte_array_from_string(str);
     struct byte_array *dotfgbc = byte_array_from_string(EXTENSION_BC);
+    struct byte_array *dotfg = byte_array_from_string(EXTENSION_SRC);
+
     int fgbc = byte_array_find(filename, dotfgbc, 0);
     if (fgbc > 0) {
         execute_file(filename, find);
         return;
     }
-    struct byte_array *dotfg = byte_array_from_string(EXTENSION_SRC);
     int fg = byte_array_find(filename, dotfg, 0);
 
      if (fg > 0)
         interpret_file(filename, find);
     else
         fprintf(stderr, "invalid file name\n");
-    
+
     byte_array_del(filename);
     byte_array_del(dotfg);
     byte_array_del(dotfgbc);
@@ -107,7 +109,7 @@ int main (int argc, char** argv)
 	act.sa_flags = 0;
 	sigaction(SIGINT, &act, &oact);
 
-    for (;;) {
+    // for (;;) {
     
     switch (argc) {
         case 1:     repl();                         break;
@@ -115,9 +117,8 @@ int main (int argc, char** argv)
         case 3:     compile_file(argv[1]);          break;
         default:    exit_message(ERROR_USAGE);      break;
     }
-        
-        sleep(1);
-    }
+
+    //  }sleep(1);
 }
 #endif // EXECUTABLE
 

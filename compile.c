@@ -304,7 +304,7 @@ struct array* lex(struct byte_array *binput)
     char c;
     line = 1;
 
-    const char* input = byte_array_to_string(binput);
+    char* input = byte_array_to_string(binput);
     const char* right_comment = lexeme_to_string(LEX_RIGHT_COMMENT);
     int right_comment_len = strlen(right_comment);
 
@@ -357,6 +357,7 @@ lexmore:
 #ifdef DEBUG
 //    display_lex_list();
 #endif
+    free(input);
     return lex_list;
 }
 
@@ -1506,18 +1507,20 @@ struct byte_array *build_string(const struct byte_array *input) {
 
     struct array* list = lex(input_copy);
     struct symbol *tree = parse(list, 0);
-    return generate_program(tree);
+    struct byte_array *result = generate_program(tree);
 
     array_del(lex_list);
     map_del(imports);
     byte_array_del(input_copy);
     symbol_del(tree);
+
+    return result;
 }
 
 struct byte_array *build_file(const struct byte_array* filename)
 {
     struct byte_array *input = read_file(filename);
-    struct byte_array * result = build_string(input);
+    struct byte_array *result = build_string(input);
     byte_array_del(input);
     return result;
 }

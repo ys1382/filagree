@@ -149,7 +149,7 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
 {
     FILE * file;
     size_t read;
-    uint8_t *str;
+    char *str;
     long size;
     
     char* filename_str = byte_array_to_string(filename_ba);
@@ -160,11 +160,13 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
 
     if ((size = fsize(file)) < 0)
         exit_message(ERROR_FSIZE);
-    else if (size > INPUT_MAX_LEN)
+    if (size == 0)
+        return byte_array_new();
+    if (size > INPUT_MAX_LEN)
         exit_message(ERROR_BIG);
-    if (!(str = (uint8_t*)malloc((size_t)size)))// + 1)))
+    if (!(str = (char*)malloc((size_t)size)))// + 1)))
         exit_message(ERROR_ALLOC);
-    
+
     read = fread(str, 1, (size_t)size, file);
     if (feof(file) || ferror(file))
         exit_message(ERROR_FREAD);
@@ -172,9 +174,10 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
     if (fclose(file))
         exit_message(ERROR_FCLOSE);
     
-    struct byte_array* ba = byte_array_new_size(read);
-    ba->data = str;
-    byte_array_reset(ba);
+    struct byte_array* ba = byte_array_from_string(str);
+    free(str);
+    //ba->data = str;
+    //byte_array_reset(ba);
     return ba;
 }
 

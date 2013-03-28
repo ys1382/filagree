@@ -131,7 +131,8 @@ struct byte_array *byte_array_new() {
 }
 
 void byte_array_del(struct byte_array* ba) {
-    if (ba->data)
+    //printf("byte_array_del %p->%p\n", ba, ba->data);
+    if (ba->data != NULL)
         free(ba->data);
     free(ba);
 }
@@ -171,6 +172,7 @@ struct byte_array *byte_array_copy(const struct byte_array* original) {
     memcpy(copy->data, original->data, original->length);
     copy->length = original->length;
     copy->current = copy->data + (original->current - original->data);
+    //printf("byte_array_copy %p->%p\n", copy, copy->data);
     return copy;
 }
 
@@ -306,12 +308,18 @@ struct byte_array *byte_array_replace(struct byte_array *within, struct byte_arr
 
 // stack ////////////////////////////////////////////////////////////////////
 
-struct stack* stack_new() {
+struct stack *stack_new() {
     return (struct stack*)calloc(sizeof(struct stack), 1);
 }
 
 void stack_del(struct stack *s)
 {
+    struct stack_node *sn = s->head;
+    while (sn) {
+        struct stack_node *oldnode = sn;
+        sn = sn->next;
+        free(oldnode);
+    }
     free(s);
 }
 
@@ -327,7 +335,7 @@ uint32_t stack_depth(struct stack *stack)
     return i;
 }
 
-void stack_push(struct stack* stack, void* data)
+void stack_push(struct stack *stack, void* data)
 {
     null_check(data);
     if (!stack->head)
@@ -342,18 +350,23 @@ void stack_push(struct stack* stack, void* data)
     //DEBUGPRINT("stack_push %x to %x:%d\n", data, stack, stack_depth(stack));
 }
 
-void* stack_pop(struct stack* stack)
+void* stack_pop(struct stack *stack)
 {
     if (!stack->head)
         return NULL;
     void* data = stack->head->data;
+    struct stack_node *oldnode = stack->head;
     stack->head = stack->head->next;
+    if (stack->head == NULL)
+        stack->tail = NULL;
+    if (oldnode != NULL)
+        free(oldnode);
     null_check(data);
     //DEBUGPRINT("stack_pop %x from %x:%d\n", data, stack, stack_depth(stack));
     return data;
 }
 
-void* stack_peek(const struct stack* stack, uint8_t index)
+void* stack_peek(const struct stack *stack, uint8_t index)
 {
     null_check(stack);
     struct stack_node *p = stack->head;
@@ -361,7 +374,7 @@ void* stack_peek(const struct stack* stack, uint8_t index)
     return p ? p->data : NULL;
 }
 
-bool stack_empty(const struct stack* stack)
+bool stack_empty(const struct stack *stack)
 {
     null_check(stack);
     return stack->head == NULL;
@@ -395,7 +408,7 @@ static void default_rm(const void *key)
 
 struct map* map_new_ex(map_compare *mc, map_hash *mh, map_copyor *my, map_rm *md)
 {
-    //DEBUGPRINT(" (map_new) ");
+    DEBUGPRINT("map_new_ex\n");
     struct map *m;
     if (!(m =(struct map*)malloc(sizeof(struct map)))) return NULL;
     m->size = 16;
@@ -419,14 +432,12 @@ struct map* map_new() {
 void map_del(struct map *m)
 {
     DEBUGPRINT("map_destroy\n");
-    size_t n;
     struct hash_node *node, *oldnode;
 
-    for(n = 0; n<m->size; ++n) {
+    for(size_t n = 0; n<m->size; ++n) {
         node = m->nodes[n];
         while (node) {
             m->deletor(node->key);
-            // byte_array_del(node->key);
             oldnode = node;
             node = node->next;
             free(oldnode);
