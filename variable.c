@@ -37,6 +37,7 @@ struct variable* variable_new(struct context *context, enum VarType type)
     v->map = NULL;
     v->mark = 0;
     v->visited = VISITED_NOT;
+    array_add(context->all_variables, v);
     return v;
 }
 
@@ -69,31 +70,35 @@ void variable_del(struct context *context, struct variable *v)
 {
     context->num_vars--;
     switch (v->type) {
+        case VAR_C:
         case VAR_INT:
         case VAR_FLT:
+        case VAR_MAP:
+        case VAR_SRC:
+            break;
+        case VAR_LST:
+            array_del(v->list);
+            break;
         case VAR_STR:
         case VAR_FNC:
             byte_array_del(v->str);
-            break;
-        case VAR_LST:
-            for (int i=0; i<v->list->length; i++)
-                variable_del(context, (struct variable*)array_get(v->list, i));
             break;
         default:
             vm_exit_message(context, "bad var type");
             break;
     }
-    if (v->map) {
+    if (v->map != NULL) {
         struct array *keys = map_keys(v->map);
         struct array *values = map_values(v->map);
-        for (int i=0; i<keys->length; i++) {
+        /* for (int i=0; i<keys->length; i++) {
             byte_array_del((struct byte_array*)array_get(keys, i));
             variable_del(context, (struct variable*)array_get(values, i));
-        }
+        }*/
         array_del(keys);
         array_del(values);
         map_del(v->map);
     }
+
     free(v);
 }
 
@@ -180,11 +185,11 @@ struct variable *variable_new_c(struct context *context, callback2func *cfnc) {
     return v;
 }
 
-const char *variable_value_str2(struct context *context, struct variable* v)
+const char *variable_value_str2(struct context *context, struct variable* v, char *str, size_t size)
 {
     null_check(v);
     enum VarType vt = (enum VarType)v->type;
-    char* str = (char*)malloc(VV_SIZE);
+    //char* str = (char*)malloc(VV_SIZE);
     struct array* list = v->list;
 
     if (v->visited ==VISITED_MORE) { // first visit of reused variable
@@ -214,7 +219,10 @@ const char *variable_value_str2(struct context *context, struct variable* v)
                 vm_null_check(context, element);
                 const char *q = (element->type == VAR_STR || element->type == VAR_FNC) ? "'" : "";
                 const char *c = i ? "," : "";
-                const char *estr = variable_value_str2(context, element);
+                int position = strlen(str);
+                char *str2 = &str[position];
+                int len2 = sizeof(str) - position;
+                const char *estr = variable_value_str2(context, element, str2, len2);
                 sprintf(str, "%s%s%s%s%s", str, c, q, estr, q);
             }
         } break;
@@ -245,7 +253,10 @@ const char *variable_value_str2(struct context *context, struct variable* v)
             strcat(str, "'");
             strcat(str, ":");
             struct variable *biv = (struct variable*)array_get(b,i);
-            const char *bistr = variable_value_str2(context, biv);
+            int position = strlen(str);
+            char *str2 = &str[position];
+            int len2 = sizeof(str) - position;
+            const char *bistr = variable_value_str2(context, biv, str2, len2);
             strcat(str, bistr);
         }
         strcat(str, vt==VAR_LST ? "]" : ">");
@@ -312,9 +323,10 @@ void variable_unmark(struct variable *v)
 
 const char *variable_value_str(struct context *context, struct variable* v)
 {
+    char buf[1000];
     variable_unmark(v);
     variable_mark(v);
-    const char *str = variable_value_str2(context, v);
+    const char *str = variable_value_str2(context, v, buf, sizeof(buf));
     variable_unmark(v);
     return str;
 }

@@ -3,6 +3,7 @@
 //  filagree
 //
 
+#include <unistd.h>
 #include "vm.h"
 #include "compile.h"
 #include "interpret.h"
@@ -109,7 +110,7 @@ int main (int argc, char** argv)
 	act.sa_flags = 0;
 	sigaction(SIGINT, &act, &oact);
 
-    // for (;;) {
+    for (;;) {
     
     switch (argc) {
         case 1:     repl();                         break;
@@ -118,7 +119,8 @@ int main (int argc, char** argv)
         default:    exit_message(ERROR_USAGE);      break;
     }
 
-    //  }sleep(1);
+    sleep(1); }
 }
+
 #endif // EXECUTABLE
 

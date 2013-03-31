@@ -219,6 +219,15 @@ struct token *token_new(enum Lexeme lexeme, int at_line) {
     return t;
 }
 
+void token_del(struct token *t)
+{
+    if (t == NULL)
+        return;
+    if (t->string != NULL)
+        byte_array_del(t->string);
+    free(t);
+}
+
 struct token *insert_token(enum Lexeme lexeme) {
     struct token *token = token_new(lexeme, line);
     array_add(lex_list, token);
@@ -489,11 +498,25 @@ struct symbol *symbol_new(enum Nonterminal nonterminal)
     s->list = array_new();
     s->index = s->value = s->other = NULL;
     s->exp = RHS;
+    //DEBUGPRINT("symbol_new %p\n", s);
     return s;
 }
 
 void symbol_del(struct symbol *s)
 {
+    if (s == NULL)
+        return;
+    for (int i=0; i<s->list->length; i++) {
+        struct symbol *si = (struct symbol*)array_get(s->list, i);
+        symbol_del(si);
+    }
+    array_del(s->list);
+
+    symbol_del(s->index);
+    symbol_del(s->value);
+    symbol_del(s->other);
+
+    //DEBUGPRINT("symbol_del %p\n", s);
     free(s);
 }
 
@@ -821,9 +844,10 @@ struct symbol *assignment()
     struct symbol *s = symbol_new(SYMBOL_ASSIGNMENT);
     s->index = repeated(SYMBOL_DESTINATION, &destination);
     s->index->exp = LHS;
-    FETCH_OR_QUIT(LEX_SET);
-    if ((s->value = repeated(SYMBOL_SOURCE, &expression)))
+//    FETCH_OR_QUIT(LEX_SET);
+    if (fetch(LEX_SET) && ((s->value = repeated(SYMBOL_SOURCE, &expression))))
         return s;
+    symbol_del(s);
     return NULL;
 }
 
@@ -851,9 +875,15 @@ struct symbol *member()
     else if ((m->token = fetch_lookahead(LEX_LEFTSQUARE, LEX_LEFTSTACHE, NULL))) {
         enum Lexeme right = m->token->lexeme == LEX_LEFTSQUARE ? LEX_RIGHTSQUARE : LEX_RIGHTSTACHE;
         m->index = expression();
-        FETCH_OR_QUIT(right);
-    } else
+        // FETCH_OR_QUIT(right);
+        if (!fetch(right)) {
+            symbol_del(m);
+            return NULL;
+        }
+    } else {
+        symbol_del(m);
         return NULL;
+    }
     return m;
 }
 
@@ -1509,6 +1539,10 @@ struct byte_array *build_string(const struct byte_array *input) {
     struct symbol *tree = parse(list, 0);
     struct byte_array *result = generate_program(tree);
 
+    for (int i=0; i<lex_list->length; i++) {
+        struct token *t = (struct token *)array_get(lex_list, i);
+        token_del(t);
+    }
     array_del(lex_list);
     map_del(imports);
     byte_array_del(input_copy);

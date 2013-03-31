@@ -164,16 +164,16 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
         return byte_array_new();
     if (size > INPUT_MAX_LEN)
         exit_message(ERROR_BIG);
-    if (!(str = (char*)malloc((size_t)size)))// + 1)))
+    if (!(str = (char*)malloc((size_t)size + 1)))
         exit_message(ERROR_ALLOC);
 
     read = fread(str, 1, (size_t)size, file);
     if (feof(file) || ferror(file))
         exit_message(ERROR_FREAD);
-    
     if (fclose(file))
         exit_message(ERROR_FCLOSE);
-    
+
+    str[read] = 0;
     struct byte_array* ba = byte_array_from_string(str);
     free(str);
     //ba->data = str;

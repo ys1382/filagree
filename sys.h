@@ -3,7 +3,7 @@
 
 #include "vm.h"
 
-struct variable *sys_find(context_p context, const struct byte_array *name);
+struct variable *sys_new(struct context *context);
 
 struct variable *sys_func(struct context *context, struct byte_array *name);
 

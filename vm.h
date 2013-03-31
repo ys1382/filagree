@@ -14,11 +14,13 @@
 #define RESERVED_GET "get"
 
 struct context {
+    struct variable *sys;
     struct variable *vm_exception;
     struct variable* error;
     struct stack *program_stack;
     struct stack *operand_stack;
     struct byte_array *program;
+    struct array *all_variables;
     bool runtime;
     uint32_t num_vars;
     uint8_t indent;
@@ -28,7 +30,6 @@ struct context {
 struct program_state {
     struct array *args;
     struct map *named_variables;
-    struct array *all_variables;
     uint32_t pc;
 };
 
@@ -97,7 +98,7 @@ void vm_call(struct context *context, struct variable *func, struct variable *ar
 void *vm_exit_message(struct context *context, const char *format, ...);
 void vm_null_check(struct context *context, const void* p);
 void vm_assert(struct context *context, bool assertion, const char *format, ...);
-void print_operand_stack(struct context *context);
+//void print_operand_stack(struct context *context);
 
 
 #endif // VM_H

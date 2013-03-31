@@ -86,6 +86,7 @@ struct byte_array* serial_decode_string(struct byte_array* buf)
 	null_check(ba->data);
     memcpy(ba->data, buf->current, len);
     buf->current += len;
+    DEBUGPRINT("serial_decode_string %p\n", ba->data);
     return ba;
 }
 

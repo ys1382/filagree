@@ -21,9 +21,6 @@ struct string_func
     callback2func* func;
 };
 
-struct variable *sys = NULL;
-
-
 // system functions
 
 struct variable *sys_print(struct context *context)
@@ -357,20 +354,15 @@ struct string_func builtin_funcs[] = {
 #endif
 };
 
-struct variable *sys_find(struct context *context, const struct byte_array *name)
+struct variable *sys_new(struct context *context)
 {
-    if (strncmp(RESERVED_SYS, (const char*)name->data, strlen(RESERVED_SYS)))
-        return NULL;
-    if (!sys) { // create sys if needed
-        struct map *sys_func_map = map_new();
-        for (int i=0; i<ARRAY_LEN(builtin_funcs); i++) {
-            struct byte_array *name = byte_array_from_string(builtin_funcs[i].name);
-            struct variable *value = variable_new_c(context, builtin_funcs[i].func);
-            map_insert(sys_func_map, name, value);
-        }
-        sys = variable_new_map(context, sys_func_map);
+    struct map *sys_func_map = map_new();
+    for (int i=0; i<ARRAY_LEN(builtin_funcs); i++) {
+        struct byte_array *name = byte_array_from_string(builtin_funcs[i].name);
+        struct variable *value = variable_new_c(context, builtin_funcs[i].func);
+        map_insert(sys_func_map, name, value);
     }
-    return sys;
+    return variable_new_map(context, sys_func_map);
 }
 
 // built-in member functions

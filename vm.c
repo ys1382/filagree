@@ -28,6 +28,7 @@ void lookup(struct context *context, struct variable *indexable, struct variable
 #endif // not DEBUG
 
 #define RESERVED_SET    "set"
+#define RESERVED_SYS    "sys"
 
 // assertions //////////////////////////////////////////////////////////////
 
@@ -83,7 +84,6 @@ struct program_state *program_state_new(struct context *context, struct map *env
     null_check(context);
     struct program_state *state = (struct program_state*)malloc(sizeof(struct program_state));
     state->named_variables = map_copy(env);
-    state->all_variables = array_new();
     state->args = array_new();
     stack_push(context->program_stack, state);
     return state;
@@ -94,7 +94,6 @@ void program_state_del(struct program_state *state)
     if (state->args != NULL)
         array_del(state->args);
     map_del(state->named_variables);
-    array_del(state->all_variables);
     free(state);
 }
 
@@ -113,25 +112,34 @@ struct context *context_new(bool state)
     context->program_stack = stack_new();
     if (state)
         stack_push(context->program_stack, program_state_new(context, NULL));
+    context->all_variables = array_new();
     context->operand_stack = stack_new();
     context->vm_exception = NULL;
     context->runtime = true;
     context->num_vars = 0;
     context->indent = 0;
     context->error = NULL;
+    context->sys = sys_new(context);
 
     return context;
 }
 
 void context_del(struct context *context)
 {
+    struct array *vars = context->all_variables;
+    for (int i=0; i<vars->length; i++) {
+        struct variable *v = (struct variable *)array_get(vars, i);
+        variable_del(context, v);
+    }
     while (!stack_empty(context->program_stack))
     {
         struct program_state *s = (struct program_state *)stack_pop(context->program_stack);
         program_state_del(s);
     }
+    
     stack_del(context->program_stack);
     stack_del(context->operand_stack);
+    array_del(context->all_variables);
     free(context);
 }
 
@@ -140,8 +148,7 @@ void context_del(struct context *context)
 void sweep(struct context *context, struct variable *root)
 {
     null_check(context);
-    struct program_state *state = (struct program_state*)stack_peek(context->program_stack, 0);
-    struct array *vars = state->all_variables;
+    struct array *vars = context->all_variables;
     for (int i=0; i<vars->length; i++) {
         struct variable *v = (struct variable*)array_get(vars, i);
         if (v->visited != VISITED_NOT)
@@ -152,8 +159,9 @@ void sweep(struct context *context, struct variable *root)
 void garbage_collect(struct context *context)
 {
     null_check(context);
-    struct program_state *state = (struct program_state*)stack_peek(context->program_stack, 0);
-    struct array *vars = state->all_variables;
+    if (!context->runtime)
+        return;
+    struct array *vars = context->all_variables;
     for (int i=0; i<vars->length; i++) {
         struct variable *v = (struct variable*)array_get(vars, i);
         variable_mark(v);
@@ -204,6 +212,7 @@ const struct number_string opcodes[] = {
     {VM_TRY,    "TRY"},
 };
 
+/*
 void print_operand_stack(struct context *context)
 {
     null_check(context);
@@ -211,6 +220,7 @@ void print_operand_stack(struct context *context)
     for (int i=0; (operand = stack_peek(context->operand_stack, i)); i++)
         DEBUGPRINT("\t%s\n", variable_value_str(context, operand));
 }
+*/
 
 const char* indentation(struct context *context)
 {
@@ -232,6 +242,7 @@ static void display_program_counter(struct context *context, const struct byte_a
 void display_program(struct byte_array *program)
 {
     struct context *context = context_new(false);
+    context->runtime = false;
 
     INDENT
     DEBUGPRINT("%sprogram bytes:\n", indentation(context));
@@ -627,15 +638,19 @@ struct variable *find_var(struct context *context, const struct byte_array *name
 
     if (!v && context->find)
         v = context->find(context, name);
-    if (!v)
-        v = sys_find(context, name);
+    if (!v && !strncmp(RESERVED_SYS, (const char*)name->data, strlen(RESERVED_SYS)))
+        v = context->sys;
     return v;
 }
 
 static void push_var(struct context *context, struct byte_array *program)
 {
     struct byte_array* name = serial_decode_string(program);
-    VM_DEBUGPRINT("VAR %s\n", byte_array_to_string(name));
+#ifdef DEBUG
+    char *str = byte_array_to_string(name);
+    VM_DEBUGPRINT("VAR %s\n", str);
+    free(str);
+#endif // DEBUG
     struct variable *v = find_var(context, name);
     if (!v)
         DEBUGPRINT("variable %s not found\n", byte_array_to_string(name));
@@ -646,7 +661,12 @@ static void push_var(struct context *context, struct byte_array *program)
 static void push_str(struct context *context, struct byte_array *program)
 {
     struct byte_array* str = serial_decode_string(program);
-    VM_DEBUGPRINT("STR '%s'\n", byte_array_to_string(str));
+    // VM_DEBUGPRINT("STR '%s'\n", byte_array_to_string(str));
+#ifdef DEBUG
+    char *str2 = byte_array_to_string(str);
+    VM_DEBUGPRINT("STR %s\n", str2);
+    free(str2);
+#endif // DEBUG
     struct variable* v = variable_new_str(context, str);
     variable_push(context, v);
 }
@@ -721,8 +741,14 @@ static void set(struct context *context,
                 struct byte_array *program)
 {
     struct byte_array *name = serial_decode_string(program);    // destination variable name
-    if (!context->runtime)
-        VM_DEBUGPRINT("%s %s\n", op==VM_SET?"SET":"STX", byte_array_to_string(name));
+    if (!context->runtime) {
+        //        VM_DEBUGPRINT("%s %s\n", op==VM_SET?"SET":"STX", byte_array_to_string(name));
+#ifdef DEBUG
+        char *str = byte_array_to_string(name);
+        VM_DEBUGPRINT("%s %s\n", op==VM_SET?"SET":"STX", str);
+        free(str);
+#endif // DEBUG
+    }
 
     struct variable *value = get_value(context, op);
     
@@ -1291,6 +1317,7 @@ void execute(struct byte_array *program, find_c_var *find)
 #ifdef DEBUG
     context->indent = 1;
 #endif
+    DEBUGPRINT("ready set go\n");
     if (!setjmp(trying))
         run(context, program, NULL, false);
 
