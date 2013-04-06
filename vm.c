@@ -722,8 +722,8 @@ static struct variable *get_value(struct context *context, enum Opcode op)
 
     if (value->type == VAR_SRC) {
         struct array *values = value->list;
-        if (values->length > values->current)
-            value = (struct variable*)array_get(values, values->current++);
+        if (values->length > values->current - values->data)
+            value = (struct variable*)values->current++;
         else
             value = variable_new_nil(context);
         if (interim)

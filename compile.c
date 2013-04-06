@@ -1429,7 +1429,7 @@ void generate_iterator(struct byte_array *code, struct symbol *root, enum Opcode
     struct symbol *ator = root->index;
     generate_code(code, ator->value);                   // IN b
     generate_step(code, 1, op);                         // iterator or comprehension
-    serial_encode_string(code, ator->token->string); // FOR a
+    serial_encode_string(code, ator->token->string);    // FOR a
 
     if (ator->index) {                                  // WHERE c
         struct byte_array *where = byte_array_new();

@@ -16,7 +16,7 @@
 
 #define BYTE_ARRAY_MAX_LEN      10000
 #define ERROR_BYTE_ARRAY_LEN    "byte array too long"
-
+#define GROWTH_FACTOR           2
 
 // array ///////////////////////////////////////////////////////////////////
 
@@ -26,8 +26,8 @@ struct array *array_new() {
 
 struct array *array_new_size(uint32_t size) {
     struct array *a = (struct array*)malloc(sizeof(struct array));
-    a->data = NULL;
-    a->current = a->length = 0;
+    a->data = (void**)malloc(size * sizeof(void**));
+    a->current = a->length = a->size = 0;
     return a;
 }
 
@@ -36,33 +36,47 @@ void array_del(struct array *a) {
 //        free(array_get(a, i));
     free(a->data);
     free(a);
-    DEBUGPRINT("array_del %p->%p\n", a, a->data);
+    //DEBUGPRINT("array_del %p->%p\n", a, a->data);
 }
 
-void array_resize(struct array *a, uint32_t length) {
-    a->data = (void**)realloc(a->data, length * sizeof(void*));
+int32_t list_resize(uint32_t size, uint32_t length)
+{
+    if (length > size)
+        return length * GROWTH_FACTOR;
+    if (length < size / (GROWTH_FACTOR * GROWTH_FACTOR))
+        return length / GROWTH_FACTOR;
+    return size;
+}
+
+void array_resize(struct array *a, uint32_t size)
+{
+    size = list_resize(a->size, size);
+    uint32_t delta = a->current - a->data;
+    a->data = (void**)realloc(a->data, size * sizeof(void*));
     null_check(a->data);
-    memset(&a->data[a->length], 0, length-a->length);
-    a->length = length;
-    DEBUGPRINT("array_resize %p->%p\n", a, a->data);
+    memset(&a->data[a->size], 0, size - a->size);
+    a->size = size;
+    a->current = a->data + delta;
+    //DEBUGPRINT("array_resize %p->%p\n", a, a->data);
 }
 
 uint32_t array_add(struct array *a, void *datum) {
+    array_resize(a, a->length + 1);
     a->data = (void**)realloc(a->data, (a->length+1) * sizeof(void*));
     a->data[a->length++] = datum;
-    DEBUGPRINT("array_add %p->%p\n", a, a->data);
+    //DEBUGPRINT("array_add %p->%p\n", a, a->data);
     return a->length-1;
 }
 
 void array_insert(struct array *a, uint32_t index, void *datum)
 {
-    a->data = (void**)realloc(a->data, (a->length+1) * sizeof(void*));
+    array_resize(a, a->length + 1);
     uint32_t i;
     for (i=a->length; i>index; i--)
         a->data[i] = a->data[i-1];
     a->data[i] = datum;
     a->length++;
-    DEBUGPRINT("array_insert %p->%p\n", a, a->data);
+    //("array_insert %p->%p\n", a, a->data);
 }
 
 void* array_get(const struct array *a, uint32_t index) {
@@ -74,8 +88,7 @@ void* array_get(const struct array *a, uint32_t index) {
 void array_set(struct array *a, uint32_t index, void* datum) {
     null_check(a);
     null_check(datum);
-    if (a->length <= index)
-        array_resize(a, index+1);
+    array_resize(a, index+1);
     //DEBUGPRINT("array_set %d %x\n", index, datum);
     a->data[index] = datum;
 }
@@ -94,17 +107,19 @@ void *list_remove(void *data, uint32_t *end, uint32_t start, int32_t length, siz
 
 void array_remove(struct array *a, uint32_t start, int32_t length) {
     a->data = (void**)list_remove(a->data, &a->length, start, length, sizeof(void*));
+    array_resize(a, a->length);
     DEBUGPRINT("array_remove %p->%p\n", a, a->data);
 }
 
 struct array *array_copy(const struct array* original) {
     if (!original)
         return NULL;
-    struct array* copy = (struct array*)malloc(sizeof(struct array));
-    copy->data = (void**)malloc(original->length * sizeof(void**));
+    struct array* copy = array_new_size(original->size); // (struct array*)malloc(sizeof(struct array));
+    //copy->data = (void**)malloc(original->length * sizeof(void**));
     memcpy(copy->data, original->data, original->length * sizeof(void*));
     copy->length = original->length;
     copy->current = original->current;
+    copy->size = original->size;
     DEBUGPRINT("array_copy %p->%p\n", copy, copy->data);
     return copy;
 }
@@ -114,6 +129,7 @@ struct array *array_part(struct array *within, uint32_t start, uint32_t length)
     struct array *p = array_copy(within);
     array_remove(p, start+length, within->length-start-length);
     array_remove(p, 0, start);
+    array_resize(p, p->length);
     return p;
 }
 
@@ -122,7 +138,8 @@ void array_append(struct array *a, const struct array* b)
     null_check(a);
     null_check(b);
     uint32_t alen = a->length;
-    array_resize(a, alen + b->length);
+    uint32_t newlen = alen + b->length;
+    array_resize(a, newlen);
     memcpy(&a->data[alen], b->data, b->length * sizeof(void*));
     a->current += b->length;
 }
@@ -130,37 +147,35 @@ void array_append(struct array *a, const struct array* b)
 // byte_array ///////////////////////////////////////////////////////////////
 
 struct byte_array *byte_array_new() {
-    struct byte_array* ba = (struct byte_array*)malloc(sizeof(struct byte_array));
-    ba->data = ba->current = NULL;
-    ba->length = 0;
-    printf("byte_array_new %p->%p\n", ba, ba->data);
-    return ba;
+    return byte_array_new_size(0);
 }
 
 void byte_array_del(struct byte_array* ba) {
-    printf("byte_array_del %p->%p\n", ba, ba->data);
+    //printf("byte_array_del %p->%p\n", ba, ba->data);
     if (ba->data != NULL)
         free(ba->data);
     free(ba);
-    DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
+    //DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
 }
 
 struct byte_array *byte_array_new_size(uint32_t size) {
     struct byte_array* ba = (struct byte_array*)malloc(sizeof(struct byte_array));
     ba->data = ba->current = (uint8_t*)malloc(size);
-    ba->length = size;
-    printf("byte_array_new_size %p->%p\n", ba, ba->data);
+    ba->length = 0;
+    ba->size = size;
+    //printf("byte_array_new_size %p->%p\n", ba, ba->data);
     return ba;
 }
 
 void byte_array_resize(struct byte_array* ba, uint32_t size) {
+    size = list_resize(ba->size, size);
     assert_message(ba->current >= ba->data, "byte_array corrupt");
     uint32_t delta = ba->current - ba->data;
     ba->data = (uint8_t*)realloc(ba->data, size);
     assert_message(ba->data, "could not reallocate data");
     ba->current = ba->data + delta;
-    ba->length = size;
-    printf("byte_array_resize %p->%p\n", ba, ba->data);
+    ba->size = size;
+    //printf("byte_array_resize %p->%p\n", ba, ba->data);
 }
 
 bool byte_array_equals(const struct byte_array *a, const struct byte_array* b)
@@ -177,12 +192,12 @@ bool byte_array_equals(const struct byte_array *a, const struct byte_array* b)
 struct byte_array *byte_array_copy(const struct byte_array* original) {
     if (!original)
         return NULL;
-    struct byte_array* copy = (struct byte_array*)malloc(sizeof(struct byte_array));
-    copy->data = (uint8_t*)malloc(original->length);
+    struct byte_array* copy = byte_array_new_size(original->size); // (struct byte_array*)malloc(sizeof(struct byte_array));
+//    copy->data = (uint8_t*)malloc(original->length);
     memcpy(copy->data, original->data, original->length);
     copy->length = original->length;
     copy->current = copy->data + (original->current - original->data);
-    printf("byte_array_copy %p->%p\n", copy, copy->data);
+    //printf("byte_array_copy %p->%p\n", copy, copy->data);
     return copy;
 }
 
@@ -204,9 +219,11 @@ void byte_array_append(struct byte_array *a, const struct byte_array* b) {
     null_check(a);
     null_check(b);
     uint32_t offset = a->length;
-    byte_array_resize(a, a->length + b->length);
+    uint32_t newlen = a->length + b->length;
+    byte_array_resize(a, newlen);
     memcpy(&a->data[offset], b->data, b->length);
-    a->current = a->data + a->length;
+    a->length = newlen;
+    a->current = a->data + newlen;
 }
 
 void byte_array_remove(struct byte_array *self, uint32_t start, int32_t length) {
@@ -219,6 +236,7 @@ struct byte_array *byte_array_part(struct byte_array *within, uint32_t start, ui
     struct byte_array *p = byte_array_copy(within);
     byte_array_remove(p, start+length, within->length-start-length);
     byte_array_remove(p, 0, start);
+    byte_array_resize(p, p->length);
     return p;
 }
 
@@ -227,6 +245,7 @@ struct byte_array *byte_array_from_string(const char* str)
     int len = strlen(str);
     struct byte_array* ba = byte_array_new_size(len);
     memcpy(ba->data, str, len);
+    ba->length = len;
     return ba;
 }
 
@@ -264,7 +283,8 @@ struct byte_array *byte_array_concatenate(int n, const struct byte_array* ba, ..
 }
 
 struct byte_array *byte_array_add_byte(struct byte_array *a, uint8_t b) {
-    byte_array_resize(a, a->length+1);
+    a->length++;
+    byte_array_resize(a, a->length);
     a->current = a->data + a->length;
     a->data[a->length-1] = b;
     return a;
