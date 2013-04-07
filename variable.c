@@ -38,6 +38,7 @@ struct variable* variable_new(struct context *context, enum VarType type)
     v->mark = 0;
     v->visited = VISITED_NOT;
     array_add(context->all_variables, v);
+    DEBUGPRINT("variable_new %d %p\n", type, v);
     return v;
 }
 
@@ -68,9 +69,11 @@ struct variable* variable_new_bool(struct context *context, bool b)
 
 void variable_del(struct context *context, struct variable *v)
 {
+//    DEBUGPRINT("variable_del %p\n", v);
     context->num_vars--;
     switch (v->type) {
         case VAR_C:
+        case VAR_NIL:
         case VAR_INT:
         case VAR_FLT:
         case VAR_MAP:
@@ -81,6 +84,7 @@ void variable_del(struct context *context, struct variable *v)
             break;
         case VAR_STR:
         case VAR_FNC:
+ //           DEBUGPRINT("variable_del str %p->%s\n", v, byte_array_to_string(v->str));
             byte_array_del(v->str);
             break;
         default:
@@ -138,6 +142,7 @@ struct variable* variable_new_float(struct context *context, float f)
 struct variable *variable_new_str(struct context *context, struct byte_array *str) {
     struct variable *v = variable_new(context, VAR_STR);
     v->str = str;
+//    DEBUGPRINT("variable_new_str %p->%s\n", v, byte_array_to_string(str));
     return v;
 }
 
@@ -154,7 +159,7 @@ struct variable *variable_new_fnc(struct context *context, struct byte_array *bo
 
 struct variable *variable_new_list(struct context *context, struct array *list) {
     struct variable *v = variable_new(context, VAR_LST);
-    
+
 #if 0
     v->list = list ? list : array_new();
 #else
@@ -324,6 +329,7 @@ void variable_unmark(struct variable *v)
 const char *variable_value_str(struct context *context, struct variable* v)
 {
     char buf[1000];
+    *buf = 0;
     variable_unmark(v);
     variable_mark(v);
     const char *str = variable_value_str2(context, v, buf, sizeof(buf));
@@ -410,7 +416,7 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
             while (size--)
                 array_add(list, variable_deserialize(context, bits));
             struct variable *out = variable_new_list(context, list);
-            
+
             uint32_t map_length = serial_decode_int(bits);
             if (map_length) {
                 out->map = map_new();
@@ -511,4 +517,56 @@ struct variable *variable_map_get(struct context *context, const struct variable
     if (!v->map)
         return variable_new_nil(context);
     return (struct variable*)map_get(v->map, key);
+}
+
+static bool variable_compare_maps(struct context *context, const struct map *umap, const struct map *vmap)
+{
+    if (!umap && !vmap)
+        return true;
+    if (!umap)
+        return variable_compare_maps(context, vmap, umap);
+    struct array *keys = map_keys(umap);
+    if (!vmap)
+        return !keys->length;
+    
+    for (int i=0; i<keys->length; i++) {
+        struct byte_array *key = (struct byte_array*)array_get(keys, i);
+        struct variable *uvalue = (struct variable*)map_get(umap, key);
+        struct variable *vvalue = (struct variable*)map_get(vmap, key);
+        if (!variable_compare(context, uvalue, vvalue))
+            return false;
+    }
+    return true;
+}
+
+bool variable_compare(struct context *context, const struct variable *u, const struct variable *v)
+{
+    if (!u != !v)
+        return false;
+    enum VarType ut = (enum VarType)u->type;
+    enum VarType vt = (enum VarType)v->type;
+    
+    if (ut != vt)
+        return false;
+    
+    switch (ut) {
+        case VAR_LST:
+            if (u->list->length != v->list->length)
+                return false;
+            for (int i=0; i<u->list->length; i++) {
+                struct variable *ui = (struct variable*)array_get(u->list, i);
+                struct variable *vi = (struct variable*)array_get(v->list, i);
+                if (!variable_compare(context, ui, vi))
+                    return false;
+            }
+            break;
+        case VAR_BOOL:
+        case VAR_INT:   if (u->integer != v->integer)           return false; break;
+        case VAR_FLT:   if (u->floater != v->floater)           return false; break;
+        case VAR_STR:   if (!byte_array_equals(u->str, v->str)) return false; break;
+        default:
+            return (bool)vm_exit_message(context, "bad comparison");
+    }
+    
+    return variable_compare_maps(context, u->map, v->map);
 }

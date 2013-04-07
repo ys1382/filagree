@@ -351,7 +351,7 @@ struct string_func builtin_funcs[] = {
     {"sound",       &sys_sound},
     {"table",       &sys_table},
     {"graphics",    &sys_graphics},
-#endif
+#endif // NO_UI
 };
 
 struct variable *sys_new(struct context *context)
@@ -359,8 +359,9 @@ struct variable *sys_new(struct context *context)
     struct map *sys_func_map = map_new();
     for (int i=0; i<ARRAY_LEN(builtin_funcs); i++) {
         struct byte_array *name = byte_array_from_string(builtin_funcs[i].name);
+        struct variable *key = variable_new_str(context, name);
         struct variable *value = variable_new_c(context, builtin_funcs[i].func);
-        map_insert(sys_func_map, name, value);
+        map_insert(sys_func_map, key, value);
     }
     return variable_new_map(context, sys_func_map);
 }

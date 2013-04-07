@@ -83,7 +83,7 @@ struct program_state *program_state_new(struct context *context, struct map *env
 {
     null_check(context);
     struct program_state *state = (struct program_state*)malloc(sizeof(struct program_state));
-    state->named_variables = map_copy(env);
+    state->named_variables = env ? map_copy(env) : map_new(context);
     state->args = array_new();
     stack_push(context->program_stack, state);
     return state;
@@ -242,6 +242,7 @@ static void display_program_counter(struct context *context, const struct byte_a
 void display_program(struct byte_array *program)
 {
     struct context *context = context_new(false);
+#if 0
     context->runtime = false;
 
     INDENT
@@ -255,6 +256,7 @@ void display_program(struct byte_array *program)
     DEBUGPRINT("%sprogram instructions:\n", indentation(context));
     byte_array_reset(program);
     display_code(context, program);
+#endif
     context_del(context);
 
     UNDENT
@@ -503,7 +505,8 @@ bool custom_method(struct context *context,
                    struct variable *value)
 {
     struct variable *custom;
-    struct byte_array *key = byte_array_from_string(method);
+    struct byte_array *name = byte_array_from_string(method);
+    struct variable *key = variable_new_str(context, name);
     if (indexable->map && (custom = (struct variable*)map_get(indexable->map, key))) {
         DEBUGPRINT("\n");
         vm_call(context, custom, indexable, index, value, NULL);
@@ -527,7 +530,7 @@ void lookup(struct context *context, struct variable *indexable, struct variable
             break;
         case VAR_STR:
             if (indexable->map)
-                item = (struct variable*)map_get(indexable->map, index->str);
+                item = (struct variable*)map_get(indexable->map, index);
             if (!item)
                 item = builtin_method(context, indexable, index);
             if (!item)
@@ -627,18 +630,18 @@ static void push_float(struct context *context, struct byte_array *program)
     variable_push(context, var);
 }
 
-struct variable *find_var(struct context *context, const struct byte_array *name)
+struct variable *find_var(struct context *context, const struct variable *key)
 {
-    null_check(name);
+    null_check(key);
 
     const struct program_state *state = (const struct program_state*)stack_peek(context->program_stack, 0);
     struct map *var_map = state->named_variables;
-    struct variable *v = (struct variable*)map_get(var_map, name);
+    struct variable *v = (struct variable*)map_get(var_map, key);
     // DEBUGPRINT(" find_var %s in {p:%p, s:%p, m:%p}: %p\n", byte_array_to_string(name), context->program_stack, state, var_map, v);
 
     if (!v && context->find)
-        v = context->find(context, name);
-    if (!v && !strncmp(RESERVED_SYS, (const char*)name->data, strlen(RESERVED_SYS)))
+        v = context->find(context, key);
+    if (!v && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS)))
         v = context->sys;
     return v;
 }
@@ -651,7 +654,8 @@ static void push_var(struct context *context, struct byte_array *program)
     VM_DEBUGPRINT("VAR %s\n", str);
     free(str);
 #endif // DEBUG
-    struct variable *v = find_var(context, name);
+    struct variable *key = variable_new_str(context, name);
+    struct variable *v = find_var(context, key);
     if (!v)
         DEBUGPRINT("variable %s not found\n", byte_array_to_string(name));
     vm_assert(context, v, "variable %s not found", byte_array_to_string(name));
@@ -678,10 +682,11 @@ static void push_fnc(struct context *context, struct byte_array *program)
 
     for (int i=0; i<num_closures; i++) {
         struct byte_array *name = serial_decode_string(program);
+        struct variable *key = variable_new_str(context, name);
         if (context->runtime) {
             if (!closures)
                 closures = map_new();
-            struct variable *c = find_var(context, name);
+            struct variable *c = find_var(context, key);
             c = variable_copy(context, c);
             map_insert(closures, name, c);
         }
@@ -895,60 +900,6 @@ static struct variable *binary_op_str(struct context *context,
     return w;
 }
 
-static bool variable_compare_maps(struct context *context, const struct map *umap, const struct map *vmap);
-
-static bool variable_compare(struct context *context, const struct variable *u, const struct variable *v)
-{
-    if (!u != !v)
-        return false;
-    enum VarType ut = (enum VarType)u->type;
-    enum VarType vt = (enum VarType)v->type;
-
-    if (ut != vt)
-        return false;
-
-    switch (ut) {
-        case VAR_LST:
-            if (u->list->length != v->list->length)
-                return false;
-            for (int i=0; i<u->list->length; i++) {
-                struct variable *ui = (struct variable*)array_get(u->list, i);
-                struct variable *vi = (struct variable*)array_get(v->list, i);
-                if (!variable_compare(context, ui, vi))
-                    return false;
-            }
-            break;
-        case VAR_BOOL:
-        case VAR_INT:   if (u->integer != v->integer)           return false; break;
-        case VAR_FLT:   if (u->floater != v->floater)           return false; break;
-        case VAR_STR:   if (!byte_array_equals(u->str, v->str)) return false; break;
-        default:
-            return (bool)vm_exit_message(context, "bad comparison");
-    }
-
-    return variable_compare_maps(context, u->map, v->map);
-}
-
-static bool variable_compare_maps(struct context *context, const struct map *umap, const struct map *vmap)
-{
-    if (!umap && !vmap)
-        return true;
-    if (!umap)
-        return variable_compare_maps(context, vmap, umap);
-    struct array *keys = map_keys(umap);
-    if (!vmap)
-        return !keys->length;
-
-    for (int i=0; i<keys->length; i++) {
-        struct byte_array *key = (struct byte_array*)array_get(keys, i);
-        struct variable *uvalue = (struct variable*)map_get(umap, key);
-        struct variable *vvalue = (struct variable*)map_get(vmap, key);
-        if (!variable_compare(context, uvalue, vvalue))
-            return false;
-    }
-    return true;
-}
-
 static struct variable *binary_op_lst(struct context *context,
                                       enum Opcode op,
                                       const struct variable *u,
@@ -1036,7 +987,7 @@ static void binary_op(struct context *context, enum Opcode op)
         bool same = variable_compare(context, u, v) ^ (op == VM_NEQ);
         w = variable_new_bool(context, same);
     } else {
-        bool floater  = (ut == VAR_FLT && is_num(vt)) || (vt == VAR_FLT && is_num(ut));
+        bool floater = (ut == VAR_FLT && is_num(vt)) || (vt == VAR_FLT && is_num(ut));
         bool inter = (ut==VAR_INT || ut==VAR_BOOL) && (vt==VAR_INT || vt==VAR_BOOL);
 
         if (floater)                                w = binary_op_float(context, op, u, v);

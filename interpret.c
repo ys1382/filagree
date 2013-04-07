@@ -69,7 +69,7 @@ void run_file(const char* str, find_c_var *find, struct map *env)
     }
     int fg = byte_array_find(filename, dotfg, 0);
 
-     if (fg > 0)
+    if (fg > 0)
         interpret_file(filename, find);
     else
         fprintf(stderr, "invalid file name\n");
@@ -108,10 +108,10 @@ void test_struct()
     byte_array_print(str, 100, z);
     DEBUGPRINT("z:%s\n", str);
     byte_array_reset(z);
-    int32_t m = serial_decode_int(z);
-    DEBUGPRINT("n:%d\n", m);
-    int32_t n = serial_decode_int(z);
-    DEBUGPRINT("n:%d\n", n);
+    //int32_t m = serial_decode_int(z);
+    //DEBUGPRINT("n:%d\n", m);
+    //int32_t n = serial_decode_int(z);
+    //DEBUGPRINT("n:%d\n", n);
     
     struct byte_array *y = byte_array_new();
     byte_array_add_byte(y, 'x');

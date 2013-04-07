@@ -25,7 +25,7 @@ enum Visited {
 
 typedef struct context *context_p; // forward declaration
 typedef struct variable *(callback2func)(context_p context);
-typedef struct variable *(find_c_var)(context_p context, const struct byte_array *name);
+typedef struct variable *(find_c_var)(context_p context, const struct variable *key);
 
 struct variable {
     enum VarType type;
@@ -73,6 +73,8 @@ void variable_remove(struct variable *self, uint32_t start, int32_t length);
 struct variable *variable_part(struct context *context, struct variable *self, uint32_t start, int32_t length);
 int variable_map_insert(struct variable* v, const struct byte_array *key, struct variable *data);
 struct variable *variable_map_get(struct context *context, const struct variable* v, const struct byte_array *key);
+bool variable_compare(struct context *context, const struct variable *u, const struct variable *v);
+
 void variable_mark(struct variable *v);
 
 const char *var_type_str(enum VarType vt);

@@ -120,7 +120,7 @@ struct array *array_copy(const struct array* original) {
     copy->length = original->length;
     copy->current = original->current;
     copy->size = original->size;
-    DEBUGPRINT("array_copy %p->%p\n", copy, copy->data);
+//    DEBUGPRINT("array_copy %p->%p\n", copy, copy->data);
     return copy;
 }
 
@@ -155,7 +155,7 @@ void byte_array_del(struct byte_array* ba) {
     if (ba->data != NULL)
         free(ba->data);
     free(ba);
-    //DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
+//    DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
 }
 
 struct byte_array *byte_array_new_size(uint32_t size) {
@@ -246,6 +246,7 @@ struct byte_array *byte_array_from_string(const char* str)
     struct byte_array* ba = byte_array_new_size(len);
     memcpy(ba->data, str, len);
     ba->length = len;
+    DEBUGPRINT("byte_array_from_string %p->%p\n", ba, ba->data);
     return ba;
 }
 
@@ -413,35 +414,42 @@ bool stack_empty(const struct stack *stack)
 
 // map /////////////////////////////////////////////////////////////////////
 
-static int32_t default_hashor(const void *x)
+static int32_t default_hashor(const void *x, void *context)
 {
-    const struct byte_array *key = (const struct byte_array*)x;
+    const struct variable *key = (const struct variable*)x;
+    assert_message(key->type == VAR_STR, "non str in default_hashor");
+    const struct byte_array *name = key->str;
     int32_t hash = 0;
     int i = 0;
-    for (i = 0; i<key->length; i++)
-        hash += key->data[i];
+    for (i = 0; i<name->length; i++)
+        hash += name->data[i];
     return hash;
 }
 
-static bool default_comparator(const void *a, const void *b) {
-    return byte_array_equals((struct byte_array*)a, (struct byte_array*)b);
+static bool default_comparator(const void *a, const void *b, void *context) {
+    return variable_compare((struct context *)context, (struct variable *)a, (struct variable *)b);
+//    return byte_array_equals((struct byte_array*)a, (struct byte_array*)b);
 }
 
-static void *default_copyor(const void *key)
+static void *default_copyor(const void *key, void *context)
 {
-    return byte_array_copy((struct byte_array *)key);
+//    struct variable *key2 = (struct variable *)key;
+//    return byte_array_copy(key2->str);
+    return variable_copy((struct context *)context, (struct variable *)key);
 }
 
-static void default_rm(const void *key)
+static void default_rm(const void *key, void *context)
 {
-    byte_array_del((struct byte_array*)key);
+//    byte_array_del((struct byte_array*)key);
+//    variable_del((struct context *)context, (struct variable *)key);
 }
 
-struct map* map_new_ex(map_compare *mc, map_hash *mh, map_copyor *my, map_rm *md)
+struct map* map_new_ex(void *context, map_compare *mc, map_hash *mh, map_copyor *my, map_rm *md)
 {
     //DEBUGPRINT("map_new_ex\n");
     struct map *m;
     if (!(m =(struct map*)malloc(sizeof(struct map)))) return NULL;
+    m->context = context;
     m->size = 16;
     m->hash_func = mh ? mh : &default_hashor;
     m->comparator = mc ? mc : &default_comparator;
@@ -456,8 +464,8 @@ struct map* map_new_ex(map_compare *mc, map_hash *mh, map_copyor *my, map_rm *md
     return m;
 }
 
-struct map* map_new() {
-    return map_new_ex(NULL, NULL, NULL, NULL);
+struct map* map_new(void *context) {
+    return map_new_ex(context, NULL, NULL, NULL, NULL);
 }
 
 void map_del(struct map *m)
@@ -468,7 +476,7 @@ void map_del(struct map *m)
     for(size_t n = 0; n<m->size; ++n) {
         node = m->nodes[n];
         while (node) {
-            m->deletor(node->key);
+            m->deletor(node->key, m->context);
             oldnode = node;
             node = node->next;
             free(oldnode);
@@ -480,13 +488,13 @@ void map_del(struct map *m)
 
 bool map_key_equals(const struct map *m1, const void *key1, const void *key2)
 {
-    return m1->comparator(key1, key2);
+    return m1->comparator(key1, key2, m1->context);
 }
 
 int map_insert(struct map *m, const void *key, void *data)
 {
     struct hash_node *node;
-    int32_t hash = m->hash_func(key) % m->size;
+    int32_t hash = m->hash_func(key, m->context) % m->size;
 
     node = m->nodes[hash];
     while (node) {
@@ -500,7 +508,7 @@ int map_insert(struct map *m, const void *key, void *data)
     if (!(node = (struct hash_node*)malloc(sizeof(struct hash_node))))
         return -1;
     //if (!(node->key = byte_array_copy(key))) {
-    if (!(node->key = m->copyor(key))) {
+    if (!(node->key = m->copyor(key, m->context))) {
         free(node);
         return -1;
     }
@@ -533,12 +541,12 @@ struct array* map_values(const struct map *m) {
 int map_remove(struct map *m, const void *key)
 {
     struct hash_node *node, *prevnode = NULL;
-    size_t hash = m->hash_func(key)%m->size;
+    size_t hash = m->hash_func(key, m->context)%m->size;
 
     node = m->nodes[hash];
     while(node) {
         if (map_key_equals(m, node->key, key)) {
-            m->deletor(node->key);
+            m->deletor(node->key, m->context);
             //byte_array_del(node->key);
             if (prevnode) prevnode->next = node->next;
             else m->nodes[hash] = node->next;
@@ -554,7 +562,7 @@ int map_remove(struct map *m, const void *key)
 bool map_has(const struct map *m, const void *key)
 {
     struct hash_node *node;
-    size_t hash = m->hash_func(key) % m->size;
+    size_t hash = m->hash_func(key, m->context) % m->size;
     node = m->nodes[hash];
     while (node) {
         if (map_key_equals(m, node->key, key))
@@ -567,7 +575,7 @@ bool map_has(const struct map *m, const void *key)
 void *map_get(const struct map *m, const void *key)
 {
     struct hash_node *node;
-    size_t hash = m->hash_func(key) % m->size;
+    size_t hash = m->hash_func(key, m->context) % m->size;
     node = m->nodes[hash];
     while (node) {
         if (map_key_equals(m, node->key, key))
@@ -621,9 +629,10 @@ void map_update(struct map *a, const struct map *b)
 struct map *map_copy(struct map *original)
 {
     struct map *copy;
-    if (!original)
-        return map_new();
-    copy = map_new_ex(original->comparator, original->hash_func, original->copyor, original->deletor);
+    null_check(original);
+//    if (!original)
+//        return map_new(NULL);
+    copy = map_new_ex(original->context, original->comparator, original->hash_func, original->copyor, original->deletor);
     map_update(copy, original);
     return copy;
 }

@@ -72,19 +72,19 @@ free_ssl:
 	return NULL;
 }
 
-static bool int_compare(const void *a, const void *b)
+static bool int_compare(const void *a, const void *b, void *context)
 {
     int32_t i = (VOID_INT)a;
     int32_t j = (VOID_INT)b;
     return i == j;
 }
 
-static int32_t int_hash(const void* x) {
+static int32_t int_hash(const void* x, void *context) {
     return (int32_t)(VOID_INT)x;
 }
 
-void *int_copy(const void *x) { return (void*)x; }
-void int_del(const void *x) {}
+void *int_copy(const void *x, void *context) { return (void*)x; }
+void int_del(const void *x, void *context) {}
 
 void node_init()
 {
@@ -102,7 +102,7 @@ void *sys_listen2(void *arg)
     int serverport = la->serverport;
     
     if (server_listeners == NULL)
-        server_listeners = map_new_ex(&int_compare, &int_hash, &int_copy, &int_del);
+        server_listeners = map_new_ex(NULL, &int_compare, &int_hash, &int_copy, &int_del);
 
     map_insert(server_listeners, (void*)(VOID_INT)serverport, listener);
 
@@ -258,7 +258,7 @@ struct variable *sys_connect(struct context *context)
     ta->cya = ctx;
 
     if (socket_listeners == NULL)
-        socket_listeners = map_new_ex(&int_compare, &int_hash, &int_copy, &int_del);
+        socket_listeners = map_new_ex(NULL, &int_compare, &int_hash, &int_copy, &int_del);
     map_insert(socket_listeners, (void*)(VOID_INT)sockfd, (void*)(VOID_INT)ta);
 
     return variable_new_int(context, sockfd);
