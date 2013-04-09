@@ -38,7 +38,7 @@ struct variable* variable_new(struct context *context, enum VarType type)
     v->mark = 0;
     v->visited = VISITED_NOT;
     array_add(context->all_variables, v);
-    DEBUGPRINT("variable_new %d %p\n", type, v);
+    //DEBUGPRINT("variable_new %d %p\n", type, v);
     return v;
 }
 
@@ -77,8 +77,8 @@ void variable_del(struct context *context, struct variable *v)
         case VAR_INT:
         case VAR_FLT:
         case VAR_MAP:
-        case VAR_SRC:
             break;
+        case VAR_SRC:
         case VAR_LST:
             array_del(v->list);
             break;
@@ -211,7 +211,6 @@ const char *variable_value_str2(struct context *context, struct variable* v, cha
         case VAR_INT:    sprintf(str, "%s%d", str, v->integer);                    break;
         case VAR_BOOL:   sprintf(str, "%s%s", str, v->boolean ? "true" : "false"); break;
         case VAR_FLT:    sprintf(str, "%s%f", str, v->floater);                    break;
-        case VAR_STR:    sprintf(str, "%s%s", str, byte_array_to_string(v->str));  break;
         case VAR_FNC:    sprintf(str, "%sf(%dB)", str, v->str->length);            break;
         case VAR_C:      sprintf(str, "%sc-function", str);                        break;
         case VAR_MAP:                                                              break;
@@ -231,9 +230,16 @@ const char *variable_value_str2(struct context *context, struct variable* v, cha
                 sprintf(str, "%s%s%s%s%s", str, c, q, estr, q);
             }
         } break;
-        case VAR_ERR:
-            strcpy(str, byte_array_to_string(v->str));
-            break;
+        case VAR_STR: {
+            char *str2 =  byte_array_to_string(v->str);
+            sprintf(str, "%s%s", str, str2);
+            free(str2);
+        } break;
+        case VAR_ERR: {
+            char *str2 =  byte_array_to_string(v->str);
+            strcpy(str, str2);
+            free(str2);
+        } break;
         case VAR_BYT:
             byte_array_print(str, VV_SIZE, v->str);
             break;
@@ -254,7 +260,9 @@ const char *variable_value_str2(struct context *context, struct variable* v, cha
             if (i)
                 strcat(str, ",");
             strcat(str, "'");
-            strcat(str, byte_array_to_string((struct byte_array*)array_get(a,i)));
+            char *str3 = byte_array_to_string((struct byte_array*)array_get(a,i));
+            strcat(str, str3);
+            free(str3);
             strcat(str, "'");
             strcat(str, ":");
             struct variable *biv = (struct variable*)array_get(b,i);

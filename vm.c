@@ -242,7 +242,6 @@ static void display_program_counter(struct context *context, const struct byte_a
 void display_program(struct byte_array *program)
 {
     struct context *context = context_new(false);
-#if 0
     context->runtime = false;
 
     INDENT
@@ -256,7 +255,6 @@ void display_program(struct byte_array *program)
     DEBUGPRINT("%sprogram instructions:\n", indentation(context));
     byte_array_reset(program);
     display_code(context, program);
-#endif
     context_del(context);
 
     UNDENT
@@ -307,6 +305,8 @@ void vm_call_src(struct context *context, struct variable *func)
 
     struct program_state *state = (struct program_state*)stack_peek(context->program_stack, 0);
     struct variable *s = (struct variable*)stack_peek(context->operand_stack, 0);
+    if (state->args != NULL)
+        array_del(state->args);
     state->args = array_copy(s->list);
 
     INDENT
@@ -334,6 +334,8 @@ void vm_call_src(struct context *context, struct variable *func)
             break;
     }
 
+    if (state->args != NULL)
+        array_del(state->args);
     state->args = NULL;
 
     UNDENT
@@ -656,16 +658,13 @@ static void push_var(struct context *context, struct byte_array *program)
 #endif // DEBUG
     struct variable *key = variable_new_str(context, name);
     struct variable *v = find_var(context, key);
-    if (!v)
-        DEBUGPRINT("variable %s not found\n", byte_array_to_string(name));
-    vm_assert(context, v, "variable %s not found", byte_array_to_string(name));
+    vm_assert(context, v, "variable not found");
     variable_push(context, v);
 }
 
 static void push_str(struct context *context, struct byte_array *program)
 {
     struct byte_array* str = serial_decode_string(program);
-    // VM_DEBUGPRINT("STR '%s'\n", byte_array_to_string(str));
 #ifdef DEBUG
     char *str2 = byte_array_to_string(str);
     VM_DEBUGPRINT("STR %s\n", str2);
@@ -757,10 +756,14 @@ static void set(struct context *context,
 
     struct variable *value = get_value(context, op);
     
+#ifdef DEBUG
+    char *str = byte_array_to_string(name);
     DEBUGPRINT("%s %s to %s\n",
                op==VM_SET ? "SET" : "STX",
-               byte_array_to_string(name),
+               str,
                variable_value_str(context, value));
+    free(str);
+#endif // DEBUG
 
     set_named_variable(context, state, name, value); // set the variable to the value
 }
@@ -1068,9 +1071,11 @@ static bool iterate(struct context *context,
     struct byte_array *how = serial_decode_string(program);
 
 #ifdef DEBUG
+    char *str = byte_array_to_string(who);
     DEBUGPRINT("%s %s\n",
                NUM_TO_STRING(opcodes, op),
-               byte_array_to_string(who));
+               str);
+    free(str);
     if (!context->runtime) {
         if (where && where->length) {
             DEBUGPRINT("%s\tWHERE\n", indentation(context));
@@ -1120,7 +1125,11 @@ static inline bool vm_trycatch(struct context *context, struct byte_array *progr
     display_code(context, trial);
     struct byte_array *name = serial_decode_string(program);
     struct byte_array *catcher = serial_decode_string(program);
-    DEBUGPRINT("%sCATCH %s %d\n", indentation(context), byte_array_to_string(name), catcher->length);
+#ifdef DEBUG
+    char *str = byte_array_to_string(name);
+    DEBUGPRINT("%sCATCH %s %d\n", indentation(context), str, catcher->length);
+    free(str);
+#endif
     display_code(context, catcher);
     if (!context->runtime)
         return false;
@@ -1247,23 +1256,22 @@ done:
         stack_pop(context->program_stack);
     if (local_state)
         program_state_del(state);
-   // if (program != NULL)
-     //   byte_array_del(program);
     return inst == VM_RET;
 }
 
 void execute(struct byte_array *program, find_c_var *find)
 {
 #ifdef DEBUG
-    display_program(program);
+//    display_program(program);
 #endif
 
     DEBUGPRINT("execute:\n");
+    struct context *context = context_new(false);
+
     null_check(program);
     program = byte_array_copy(program);
     byte_array_reset(program);
-
-    struct context *context = context_new(false);
+    
     context->find = find;
 #ifdef DEBUG
     context->indent = 1;
