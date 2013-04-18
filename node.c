@@ -41,7 +41,7 @@ void *incoming_connection(void *arg)
 {
 	char readline[MAXLINE];
     struct thread_argument *ta = (struct thread_argument *)arg;
-    struct context *context = context_new(true);
+    struct context *context = context_new(true, true);
     context->find = ta->find;
 
     for (;;)

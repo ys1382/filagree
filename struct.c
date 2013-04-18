@@ -22,20 +22,18 @@
 
 struct array *array_new() {
     struct array *a = array_new_size(0);
-    //DEBUGPRINT("array_new %p->%p\n", a, a->data);
+    ///DEBUGPRINT("array_new %p->%p\n", a, a->data);
     return a;
 }
 
 struct array *array_new_size(uint32_t size) {
     struct array *a = (struct array*)malloc(sizeof(struct array));
-    a->data = (void**)malloc(size * sizeof(void**));
-    a->current = a->length = a->size = 0;
+    a->data = a->current = (void**)malloc(size * sizeof(void**));
+    a->length = a->size = 0;
     return a;
 }
 
 void array_del(struct array *a) {
-//    for (int i=0; i<a->length; i++)
-//        free(array_get(a, i));
     //DEBUGPRINT("array_del %p->%p\n", a, a->data);
     free(a->data);
     free(a);
@@ -53,7 +51,6 @@ uint32_t list_resize(uint32_t size, uint32_t length)
 
 void array_resize(struct array *a, uint32_t size)
 {
-    //uint32_t oldsize = size;
     if (!(size = list_resize(a->size, size))) // didn't resize
         return;
     uint32_t delta = a->current - a->data;
@@ -62,13 +59,13 @@ void array_resize(struct array *a, uint32_t size)
     memset(&a->data[a->size], 0, size - a->size);
     a->size = size;
     a->current = a->data + delta;
-    //DEBUGPRINT("array_resize %d-%d %p->%p\n", oldsize, size, a, a->data);
+    //DEBUGPRINT("array_resize %d-%d %p->%p\n", size, a, a->data);
     return;
 }
 
 uint32_t array_add(struct array *a, void *datum) {
     array_resize(a, a->length + 1);
-    a->data = (void**)realloc(a->data, (a->length+1) * sizeof(void*));
+    //a->data = (void**)realloc(a->data, (a->length+1) * sizeof(void*));
     a->data[a->length++] = datum;
     //DEBUGPRINT("array_add %p->%p\n", a, a->data);
     return a->length-1;
@@ -161,7 +158,7 @@ void byte_array_del(struct byte_array* ba) {
     if (ba->data != NULL)
         free(ba->data);
     free(ba);
-//    DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
+    //DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
 }
 
 struct byte_array *byte_array_new_size(uint32_t size) {
@@ -199,12 +196,11 @@ bool byte_array_equals(const struct byte_array *a, const struct byte_array* b)
 struct byte_array *byte_array_copy(const struct byte_array* original) {
     if (!original)
         return NULL;
-    struct byte_array* copy = byte_array_new_size(original->size); // (struct byte_array*)malloc(sizeof(struct byte_array));
-//    copy->data = (uint8_t*)malloc(original->length);
+    struct byte_array* copy = byte_array_new_size(original->size);
     memcpy(copy->data, original->data, original->length);
     copy->length = original->length;
     copy->current = copy->data + (original->current - original->data);
-    //printf("byte_array_copy %p->%p\n", copy, copy->data);
+//    printf("byte_array_copy %p->%p\n", copy, copy->data);
     return copy;
 }
 
@@ -253,7 +249,7 @@ struct byte_array *byte_array_from_string(const char* str)
     struct byte_array* ba = byte_array_new_size(len);
     memcpy(ba->data, str, len);
     ba->length = len;
-    //DEBUGPRINT("byte_array_from_string %p->%p\n", ba, ba->data);
+    // DEBUGPRINT("byte_array_from_string %s %p->%p\n", str, ba, ba->data);
     return ba;
 }
 
@@ -263,7 +259,7 @@ char* byte_array_to_string(const struct byte_array* ba)
     char* s = (char*)malloc(len+1);
     memcpy(s, ba->data, len);
     s[len] = 0;
-    DEBUGPRINT("byte_array_to_string %p\n", s);
+    //DEBUGPRINT("byte_array_to_string %p\n", s);
     return s;
 }
 
@@ -534,6 +530,7 @@ struct array* map_keys(const struct map *m) {
         for (const struct hash_node* n = m->nodes[i]; n; n=n->next)
             if (n->data)
                 array_add(a, n->key);
+    //DEBUGPRINT("map_keys %p\n", a);
     return a;
 }
 
@@ -626,18 +623,20 @@ void map_update(struct map *a, const struct map *b)
 {
     if (b == NULL)
         return;
-    const struct array *keys = map_keys(b);
+    struct array *keys = map_keys(b);
     for (int i=0; i<keys->length; i++) {
         const void *key = array_get(keys, i);
         if (!map_has(a, key))
             map_insert(a, key, map_get(b, key));
     }
+    array_del(keys);
 }
 
 struct map *map_copy(struct map *original)
 {
+    if (original == NULL)
+        return NULL;
     struct map *copy;
-    null_check(original);
 //    if (!original)
 //        return map_new(NULL);
     copy = map_new_ex(original->context, original->comparator, original->hash_func, original->copyor, original->deletor);

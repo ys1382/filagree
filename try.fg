@@ -1,1 +1,10 @@
-sys.print('hello, world!')
+import 'unit_test'
+
+tester.test('add integers',
+    function()
+        a = 7
+        b = 8
+        c = a + b
+        return c
+    end,
+    15)

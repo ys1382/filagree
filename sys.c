@@ -30,7 +30,8 @@ struct variable *sys_print(struct context *context)
     assert_message(args && args->type==VAR_SRC && args->list, "bad print arg");
     for (int i=1; i<args->list->length; i++) {
         struct variable *arg = (struct variable*)array_get(args->list, i);
-        log_print("%s\n", variable_value_str(context, arg));
+        char buf[VV_SIZE];
+        log_print("%s\n", variable_value_str(context, arg, buf));
     }
     return NULL;
 }
@@ -218,6 +219,7 @@ const char *variable_keyed_string(struct context *context, struct variable *v, c
         return NULL;
     struct byte_array *b = byte_array_from_string(key);
     struct variable *u = variable_map_get(context, v, b);
+    byte_array_del(b);
     if (!u || u->type != VAR_STR)
         return NULL;
     return byte_array_to_string(u->str);
@@ -232,12 +234,14 @@ struct variable *sys_button(struct context *context)
     int32_t w = param_int(value, 4);
     int32_t h = param_int(value, 5);
     struct variable *item = (struct variable*)array_get(value->list, 6);
+    struct byte_array *logic = byte_array_from_string("logic");
 
     hal_button(context, uictx, x, y, &w, &h,
-               variable_map_get(context, item, byte_array_from_string("logic")),
+               variable_map_get(context, item, logic),
                variable_keyed_string(context, item, "text"),
                variable_keyed_string(context, item, "image"));
     
+    byte_array_del(logic);
     return two_ints(context, w, h);
 }
 
@@ -249,11 +253,18 @@ struct variable *sys_table(struct context *context)
     int32_t y = param_int(value, 3);
     int32_t w = param_int(value, 4);
     int32_t h = param_int(value, 5);
+
+    struct byte_array *balist = byte_array_from_string("list");
+    struct byte_array *balogic = byte_array_from_string("logic");
+
     struct variable *item = (struct variable*)array_get(value->list, 6);
-    struct variable *list = variable_map_get(context, item, byte_array_from_string("list"));
-    struct variable *logic = variable_map_get(context, item, byte_array_from_string("logic"));
+    struct variable *list = variable_map_get(context, item, balist);
+    struct variable *logic = variable_map_get(context, item, balogic);
 
     hal_table(context, uictx, x, y, w, h, list, logic);
+
+    byte_array_del(balist);
+    byte_array_del(balogic);
     return NULL;
 }
 
@@ -356,7 +367,7 @@ struct string_func builtin_funcs[] = {
 
 struct variable *sys_new(struct context *context)
 {
-    struct map *sys_func_map = map_new();
+    struct map *sys_func_map = map_new(context);
     for (int i=0; i<ARRAY_LEN(builtin_funcs); i++) {
         struct byte_array *name = byte_array_from_string(builtin_funcs[i].name);
         struct variable *key = variable_new_str(context, name);
@@ -701,7 +712,8 @@ struct variable *builtin_method(struct context *context,
     }
     if (!strcmp(idxstr, FNC_TYPE)) {
         const char *typestr = var_type_str(it);
-        return variable_new_str(context, byte_array_from_string(typestr));
+        struct byte_array *bats = byte_array_from_string(typestr);
+        return variable_new_str(context, bats);
     }
 
     if (!strcmp(idxstr, FNC_STRING))

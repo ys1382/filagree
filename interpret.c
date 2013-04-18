@@ -19,7 +19,7 @@ bool run(struct context *context,
 void repl()
 {
     char str[FG_MAX_INPUT];
-    struct context *context = context_new(true);
+    struct context *context = context_new(true, true);
 
     for (;;) {
         fflush(stdin);
@@ -38,8 +38,10 @@ void repl()
         struct byte_array *program = build_string(input);
         if (!setjmp(trying))
             run(context, program, NULL, true);
+        byte_array_del(input);
+        byte_array_del(program);
     }
-    
+
     context_del(context);
 }
 
@@ -84,6 +86,8 @@ void interpret_string(const char *str, find_c_var *find)
     struct byte_array *input = byte_array_from_string(str);
     struct byte_array *program = build_string(input);
     execute(program, find);
+    byte_array_del(input);
+    byte_array_del(program);
 }
 
 
@@ -97,55 +101,16 @@ void sig_handler(const int sig)
     exit(1);
 }
 
-#include "serial.h"
-
-void test_struct()
-{
-    struct byte_array *z = byte_array_new();
-    serial_encode_int(z, 7);
-    serial_encode_int(z, 89);
-    char str[100];
-    byte_array_print(str, 100, z);
-    DEBUGPRINT("z:%s\n", str);
-    byte_array_reset(z);
-    //int32_t m = serial_decode_int(z);
-    //DEBUGPRINT("n:%d\n", m);
-    //int32_t n = serial_decode_int(z);
-    //DEBUGPRINT("n:%d\n", n);
-    
-    struct byte_array *y = byte_array_new();
-    byte_array_add_byte(y, 'x');
-    struct byte_array *x = byte_array_from_string("31415");
-    byte_array_append(y, x);
-    byte_array_print(str, 100, y);
-    DEBUGPRINT("y:%s\n", str);
-    
-    struct array *a = array_new();
-    for (int i=0; i<10; i++) {
-        struct byte_array *b = byte_array_from_string("hi");
-        array_add(a, b);
-    }
-}
-
 int main (int argc, char** argv)
 {
-    //test_struct();
-    //return 0;
-    
-    
-	struct sigaction act, oact;             /* structures for signal handling */
-    
-	/* Define a signal handler for when the user closes the program
-     with Ctrl-C. Also, turn off SA_RESTART so that the OS doesn't
-     restart the call to accept() after the signal is handled. */
-    
+	struct sigaction act, oact; // for handling ctrl-c
 	act.sa_handler = sig_handler;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
 	sigaction(SIGINT, &act, &oact);
 
     for (;;) {
-    
+
     switch (argc) {
         case 1:     repl();                         break;
         case 2:     run_file(argv[1], NULL, NULL);  break;

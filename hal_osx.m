@@ -480,7 +480,8 @@ void hal_label (int32_t x, int32_t y,
 objectValueForTableColumn:(NSTableColumn *) aTableColumn
                       row:(long) rowIndex {
     struct variable *item = array_get(self->data->list, rowIndex);
-    const char *name = variable_value_str(self->context, item);
+    char name[VV_SIZE];
+    variable_value_str(self->context, item, name);
     return [NSString stringWithUTF8String:name];
 }
 
@@ -694,7 +695,8 @@ void hal_save(struct context *context, const struct byte_array *key, const struc
 
     byte_array_reset(bits);
     struct variable *tst = variable_deserialize(context, bits);
-    NSLog(@"tst = %s", variable_value_str(context, tst));
+    char buf[VV_SIZE];
+    NSLog(@"tst = %s", variable_value_str(context, tst, buf));
 
     [defaults setObject:value2 forKey:key3];
     [defaults synchronize];

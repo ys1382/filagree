@@ -157,12 +157,8 @@ struct byte_array* serial_encode_string(struct byte_array* buf, const struct byt
         buf = byte_array_new();
 
     serial_encode_int(buf, bytes->length);
-//    buf->length += bytes->length;
-//    byte_array_resize(buf, buf->length);
-//    memcpy(buf->current, bytes->data, bytes->length);
     byte_array_append(buf, bytes);
 
-//    buf->current = buf->data + buf->length;
     return buf;
 }
 

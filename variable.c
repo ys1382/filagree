@@ -7,7 +7,6 @@
 
 #define ERROR_VAR_TYPE  "type error"
 #define VAR_MAX         1000
-#define VV_SIZE         1000
 
 const struct number_string var_types[] = {
     {VAR_NIL,   "nil"},
@@ -69,7 +68,7 @@ struct variable* variable_new_bool(struct context *context, bool b)
 
 void variable_del(struct context *context, struct variable *v)
 {
-//    DEBUGPRINT("variable_del %p\n", v);
+    //DEBUGPRINT("variable_del %p->%p\n", v, v->list);
     context->num_vars--;
     switch (v->type) {
         case VAR_C:
@@ -77,6 +76,7 @@ void variable_del(struct context *context, struct variable *v)
         case VAR_INT:
         case VAR_FLT:
         case VAR_MAP:
+        case VAR_BOOL:
             break;
         case VAR_SRC:
         case VAR_LST:
@@ -91,17 +91,8 @@ void variable_del(struct context *context, struct variable *v)
             vm_exit_message(context, "bad var type");
             break;
     }
-    if (v->map != NULL) {
-        struct array *keys = map_keys(v->map);
-        struct array *values = map_values(v->map);
-        /* for (int i=0; i<keys->length; i++) {
-            byte_array_del((struct byte_array*)array_get(keys, i));
-            variable_del(context, (struct variable*)array_get(values, i));
-        }*/
-        array_del(keys);
-        array_del(values);
+    if (v->map != NULL)
         map_del(v->map);
-    }
 
     free(v);
 }
@@ -151,19 +142,19 @@ struct variable *variable_new_fnc(struct context *context, struct byte_array *bo
     struct variable *v = variable_new(context, VAR_FNC);
     v->str = body;
     if (closures) {
+        struct byte_array *str = byte_array_from_string(RESERVED_ENV);
+        struct variable *env = variable_new_str(context, str);
         struct variable *vc = variable_new_map(context, closures);
-        variable_map_insert(v, byte_array_from_string(RESERVED_ENV), vc);
+        variable_map_insert(context, v, env, vc);
     }
     return v;
 }
 
-struct variable *variable_new_list(struct context *context, struct array *list) {
+struct variable *variable_new_list(struct context *context, struct array *list)
+{
     struct variable *v = variable_new(context, VAR_LST);
-
-#if 0
-    v->list = list ? list : array_new();
-#else
     v->list = array_new();
+    //DEBUGPRINT("variable_new_list %p->%p\n", v, v->list);
     for (uint32_t i=0; list && (i<list->length); i++) {
         struct variable *u = (struct variable*)array_get(list, i);
         if (u->type == VAR_MAP) {
@@ -173,12 +164,11 @@ struct variable *variable_new_list(struct context *context, struct array *list) 
         } else
             array_set(v->list, v->list->length, u);
     }
-#endif
-
     return v;
 }
 
-struct variable *variable_new_map(struct context *context, struct map *map) {
+struct variable *variable_new_map(struct context *context, struct map *map)
+{
     struct variable *v = variable_new(context, VAR_MAP);
     v->map = map;
     return v;
@@ -190,7 +180,7 @@ struct variable *variable_new_c(struct context *context, callback2func *cfnc) {
     return v;
 }
 
-const char *variable_value_str2(struct context *context, struct variable* v, char *str, size_t size)
+static void variable_value_str2(struct context *context, struct variable* v, char *str, size_t size)
 {
     null_check(v);
     enum VarType vt = (enum VarType)v->type;
@@ -203,7 +193,7 @@ const char *variable_value_str2(struct context *context, struct variable* v, cha
     }
     else if (v->visited == VISITED_X) { // subsequent visit
         sprintf(str, "*%d", v->mark);
-        return str;
+        return;
     }
 
     switch (vt) {
@@ -223,11 +213,12 @@ const char *variable_value_str2(struct context *context, struct variable* v, cha
                 vm_null_check(context, element);
                 const char *q = (element->type == VAR_STR || element->type == VAR_FNC) ? "'" : "";
                 const char *c = i ? "," : "";
+                sprintf(str, "%s%s%s", str, c, q);
                 int position = strlen(str);
                 char *str2 = &str[position];
                 int len2 = sizeof(str) - position;
-                const char *estr = variable_value_str2(context, element, str2, len2);
-                sprintf(str, "%s%s%s%s%s", str, c, q, estr, q);
+                variable_value_str2(context, element, str2, len2);
+                strcat(str, q);
             }
         } break;
         case VAR_STR: {
@@ -249,8 +240,9 @@ const char *variable_value_str2(struct context *context, struct variable* v, cha
     }
 
     if (v->map) {
-        const struct array *a = map_keys(v->map);
-        const struct array *b = map_values(v->map);
+
+        struct array *a = map_keys(v->map);
+        struct array *b = map_values(v->map);
 
         if (vt != VAR_LST)
             strcat(str, "<");
@@ -260,24 +252,38 @@ const char *variable_value_str2(struct context *context, struct variable* v, cha
             if (i)
                 strcat(str, ",");
             strcat(str, "'");
-            char *str3 = byte_array_to_string((struct byte_array*)array_get(a,i));
-            strcat(str, str3);
-            free(str3);
+            
+            // char *str3 = byte_array_to_string((struct byte_array*)array_get(a,i));
+            int position = strlen(str);
+            struct variable *vai = (struct variable *)array_get(a,i);
+            char *str2 = &str[position];
+            int len2 = sizeof(str) - position;
+            //const char *vaistr =
+            variable_value_str2(context, vai, str2, len2);
+//            strcat(str, vaistr);
+            //free(str2);
+
             strcat(str, "'");
             strcat(str, ":");
             struct variable *biv = (struct variable*)array_get(b,i);
-            int position = strlen(str);
-            char *str2 = &str[position];
-            int len2 = sizeof(str) - position;
-            const char *bistr = variable_value_str2(context, biv, str2, len2);
-            strcat(str, bistr);
-        }
+            position = strlen(str);
+            str2 = &str[position];
+            len2 = sizeof(str) - position;
+            //const char *bistr =
+            variable_value_str2(context, biv, str2, len2);
+//            strcat(str, bistr);
+
+        } // for
+
         strcat(str, vt==VAR_LST ? "]" : ">");
-    }
+
+        array_del(a);
+        array_del(b);
+
+    } // map
+
     else if (vt == VAR_LST || vt == VAR_SRC)
         strcat(str, "]");
-
-    return str;
 }
 
 static void variable_mark2(struct variable *v, uint32_t *marker)
@@ -294,9 +300,10 @@ static void variable_mark2(struct variable *v, uint32_t *marker)
     v->visited = VISITED_ONCE;
 
     if (v->map) {
-        const struct array *values = map_values(v->map);
+        struct array *values = map_values(v->map);
         for (int i=0; values && i<values->length; i++)
             variable_mark2((struct variable*)array_get(values, i), marker);
+        array_del(values);
     }
 
     if (v->type == VAR_LST) {
@@ -324,29 +331,31 @@ void variable_unmark(struct variable *v)
         }
     }
     if (v->map) {
-        const struct array *a = map_keys(v->map);
-        const struct array *b = map_values(v->map);
+        struct array *a = map_keys(v->map);
+        struct array *b = map_values(v->map);
         for (int i=0; i<a->length; i++) {
             struct variable *biv = (struct variable*)array_get(b,i);
             variable_unmark(biv);
         }
+        array_del(a);
+        array_del(b);
     }
 }
 
 
-const char *variable_value_str(struct context *context, struct variable* v)
+char *variable_value_str(struct context *context, struct variable* v, char *buf)
 {
-    char buf[1000];
     *buf = 0;
     variable_unmark(v);
     variable_mark(v);
-    const char *str = variable_value_str2(context, v, buf, sizeof(buf));
+    variable_value_str2(context, v, buf, sizeof(buf));
     variable_unmark(v);
-    return str;
+    return buf;
 }
 
 struct byte_array *variable_value(struct context *c, struct variable *v) {
-    const char *str = variable_value_str(c, v);
+    char buf[VV_SIZE];
+    const char *str = variable_value_str(c, v, buf);
     return byte_array_from_string(str);
 }
 
@@ -396,7 +405,7 @@ struct byte_array *variable_serialize(struct context *context,
                 const struct array *values = map_values(in->map);
                 serial_encode_int(bits, keys->length);
                 for (int i=0; i<keys->length; i++) {
-                    serial_encode_string(bits, (const struct byte_array*)array_get(keys, i));
+                    serial_encode_string(bits, ((const struct variable*)array_get(keys, i))->str);
                     variable_serialize(context, bits, (const struct variable*)array_get(values, i), true);
                 }
             } else
@@ -427,7 +436,7 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
 
             uint32_t map_length = serial_decode_int(bits);
             if (map_length) {
-                out->map = map_new();
+                out->map = map_new(context);
                 for (int i=0; i<map_length; i++) {
                     struct byte_array *key = serial_decode_string(bits);
                     struct variable *value = variable_deserialize(context, bits);
@@ -513,10 +522,10 @@ struct variable *variable_concatenate(struct context *context, int n, const stru
     return result;
 }
 
-int variable_map_insert(struct variable* v, const struct byte_array *key, struct variable *datum)
+int variable_map_insert(struct context *context, struct variable* v, struct variable *key, struct variable *datum)
 {
     if (!v->map)
-        v->map = map_new();
+        v->map = map_new(context);
     return map_insert(v->map, key, datum);
 }
 
@@ -538,7 +547,7 @@ static bool variable_compare_maps(struct context *context, const struct map *uma
         return !keys->length;
     
     for (int i=0; i<keys->length; i++) {
-        struct byte_array *key = (struct byte_array*)array_get(keys, i);
+        struct variable *key = (struct variable*)array_get(keys, i);
         struct variable *uvalue = (struct variable*)map_get(umap, key);
         struct variable *vvalue = (struct variable*)map_get(vmap, key);
         if (!variable_compare(context, uvalue, vvalue))

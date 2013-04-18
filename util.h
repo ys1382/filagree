@@ -52,7 +52,7 @@ struct number_string {
     char* chars;
 };
 
-const char* num_to_string(const struct number_string *ns, int num_items, int num);
+const char *num_to_string(const struct number_string *ns, int num_items, int num);
 #define NUM_TO_STRING(ns, num) num_to_string(ns, ARRAY_LEN(ns), num)
 
 // error messages

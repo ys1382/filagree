@@ -1,6 +1,8 @@
 #ifndef VARIABLE_H
 #define VARIABLE_H
 
+#define VV_SIZE 1000
+
 enum VarType {
     VAR_NIL,
     VAR_INT,
@@ -45,7 +47,7 @@ struct variable {
 struct variable* variable_new(struct context *context, enum VarType type);
 void variable_del(struct context *context, struct variable *v);
 struct byte_array* variable_value(struct context *context, struct variable* v);
-const char* variable_value_str(struct context *context, struct variable* v);
+char* variable_value_str(struct context *context, struct variable* v, char *buf);
 struct byte_array *variable_serialize(struct context *context, struct byte_array *bits,
                                       const struct variable *in,
                                       bool withType);
@@ -71,7 +73,7 @@ void variable_push(struct context *context, struct variable *v);
 struct variable *variable_concatenate(struct context *context, int n, const struct variable* v, ...);
 void variable_remove(struct variable *self, uint32_t start, int32_t length);
 struct variable *variable_part(struct context *context, struct variable *self, uint32_t start, int32_t length);
-int variable_map_insert(struct variable* v, const struct byte_array *key, struct variable *data);
+int variable_map_insert(struct context *context, struct variable* v, struct variable *key, struct variable *data);
 struct variable *variable_map_get(struct context *context, const struct variable* v, const struct byte_array *key);
 bool variable_compare(struct context *context, const struct variable *u, const struct variable *v);
 

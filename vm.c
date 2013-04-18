@@ -105,7 +105,7 @@ static inline void cfnc_length(struct context *context) {
     stack_push(context->operand_stack, result);
 }
 
-struct context *context_new(bool state)
+struct context *context_new(bool state, bool sys_funcs)
 {
     struct context *context = (struct context*)malloc(sizeof(struct context));
     null_check(context);
@@ -119,7 +119,7 @@ struct context *context_new(bool state)
     context->num_vars = 0;
     context->indent = 0;
     context->error = NULL;
-    context->sys = sys_new(context);
+    context->sys = sys_funcs ? sys_new(context) : NULL;
 
     return context;
 }
@@ -241,7 +241,7 @@ static void display_program_counter(struct context *context, const struct byte_a
 
 void display_program(struct byte_array *program)
 {
-    struct context *context = context_new(false);
+    struct context *context = context_new(false, false);
     context->runtime = false;
 
     INDENT
@@ -416,8 +416,12 @@ static void push_list(struct context *context, struct byte_array *program)
     }
     struct variable *list = variable_new_list(context, items);
     list->map = map;
-    DEBUGPRINT(": %s\n", variable_value_str(context, list));
+#ifdef DEBUG
+    char buf[VV_SIZE];
+    DEBUGPRINT(": %s\n", variable_value_str(context, list, buf));
+#endif
     variable_push(context, list);
+    array_del(items);
 }
 
 static void push_map(struct context *context, struct byte_array *program)
@@ -426,15 +430,18 @@ static void push_map(struct context *context, struct byte_array *program)
     DEBUGPRINT("MAP %d", num_items);
     if (!context->runtime)
         VM_DEBUGPRINT("\n");
-    struct map *map = map_new();
+    struct map *map = map_new(context);
     while (num_items--) {
         struct variable* value = variable_pop(context);
         struct variable* key = variable_pop(context);
         assert_message(key->type==VAR_STR, "non-string map index");
-        map_insert(map, key->str, value);
+        map_insert(map, key, value);
     }
     struct variable *v = variable_new_map(context, map);
-    DEBUGPRINT(": %s\n", variable_value_str(context, v));
+#ifdef DEBUG
+    char buf[VV_SIZE];
+    DEBUGPRINT(": %s\n", variable_value_str(context, v, buf));
+#endif
     variable_push(context, v);
 }
 
@@ -451,14 +458,14 @@ struct variable* variable_set(struct context *context, struct variable *dst, con
         case VAR_FNC:
         case VAR_BYT:
         case VAR_STR:   dst->str = byte_array_copy(src->str);   break;
-        case VAR_MAP:   dst->map = src->map;                    break;
         case VAR_SRC:
-        case VAR_LST:   dst->list = src->list;                  break;
+        case VAR_LST:   dst->list = array_copy(src->list);      break;
+        case VAR_MAP:                                           break;
         default:
             vm_exit_message(context, "bad var type");
             break;
     }
-    dst->map = src->map;
+    dst->map = map_copy(src->map);
     dst->type = src->type;
     return dst;
 }
@@ -684,7 +691,7 @@ static void push_fnc(struct context *context, struct byte_array *program)
         struct variable *key = variable_new_str(context, name);
         if (context->runtime) {
             if (!closures)
-                closures = map_new();
+                closures = map_new(context);
             struct variable *c = find_var(context, key);
             c = variable_copy(context, c);
             map_insert(closures, name, c);
@@ -704,7 +711,7 @@ static void push_fnc(struct context *context, struct byte_array *program)
 
 void set_named_variable(struct context *context,
                         struct program_state *state,
-                        const struct byte_array *name,
+                        struct byte_array *name,
                         const struct variable *value)
 {
     // DEBUGPRINT(" set_named_variable: %p\n", state);
@@ -712,7 +719,8 @@ void set_named_variable(struct context *context,
         state = (struct program_state*)stack_peek(context->program_stack, 0);
     struct map *var_map = state->named_variables;
     struct variable *to_var = variable_copy(context, value);
-    map_insert(var_map, name, to_var);
+    struct variable *name2 = variable_new_str(context, name);
+    map_insert(var_map, name2, to_var);
 
     //DEBUGPRINT("SET %s to %s\n", byte_array_to_string(name), variable_value_str(context, value));
     // DEBUGPRINT(" SET %s at %p in {p:%p, s:%p, m:%p}\n", byte_array_to_string(name), to_var, context->program_stack, state, var_map);
@@ -727,7 +735,7 @@ static struct variable *get_value(struct context *context, enum Opcode op)
     if (value->type == VAR_SRC) {
         struct array *values = value->list;
         if (values->length > values->current - values->data)
-            value = (struct variable*)values->current++;
+            value = (struct variable*)*values->current++;
         else
             value = variable_new_nil(context);
         if (interim)
@@ -758,10 +766,11 @@ static void set(struct context *context,
     
 #ifdef DEBUG
     char *str = byte_array_to_string(name);
+    char buf[VV_SIZE];
     DEBUGPRINT("%s %s to %s\n",
                op==VM_SET ? "SET" : "STX",
                str,
-               variable_value_str(context, value));
+               variable_value_str(context, value, buf));
     free(str);
 #endif // DEBUG
 
@@ -813,7 +822,7 @@ static void list_put(struct context *context, enum Opcode op, bool really)
                     vm_exit_message(context, "indexing non-indexable");
             } break;
         case VAR_STR:
-            variable_map_insert(recipient, key->str, value);
+            variable_map_insert(context, recipient, key, value);
             break;
         default:
             vm_exit_message(context, "bad index type");
@@ -834,10 +843,8 @@ static struct variable *binary_op_int(struct context *context,
         case VM_DIV:    i = m / n;    break;
         case VM_ADD:    i = m + n;    break;
         case VM_SUB:    i = m - n;    break;
-            //case VM_AND:    i = m && n;   break;
         case VM_EQU:    i = m == n;   break;
         case VM_NEQ:    i = m != n;   break;
-            //case VM_ORR:    i = m || n;   break;
         case VM_GTN:    i = m > n;    break;
         case VM_LTN:    i = m < n;    break;
         case VM_GRQ:    i = m >= n;   break;
@@ -889,17 +896,26 @@ static struct variable *binary_op_str(struct context *context,
                                       struct variable *v)
 {
     struct variable *w = NULL;
-    struct byte_array *ustr = u->type == VAR_STR ? u->str : variable_value(context, u);
-    struct byte_array *vstr = v->type == VAR_STR ? v->str : variable_value(context, v);
+    enum VarType ut = u->type, vt = v->type;
+    struct byte_array *ustr = ut == VAR_STR ? u->str : variable_value(context, u);
+    struct byte_array *vstr = vt == VAR_STR ? v->str : variable_value(context, v);
 
     switch (op) {
         case VM_ADD:
             w = variable_new_str(context, byte_array_concatenate(2, vstr, ustr));
             break;
-        case VM_EQU:    w = variable_new_int(context, byte_array_equals(ustr, vstr));            break;
+        case VM_EQU:
+            w = variable_new_int(context, byte_array_equals(ustr, vstr));
+            break;
         default:
-            return (struct variable*)vm_exit_message(context, "unknown string operation");
+            w = (struct variable*)vm_exit_message(context, "unknown string operation");
+            break;
     }
+
+    if (ut != VAR_STR)
+        byte_array_del(ustr);
+    if (vt != VAR_STR)
+        byte_array_del(vstr);
     return w;
 }
 
@@ -1002,12 +1018,14 @@ static void binary_op(struct context *context, enum Opcode op)
     }
 
     variable_push(context, w);
-
+#ifdef DEBUG
+    char bufv[VV_SIZE], bufu[VV_SIZE], bufw[VV_SIZE];
     DEBUGPRINT("%s(%s,%s) = %s\n",
                NUM_TO_STRING(opcodes, op),
-               variable_value_str(context, v),
-               variable_value_str(context, u),
-               variable_value_str(context, w));
+               variable_value_str(context, v, bufv),
+               variable_value_str(context, u, bufu),
+               variable_value_str(context, w, bufw));
+#endif
 }
 
 static void unary_op(struct context *context, enum Opcode op)
@@ -1053,11 +1071,13 @@ static void unary_op(struct context *context, enum Opcode op)
     }
 
     variable_push(context, result);
-
+#ifdef DEBUG
+    char buf1[VV_SIZE], buf2[VV_SIZE];
     DEBUGPRINT("%s(%s) = %s\n",
                NUM_TO_STRING(opcodes, op),
-               variable_value_str(context, v),
-               variable_value_str(context, result));
+               variable_value_str(context, v, buf1),
+               variable_value_str(context, result, buf2));
+#endif
 }
 
 // FOR who IN what WHERE where DO how
@@ -1256,6 +1276,8 @@ done:
         stack_pop(context->program_stack);
     if (local_state)
         program_state_del(state);
+    if (program != NULL)
+        byte_array_del(program);
     return inst == VM_RET;
 }
 
@@ -1266,17 +1288,16 @@ void execute(struct byte_array *program, find_c_var *find)
 #endif
 
     DEBUGPRINT("execute:\n");
-    struct context *context = context_new(false);
+    struct context *context = context_new(false, true);
 
     null_check(program);
     program = byte_array_copy(program);
     byte_array_reset(program);
-    
+
     context->find = find;
 #ifdef DEBUG
     context->indent = 1;
 #endif
-    DEBUGPRINT("ready set go\n");
     if (!setjmp(trying))
         run(context, program, NULL, false);
 

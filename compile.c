@@ -27,6 +27,8 @@ struct array* lex_list;
 struct map *imports = NULL;
 struct byte_array *read_file(const struct byte_array *filename);
 
+static struct context *context;
+
 // token ///////////////////////////////////////////////////////////////////
 
     enum Lexeme {
@@ -296,12 +298,16 @@ int import(const char* input, int i)
     struct byte_array *path = byte_array_new();
     while (!isspace(input[i]) && input[i]!=QUOTE)
         byte_array_add_byte(path, input[i++]);
-    byte_array_append(path, byte_array_from_string(EXTENSION_SRC));
+    struct byte_array *dotsrc = byte_array_from_string(EXTENSION_SRC);
+    byte_array_append(path, dotsrc);
+    byte_array_del(dotsrc);
 
-    if (!map_has(imports, path)) {
-        map_insert(imports, path, NULL);
+    struct variable *path2 = variable_new_str(context, path);
+    if (!map_has(imports, path2)) {
+        map_insert(imports, path2, NULL);
         struct byte_array *imported = read_file(path);
         lex(imported);
+        byte_array_del(imported);
     }
 
     return i+1;
@@ -1031,8 +1037,10 @@ struct symbol *comprehension()
     struct symbol *s = symbol_new(SYMBOL_COMPREHENSION);
     s->value = expression();
     s->index = iterator();
-    if (!s->index)
+    if (!s->index) {
+        symbol_del(s);
         return NULL;
+    }
     FETCH_OR_ERROR(LEX_RIGHTSQUARE);
     return s;
 }
@@ -1266,6 +1274,7 @@ void generate_fdecl(struct byte_array *code, struct symbol *root)
     generate_code(f, root->index); // params
     generate_code(f, root->value); // statements
     serial_encode_string(code, f);
+    byte_array_del(f);
 }
 
 void generate_pair(struct byte_array *code, struct symbol *root)
@@ -1326,6 +1335,7 @@ void generate_math(struct byte_array *code, struct symbol *root)
         generate_step(code, 1, op);
         serial_encode_int(code, second->length);
         byte_array_append(code, second);
+        byte_array_del(second);
         return;
     }
 
@@ -1355,25 +1365,27 @@ void generate_loop(struct byte_array *code, struct symbol *root)
 {
     struct byte_array *ifa, *b, *jmp;
 
-    int32_t loop_length, jmp_len = 2;
-    do {
-        ifa = byte_array_new();
-        b = byte_array_new();
-        jmp = byte_array_new();
+    ifa = byte_array_new();
+    b = byte_array_new();
+    jmp = byte_array_new();
 
-        generate_code(b, root->value);
+    int32_t loop_length;
 
-        generate_code(ifa, root->index);
-        generate_step(ifa, 1, VM_IFF);
-        serial_encode_int(ifa, b->length + jmp_len);
+    generate_code(b, root->value);
+    generate_code(ifa, root->index);
+    generate_step(ifa, 1, VM_IFF);
+    serial_encode_int(ifa, b->length + 2);
 
-        loop_length = ifa->length + b->length;
-        generate_jump(jmp, -loop_length);
-
-    } while (jmp_len++ < jmp->length);
+    loop_length = ifa->length + b->length;
+    generate_jump(jmp, -loop_length);
 
     struct byte_array *while_a_do_b = byte_array_concatenate(3, ifa, b, jmp);
     byte_array_append(code, while_a_do_b);
+
+    byte_array_del(ifa);
+    byte_array_del(b);
+    byte_array_del(jmp);
+    byte_array_del(while_a_do_b);
 }
 
 void generate_ifthenelse(struct byte_array *code, struct symbol *root)
@@ -1418,9 +1430,16 @@ void generate_ifthenelse(struct byte_array *code, struct symbol *root)
         generate_step(if_code, 1, VM_IFF);
         serial_encode_int(if_code, then_code->length);
 
-        combined = byte_array_concatenate(3, if_code, then_code, combined);
+        struct byte_array *latest = byte_array_concatenate(3, if_code, then_code, combined);
+        byte_array_del(if_code);
+        byte_array_del(then_code);
+        byte_array_del(combined);
+        combined = latest;
     }
     byte_array_append(code, combined);
+    byte_array_del(combined);
+    array_del(ifs);
+    array_del(thens);
 }
 
 // <iterator> --> LEX_FOR LEX_IDENTIFIER LEX_IN <expression> ( LEX_WHERE <expression> )?
@@ -1435,6 +1454,7 @@ void generate_iterator(struct byte_array *code, struct symbol *root, enum Opcode
         struct byte_array *where = byte_array_new();
         generate_code(where, ator->index);
         serial_encode_string(code, where);
+        byte_array_del(where);
     }
     else
         generate_nil(code, NULL);
@@ -1442,6 +1462,7 @@ void generate_iterator(struct byte_array *code, struct symbol *root, enum Opcode
     struct byte_array *what = byte_array_new();
     generate_code(what, root->value);
     serial_encode_string(code, what);    // DO d
+    byte_array_del(what);
 }
 
 // <iterloop> --> <iterator> <statements> LEX_END
@@ -1465,6 +1486,9 @@ void generate_trycatch(struct byte_array *code, struct symbol *root)
     serial_encode_string(code, root->token->string);
     struct byte_array *catcher = generate_code(NULL, root->value);
     serial_encode_string(code, catcher);
+
+    byte_array_del(trial);
+    byte_array_del(catcher);
 }
 
 void generate_throw(struct byte_array *code, struct symbol *root)
@@ -1517,6 +1541,8 @@ struct byte_array *generate_code(struct byte_array *code, struct symbol *root)
     return code;
 }
 
+//todo: del after append and concatenate
+
 struct byte_array *generate_program(struct symbol *root)
 {
     DEBUGPRINT("generate:\n");
@@ -1533,7 +1559,8 @@ struct byte_array *build_string(const struct byte_array *input) {
     DEBUGPRINT("lex %d:\n", input_copy->length);
 
     lex_list = array_new();
-    imports = map_new();
+    context = context_new(false, false);
+    imports = map_new(context);
 
     struct array* list = lex(input_copy);
     struct symbol *tree = parse(list, 0);
@@ -1545,6 +1572,7 @@ struct byte_array *build_string(const struct byte_array *input) {
     }
     array_del(lex_list);
     map_del(imports);
+    context_del(context);
     byte_array_del(input_copy);
     symbol_del(tree);
 
@@ -1569,4 +1597,9 @@ void compile_file(const char* str)
     assert_message(offset > 0, "invalid source file name");
     byte_array_replace(filename, dotfgbc, offset, dotfg->length);
     write_file(filename, program);
+
+    byte_array_del(filename);
+    byte_array_del(program);
+    byte_array_del(dotfg);
+    byte_array_del(dotfgbc);
 }

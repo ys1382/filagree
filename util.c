@@ -121,7 +121,7 @@ void null_check(const void *pointer) {
         exit_message("null pointer");
 }
 
-const char* num_to_string(const struct number_string *ns, int num_items, int num)
+const char *num_to_string(const struct number_string *ns, int num_items, int num)
 {
     for (int i=0; i<num_items; i++) // reverse lookup nonterminal string
         if (num == ns[i].number)

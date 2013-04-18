@@ -1,6 +1,9 @@
 # test.fg ###################################################################
 
 import 'sys'
+
+/*
+
 import 'unit_test'
 
 tester.test('add integers',
@@ -344,3 +347,5 @@ tester.test('map args',
 
 
 tester.done()
+
+*/
