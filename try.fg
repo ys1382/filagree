@@ -1,10 +1,6 @@
-import 'unit_test'
+a = ['p' : 0, 'q' : 1]
 
-tester.test('add integers',
-    function()
-        a = 7
-        b = 8
-        c = a + b
-        return c
-    end,
-    15)
+a.p = a.p + 1
+a.p = a.p + 1
+
+sys.print(a.p)

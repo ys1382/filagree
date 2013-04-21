@@ -16,6 +16,7 @@
 #include "hal.h"
 #include "struct.h"
 
+
 static NSWindow *window = NULL;
 static NSMutableArray *inputs = NULL;
 
@@ -715,4 +716,9 @@ struct variable *hal_load(struct context *context, const struct byte_array *key)
     bits.current = bits.data;
 
     return variable_deserialize(context, &bits);
+}
+
+void hal_print(const char *str)
+{
+    NSLog(@"%s", str);
 }

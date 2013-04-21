@@ -31,7 +31,7 @@ struct variable *sys_print(struct context *context)
     for (int i=1; i<args->list->length; i++) {
         struct variable *arg = (struct variable*)array_get(args->list, i);
         char buf[VV_SIZE];
-        log_print("%s\n", variable_value_str(context, arg, buf));
+        printf("%s\n", variable_value_str(context, arg, buf));
     }
     return NULL;
 }

@@ -1,8 +1,6 @@
 # test.fg ###################################################################
 
-import 'sys'
-
-/*
+# import 'sys'
 
 import 'unit_test'
 
@@ -48,6 +46,8 @@ tester.test('index',
         return a[2]
     end,
     9)
+
+/*
 
 tester.test('list set',
     function()
@@ -345,7 +345,7 @@ tester.test('map args',
     end,
     15)
 
+*/
 
 tester.done()
 
-*/

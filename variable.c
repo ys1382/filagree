@@ -526,6 +526,10 @@ int variable_map_insert(struct context *context, struct variable* v, struct vari
 {
     if (!v->map)
         v->map = map_new(context);
+#ifdef DEBUG
+    //char buf[VV_SIZE];
+    //DEBUGPRINT("variable_map_insert %p %s into %p\n", datum, variable_value_str(context, datum, buf), v );
+#endif
     return map_insert(v->map, key, datum);
 }
 
@@ -543,17 +547,20 @@ static bool variable_compare_maps(struct context *context, const struct map *uma
     if (!umap)
         return variable_compare_maps(context, vmap, umap);
     struct array *keys = map_keys(umap);
+    bool result = true;
     if (!vmap)
-        return !keys->length;
-    
-    for (int i=0; i<keys->length; i++) {
+        result = !keys->length;
+    else for (int i=0; i<keys->length; i++) {
         struct variable *key = (struct variable*)array_get(keys, i);
         struct variable *uvalue = (struct variable*)map_get(umap, key);
         struct variable *vvalue = (struct variable*)map_get(vmap, key);
-        if (!variable_compare(context, uvalue, vvalue))
-            return false;
+        if (!variable_compare(context, uvalue, vvalue)) {
+            result = false;
+            break;
+        }
     }
-    return true;
+    array_del(keys);
+    return result;
 }
 
 bool variable_compare(struct context *context, const struct variable *u, const struct variable *v)

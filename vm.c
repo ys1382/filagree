@@ -531,7 +531,7 @@ void lookup(struct context *context, struct variable *indexable, struct variable
         return;
     }
 
-    struct variable *item=0;
+    struct variable *item = NULL;
 
     switch (index->type) {
         case VAR_INT:
@@ -552,7 +552,10 @@ void lookup(struct context *context, struct variable *indexable, struct variable
             vm_exit_message(context, "bad index type");
             break;
     }
-    //    DEBUGPRINT(" found %s\n", variable_value_str(context, item));
+#ifdef DEBUG
+    // char buf[VV_SIZE];
+    // DEBUGPRINT(" found %p: %s\n", item, variable_value_str(context, item, buf));
+#endif
     variable_push(context, item);
 }
 
@@ -666,6 +669,7 @@ static void push_var(struct context *context, struct byte_array *program)
     struct variable *key = variable_new_str(context, name);
     struct variable *v = find_var(context, key);
     vm_assert(context, v, "variable not found");
+    //printf("pushed %p\n", v);
     variable_push(context, v);
 }
 
@@ -712,15 +716,15 @@ static void push_fnc(struct context *context, struct byte_array *program)
 void set_named_variable(struct context *context,
                         struct program_state *state,
                         struct byte_array *name,
-                        const struct variable *value)
+                        struct variable *value)
 {
     // DEBUGPRINT(" set_named_variable: %p\n", state);
     if (!state)
         state = (struct program_state*)stack_peek(context->program_stack, 0);
     struct map *var_map = state->named_variables;
-    struct variable *to_var = variable_copy(context, value);
+    //struct variable *to_var = variable_copy(context, value);
     struct variable *name2 = variable_new_str(context, name);
-    map_insert(var_map, name2, to_var);
+    map_insert(var_map, name2, value); //to_var);
 
     //DEBUGPRINT("SET %s to %s\n", byte_array_to_string(name), variable_value_str(context, value));
     // DEBUGPRINT(" SET %s at %p in {p:%p, s:%p, m:%p}\n", byte_array_to_string(name), to_var, context->program_stack, state, var_map);
@@ -767,9 +771,10 @@ static void set(struct context *context,
 #ifdef DEBUG
     char *str = byte_array_to_string(name);
     char buf[VV_SIZE];
-    DEBUGPRINT("%s %s to %s\n",
+    DEBUGPRINT("%s %s to %p:%s\n",
                op==VM_SET ? "SET" : "STX",
                str,
+               value,
                variable_value_str(context, value, buf));
     free(str);
 #endif // DEBUG
@@ -784,7 +789,7 @@ static void dst(struct context *context, bool really) // drop unused assignment 
         VM_DEBUGPRINT(" (not runtime)\n");
 
     if (stack_empty(context->operand_stack)) {
-        DEBUGPRINT(" %x mt\n", context->operand_stack);
+        DEBUGPRINT(" %p mt\n", context->operand_stack);
         return;
     }
 

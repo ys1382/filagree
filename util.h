@@ -28,10 +28,9 @@ const char *make_message(const char *fmt, va_list ap);
 void assert_message(bool assertion, const char *format, ...);
 void *exit_message(const char *format, ...);
 void null_check(const void* p);
-void log_print(const char *format, ...);
 
 #ifdef DEBUG
-#define DEBUGPRINT(...) log_print( __VA_ARGS__ );
+#define DEBUGPRINT(...) printf( __VA_ARGS__ );
 #else
 #define DEBUGPRINT(...) {};
 #endif // #ifdef DEBUG

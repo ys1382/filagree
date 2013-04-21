@@ -1,5 +1,6 @@
 #include "struct.h"
 #include "util.h"
+#include "hal.h"
 #include <string.h>
 #include <stdarg.h>
 
@@ -50,40 +51,6 @@ char *strnstr(const char *s, const char *find, size_t slen)
 
 #define MESSAGE_MAX 100
 
-void log_print(const char *format, ...)
-{
-    /* static char log_message[MESSAGE_MAX+1] = "";
-    char one_line[MESSAGE_MAX];
-
-    char *newline;*/
-    va_list list;
-    va_start(list, format);
-    const char *message = make_message(format, list);
-    va_end(list);
-    /*size_t log_len = strnlen(log_message, MESSAGE_MAX);
-    strncat(log_message, message, MESSAGE_MAX - log_len);
-    log_len = strnlen(log_message, MESSAGE_MAX);
-    if (log_len == MESSAGE_MAX)
-        log_message[MESSAGE_MAX-1] = '\n';
-    if (!(newline = strnstr(log_message, "\n", MESSAGE_MAX)))
-        return;
-    size_t line_len = newline - log_message;
-    memcpy(one_line, log_message, line_len);
-    one_line[line_len] = 0;*/
-
-#ifdef ANDROID
-    __android_log_write(ANDROID_LOG_ERROR, TAG, message);
-#elif defined IOS
-    NSLog(@"%s", message);
-#elifdef MBED
-    usbTxRx.printf("%s", message);    
-#else
-    printf("%s", message);    
-#endif
-
-   // memmove(log_message, newline+1, log_len-line_len);
-}
-
 const char *make_message(const char *format, va_list ap)
 {
     static char message[MESSAGE_MAX];
@@ -94,7 +61,7 @@ const char *make_message(const char *format, va_list ap)
 void exit_message2(const char *format, va_list list)
 {
     const char *message = make_message(format, list);
-    log_print("%s\n", message);
+    hal_print(message);
     va_end(list);
     exit(1);
 }
