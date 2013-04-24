@@ -40,8 +40,10 @@ static void vm_exit() {
 
 void set_error(struct context *context, const char *format, va_list list)
 {
-    if (!context)
+    if (context == NULL) {
+        DEBUGPRINT("can't set error because context is null");
         return;
+    }
     null_check(format);
     const char *message = make_message(format, list);
     context->error = variable_new_err(context, message);
@@ -318,7 +320,7 @@ void vm_call_src(struct context *context, struct variable *func)
             break;
         case VAR_C: {
             struct variable *v = func->cfnc(context);
-            if (!v)
+            if (v == NULL)
                 v = variable_new_src(context, 0);
             else if (v->type != VAR_SRC) { // convert to VAR_SRC variable
                 stack_push(context->operand_stack, v);
@@ -407,7 +409,7 @@ static void push_list(struct context *context, struct byte_array *program)
     while (num_items--) {
         struct variable* v = variable_pop(context);
         if (v->type == VAR_MAP) {
-            if (!map)
+            if (map == NULL)
                 map = map_new(context, NULL);
             map_update(map, v->map); // mapped values are stored in the map, not list
         }
@@ -540,9 +542,9 @@ void lookup(struct context *context, struct variable *indexable, struct variable
         case VAR_STR:
             if (indexable->map)
                 item = (struct variable*)map_get(indexable->map, index);
-            if (!item)
+            if (item == NULL)
                 item = builtin_method(context, indexable, index);
-            if (!item)
+            if (item == NULL)
                 item = variable_new_nil(context);
             break;
         case VAR_NIL:
@@ -651,9 +653,9 @@ struct variable *find_var(struct context *context, const struct variable *key)
     struct variable *v = (struct variable*)map_get(var_map, key);
     // DEBUGPRINT(" find_var %s in {p:%p, s:%p, m:%p}: %p\n", byte_array_to_string(name), context->program_stack, state, var_map, v);
 
-    if (!v && context->find)
+    if ((v == NULL) && context->find)
         v = context->find(context, key);
-    if (!v && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS)))
+    if ((v == NULL) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS)))
         v = context->sys;
     return v;
 }
@@ -694,7 +696,7 @@ static void push_fnc(struct context *context, struct byte_array *program)
         struct byte_array *name = serial_decode_string(program);
         struct variable *key = variable_new_str(context, name);
         if (context->runtime) {
-            if (!closures)
+            if (closures == NULL)
                 closures = map_new(context);
             struct variable *c = find_var(context, key);
             c = variable_copy(context, c);
@@ -719,7 +721,7 @@ void set_named_variable(struct context *context,
                         struct variable *value)
 {
     // DEBUGPRINT(" set_named_variable: %p\n", state);
-    if (!state)
+    if (state == NULL)
         state = (struct program_state*)stack_peek(context->program_stack, 0);
     struct map *var_map = state->named_variables;
     //struct variable *to_var = variable_copy(context, value);
@@ -771,10 +773,9 @@ static void set(struct context *context,
 #ifdef DEBUG
     char *str = byte_array_to_string(name);
     char buf[VV_SIZE];
-    DEBUGPRINT("%s %s to %p:%s\n",
+    DEBUGPRINT("%s %s to %s\n",
                op==VM_SET ? "SET" : "STX",
                str,
-               value,
                variable_value_str(context, value, buf));
     free(str);
 #endif // DEBUG
@@ -1126,7 +1127,7 @@ static bool iterate(struct context *context,
         byte_array_reset(how);
         if (where && where->length)
             run(context, where, NULL, true);
-        if (!where || !where->length || test_operand(context)) {
+        if ((where == NULL) || !where->length || test_operand(context)) {
 
             if (run(context, how, NULL, true)) // true if run hit VM_RET
                 return true;
@@ -1197,7 +1198,7 @@ bool run(struct context *context,
     enum Opcode inst = VM_NIL;
     if (context->runtime) {
         if (in_context) {
-            if (!state)
+            if (state == NULL)
                 state = (struct program_state*)stack_peek(context->program_stack, 0);
             env = state->named_variables; // use the caller's variable set in the new state
         }

@@ -47,8 +47,6 @@ tester.test('index',
     end,
     9)
 
-/*
-
 tester.test('list set',
     function()
         a = [7,8,9]
@@ -76,12 +74,14 @@ tester.test('while',
     end,
     7)
 
+
 tester.test('comment',
     function()
         # return 1
         return 2
     end,
     2)
+
 
 tester.test('float',
       function()
@@ -90,6 +90,7 @@ tester.test('float',
       return x + y > 4
     end,
     1)
+
 
 tester.test('serial',
     function()
@@ -100,6 +101,7 @@ tester.test('serial',
         return c.x + c[2]
     end,
     11)
+
 
 tester.test('map',
     function()
@@ -116,6 +118,8 @@ tester.test('map',
         return result
     end,
     '[2,3,4,\'x\':7,\'y\':8,\'z\':9]list3[2,3,4][\'x\',\'y\',\'z\'][7,8,9]')
+
+/*
 
 tester.test('string',
     function()
@@ -134,6 +138,7 @@ tester.test('scope',
         return n
     end,
     2)
+
 
 tester.test('file',
      function()
@@ -158,6 +163,7 @@ tester.test('many returns',
         end
     end,
     2)
+
 
 tester.test('sort',
     function()
@@ -216,6 +222,7 @@ tester.test('comprehension',
     end,
     [5,6,10])
 
+
 tester.test('exception',
     function()
         try
@@ -252,6 +259,7 @@ tester.test('no return',
         return 3
     end,
     3)
+
 
 tester.test('closure',
     function()

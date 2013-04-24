@@ -529,7 +529,7 @@ void symbol_del(struct symbol *s)
 struct symbol *symbol_add(struct symbol *s, struct symbol *t)
 {
     null_check(s);
-    if (!t)
+    if (t == NULL)
         return NULL;
     //DEBUGPRINT("symbol_add %s\n", nonterminals[t->nonterminal]);
     array_add(s->list, t);
@@ -540,8 +540,7 @@ struct symbol *symbol_add(struct symbol *s, struct symbol *t)
 
 void display_symbol(const struct symbol *symbol, int depth)
 {
-    //    null_check(symbol);
-    if (!symbol)
+    if (symbol == NULL)
         return;
     assert_message(depth < 100, "kablooie!");
     char* indent = (char*)malloc(sizeof(char)*(depth+1));
@@ -712,7 +711,7 @@ struct symbol *repeated(enum Nonterminal nonterminal, Parsnip *p)
 {
     struct symbol *r, *s = symbol_new(nonterminal);
     do {
-        if (!(r=p()))
+        if ((r=p()) == NULL)
             break;
         symbol_add(s, r);
     } while (fetch(LEX_COMMA));
@@ -783,7 +782,7 @@ struct symbol *table() {
 struct symbol *integer()
 {
     struct token *t = fetch(LEX_INTEGER);
-    if (!t)
+    if (t == NULL)
         return NULL;
     struct symbol *s = symbol_new(SYMBOL_INTEGER);
     s->token = t;
@@ -793,7 +792,7 @@ struct symbol *integer()
 struct symbol *boolean()
 {
     struct token *t = fetch_lookahead(LEX_TRUE, LEX_FALSE, NULL);
-    if (!t)
+    if (t == NULL)
         return NULL;
     struct symbol *s = symbol_new(SYMBOL_BOOLEAN);
     s->token = t;
@@ -803,7 +802,7 @@ struct symbol *boolean()
 struct symbol *nil()
 {
     struct token *t = fetch(LEX_NIL);
-    if (!t)
+    if (t == NULL)
         return NULL;
     struct symbol *s = symbol_new(SYMBOL_NIL);
     s->token = t;
@@ -813,7 +812,7 @@ struct symbol *nil()
 struct symbol *floater()
 {
     struct token *t = fetch(LEX_INTEGER);
-    if (!t)
+    if (t == NULL)
         return NULL;
     FETCH_OR_QUIT(LEX_PERIOD);
     struct token *u = fetch(LEX_INTEGER);
@@ -831,7 +830,7 @@ struct symbol *floater()
 struct symbol *string()
 {
     struct token *t = fetch(LEX_STRING);
-    if (!t)
+    if (t == NULL)
         return NULL;
     struct symbol *s = symbol_new(SYMBOL_STRING);
     s->token = t;
@@ -874,7 +873,7 @@ struct symbol *member()
     struct symbol *m = symbol_new(SYMBOL_MEMBER);
 
     if ((m->token = fetch_lookahead(LEX_PERIOD, LEX_BANG, NULL))) {
-        if (!(m->index = variable()))
+        if ((m->index = variable()) == NULL)
             return NULL;
         m->index->nonterminal = SYMBOL_STRING;
     }
@@ -882,7 +881,7 @@ struct symbol *member()
         enum Lexeme right = m->token->lexeme == LEX_LEFTSQUARE ? LEX_RIGHTSQUARE : LEX_RIGHTSTACHE;
         m->index = expression();
         // FETCH_OR_QUIT(right);
-        if (!fetch(right)) {
+        if (fetch(right) == NULL) {
             symbol_del(m);
             return NULL;
         }
@@ -958,9 +957,9 @@ struct symbol *expression()
 struct symbol *destination()
 {
     struct symbol *a, *b;
-    if (!(a = variable()))
+    if ((a = variable()) == NULL)
         return NULL;  
-    while ((b = member())) {
+    while ((b = member()) != NULL) {
         b->value = a;
         a = b;
     }
@@ -1037,7 +1036,7 @@ struct symbol *comprehension()
     struct symbol *s = symbol_new(SYMBOL_COMPREHENSION);
     s->value = expression();
     s->index = iterator();
-    if (!s->index) {
+    if (s->index == NULL) {
         symbol_del(s);
         return NULL;
     }
@@ -1049,7 +1048,7 @@ struct symbol *comprehension()
 struct symbol *iterloop()
 {
     struct symbol *i = iterator();
-    if (!i)
+    if (i == NULL)
         return  NULL;
     struct symbol *s = symbol_new(SYMBOL_ITERLOOP);
     s->index = i;
@@ -1072,7 +1071,7 @@ struct symbol *trycatch()
     struct symbol *s = symbol_new(SYMBOL_TRYCATCH);
     s->index = statements();
     FETCH_OR_ERROR(LEX_CATCH);
-    if (!(s->token = fetch(LEX_IDENTIFIER)))
+    if ((s->token = fetch(LEX_IDENTIFIER)) == NULL)
         OR_ERROR(LEX_IDENTIFIER);
     s->exp = LHS;
     s->value = statements();
@@ -1146,7 +1145,7 @@ void generate_step(struct byte_array *code, int count, int action,...)
 
 void generate_items(struct byte_array *code, const struct symbol* root)
 {
-    if (!root)
+    if (root == NULL)
         return;
     const struct array *items = root->list;
     uint32_t num_items = items->length;
@@ -1501,7 +1500,7 @@ typedef void(generator)(struct byte_array*, struct symbol*);
 
 struct byte_array *generate_code(struct byte_array *code, struct symbol *root)
 {
-    if (!root)
+    if (root == NULL)
         return NULL;
     generator *g = NULL;
 
@@ -1534,7 +1533,7 @@ struct byte_array *generate_code(struct byte_array *code, struct symbol *root)
             return (struct byte_array*)exit_message(ERROR_TOKEN);
     }
 
-    if (!code)
+    if (code == NULL)
         code = byte_array_new();
     if (g)
         g(code, root);

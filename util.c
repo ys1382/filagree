@@ -84,7 +84,7 @@ void *exit_message(const char *format, ...)
 }
 
 void null_check(const void *pointer) {
-    if (!pointer)
+    if (pointer == NULL)
         exit_message("null pointer");
 }
 
@@ -158,7 +158,7 @@ int write_file(const struct byte_array* filename, struct byte_array* bytes)
 {
     const char *fname = byte_array_to_string(filename);
     FILE* file = fopen(fname, "w");
-    if (!file) {
+    if (file == NULL) {
         DEBUGPRINT("could not open file %s\n", fname);
         return -1;
     }

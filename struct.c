@@ -91,9 +91,12 @@ void* array_get(const struct array *a, uint32_t index) {
 void array_set(struct array *a, uint32_t index, void* datum) {
     null_check(a);
     null_check(datum);
-    array_resize(a, index+1);
+    uint32_t minlen = index + 1;
+    array_resize(a, minlen);
     //DEBUGPRINT("array_set %d %x\n", index, datum);
     a->data[index] = datum;
+    if (a->length <= minlen)
+        a->length = minlen;
 }
 
 void *list_remove(void *data, uint32_t *end, uint32_t start, int32_t length, size_t width)
@@ -115,7 +118,7 @@ void array_remove(struct array *a, uint32_t start, int32_t length) {
 }
 
 struct array *array_copy(const struct array* original) {
-    if (!original)
+    if (original == NULL)
         return NULL;
     struct array* copy = array_new_size(original->size); // (struct array*)malloc(sizeof(struct array));
     //copy->data = (void**)malloc(original->length * sizeof(void**));
@@ -186,7 +189,7 @@ bool byte_array_equals(const struct byte_array *a, const struct byte_array* b)
 {
     if (a==b)
         return true;
-    if (!a != !b) // one is null and the other is not
+    if ((a == NULL) != (b == NULL)) // one is null and the other is not
         return false;
     if (a->length != b->length)
         return false;
@@ -194,7 +197,7 @@ bool byte_array_equals(const struct byte_array *a, const struct byte_array* b)
 }
 
 struct byte_array *byte_array_copy(const struct byte_array* original) {
-    if (!original)
+    if (original == NULL)
         return NULL;
     struct byte_array* copy = byte_array_new_size(original->size);
     memcpy(copy->data, original->data, original->length);
@@ -274,7 +277,7 @@ struct byte_array *byte_array_concatenate(int n, const struct byte_array* ba, ..
     va_list argp;
     for(va_start(argp, ba); --n;) {
         struct byte_array* parameter = va_arg(argp, struct byte_array* );
-        if (!parameter)
+        if (parameter == NULL)
             continue;
         assert_message(result->length + parameter->length < BYTE_ARRAY_MAX_LEN, ERROR_BYTE_ARRAY_LEN);
         byte_array_append(result, parameter);
@@ -374,7 +377,7 @@ uint32_t stack_depth(struct stack *stack)
 void stack_push(struct stack *stack, void* data)
 {
     null_check(data);
-    if (!stack->head)
+    if (stack->head == NULL)
         stack->head = stack->tail = stack_node_new();
     else {
         struct stack_node* old_head = stack->head;
@@ -388,7 +391,7 @@ void stack_push(struct stack *stack, void* data)
 
 void* stack_pop(struct stack *stack)
 {
-    if (!stack->head)
+    if (stack->head == NULL)
         return NULL;
     void* data = stack->head->data;
     struct stack_node *oldnode = stack->head;
@@ -452,7 +455,8 @@ struct map* map_new_ex(void *context, map_compare *mc, map_hash *mh, map_copyor 
 {
     //DEBUGPRINT("map_new_ex\n");
     struct map *m;
-    if (!(m =(struct map*)malloc(sizeof(struct map)))) return NULL;
+    if ((m =(struct map*)malloc(sizeof(struct map))) == NULL)
+        return NULL;
     m->context = context;
     m->size = 16;
     m->hash_func = mh ? mh : &default_hashor;
@@ -460,7 +464,7 @@ struct map* map_new_ex(void *context, map_compare *mc, map_hash *mh, map_copyor 
     m->deletor = md ? md : & default_rm;
     m->copyor = my ? my : &default_copyor;
 
-    if (!(m->nodes = (struct hash_node**)calloc(m->size, sizeof(struct hash_node*)))) {
+    if ((m->nodes = (struct hash_node**)calloc(m->size, sizeof(struct hash_node*))) == NULL) {
         free(m);
         return NULL;
     }
@@ -509,10 +513,9 @@ int map_insert(struct map *m, const void *key, void *data)
         node = node->next;
     }
 
-    if (!(node = (struct hash_node*)malloc(sizeof(struct hash_node))))
+    if ((node = (struct hash_node*)malloc(sizeof(struct hash_node))) == NULL)
         return -1;
-    //if (!(node->key = byte_array_copy(key))) {
-    if (!(node->key = m->copyor(key, m->context))) {
+    if ((node->key = m->copyor(key, m->context)) == NULL) {
         free(node);
         return -1;
     }
@@ -600,7 +603,7 @@ int map_resize(struct map *m, size_t size)
     newtbl.size = size;
     newtbl.hash_func = m->hash_func;
 
-    if (!(newtbl.nodes = (struct hash_node**)calloc(size, sizeof(struct hash_node*))))
+    if ((newtbl.nodes = (struct hash_node**)calloc(size, sizeof(struct hash_node*))) == NULL)
         return -1;
 
     for (n = 0; n<m->size; ++n) {
@@ -637,8 +640,6 @@ struct map *map_copy(struct map *original)
     if (original == NULL)
         return NULL;
     struct map *copy;
-//    if (!original)
-//        return map_new(NULL);
     copy = map_new_ex(original->context, original->comparator, original->hash_func, original->copyor, original->deletor);
     map_update(copy, original);
     return copy;

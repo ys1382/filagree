@@ -52,7 +52,7 @@ struct variable *sys_load(struct context *context)
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = (struct variable*)array_get(value->list, 1);
     struct byte_array *file_bytes = read_file(path->str);
-    if (!file_bytes)
+    if (file_bytes == NULL)
         return NULL;
     return variable_deserialize(context, file_bytes);
 }
@@ -215,12 +215,12 @@ struct variable *sys_input(struct context *context)
 
 const char *variable_keyed_string(struct context *context, struct variable *v, const char *key)
 {
-    if (!v || !v->map)
+    if ((v == NULL) || (v->map == NULL))
         return NULL;
     struct byte_array *b = byte_array_from_string(key);
     struct variable *u = variable_map_get(context, v, b);
     byte_array_del(b);
-    if (!u || u->type != VAR_STR)
+    if ((u == NULL) || (u->type != VAR_STR))
         return NULL;
     return byte_array_to_string(u->str);
 }
@@ -573,7 +573,7 @@ struct variable *cfnc_find2(struct context *context, bool has)
                 result = has ? variable_new_bool(context, true) : v;
         }
     }
-    if (!result && self->map && sought->type == VAR_STR)
+    if ((result == NULL) && (self->map != NULL) && (sought->type == VAR_STR))
         result = (struct variable*)map_get(self->map, sought->str);
     return result ? result : variable_new_nil(context);
 }
@@ -697,7 +697,8 @@ struct variable *builtin_method(struct context *context,
                                 const struct variable *index)
 {
     enum VarType it = indexable->type;
-    const char *idxstr = byte_array_to_string(index->str);
+    char *idxstr = byte_array_to_string(index->str);
+    struct variable *result = NULL;
 
     if (!strcmp(idxstr, FNC_LENGTH)) {
         int n;
@@ -705,76 +706,83 @@ struct variable *builtin_method(struct context *context,
             case VAR_LST: n = indexable->list->length;  break;
             case VAR_STR: n = indexable->str->length;   break;
             default:
+                free(idxstr);
                 exit_message("no length for non-indexable");
                 return NULL;
         }
-        return variable_new_int(context, n);
+        result = variable_new_int(context, n);
     }
-    if (!strcmp(idxstr, FNC_TYPE)) {
+    else if (!strcmp(idxstr, FNC_TYPE)) {
         const char *typestr = var_type_str(it);
         struct byte_array *bats = byte_array_from_string(typestr);
-        return variable_new_str(context, bats);
+        result = variable_new_str(context, bats);
     }
 
-    if (!strcmp(idxstr, FNC_STRING))
-        return variable_new_str(context, variable_value(context, indexable));
+    else if (!strcmp(idxstr, FNC_STRING))
+        result = variable_new_str(context, variable_value(context, indexable));
 
-    if (!strcmp(idxstr, FNC_LIST))
-        return variable_new_list(context, indexable->list);
+    else if (!strcmp(idxstr, FNC_LIST))
+        result = variable_new_list(context, indexable->list);
 
-    if (!strcmp(idxstr, FNC_KEYS)) {
+    else if (!strcmp(idxstr, FNC_KEYS)) {
         assert_message(it == VAR_LST, "keys are only for list");
 
-        struct variable *v = variable_new_list(context, array_new());
+        struct variable *v = variable_new_list(context, NULL);
         if (indexable->map) {
-            const struct array *a = map_keys(indexable->map);
+            struct array *a = map_keys(indexable->map);
             for (int i=0; i<a->length; i++) {
-                struct variable *u = variable_new_str(context, (struct byte_array*)array_get(a, i));
+                //struct variable *u = variable_new_str(context, (struct byte_array*)array_get(a, i));
+                struct variable *u = variable_copy(context, (struct variable*)array_get(a, i));
                 array_add(v->list, u);
             }
+            array_del(a);
         }
-        return v;
+        result = v;
     }
 
-    if (!strcmp(idxstr, FNC_VALUES)) {
+    else if (!strcmp(idxstr, FNC_VALUES)) {
         assert_message(it == VAR_LST, "values are only for list");
-        if (!indexable->map)
-            return variable_new_list(context, array_new());
-        else
-            return variable_new_list(context, (struct array*)map_values(indexable->map));
+        if (indexable->map == NULL)
+            result = variable_new_list(context, NULL);
+        else {
+            struct array *values = map_values(indexable->map);
+            result = variable_new_list(context, (struct array*)values);
+            array_del(values);
+        }
     }
 
-    if (!strcmp(idxstr, FNC_SERIALIZE))
-        return variable_new_c(context, &cfnc_serialize);
+    else if (!strcmp(idxstr, FNC_SERIALIZE))
+        result = variable_new_c(context, &cfnc_serialize);
 
-    if (!strcmp(idxstr, FNC_DESERIALIZE))
-        return variable_new_c(context, &cfnc_deserialize);
+    else if (!strcmp(idxstr, FNC_DESERIALIZE))
+        result = variable_new_c(context, &cfnc_deserialize);
 
-    if (!strcmp(idxstr, FNC_SORT)) {
+    else if (!strcmp(idxstr, FNC_SORT)) {
         assert_message(indexable->type == VAR_LST, "sorting non-list");
-        return variable_new_c(context, &cfnc_sort);
+        result = variable_new_c(context, &cfnc_sort);
     }
 
-    if (!strcmp(idxstr, FNC_CHAR))
-        return variable_new_c(context, &cfnc_char);
+    else if (!strcmp(idxstr, FNC_CHAR))
+        result = variable_new_c(context, &cfnc_char);
 
-    if (!strcmp(idxstr, FNC_HAS))
-        return variable_new_c(context, &cfnc_has);
+    else if (!strcmp(idxstr, FNC_HAS))
+        result = variable_new_c(context, &cfnc_has);
 
-    if (!strcmp(idxstr, FNC_FIND))
-        return variable_new_c(context, &cfnc_find);
+    else if (!strcmp(idxstr, FNC_FIND))
+        result = variable_new_c(context, &cfnc_find);
 
-    if (!strcmp(idxstr, FNC_PART))
-        return variable_new_c(context, &cfnc_part);
+    else if (!strcmp(idxstr, FNC_PART))
+        result = variable_new_c(context, &cfnc_part);
 
-    if (!strcmp(idxstr, FNC_REMOVE))
-        return variable_new_c(context, &cfnc_remove);
+    else if (!strcmp(idxstr, FNC_REMOVE))
+        result = variable_new_c(context, &cfnc_remove);
 
-    if (!strcmp(idxstr, FNC_INSERT))
-        return variable_new_c(context, &cfnc_insert);
+    else if (!strcmp(idxstr, FNC_INSERT))
+        result = variable_new_c(context, &cfnc_insert);
 
-    if (!strcmp(idxstr, FNC_REPLACE))
-        return variable_new_c(context, &cfnc_replace);
+    else if (!strcmp(idxstr, FNC_REPLACE))
+        result = variable_new_c(context, &cfnc_replace);
 
-    return NULL;
+    free(idxstr);
+    return result;
 }
