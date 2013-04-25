@@ -132,7 +132,7 @@ struct variable* variable_new_float(struct context *context, float f)
 
 struct variable *variable_new_str(struct context *context, struct byte_array *str) {
     struct variable *v = variable_new(context, VAR_STR);
-    v->str = str;
+    v->str = byte_array_copy(str);
 //    DEBUGPRINT("variable_new_str %p->%s\n", v, byte_array_to_string(str));
     return v;
 }
@@ -140,7 +140,7 @@ struct variable *variable_new_str(struct context *context, struct byte_array *st
 struct variable *variable_new_fnc(struct context *context, struct byte_array *body, struct map *closures)
 {
     struct variable *v = variable_new(context, VAR_FNC);
-    v->str = body;
+    v->str = byte_array_copy(body);
     if (closures) {
         struct byte_array *str = byte_array_from_string(RESERVED_ENV);
         struct variable *env = variable_new_str(context, str);
@@ -423,13 +423,21 @@ struct byte_array *variable_serialize(struct context *context,
 struct variable *variable_deserialize(struct context *context, struct byte_array *bits)
 {
 	null_check(context);
+    struct variable *result = NULL;
+    struct byte_array *str = NULL;
     enum VarType vt = (enum VarType)serial_decode_int(bits);
     switch (vt) {
         case VAR_NIL:    return variable_new_nil(context);
         case VAR_INT:    return variable_new_int(context, serial_decode_int(bits));
         case VAR_FLT:    return variable_new_float(context, serial_decode_float(bits));
-        case VAR_FNC:    return variable_new_fnc(context, serial_decode_string(bits), NULL);
-        case VAR_STR:    return variable_new_str(context, serial_decode_string(bits));
+        case VAR_FNC:
+            str = serial_decode_string(bits);
+            result = variable_new_fnc(context, str, NULL);
+            break;
+        case VAR_STR:
+            str = serial_decode_string(bits);
+            result =  variable_new_str(context, str);
+            break;
         case VAR_LST: {
             uint32_t size = serial_decode_int(bits);
             struct array *list = array_new_size(size);
@@ -451,8 +459,10 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
         }
         default:
             vm_exit_message(context, "bad var type");
-            return NULL;
     }
+    if (str != NULL)
+        byte_array_del(str);
+    return result;
 }
 
 uint32_t variable_length(struct context *context, const struct variable *v)
@@ -477,18 +487,21 @@ struct variable *variable_part(struct context *context, struct variable *self, u
     if (length < 0) // end < start
         length = 0;
 
+    struct variable *result = NULL;
     switch (self->type) {
         case VAR_STR: {
             struct byte_array *str = byte_array_part(self->str, start, length);
-            return variable_new_str(context, str);
+            result = variable_new_str(context, str);
+            byte_array_del(str);
         }
         case VAR_LST: {
             struct array *list = array_part(self->list, start, length);
-            return variable_new_list(context, list);
+            result = variable_new_list(context, list);
         }
         default:
-            return (struct variable*)exit_message("bad part type");
+            result = (struct variable*)exit_message("bad part type");
     }
+    return result;
 }
 
 void variable_remove(struct variable *self, uint32_t start, int32_t length)
@@ -588,7 +601,7 @@ bool variable_compare(struct context *context, const struct variable *u, const s
                     return false;
             }
             break;
-        case VAR_BOOL:
+        case VAR_BOOL:  if (u->boolean != v->boolean)           return false; break;
         case VAR_INT:   if (u->integer != v->integer)           return false; break;
         case VAR_FLT:   if (u->floater != v->floater)           return false; break;
         case VAR_STR:   if (!byte_array_equals(u->str, v->str)) return false; break;

@@ -501,7 +501,11 @@ static struct variable *list_get_int(struct context *context,
             vm_assert(context, index < indexable->str->length, "index out of bounds");
             char *str = (char*)malloc(2);
             sprintf(str, "%c", indexable->str->data[index]);
-            return variable_new_str(context, byte_array_from_string(str));
+            struct byte_array *str2 = byte_array_from_string(str);
+            struct variable *str3 = variable_new_str(context, str2);
+            free(str);
+            byte_array_del(str2);
+            return str3;
         }
         default:
             vm_exit_message(context, "indexing non-indexable");
@@ -518,6 +522,7 @@ bool custom_method(struct context *context,
     struct variable *custom;
     struct byte_array *name = byte_array_from_string(method);
     struct variable *key = variable_new_str(context, name);
+    byte_array_del(name);
     if (indexable->map && (custom = (struct variable*)map_get(indexable->map, key))) {
         DEBUGPRINT("\n");
         vm_call(context, custom, indexable, index, value, NULL);
@@ -673,6 +678,7 @@ static void push_var(struct context *context, struct byte_array *program)
     vm_assert(context, v, "variable not found");
     //printf("pushed %p\n", v);
     variable_push(context, v);
+    byte_array_del(name);
 }
 
 static void push_str(struct context *context, struct byte_array *program)
@@ -684,6 +690,7 @@ static void push_str(struct context *context, struct byte_array *program)
     free(str2);
 #endif // DEBUG
     struct variable* v = variable_new_str(context, str);
+    byte_array_del(str);
     variable_push(context, v);
 }
 
@@ -702,6 +709,7 @@ static void push_fnc(struct context *context, struct byte_array *program)
             c = variable_copy(context, c);
             map_insert(closures, name, c);
         }
+        byte_array_del(name);
     }
 
     struct byte_array *body = serial_decode_string(program);
@@ -713,6 +721,7 @@ static void push_fnc(struct context *context, struct byte_array *program)
         struct variable *f = variable_new_fnc(context, body, closures);
         variable_push(context, f);
     }
+    byte_array_del(body);
 }
 
 void set_named_variable(struct context *context,
@@ -781,6 +790,7 @@ static void set(struct context *context,
 #endif // DEBUG
 
     set_named_variable(context, state, name, value); // set the variable to the value
+    byte_array_del(name);
 }
 
 static void dst(struct context *context, bool really) // drop unused assignment right-hand-side values
@@ -907,9 +917,11 @@ static struct variable *binary_op_str(struct context *context,
     struct byte_array *vstr = vt == VAR_STR ? v->str : variable_value(context, v);
 
     switch (op) {
-        case VM_ADD:
-            w = variable_new_str(context, byte_array_concatenate(2, vstr, ustr));
-            break;
+        case VM_ADD: {
+            struct byte_array *wstr = byte_array_concatenate(2, vstr, ustr);
+            w = variable_new_str(context, wstr);
+            byte_array_del(wstr);
+        } break;
         case VM_EQU:
             w = variable_new_int(context, byte_array_equals(ustr, vstr));
             break;
@@ -1118,6 +1130,7 @@ static bool iterate(struct context *context,
 
     struct variable *what = variable_pop(context);
     uint32_t len = variable_length(context, what);
+    bool returned = false;
     for (int i=0; i<len; i++) {
 
         struct variable *that = list_get_int(context, what, i);
@@ -1129,8 +1142,10 @@ static bool iterate(struct context *context,
             run(context, where, NULL, true);
         if ((where == NULL) || !where->length || test_operand(context)) {
 
-            if (run(context, how, NULL, true)) // true if run hit VM_RET
-                return true;
+            if (run(context, how, NULL, true)) { // true if run hit VM_RET
+                returned = true;
+                goto done;
+            }
 
             if (comprehending) {
                 struct variable *item = (struct variable*)stack_pop(context->operand_stack);
@@ -1141,7 +1156,12 @@ static bool iterate(struct context *context,
 
     if (comprehending)
         stack_push(context->operand_stack, result);
-    return false;
+    returned = false;
+done:
+    byte_array_del(who);
+    byte_array_del(where);
+    byte_array_del(how);
+    return returned;
 }
 
 static inline bool vm_trycatch(struct context *context, struct byte_array *program)
@@ -1163,9 +1183,11 @@ static inline bool vm_trycatch(struct context *context, struct byte_array *progr
     run(context, trial, NULL, true);
     if (context->vm_exception) {
         set_named_variable(context, NULL, name, context->vm_exception);
+        byte_array_del(name);
         context->vm_exception = NULL;
         return run(context, catcher, NULL, true);
     }
+    byte_array_del(name);
     return false;
 }
 

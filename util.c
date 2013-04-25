@@ -143,8 +143,6 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
     str[read] = 0;
     struct byte_array* ba = byte_array_from_string(str);
     free(str);
-    //ba->data = str;
-    //byte_array_reset(ba);
     return ba;
 }
 
@@ -156,12 +154,14 @@ int write_byte_array(struct byte_array* ba, FILE* file) {
 
 int write_file(const struct byte_array* filename, struct byte_array* bytes)
 {
-    const char *fname = byte_array_to_string(filename);
+    char *fname = byte_array_to_string(filename);
     FILE* file = fopen(fname, "w");
     if (file == NULL) {
         DEBUGPRINT("could not open file %s\n", fname);
+        free(fname);
         return -1;
     }
+    free(fname);
 
     int r = fwrite(bytes->data, 1, bytes->length, file);
     DEBUGPRINT("\twrote %d bytes\n", r);

@@ -666,6 +666,7 @@ void hal_save_form(struct context *context, const struct byte_array *key)
         const char *str2 = [str UTF8String];
         struct byte_array *str3 = byte_array_from_string(str2);
         struct variable *v = variable_new_str(context, str3);
+        byte_array_del(str3);
         array_set(list, list->length, v);
     }
     struct variable *u = variable_new_list(context, list);

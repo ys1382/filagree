@@ -44,6 +44,7 @@ struct variable *sys_save(struct context *context)
     struct byte_array *bytes = byte_array_new();
     variable_serialize(context, bytes, v, true);
     int w = write_file(path->str, bytes);
+    byte_array_del(bytes);
     return variable_new_int(context, w);
 }
 
@@ -54,7 +55,9 @@ struct variable *sys_load(struct context *context)
     struct byte_array *file_bytes = read_file(path->str);
     if (file_bytes == NULL)
         return NULL;
-    return variable_deserialize(context, file_bytes);
+    struct variable *v = variable_deserialize(context, file_bytes);
+    byte_array_del(file_bytes);
+    return v;
 }
 
 struct variable *sys_write(struct context *context)
@@ -74,11 +77,15 @@ struct variable *sys_read(struct context *context)
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = (struct variable*)array_get(value->list, 1);
     struct byte_array *bytes = read_file(path->str);
-    if (bytes)
-        return variable_new_str(context, bytes);
-    struct byte_array *str = byte_array_from_string("could not load file");
-    context->vm_exception = variable_new_str(context, str);
-    return NULL;
+    struct variable *result = NULL;
+    if (bytes != NULL)
+        result = variable_new_str(context, bytes);
+    else {
+        bytes = byte_array_from_string("could not load file");
+        context->vm_exception = variable_new_str(context, bytes);
+    }
+    byte_array_del(bytes);
+    return result;
 }
 
 struct variable *sys_run(struct context *context)
@@ -102,7 +109,9 @@ struct variable *sys_rm(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = (struct variable*)array_get(value->list, 1);
-    remove(byte_array_to_string(path->str));
+    char *str = byte_array_to_string(path->str);
+    remove(str);
+    free(str);
     return NULL;
 }
 
@@ -371,6 +380,7 @@ struct variable *sys_new(struct context *context)
     for (int i=0; i<ARRAY_LEN(builtin_funcs); i++) {
         struct byte_array *name = byte_array_from_string(builtin_funcs[i].name);
         struct variable *key = variable_new_str(context, name);
+        byte_array_del(name);
         struct variable *value = variable_new_c(context, builtin_funcs[i].func);
         map_insert(sys_func_map, key, value);
     }
@@ -633,7 +643,9 @@ struct variable *cfnc_serialize(struct context *context)
     bool withType = !typer || typer->boolean; // default to true
 
     struct byte_array *bits = variable_serialize(context, NULL, indexable, withType);
-    return variable_new_str(context, bits);
+    struct variable *result = variable_new_str(context, bits);
+    byte_array_del(bits);
+    return result;
 }
 
 struct variable *cfnc_deserialize(struct context *context)
@@ -689,7 +701,9 @@ struct variable *cfnc_replace(struct context *context)
     } else exit_message("replacement is not a string");
 
     null_check(replaced);
-    return variable_new_str(context, replaced);
+    struct variable *result = variable_new_str(context, replaced);
+    byte_array_del(replaced);
+    return result;
 }
 
 struct variable *builtin_method(struct context *context,
@@ -716,10 +730,14 @@ struct variable *builtin_method(struct context *context,
         const char *typestr = var_type_str(it);
         struct byte_array *bats = byte_array_from_string(typestr);
         result = variable_new_str(context, bats);
+        byte_array_del(bats);
     }
 
-    else if (!strcmp(idxstr, FNC_STRING))
-        result = variable_new_str(context, variable_value(context, indexable));
+    else if (!strcmp(idxstr, FNC_STRING)) {
+        struct byte_array *vv = variable_value(context, indexable);
+        result = variable_new_str(context, vv);
+        byte_array_del(vv);
+    }
 
     else if (!strcmp(idxstr, FNC_LIST))
         result = variable_new_list(context, indexable->list);
@@ -731,7 +749,6 @@ struct variable *builtin_method(struct context *context,
         if (indexable->map) {
             struct array *a = map_keys(indexable->map);
             for (int i=0; i<a->length; i++) {
-                //struct variable *u = variable_new_str(context, (struct byte_array*)array_get(a, i));
                 struct variable *u = variable_copy(context, (struct variable*)array_get(a, i));
                 array_add(v->list, u);
             }

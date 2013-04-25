@@ -309,6 +309,7 @@ int import(const char* input, int i)
         lex(imported);
         byte_array_del(imported);
     }
+    byte_array_del(path);
 
     return i+1;
 }
