@@ -288,8 +288,6 @@ tester.test('short circuit',
     end,
     14)
 
-/*
-
 tester.test('custom getter',
     function()
         x = ['get':
@@ -318,6 +316,28 @@ tester.test('custom setter',
     end,
     125)
 
+tester.test('assignment expression',
+    function()
+        a,b = c,d,e,f,g = 7,8,9
+        if (h = not (i = 0)) then
+            return a + b + c + h + i
+        end
+        return 9
+    end,
+    23)
+
+tester.test('map args',
+    function()
+        f = function()
+            a = sys.args()
+            return a.p + a.q
+        end
+        return f('p':7, 'q':8)
+    end,
+    15)
+
+/*
+
 tester.test('list class',
     function()
         list = sys.List('x')
@@ -338,25 +358,6 @@ tester.test('string class',
     end,
     10)
 
-tester.test('assignment expression',
-    function()
-        a,b = c,d,e,f,g = 7,8,9
-        if (h = not (i = 0)) then
-            return a + b + c + h + i
-        end
-        return 9
-    end,
-    23)
-
-tester.test('map args',
-    function()
-        f = function()
-            a = sys.args()
-            return a.p + a.q
-        end
-        return f('p':7, 'q':8)
-    end,
-    15)
 
 */
 

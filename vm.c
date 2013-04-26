@@ -756,8 +756,8 @@ static struct variable *get_value(struct context *context, enum Opcode op)
             value = (struct variable*)*values->current++;
         else
             value = variable_new_nil(context);
-        if (interim)
-            values->current = 0;
+        //if (interim)
+        //    values->current = 0;
     }
     else if (!interim)
         variable_pop(context);

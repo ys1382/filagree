@@ -112,6 +112,7 @@ struct variable *variable_new_src(struct context *context, uint32_t size)
             array_insert(v->list, 0, o);
     }
 //  DEBUGPRINT("src = %s\n", variable_value_str(context, v));
+    v->list->current = v->list->data;
     return v;
 }
 

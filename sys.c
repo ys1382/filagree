@@ -588,7 +588,7 @@ struct variable *cfnc_find2(struct context *context, bool has)
         }
     }
     if ((result == NULL) && (self->map != NULL) && (sought->type == VAR_STR))
-        result = (struct variable*)map_get(self->map, sought->str);
+        result = (struct variable*)map_get(self->map, sought);
     return result ? result : variable_new_nil(context);
 }
 
