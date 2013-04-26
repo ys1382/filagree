@@ -227,7 +227,8 @@ const char *variable_keyed_string(struct context *context, struct variable *v, c
     if ((v == NULL) || (v->map == NULL))
         return NULL;
     struct byte_array *b = byte_array_from_string(key);
-    struct variable *u = variable_map_get(context, v, b);
+    struct variable *b2 = variable_new_str(context, b);
+    struct variable *u = variable_map_get(context, v, b2);
     byte_array_del(b);
     if ((u == NULL) || (u->type != VAR_STR))
         return NULL;
@@ -244,9 +245,10 @@ struct variable *sys_button(struct context *context)
     int32_t h = param_int(value, 5);
     struct variable *item = (struct variable*)array_get(value->list, 6);
     struct byte_array *logic = byte_array_from_string("logic");
+    struct variable *logic2 = variable_new_str(context, logic);
 
     hal_button(context, uictx, x, y, &w, &h,
-               variable_map_get(context, item, logic),
+               variable_map_get(context, item, logic2),
                variable_keyed_string(context, item, "text"),
                variable_keyed_string(context, item, "image"));
     
@@ -264,11 +266,13 @@ struct variable *sys_table(struct context *context)
     int32_t h = param_int(value, 5);
 
     struct byte_array *balist = byte_array_from_string("list");
+    struct variable *balist2 = variable_new_str(context, balist);
     struct byte_array *balogic = byte_array_from_string("logic");
+    struct variable *balogic2 = variable_new_str(context, balogic);
 
     struct variable *item = (struct variable*)array_get(value->list, 6);
-    struct variable *list = variable_map_get(context, item, balist);
-    struct variable *logic = variable_map_get(context, item, balogic);
+    struct variable *list = variable_map_get(context, item, balist2);
+    struct variable *logic = variable_map_get(context, item, balogic2);
 
     hal_table(context, uictx, x, y, w, h, list, logic);
 
@@ -673,7 +677,7 @@ struct variable *cfnc_replace(struct context *context)
     assert_message(self->type == VAR_STR, "searching in a non-string");
 
     int32_t where = 0;
-    struct byte_array *replaced = self->str;
+    struct byte_array *replaced = NULL;
 
     if (a->type == VAR_STR) { // find a, replace with b
 
@@ -682,14 +686,21 @@ struct variable *cfnc_replace(struct context *context)
         if (c) { // replace first match after index b
 
             assert_message(c->type == VAR_INT, "non-integer index");
-            uint32_t found = byte_array_find(self->str, a->str, c->integer);
-            replaced = byte_array_replace(self->str, b->str, found, b->str->length);
+            if (((where = byte_array_find(self->str, a->str, c->integer)) >= 0))
+                replaced = byte_array_replace(self->str, b->str, where, b->str->length);
 
-        } else for(;;) { // replace all
+        } else {
 
-            if ((where = byte_array_find(self->str, a->str, where)) < 0)
-                break;
-            replaced = byte_array_replace(replaced, b->str, where++, a->str->length);
+            replaced = byte_array_copy(self->str);
+
+            for(;;) { // replace all
+
+                if ((where = byte_array_find(self->str, a->str, where)) < 0)
+                    break;
+                struct byte_array *replaced2 = byte_array_replace(replaced, b->str, where++, a->str->length);
+                byte_array_del(replaced);
+                replaced = replaced2;
+            }
         }
 
     } else if (a->type == VAR_INT ) { // replace at index a, length b, insert c
@@ -702,7 +713,9 @@ struct variable *cfnc_replace(struct context *context)
 
     null_check(replaced);
     struct variable *result = variable_new_str(context, replaced);
+    DEBUGPRINT("byte_array_del %p->%p\n", replaced, replaced->data);
     byte_array_del(replaced);
+    
     return result;
 }
 

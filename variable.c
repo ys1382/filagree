@@ -146,6 +146,7 @@ struct variable *variable_new_fnc(struct context *context, struct byte_array *bo
         struct variable *env = variable_new_str(context, str);
         struct variable *vc = variable_new_map(context, closures);
         variable_map_insert(context, v, env, vc);
+        byte_array_del(str);
     }
     return v;
 }
@@ -493,13 +494,16 @@ struct variable *variable_part(struct context *context, struct variable *self, u
             struct byte_array *str = byte_array_part(self->str, start, length);
             result = variable_new_str(context, str);
             byte_array_del(str);
+            break;
         }
         case VAR_LST: {
             struct array *list = array_part(self->list, start, length);
             result = variable_new_list(context, list);
+            break;
         }
         default:
             result = (struct variable*)exit_message("bad part type");
+            break;
     }
     return result;
 }
@@ -550,7 +554,7 @@ int variable_map_insert(struct context *context, struct variable* v, struct vari
     return map_insert(v->map, key, datum);
 }
 
-struct variable *variable_map_get(struct context *context, const struct variable* v, const struct byte_array *key)
+struct variable *variable_map_get(struct context *context, const struct variable* v, const struct variable *key)
 {
     if (v->map == NULL)
         return variable_new_nil(context);

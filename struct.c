@@ -336,11 +336,13 @@ struct byte_array *byte_array_replace(struct byte_array *within, struct byte_arr
 
     int32_t new_length = within->length - length + replacement->length;
     struct byte_array *replaced = byte_array_new_size(new_length);
+    replaced->length = new_length;
 
     memcpy(replaced->data, within->data, start);
     memcpy(replaced->data + start, replacement->data, replacement->length);
     memcpy(replaced->data + start + replacement->length, within->data + start + length, within->length - start - length);
 
+    DEBUGPRINT("byte_array_replace %p->%p\n", replaced, replaced->data);
     return replaced;
 }
 

@@ -184,7 +184,6 @@ tester.test('find',
     end,
     10)
 
-/*
 
 tester.test('part',
     function()
@@ -288,6 +287,8 @@ tester.test('short circuit',
         return a+b+c+d+e+f+g+h
     end,
     14)
+
+/*
 
 tester.test('custom getter',
     function()

@@ -300,7 +300,10 @@ void vm_call_src(struct context *context, struct variable *func)
 {
     struct map *env = NULL;
     if (func->map) {
-        struct variable *v = (struct variable*)variable_map_get(context, func, byte_array_from_string(RESERVED_ENV));
+        struct byte_array *env2 = byte_array_from_string(RESERVED_ENV);
+        struct variable *env3 = variable_new_str(context, env2);
+        struct variable *v = (struct variable*)variable_map_get(context, func, env3);
+        byte_array_del(env2);
         if (v)
             env = v->map;
     }
@@ -702,14 +705,14 @@ static void push_fnc(struct context *context, struct byte_array *program)
     for (int i=0; i<num_closures; i++) {
         struct byte_array *name = serial_decode_string(program);
         struct variable *key = variable_new_str(context, name);
+        byte_array_del(name);
         if (context->runtime) {
             if (closures == NULL)
                 closures = map_new(context);
             struct variable *c = find_var(context, key);
             c = variable_copy(context, c);
-            map_insert(closures, name, c);
+            map_insert(closures, key, c);
         }
-        byte_array_del(name);
     }
 
     struct byte_array *body = serial_decode_string(program);
@@ -1104,6 +1107,8 @@ static bool iterate(struct context *context,
                     struct program_state *state,
                     struct byte_array *program)
 {
+    bool returned = false;
+
     struct byte_array *who = serial_decode_string(program);
     struct byte_array *where = serial_decode_string(program);
     struct byte_array *how = serial_decode_string(program);
@@ -1121,7 +1126,7 @@ static bool iterate(struct context *context,
         }
         DEBUGPRINT("%s\tDO\n", indentation(context));
         display_code(context, how);
-        return false;
+        goto done;
     }
 #endif
 
@@ -1130,7 +1135,6 @@ static bool iterate(struct context *context,
 
     struct variable *what = variable_pop(context);
     uint32_t len = variable_length(context, what);
-    bool returned = false;
     for (int i=0; i<len; i++) {
 
         struct variable *that = list_get_int(context, what, i);
@@ -1156,7 +1160,7 @@ static bool iterate(struct context *context,
 
     if (comprehending)
         stack_push(context->operand_stack, result);
-    returned = false;
+
 done:
     byte_array_del(who);
     byte_array_del(where);
@@ -1166,6 +1170,7 @@ done:
 
 static inline bool vm_trycatch(struct context *context, struct byte_array *program)
 {
+    bool returned = false;
     struct byte_array *trial = serial_decode_string(program);
     DEBUGPRINT("TRY %d\n", trial->length);
     display_code(context, trial);
@@ -1178,17 +1183,19 @@ static inline bool vm_trycatch(struct context *context, struct byte_array *progr
 #endif
     display_code(context, catcher);
     if (!context->runtime)
-        return false;
+        goto done;
 
     run(context, trial, NULL, true);
     if (context->vm_exception) {
         set_named_variable(context, NULL, name, context->vm_exception);
-        byte_array_del(name);
         context->vm_exception = NULL;
-        return run(context, catcher, NULL, true);
+        returned = run(context, catcher, NULL, true);
     }
+done:
     byte_array_del(name);
-    return false;
+    byte_array_del(trial);
+    byte_array_del(catcher);
+    return returned;
 }
 
 static inline bool ret(struct context *context, struct byte_array *program)
