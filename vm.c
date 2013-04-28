@@ -11,7 +11,7 @@
 
 bool run(struct context *context, struct byte_array *program, struct map *env, bool in_context);
 void display_code(struct context *context, struct byte_array *code);
-void lookup(struct context *context, struct variable *indexable, struct variable *index, bool really);
+bool lookup(struct context *context, struct variable *indexable, struct variable *index, bool really);
 
 #ifdef DEBUG
 
@@ -366,7 +366,8 @@ void vm_call(struct context *context, struct variable *func, struct variable *ar
     vm_call_src(context, func);
 }
 
-void func_call(struct context *context, enum Opcode op, struct byte_array *program, struct variable *indexable)
+void func_call(struct context *context, enum Opcode op,
+               struct byte_array *program, struct variable *indexable)
 {
     struct variable *func = context->runtime ? (struct variable*)variable_pop(context): NULL;
 
@@ -395,7 +396,9 @@ static void method(struct context *context, struct byte_array *program, bool rea
     if (context->runtime) {
         indexable = variable_pop(context);
         index = variable_pop(context);
-        lookup(context, indexable, index, really);
+        if (lookup(context, indexable, index, really))
+            DEBUGPRINT("%s...", indentation(context));
+
     }
     func_call(context, VM_MET, program, indexable);
 }
@@ -527,7 +530,7 @@ bool custom_method(struct context *context,
     struct variable *key = variable_new_str(context, name);
     byte_array_del(name);
     if (indexable->map && (custom = (struct variable*)map_get(indexable->map, key))) {
-        DEBUGPRINT("\n");
+        DEBUGPRINT("(custom %s)\n", method);
         vm_call(context, custom, indexable, index, value, NULL);
         return true;
     }
@@ -535,10 +538,15 @@ bool custom_method(struct context *context,
 }
 
 // get the indexed item and push on operand stack
-void lookup(struct context *context, struct variable *indexable, struct variable *index, bool really)
+bool lookup(struct context *context, struct variable *indexable, struct variable *index, bool really)
 {
+#ifdef DEBUG
+    char buf[VV_SIZE];
+    DEBUGPRINT("\"%s\" ", variable_value_str(context, index, buf));
+#endif
+
     if (!really && custom_method(context, RESERVED_GET, indexable, index, NULL)) {
-        return;
+        return true;
     }
 
     struct variable *item = NULL;
@@ -567,17 +575,21 @@ void lookup(struct context *context, struct variable *indexable, struct variable
     // DEBUGPRINT(" found %p: %s\n", item, variable_value_str(context, item, buf));
 #endif
     variable_push(context, item);
+    return false;
 }
 
 static void list_get(struct context *context, bool really)
 {
-    DEBUGPRINT("GET\n");
-    if (!context->runtime)
+    DEBUGPRINT("GET ");
+    if (!context->runtime) {
+        DEBUGPRINT("\n");
         return;
+    }
     struct variable *indexable, *index;
     indexable = variable_pop(context);
     index = variable_pop(context);
     lookup(context, indexable, index, really);
+    DEBUGPRINT("\n");
 }
 
 static int32_t jump(struct context *context, struct byte_array *program)
@@ -710,7 +722,7 @@ static void push_fnc(struct context *context, struct byte_array *program)
             if (closures == NULL)
                 closures = map_new(context);
             struct variable *c = find_var(context, key);
-            c = variable_copy(context, c);
+            //c = variable_copy(context, c);
             map_insert(closures, key, c);
         }
     }
@@ -732,7 +744,7 @@ void set_named_variable(struct context *context,
                         struct byte_array *name,
                         struct variable *value)
 {
-    // DEBUGPRINT(" set_named_variable: %p\n", state);
+    //DEBUGPRINT(" set_named_variable: %p\n", state);
     if (state == NULL)
         state = (struct program_state*)stack_peek(context->program_stack, 0);
     struct map *var_map = state->named_variables;
@@ -817,15 +829,20 @@ static void dst(struct context *context, bool really) // drop unused assignment 
 
 static void list_put(struct context *context, enum Opcode op, bool really)
 {
-    DEBUGPRINT("PUT\n");
-    if (!context->runtime)
+    DEBUGPRINT("PUT ");
+    if (!context->runtime) {
+        DEBUGPRINT("\n");
         return;
+    }
     struct variable* recipient = variable_pop(context);
     struct variable* key = variable_pop(context);
     struct variable *value = get_value(context, op);
 
-    if (!really && custom_method(context, RESERVED_SET, recipient, key, value))
+    if (!really && custom_method(context, RESERVED_SET, recipient, key, value)) {
+        DEBUGPRINT("\n");
         return;
+    }
+    DEBUGPRINT("\n");
 
     switch (key->type) {
         case VAR_INT:
@@ -854,8 +871,8 @@ static struct variable *binary_op_int(struct context *context,
                                       const struct variable *u,
                                       const struct variable *v)
 {
-    int32_t m = u->integer;
-    int32_t n = v->integer;
+    int32_t m = u->type == VAR_INT ? u->integer : u->boolean;
+    int32_t n = v->type == VAR_INT ? v->integer : v->boolean;
     int32_t i;
     switch (op) {
         case VM_MUL:    i = m * n;    break;
@@ -976,6 +993,7 @@ static struct variable *binary_op_nil(struct context *context,
         case VM_NEQ:    return variable_new_bool(context, v->type != u->type);
         case VM_ADD:
         case VM_SUB:    return variable_copy(context, v);
+        case VM_MUL:    return variable_new_nil(context);
         case VM_LTN:
         case VM_GTN:
         case VM_LEQ:
@@ -1243,6 +1261,8 @@ bool run(struct context *context,
         inst &= ~VM_RLY;
 #ifdef DEBUG
         display_program_counter(context, program);
+        if (really)
+            DEBUGPRINT("really ");
 #endif
         program->current++; // increment past the instruction
         int32_t pc_offset = 0;
@@ -1253,8 +1273,8 @@ bool run(struct context *context,
             case VM_RET:    if (ret(context, program))                  goto done;  break;
             case VM_TRO:    if (tro(context))                           goto done;  break;
             case VM_TRY:    if (vm_trycatch(context, program))          goto done;  break;
-            case VM_EQU:
             case VM_MUL:
+            case VM_EQU:
             case VM_DIV:
             case VM_ADD:
             case VM_SUB:

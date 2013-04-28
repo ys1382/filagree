@@ -500,6 +500,7 @@ struct variable *variable_part(struct context *context, struct variable *self, u
         case VAR_LST: {
             struct array *list = array_part(self->list, start, length);
             result = variable_new_list(context, list);
+            array_del(list);
             break;
         }
         default:
@@ -546,6 +547,7 @@ struct variable *variable_concatenate(struct context *context, int n, const stru
 
 int variable_map_insert(struct context *context, struct variable* v, struct variable *key, struct variable *datum)
 {
+    assert_message(v->type != VAR_NIL, "can't insert into nil");
     if (v->map == NULL)
         v->map = map_new(context);
 #ifdef DEBUG

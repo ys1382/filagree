@@ -1,17 +1,14 @@
+# sys.class is a function that returns a function
 sys.class = function(self, init, super)
 
-    meta = [
-        'super':super,
-        'get': function(self, sought)
-            return self{sought}
-        end,
-        'set': function(self, key, value)
-            self{key} = value
-        end
-    ]
+    # the class structure inside every instance
+    meta = [ 'super':super ]
 
-    f = function()(init, meta)
-        sys.print('sys.class.f: ' + sys.args())
+    # the class constructor
+    f = function()(init,meta)
+        #sys.print('sys.class.f: ' + sys.args())
+        
+        # self is the class instance
         if init and (init.type == 'function') then
             self = init(sys.args())
         else
@@ -19,20 +16,21 @@ sys.class = function(self, init, super)
         end
 
         self!get = function(self, sought)
-            g = self!meta!find(sought)
-            if (g==nil) and (self!meta!super) then
-                g = self!meta!super[sought]
+            g = self!meta.find(sought)
+            if (g==nil) and (self!meta.super) then
+                g = self!meta.super[sought]
             end
-            return g
+            return g or self{sought}
         end
 
         self!meta = meta
+
         return self
     end
 
+    f!set = function(self, key, value) self!meta[key] = value sys.print(self) end
+    f!get = function(self, sought) return self!meta[sought] end
     f!meta = meta
-    f!get = function(self, sought) return self!meta!get{sought} end
-    f!set = function(self, key, value) self!meta!set(key, value) end
 
     return f
 end

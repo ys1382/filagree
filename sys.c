@@ -617,6 +617,7 @@ struct variable *cfnc_insert(struct context *context)
             array_set(list, 0, insertion);
             insertion = variable_new_list(context, list);
             position = self->list->length;
+            array_del(list);
         } break;
         case VAR_STR:
             assert_message(insertion->type == VAR_STR, "insertion doesn't match destination");
@@ -632,11 +633,13 @@ struct variable *cfnc_insert(struct context *context)
     struct variable *second = variable_part(context, variable_copy(context, self), position, -1);
     struct variable *joined = variable_concatenate(context, 3, first, insertion, second);
 
-    if (self->type == VAR_LST)
-        self->list = joined->list;
-    else
-        self->str = joined->str;
-    return joined;
+    if (self->type == VAR_LST) {
+        array_del(self->list);
+        self->list = array_copy(joined->list);
+    } else {
+        byte_array_del(self->str);
+        self->str = byte_array_copy(joined->str);
+    } return joined;
 }
 
 struct variable *cfnc_serialize(struct context *context)
@@ -713,7 +716,6 @@ struct variable *cfnc_replace(struct context *context)
 
     null_check(replaced);
     struct variable *result = variable_new_str(context, replaced);
-    DEBUGPRINT("byte_array_del %p->%p\n", replaced, replaced->data);
     byte_array_del(replaced);
     
     return result;

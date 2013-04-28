@@ -1,5 +1,2 @@
-a,b = c,d,e,f,g = 7,8,9
-if (h = not (i = 0)) then
-    return a + b + c + h + i
-end
-return 9
+x = [7,8]
+x.insert(9)

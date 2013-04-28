@@ -3,7 +3,8 @@ import 'proto'
 ####### List
 
 sys.List = sys.class( function(init_args)
-                          return ['list':[]]
+                        vals = init_args[0]
+                        return ['list':[vals]]
                       end )
 
 sys.List.insert = function(self, datum)
@@ -11,9 +12,8 @@ sys.List.insert = function(self, datum)
 end
 
 sys.List.has = function(self, havin)
-    return self!list!has(havin)
+    return self!list.has(havin)
 end
-
 
 ####### String
 

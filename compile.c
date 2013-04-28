@@ -505,6 +505,7 @@ struct symbol *symbol_new(enum Nonterminal nonterminal)
     s->list = array_new();
     s->index = s->value = s->other = NULL;
     s->exp = RHS;
+    s->token = NULL;
     //DEBUGPRINT("symbol_new %p\n", s);
     return s;
 }
@@ -1308,7 +1309,12 @@ void generate_fcall(struct byte_array *code, struct symbol *root)
         generate_items(code, root);                 // arguments
         generate_code(code, root->value->index);    // member
         generate_code(code, root->value->value);    // function
-        generate_step(code, 1, VM_MET);
+        struct token *token = root->value->token;
+        enum Opcode op = VM_MET;
+        if ((token != NULL) &&
+            (token->lexeme == LEX_BANG || token->lexeme == LEX_LEFTSTACHE))
+            op |= VM_RLY;
+        generate_step(code, 1, op);
     } else {
         generate_items(code, root);                 // arguments
         generate_code(code, root->value);           // function

@@ -114,7 +114,7 @@ void *list_remove(void *data, uint32_t *end, uint32_t start, int32_t length, siz
 void array_remove(struct array *a, uint32_t start, int32_t length) {
     a->data = (void**)list_remove(a->data, &a->length, start, length, sizeof(void*));
     array_resize(a, a->length);
-    DEBUGPRINT("array_remove %p->%p\n", a, a->data);
+    //DEBUGPRINT("array_remove %p->%p\n", a, a->data);
 }
 
 struct array *array_copy(const struct array* original) {
@@ -147,6 +147,7 @@ void array_append(struct array *a, const struct array* b)
     uint32_t newlen = alen + b->length;
     array_resize(a, newlen);
     memcpy(&a->data[alen], b->data, b->length * sizeof(void*));
+    a->length = newlen;
     a->current += b->length;
 }
 
@@ -342,7 +343,7 @@ struct byte_array *byte_array_replace(struct byte_array *within, struct byte_arr
     memcpy(replaced->data + start, replacement->data, replacement->length);
     memcpy(replaced->data + start + replacement->length, within->data + start + length, within->length - start - length);
 
-    DEBUGPRINT("byte_array_replace %p->%p\n", replaced, replaced->data);
+    //DEBUGPRINT("byte_array_replace %p->%p\n", replaced, replaced->data);
     return replaced;
 }
 
@@ -444,7 +445,8 @@ static void *default_copyor(const void *key, void *context)
 {
 //    struct variable *key2 = (struct variable *)key;
 //    return byte_array_copy(key2->str);
-    return variable_copy((struct context *)context, (struct variable *)key);
+//    return variable_copy((struct context *)context, (struct variable *)key);
+    return (void*)key;
 }
 
 static void default_rm(const void *key, void *context)
