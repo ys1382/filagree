@@ -726,7 +726,10 @@ struct symbol *repeated(enum Nonterminal nonterminal, Parsnip *p)
 // <variable> --> LEX_IDENTIFIER
 struct symbol *variable()
 {
-    return symbol_fetch(SYMBOL_VARIABLE, LEX_IDENTIFIER, NULL);
+    struct symbol *s = symbol_fetch(SYMBOL_VARIABLE, LEX_IDENTIFIER, NULL);
+    if (s)
+        return s;
+    return  NULL;
 }
 
 // <paramdecl> --> LEX_LEFTHESIS <variable>, LEX_RIGHTHESIS
@@ -1546,8 +1549,6 @@ struct byte_array *generate_code(struct byte_array *code, struct symbol *root)
         g(code, root);
     return code;
 }
-
-//todo: del after append and concatenate
 
 struct byte_array *generate_program(struct symbol *root)
 {

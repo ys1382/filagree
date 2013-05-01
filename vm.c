@@ -30,6 +30,8 @@ bool lookup(struct context *context, struct variable *indexable, struct variable
 #define RESERVED_SET    "set"
 #define RESERVED_SYS    "sys"
 
+#define VAR_MAX         788
+
 // assertions //////////////////////////////////////////////////////////////
 
 jmp_buf trying;
@@ -133,6 +135,7 @@ void context_del(struct context *context)
         struct variable *v = (struct variable *)array_get(vars, i);
         variable_del(context, v);
     }
+
     while (!stack_empty(context->program_stack))
     {
         struct program_state *s = (struct program_state *)stack_pop(context->program_stack);
@@ -147,28 +150,75 @@ void context_del(struct context *context)
 
 // garbage collection //////////////////////////////////////////////////////
 
-void sweep(struct context *context, struct variable *root)
+void unmark_all(struct context *context)
 {
-    null_check(context);
     struct array *vars = context->all_variables;
     for (int i=0; i<vars->length; i++) {
         struct variable *v = (struct variable*)array_get(vars, i);
-        if (v->visited != VISITED_NOT)
-            variable_del(context, v);
+        variable_unmark(v);
     }
+}
+
+void mark_map(struct map *map, bool mark)
+{
+    if (map == NULL)
+        return;
+
+    struct array *a = map_keys(map);
+    struct array *b = map_values(map);
+    for (int i=0; i<a->length; i++) {
+        struct variable *aiv = (struct variable*)array_get(a,i);
+        struct variable *biv = (struct variable*)array_get(b,i);
+        if (mark) {
+            variable_mark(aiv);
+            variable_mark(biv);
+        } else {
+            variable_unmark(aiv);
+            variable_unmark(biv);
+        }
+    }
+    array_del(a);
+    array_del(b);
 }
 
 void garbage_collect(struct context *context)
 {
+    int i;
     null_check(context);
     if (!context->runtime)
         return;
-    struct array *vars = context->all_variables;
-    for (int i=0; i<vars->length; i++) {
-        struct variable *v = (struct variable*)array_get(vars, i);
-        variable_mark(v);
-        sweep(context, v);
+    if (context->num_vars++ < VAR_MAX)
+        return;
+        
+    struct variable *v;
+    DEBUGPRINT("garbage collect\n");
+
+    unmark_all(context);
+
+    // mark named variables
+    struct program_state *state;
+    for (i=0; (state = (struct program_state*)stack_peek(context->program_stack, i)); i++) {
+        mark_map(state->named_variables, true);
     }
+
+    // mark variables in operand stack
+    for (i=0; (v = (struct variable*)stack_peek(context->operand_stack, i)); i++) {
+        variable_mark(v);
+    }
+
+    variable_mark(context->sys);
+
+    // sweep
+    struct array *vars = context->all_variables;
+    for (i=0; i<vars->length; i++) {
+        struct variable *v = (struct variable*)array_get(vars, i);
+        if (v->visited == VISITED_NOT) {
+            variable_del(context, v);
+            array_remove(context->all_variables, i--, 1);
+        }
+    }
+
+    unmark_all(context);
 }
 
 // display /////////////////////////////////////////////////////////////////
@@ -1256,6 +1306,7 @@ bool run(struct context *context,
     }
 
     while (program->current < program->data + program->length) {
+        garbage_collect(context);
         inst = (enum Opcode)*program->current;
         bool really = inst & VM_RLY;
         inst &= ~VM_RLY;

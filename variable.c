@@ -5,8 +5,9 @@
 #include "variable.h"
 #include "util.h"
 
+extern void mark_map(struct map *map, bool mark);
+
 #define ERROR_VAR_TYPE  "type error"
-#define VAR_MAX         10000 // todo: test with 1k
 
 const struct number_string var_types[] = {
     {VAR_NIL,   "nil"},
@@ -29,15 +30,13 @@ const char *var_type_str(enum VarType vt)
 struct variable* variable_new(struct context *context, enum VarType type)
 {
     null_check(context);
-   if (context->num_vars++ > VAR_MAX)
-        garbage_collect(context);
     struct variable* v = (struct variable*)malloc(sizeof(struct variable));
     v->type = type;
     v->map = NULL;
     v->mark = 0;
     v->visited = VISITED_NOT;
     array_add(context->all_variables, v);
-    //DEBUGPRINT("variable_new %d %p\n", type, v);
+    // DEBUGPRINT("variable_new %d %p\n", type, v);
     return v;
 }
 
@@ -301,17 +300,12 @@ static void variable_mark2(struct variable *v, uint32_t *marker)
     v->mark = ++(*marker);
     v->visited = VISITED_ONCE;
 
-    if (v->map) {
-        struct array *values = map_values(v->map);
-        for (int i=0; values && i<values->length; i++)
-            variable_mark2((struct variable*)array_get(values, i), marker);
-        array_del(values);
-    }
-
     if (v->type == VAR_LST) {
         for (int i=0; i<v->list->length; i++)
             variable_mark2((struct variable*)array_get(v->list, i), marker);
     }
+    
+    mark_map(v->map, true);
 }
 
 void variable_mark(struct variable *v)
@@ -326,22 +320,15 @@ void variable_unmark(struct variable *v)
         return;
     v->mark = 0;
     v->visited = VISITED_NOT;
+
     if (v->type == VAR_LST) {
         for (int i=0; i<v->list->length; i++) {
             struct variable* element = (struct variable*)array_get(v->list, i);
             variable_unmark(element);
         }
     }
-    if (v->map) {
-        struct array *a = map_keys(v->map);
-        struct array *b = map_values(v->map);
-        for (int i=0; i<a->length; i++) {
-            struct variable *biv = (struct variable*)array_get(b,i);
-            variable_unmark(biv);
-        }
-        array_del(a);
-        array_del(b);
-    }
+
+    mark_map(v->map, false);
 }
 
 

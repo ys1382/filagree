@@ -1,2 +1,2 @@
-x = [7,8]
-x.insert(9)
+a = ['x':7,'y':8]
+q = a.string

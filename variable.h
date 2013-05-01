@@ -78,6 +78,7 @@ struct variable *variable_map_get(struct context *context, const struct variable
 bool variable_compare(struct context *context, const struct variable *u, const struct variable *v);
 
 void variable_mark(struct variable *v);
+void variable_unmark(struct variable *v);
 
 const char *var_type_str(enum VarType vt);
 

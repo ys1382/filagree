@@ -45,7 +45,7 @@ uint32_t list_resize(uint32_t size, uint32_t length)
     if (length > size)
         size = length * GROWTH_FACTOR;
     if (length < size / (GROWTH_FACTOR * GROWTH_FACTOR))
-        size = length / GROWTH_FACTOR;
+        size = size / GROWTH_FACTOR;
     return size != oldsize ? size : 0;
 }
 
@@ -56,7 +56,7 @@ void array_resize(struct array *a, uint32_t size)
     uint32_t delta = a->current - a->data;
     a->data = (void**)realloc(a->data, size * sizeof(void*));
     null_check(a->data);
-    memset(&a->data[a->size], 0, size - a->size);
+    //memset(&a->data[a->size], 0, size - a->size);
     a->size = size;
     a->current = a->data + delta;
     //DEBUGPRINT("array_resize %d-%d %p->%p\n", size, a, a->data);
@@ -99,7 +99,7 @@ void array_set(struct array *a, uint32_t index, void* datum) {
         a->length = minlen;
 }
 
-void *list_remove(void *data, uint32_t *end, uint32_t start, int32_t length, size_t width)
+void list_remove(void *data, uint32_t *end, uint32_t start, int32_t length, size_t width)
 {
     assert_message(data || !length, "list can't remove");
     null_check(end);
@@ -108,11 +108,11 @@ void *list_remove(void *data, uint32_t *end, uint32_t start, int32_t length, siz
 
     memmove((uint8_t*)data+start*width, (uint8_t*)data+(start+length)*width, (*end-start-length)*width);
     *end -= (uint32_t)length;
-    return realloc(data, *end * width);
+//    return realloc(data, *end * width);
 }
 
 void array_remove(struct array *a, uint32_t start, int32_t length) {
-    a->data = (void**)list_remove(a->data, &a->length, start, length, sizeof(void*));
+    list_remove(a->data, &a->length, start, length, sizeof(void*));
     array_resize(a, a->length);
     //DEBUGPRINT("array_remove %p->%p\n", a, a->data);
 }
@@ -234,7 +234,8 @@ void byte_array_append(struct byte_array *a, const struct byte_array* b) {
 }
 
 void byte_array_remove(struct byte_array *self, uint32_t start, int32_t length) {
-    self->data = (uint8_t*)list_remove(self->data, &self->length, start, length, sizeof(uint8_t));
+    list_remove(self->data, &self->length, start, length, sizeof(uint8_t));
+    byte_array_resize(self, self->length);
     DEBUGPRINT("byte_array_remove %p->%p\n", self, self->data);
 }
 

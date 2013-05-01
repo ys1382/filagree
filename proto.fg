@@ -1,10 +1,24 @@
-# sys.class is a function that returns a function
+#
+# sys.class
+#
+#   parameters:
+#       init: the class' constructor
+#       super: the parent class
+#   returns:
+#       a function which creates a class. A 'class' is a
+#       set of members ("meta") shared by all instances.
+#
+#   note: x.y and x[y] call the custom 'get' and 'set'
+#   member if there is one, but x!y and x{y} skip the
+#   custom functions, and just do standard get or set.
+#
 sys.class = function(self, init, super)
 
-    # the class structure inside every instance
+    # meta is the class structure inside every instance.
+    # it contains the members for every class and instance
     meta = [ 'super':super ]
 
-    # the class constructor
+    # f calls the class constructor, and sets meta
     f = function()(init,meta)
         #sys.print('sys.class.f: ' + sys.args())
         
@@ -15,6 +29,8 @@ sys.class = function(self, init, super)
             self = []
         end
 
+        # when any instance's member is requested,
+        # first look in meta, then the instance
         self!get = function(self, sought)
             g = self!meta.find(sought)
             if (g==nil) and (self!meta.super) then
@@ -23,14 +39,18 @@ sys.class = function(self, init, super)
             return g or self{sought}
         end
 
+        # instance and class share the same meta
         self!meta = meta
 
+        # the instance
         return self
     end
 
+    # when any class's member is getted or setted, do so in meta
     f!set = function(self, key, value) self!meta[key] = value sys.print(self) end
     f!get = function(self, sought) return self!meta[sought] end
     f!meta = meta
 
+    # the class
     return f
 end
