@@ -30,7 +30,7 @@ bool lookup(struct context *context, struct variable *indexable, struct variable
 #define RESERVED_SET    "set"
 #define RESERVED_SYS    "sys"
 
-#define VAR_MAX         788
+#define VAR_MAX         999
 
 // assertions //////////////////////////////////////////////////////////////
 
@@ -120,7 +120,6 @@ struct context *context_new(bool state, bool sys_funcs)
     context->operand_stack = stack_new();
     context->vm_exception = NULL;
     context->runtime = true;
-    context->num_vars = 0;
     context->indent = 0;
     context->error = NULL;
     context->sys = sys_funcs ? sys_new(context) : NULL;
@@ -141,7 +140,7 @@ void context_del(struct context *context)
         struct program_state *s = (struct program_state *)stack_pop(context->program_stack);
         program_state_del(s);
     }
-    
+
     stack_del(context->program_stack);
     stack_del(context->operand_stack);
     array_del(context->all_variables);
@@ -187,9 +186,9 @@ void garbage_collect(struct context *context)
     null_check(context);
     if (!context->runtime)
         return;
-    if (context->num_vars++ < VAR_MAX)
+    if (context->all_variables->length < VAR_MAX)
         return;
-        
+
     struct variable *v;
     DEBUGPRINT("garbage collect\n");
 
@@ -318,11 +317,11 @@ void display_code(struct context *context, struct byte_array *code)
     null_check(context);
     bool was_running = context->runtime;
     context->runtime = false;
-    
+
     INDENT
     run(context, code, false, NULL);
     UNDENT
-    
+
     context->runtime = was_running;
 }
 
@@ -843,7 +842,7 @@ static void set(struct context *context,
     }
 
     struct variable *value = get_value(context, op);
-    
+
 #ifdef DEBUG
     char *str = byte_array_to_string(name);
     char buf[VV_SIZE];
@@ -875,6 +874,8 @@ static void dst(struct context *context, bool really) // drop unused assignment 
     else
         DEBUGPRINT(" (%s/%d)", var_type_str(v->type), really);
     DEBUGPRINT("\n");
+
+    garbage_collect(context);
 }
 
 static void list_put(struct context *context, enum Opcode op, bool really)
@@ -1306,10 +1307,10 @@ bool run(struct context *context,
     }
 
     while (program->current < program->data + program->length) {
-        garbage_collect(context);
         inst = (enum Opcode)*program->current;
         bool really = inst & VM_RLY;
         inst &= ~VM_RLY;
+
 #ifdef DEBUG
         display_program_counter(context, program);
         if (really)
@@ -1384,6 +1385,7 @@ done:
         program_state_del(state);
     if (program != NULL)
         byte_array_del(program);
+    garbage_collect(context);
     return inst == VM_RET;
 }
 

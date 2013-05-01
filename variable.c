@@ -68,7 +68,6 @@ struct variable* variable_new_bool(struct context *context, bool b)
 void variable_del(struct context *context, struct variable *v)
 {
     //DEBUGPRINT("variable_del %p->%p\n", v, v->list);
-    context->num_vars--;
     switch (v->type) {
         case VAR_C:
         case VAR_NIL:

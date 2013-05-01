@@ -22,7 +22,6 @@ struct context {
     struct byte_array *program;
     struct array *all_variables;
     bool runtime;
-    uint32_t num_vars;
     uint8_t indent;
     find_c_var *find;
 };

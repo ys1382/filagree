@@ -450,11 +450,7 @@ static void *default_copyor(const void *key, void *context)
     return (void*)key;
 }
 
-static void default_rm(const void *key, void *context)
-{
-//    byte_array_del((struct byte_array*)key);
-//    variable_del((struct context *)context, (struct variable *)key);
-}
+static void default_rm(const void *key, void *context) {}
 
 struct map* map_new_ex(void *context, map_compare *mc, map_hash *mh, map_copyor *my, map_rm *md)
 {
