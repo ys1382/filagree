@@ -446,15 +446,14 @@ static void *default_copyor(const void *key, void *context)
 {
 //    struct variable *key2 = (struct variable *)key;
 //    return byte_array_copy(key2->str);
-//    return variable_copy((struct context *)context, (struct variable *)key);
-    return (void*)key;
+    return variable_copy((struct context *)context, (struct variable *)key);
+//    return (void*)key;
 }
 
 static void default_rm(const void *key, void *context) {}
 
 struct map* map_new_ex(void *context, map_compare *mc, map_hash *mh, map_copyor *my, map_rm *md)
 {
-    //DEBUGPRINT("map_new_ex\n");
     struct map *m;
     if ((m =(struct map*)malloc(sizeof(struct map))) == NULL)
         return NULL;
@@ -470,6 +469,7 @@ struct map* map_new_ex(void *context, map_compare *mc, map_hash *mh, map_copyor 
         return NULL;
     }
 
+    //DEBUGPRINT("map_new %p\n", m);
     return m;
 }
 
@@ -479,7 +479,7 @@ struct map* map_new(void *context) {
 
 void map_del(struct map *m)
 {
-    //xDEBUGPRINT("map_destroy\n");
+    //DEBUGPRINT("map_del %p\n", m);
     struct hash_node *node, *oldnode;
 
     for(size_t n = 0; n<m->size; ++n) {
@@ -556,7 +556,6 @@ int map_remove(struct map *m, const void *key)
     while(node) {
         if (map_key_equals(m, node->key, key)) {
             m->deletor(node->key, m->context);
-            //byte_array_del(node->key);
             if (prevnode) prevnode->next = node->next;
             else m->nodes[hash] = node->next;
             free(node);
@@ -622,26 +621,30 @@ int map_resize(struct map *m, size_t size)
     return 0;
 }
 
-// in case of intersection, a wins
+// b into a; in case of intersection, a wins
 void map_update(struct map *a, const struct map *b)
 {
-    if (b == NULL)
+    if ((a == NULL) || (b == NULL))
         return;
     struct array *keys = map_keys(b);
     for (int i=0; i<keys->length; i++) {
         const void *key = array_get(keys, i);
-        if (!map_has(a, key))
-            map_insert(a, key, map_get(b, key));
+        if (!map_has(a, key)) {
+            void *key2 = b->copyor(key, a->context);
+            void *value = map_get(b, key);
+            void *value2 = b->copyor(value, a->context);
+            map_insert(a, key2, value2);
+        }
     }
     array_del(keys);
 }
 
-struct map *map_copy(struct map *original)
+struct map *map_copy(void *context, struct map *original)
 {
     if (original == NULL)
         return NULL;
     struct map *copy;
-    copy = map_new_ex(original->context, original->comparator, original->hash_func, original->copyor, original->deletor);
+    copy = map_new_ex(context, original->comparator, original->hash_func, original->copyor, original->deletor);
     map_update(copy, original);
     return copy;
 }

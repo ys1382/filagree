@@ -87,7 +87,7 @@ struct program_state *program_state_new(struct context *context, struct map *env
 {
     null_check(context);
     struct program_state *state = (struct program_state*)malloc(sizeof(struct program_state));
-    state->named_variables = env ? map_copy(env) : map_new(context);
+    state->named_variables = env ? map_copy(context, env) : map_new(context);
     state->args = array_new();
     stack_push(context->program_stack, state);
     return state;
@@ -109,7 +109,7 @@ static inline void cfnc_length(struct context *context) {
     stack_push(context->operand_stack, result);
 }
 
-struct context *context_new(bool state, bool sys_funcs)
+struct context *context_new(bool state, bool sys_funcs, find_c_var *find)
 {
     struct context *context = (struct context*)malloc(sizeof(struct context));
     null_check(context);
@@ -123,6 +123,7 @@ struct context *context_new(bool state, bool sys_funcs)
     context->indent = 0;
     context->error = NULL;
     context->sys = sys_funcs ? sys_new(context) : NULL;
+    context->find = find;
 
     return context;
 }
@@ -132,6 +133,7 @@ void context_del(struct context *context)
     struct array *vars = context->all_variables;
     for (int i=0; i<vars->length; i++) {
         struct variable *v = (struct variable *)array_get(vars, i);
+        //DEBUGPRINT("context_del %p : ", context);
         variable_del(context, v);
     }
 
@@ -292,7 +294,7 @@ static void display_program_counter(struct context *context, const struct byte_a
 
 void display_program(struct byte_array *program)
 {
-    struct context *context = context_new(false, false);
+    struct context *context = context_new(false, false, NULL);
     context->runtime = false;
 
     INDENT
@@ -501,41 +503,6 @@ static void push_map(struct context *context, struct byte_array *program)
 #endif
     variable_push(context, v);
 }
-
-struct variable* variable_set(struct context *context, struct variable *dst, const struct variable* src)
-{
-    vm_null_check(context, dst);
-    vm_null_check(context, src);
-    switch (src->type) {
-        case VAR_NIL:                                           break;
-        case VAR_BOOL:  dst->boolean = src->boolean;            break;
-        case VAR_INT:   dst->integer = src->integer;            break;
-        case VAR_FLT:   dst->floater = src->floater;            break;
-        case VAR_C:     dst->cfnc = src->cfnc;                  break;
-        case VAR_FNC:
-        case VAR_BYT:
-        case VAR_STR:   dst->str = byte_array_copy(src->str);   break;
-        case VAR_SRC:
-        case VAR_LST:   dst->list = array_copy(src->list);      break;
-        case VAR_MAP:                                           break;
-        default:
-            vm_exit_message(context, "bad var type");
-            break;
-    }
-    dst->map = map_copy(src->map);
-    dst->type = src->type;
-    return dst;
-}
-
-struct variable* variable_copy(struct context *context, const struct variable* v)
-{
-//    DEBUGPRINT("variable_copy");
-    vm_null_check(context, v);
-    struct variable *u = variable_new(context, (enum VarType)v->type);
-    variable_set(context, u, v);
-    return u;
-}
-
 
 // run /////////////////////////////////////////////////////////////////////
 
@@ -817,8 +784,6 @@ static struct variable *get_value(struct context *context, enum Opcode op)
             value = (struct variable*)*values->current++;
         else
             value = variable_new_nil(context);
-        //if (interim)
-        //    values->current = 0;
     }
     else if (!interim)
         variable_pop(context);
@@ -1396,13 +1361,12 @@ void execute(struct byte_array *program, find_c_var *find)
 #endif
 
     DEBUGPRINT("execute:\n");
-    struct context *context = context_new(false, true);
+    struct context *context = context_new(false, true, find);
 
     null_check(program);
     program = byte_array_copy(program);
     byte_array_reset(program);
 
-    context->find = find;
 #ifdef DEBUG
     context->indent = 1;
 #endif

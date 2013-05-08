@@ -1566,7 +1566,7 @@ struct byte_array *build_string(const struct byte_array *input) {
     DEBUGPRINT("lex %d:\n", input_copy->length);
 
     lex_list = array_new();
-    context = context_new(false, false);
+    context = context_new(false, false, NULL);
     imports = map_new(context);
 
     struct array* list = lex(input_copy);

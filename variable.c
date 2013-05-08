@@ -36,7 +36,7 @@ struct variable* variable_new(struct context *context, enum VarType type)
     v->mark = 0;
     v->visited = VISITED_NOT;
     array_add(context->all_variables, v);
-    // DEBUGPRINT("variable_new %d %p\n", type, v);
+    //DEBUGPRINT("variable_new %d %p\n", type, v);
     return v;
 }
 
@@ -82,7 +82,7 @@ void variable_del(struct context *context, struct variable *v)
             break;
         case VAR_STR:
         case VAR_FNC:
- //           DEBUGPRINT("variable_del str %p->%s\n", v, byte_array_to_string(v->str));
+            //DEBUGPRINT("variable_del str %p->%s\n", v, byte_array_to_string(v->str));
             byte_array_del(v->str);
             break;
         default:
@@ -252,7 +252,7 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
             if (i)
                 strcat(str, ",");
             strcat(str, "'");
-            
+
             // char *str3 = byte_array_to_string((struct byte_array*)array_get(a,i));
             int position = strlen(str);
             struct variable *vai = (struct variable *)array_get(a,i);
@@ -303,7 +303,9 @@ static void variable_mark2(struct variable *v, uint32_t *marker)
         for (int i=0; i<v->list->length; i++)
             variable_mark2((struct variable*)array_get(v->list, i), marker);
     }
-    
+
+    //DEBUGPRINT("variable_mark2 %p->%p\n", v, v->map);
+
     mark_map(v->map, true);
 }
 
@@ -579,10 +581,10 @@ bool variable_compare(struct context *context, const struct variable *u, const s
         return false;
     enum VarType ut = (enum VarType)u->type;
     enum VarType vt = (enum VarType)v->type;
-    
+
     if (ut != vt)
         return false;
-    
+
     switch (ut) {
         case VAR_LST:
             if (u->list->length != v->list->length)
@@ -601,6 +603,42 @@ bool variable_compare(struct context *context, const struct variable *u, const s
         default:
             return (bool)vm_exit_message(context, "bad comparison");
     }
-    
+
     return variable_compare_maps(context, u->map, v->map);
 }
+
+struct variable* variable_set(struct context *context, struct variable *dst, const struct variable* src)
+{
+    vm_null_check(context, dst);
+    vm_null_check(context, src);
+    switch (src->type) {
+        case VAR_NIL:                                           break;
+        case VAR_BOOL:  dst->boolean = src->boolean;            break;
+        case VAR_INT:   dst->integer = src->integer;            break;
+        case VAR_FLT:   dst->floater = src->floater;            break;
+        case VAR_C:     dst->cfnc = src->cfnc;                  break;
+        case VAR_FNC:
+        case VAR_BYT:
+        case VAR_STR:   dst->str = byte_array_copy(src->str);   break;
+        case VAR_SRC:
+        case VAR_LST:   dst->list = array_copy(src->list);      break;
+        case VAR_MAP:                                           break;
+        default:
+            vm_exit_message(context, "bad var type");
+            break;
+    }
+    dst->map = map_copy(context, src->map);
+    dst->type = src->type;
+    return dst;
+}
+
+struct variable* variable_copy(struct context *context, const struct variable* v)
+{
+    //    DEBUGPRINT("variable_copy");
+    vm_null_check(context, v);
+    struct variable *u = variable_new(context, (enum VarType)v->type);
+    variable_set(context, u, v);
+    //DEBUGPRINT("variable_copy %p -> %p -> %p\n", context, v, u);
+    return u;
+}
+

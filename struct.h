@@ -121,6 +121,6 @@ bool map_has(const struct map* map, const void *key);
 struct array* map_keys(const struct map* m);
 struct array* map_values(const struct map* m);
 void map_update(struct map *a, const struct map *b);
-struct map *map_copy(struct map *map);
+struct map *map_copy(void *context, struct map *map);
 
 #endif // STRUCT_H

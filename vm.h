@@ -88,10 +88,9 @@ enum Opcode {
 #ifdef DEBUG
 void display_program(struct byte_array* program);
 #endif
-struct context *context_new(bool state, bool sys_funcs);
+struct context *context_new(bool state, bool sys_funcs, find_c_var *find);
 void context_del();
-void execute(struct byte_array *program,
-             find_c_var *find);
+void execute(struct byte_array *program, find_c_var *find);
 void garbage_collect(struct context *context);
 void vm_call(struct context *context, struct variable *func, struct variable *arg,...);
 void *vm_exit_message(struct context *context, const char *format, ...);

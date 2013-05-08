@@ -165,14 +165,14 @@ struct variable *sys_sin(struct context *context) // radians
     return variable_new_float(context, s);
 }
 
-const char *param_str(const struct variable *value, uint32_t index)
+char *param_str(const struct variable *value, uint32_t index)
 {
     if (index >= value->list->length)
         return NULL;
     const struct variable *strv = (struct variable*)array_get(value->list, index);
     assert_message(strv->type == VAR_STR, "param is not string");
     const struct byte_array *strb = strv->str;
-    const char *str = byte_array_to_string(strb);
+    char *str = byte_array_to_string(strb);
     return str;
 }
 
@@ -182,13 +182,18 @@ int32_t param_int(const struct variable *value, uint32_t index) {
     return ((struct variable*)array_get(value->list, index))->integer;
 }
 
-#ifndef NO_UI
-
-static struct variable *param_var(const struct variable *value, uint32_t index) {
+struct variable *param_var(struct context *context, const struct variable *value, uint32_t index) {
     if (index >= value->list->length)
         return NULL;
-    return (struct variable*)array_get(value->list, index);
+    struct variable *v = (struct variable*)array_get(value->list, index);
+
+    //char buf[1000];
+    //DEBUGPRINT("param_var %p->%p : %s\n", v, v->map, variable_value_str(context, v, buf));
+    
+    return variable_copy(context, v);
 }
+
+#ifndef NO_UI
 
 struct variable *two_ints(struct context *context, int32_t w, int32_t h)
 {
@@ -314,8 +319,8 @@ struct variable *sys_window(struct context *context)
         h = param_int(value, 2);
     }
 
-    struct variable *uictx = param_var(value, 2);
-    struct variable *logic = param_var(value, 3);
+    struct variable *uictx = param_var(context, value, 2);
+    struct variable *logic = param_var(context, value, 3);
     
     hal_window(context, uictx, &w, &h, logic);
     return two_ints(context, w, h);

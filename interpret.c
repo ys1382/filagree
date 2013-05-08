@@ -19,7 +19,7 @@ bool run(struct context *context,
 void repl()
 {
     char str[FG_MAX_INPUT];
-    struct context *context = context_new(true, true);
+    struct context *context = context_new(true, true, NULL);
 
     for (;;) {
         fflush(stdin);
@@ -114,8 +114,9 @@ int main (int argc, char** argv)
                 case 2:     run_file(argv[1], NULL, NULL);  break;
                 case 3:     compile_file(argv[1]);          break;
                 default:    exit_message(ERROR_USAGE);      break;
-    //} sleep(1);
-    }
+        }
+    sleep(10);
+
 }
 
 #endif // EXECUTABLE

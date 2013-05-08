@@ -1,3 +1,12 @@
+# node.fh demo:
+#
+# 1) server listens
+# 2) client connects
+# 3) clients sends 'hi'
+# 4) server responds with 'hi2'
+
+
+
 server_listener = [
 
     'connected' : function(self, id)
@@ -6,7 +15,12 @@ server_listener = [
 
     'messaged' : function(self, id, msg)
         sys.print('server: message from ' + id + ': ' + msg)
-        sys.send(id, msg + 2)
+        sys.send(id, msg + '2')
+        #sys.disconnect(id) # from all
+    end,
+
+    'sent' : function(self, id)
+        sys.print('server: sent to ' + id)
     end
 
 ]
@@ -15,21 +29,23 @@ client_listener = [
 
     'connected' : function(self, id)
         sys.print('client: connected ' + id)
+        sys.send(id, 'hi', self)
+        #sys.disconnect(id)
     end,
 
     'messaged' : function(self, id, msg)
         sys.print('client: message from ' + id + ': ' + msg)
-        self.result = msg
-    end
+    end,
 
+    'sent' : function(self, id)
+        sys.print('client: sent to ' + id)
+    end
 ]
 
-server = sys.listen(8080, server_listener)
+port = 9991
 
-client = sys.connect('localhost', 8080, client_listener)
-sys.send(client, 'hi')
+#server starts to listen
+sys.listen(port, server_listener)
 
-sys.disconnect(client, 'localhost', 8080)
-sys.disconnect(server) # from all
-
-sys.print('result = ' + client.result)
+#client connects to server
+sys.connect('127.0.0.1', port, client_listener)
