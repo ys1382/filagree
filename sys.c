@@ -12,6 +12,7 @@
 #include "vm.h"
 #include "util.h"
 #include "node.h"
+#include "file.h"
 
 #define RESERVED_SYS  "sys"
 
@@ -351,6 +352,28 @@ struct variable *sys_loop(struct context *context)
 
 #endif // NO_UI
 
+struct variable *sys_file_listen(struct context *context)
+{
+    struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
+    const char *path = param_str(arguments, 1);
+    hal_file_listen(path);
+    return NULL;
+}
+
+int file_listing_callback(const char *path, bool isDir, void *context)
+{
+    printf("ftw %s%s\n", path, isDir ? "/" : "");
+    return 0;
+}
+
+struct variable *sys_file_listing(struct context *context)
+{
+    struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
+    const char *path = param_str(arguments, 1);
+    file_listing(path, &file_listing_callback, context);
+    return NULL;
+}
+
 struct string_func builtin_funcs[] = {
 	{"args",        &sys_args},
     {"print",       &sys_print},
@@ -364,10 +387,12 @@ struct string_func builtin_funcs[] = {
     {"sin",         &sys_sin},
     {"run",         &sys_run},
     {"interpret",   &sys_interpret},
-    {"listen",      &sys_listen},
+    {"listen",      &sys_socket_listen},
     {"send",        &sys_send},
     {"connect",     &sys_connect},
     {"disconnect",  &sys_disconnect},
+    {"file_listin", &sys_file_listing},
+    {"file_listen", &sys_file_listen},
 #ifndef NO_UI
     {"window",      &sys_window},
     {"load_form",   &sys_load_form},

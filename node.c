@@ -16,36 +16,38 @@
 #include "serial.h"
 #include "sys.h"
 
-
 #define MAXLINE 1024
 
-
-struct thread_argument {
-    struct context *context;
-    struct variable *listener;
-    int fd;
-    const char *event;
-    char *serveraddr;
-    char buf[MAXLINE];
-    ssize_t length;
-    uint16_t serverport;
+enum Event {
+    CONNECTED,
+    DISCONNECTED,
+    MESSAGED,
+    SENT,
+    ERROR,
 };
 
-struct thread_argument *thread_new(struct context *context, find_c_var *find)
-{
-    struct thread_argument *ta = (struct thread_argument *)malloc(sizeof(struct thread_argument));
-    ta->context = (context != NULL) ? context : context_new(true, true, find);
-    return ta;
-}
+struct number_string node_events[] = {
+    {CONNECTED,     "connected"},
+    {DISCONNECTED,  "disconnected"},
+    {MESSAGED,      "messaged"},
+    {SENT,          "sent"},
+    {ERROR,         "error"},
+};
 
-static struct map *server_listeners = NULL; // maps port to listener
-
+struct thread_argument {
+    int fd;
+	struct sockaddr_in servaddr;
+    struct context *context;
+    struct variable *listener;
+    enum Event event;
+    struct byte_array *buf;
+};
 
 static bool int_compare(const void *a, const void *b, void *context)
 {
     int32_t i = (VOID_INT)a;
     int32_t j = (VOID_INT)b;
-    return i == j;
+    return  i == j;
 }
 
 static int32_t int_hash(const void* x, void *context) {
@@ -56,26 +58,57 @@ void *int_copy(const void *x, void *context) { return (void*)x; }
 
 void int_del(const void *x, void *context) {}
 
+struct thread_argument *thread_new(struct context *context, struct variable *listener, int fd)
+{
+    if (context->threads == NULL)
+        context->threads = array_new();
+
+    if (context->socket_listeners == NULL)
+        context->socket_listeners = map_new_ex(NULL,
+                                               &int_compare,
+                                               &int_hash,
+                                               &int_copy,
+                                               &int_del);
+
+    struct thread_argument *ta = (struct thread_argument *)malloc(sizeof(struct thread_argument));
+    ta->context = context_new(true, true, true, context);
+    ta->listener = listener != NULL ? variable_copy(ta->context, listener) : NULL;
+    ta->fd = fd;
+    //DEBUGPRINT("thread_new on %p\n", context);
+    return ta;
+}
+
+void thread_wait_for(pthread_t *thread)
+{
+    //DEBUGPRINT("\tpthread_join on thread %p\n", thread);
+    if (pthread_join(*thread, NULL))
+        printf("could not pthread_join, error %d\n", errno);
+}
+
 void callback(struct thread_argument *ta, struct variable *message)
 {
-    struct byte_array *key = byte_array_from_string(ta->event);
-    struct variable *key2 = variable_new_str(ta->context, key);
-    struct variable *callback = variable_map_get(ta->context, ta->listener, key2);
+    if (ta->listener == NULL)
+        return;
+
+    const char *key = NUM_TO_STRING(node_events, ta->event);
+    struct byte_array *key2 = byte_array_from_string(key);
+    struct variable *key3 = variable_new_str(ta->context, key2);
+    struct variable *callback = variable_map_get(ta->context, ta->listener, key3);
     if ((callback != NULL) && (callback->type != VM_NIL)) {
         struct variable *id = variable_new_int(ta->context, ta->fd);
         vm_call(ta->context, callback, ta->listener, id, message);
     } else {
-        char buf[1000];
-        DEBUGPRINT("could not find %s in %s", ta->event, variable_value_str(ta->context, ta->listener, buf));
+        //char buf[1000];
+        //DEBUGPRINT("could not find event in %s", variable_value_str(ta->context, ta->listener, buf));
     }
-    variable_del(ta->context, key2);
+    variable_del(ta->context, key3);
 }
 
 // callback to client when connection is opened (or fails)
 void *connected(void *arg)
 {
     struct thread_argument *ta = (struct thread_argument *)arg;
-    ta->event = "connected";
+    ta->event = CONNECTED;
     callback(arg, NULL);
     return NULL;
 }
@@ -84,73 +117,94 @@ void *connected(void *arg)
 void *incoming(void *arg)
 {
     struct thread_argument *ta = (struct thread_argument *)arg;
-    struct byte_array *raw_message = byte_array_new_size(ta->length);
-    raw_message->data = raw_message->current = (uint8_t*)ta->buf;
-    raw_message->length = ta->length;
-    struct variable *message = variable_deserialize(ta->context, raw_message);
-
+    struct variable *message = variable_deserialize(ta->context, ta->buf);
     callback(ta, message);
-
 	return NULL;
 }
 
-// listens for incoming connections
-void *sys_listen2(void *arg)
+void disconnect_fd(struct context *context, int fd, struct variable *listener)
+{
+    pthread_t *thread = map_get(context->socket_listeners, fd);
+    //DEBUGPRINT("close %d, cancel %p\n", fd, thread);
+    map_remove(context->socket_listeners, fd);
+
+    pthread_t moi = pthread_self();
+    if (moi == *thread) {
+        printf("suicide %p on fd %d\n", *thread, fd);
+        return;
+    }
+    
+    //DEBUGPRINT("cancel thread %p\n", *thread);
+    if (pthread_cancel(*thread))
+        perror("pthread_cancel");
+
+    //DEBUGPRINT("close socket %d\n", fd);
+    if (close(fd))
+        perror("close");
+
+    /*if (listener != NULL) {
+        struct thread_argument *ta = thread_new(context, listener, fd);
+        ta->event = DISCONNECTED;
+        callback(ta, NULL);
+    }*/
+}
+
+// for use with pthread_join in context_del, so that the context's variables are
+// not all freed before the thread is done
+
+void add_thread(struct thread_argument *ta, void *(*start_routine)(void *), int sockfd)
+{
+    pthread_t *tid = malloc(sizeof(pthread_t));
+    if (tid == NULL) {
+        perror("malloc");
+        return;
+    }
+    if (pthread_create(tid, NULL, start_routine, (void*)ta)) {
+        perror("pthread_create");
+        return;
+    }
+    
+    //pthread_t moi = pthread_self();
+
+    //DEBUGPRINT("add_thread %p to fd %d\n", *tid, sockfd);
+    if (sockfd)
+        map_insert(ta->context->socket_listeners, sockfd, tid);
+    else
+        array_add(ta->context->threads, tid);
+}
+
+// listens for inbound connections
+void *sys_socket_listen2(void *arg)
 {
     struct thread_argument *ta0 = (struct thread_argument*)arg;
     struct variable *listener = ta0->listener;
-    int serverport = ta0->serverport;
 
-    if (server_listeners == NULL)
-        server_listeners = map_new_ex(NULL, &int_compare, &int_hash, &int_copy, &int_del);
-
-    map_insert(server_listeners, (void*)(VOID_INT)serverport, listener);
-
-
-	int					i, maxi, maxfd, listenfd, connfd, sockfd;
+	int					i, maxi, maxfd, connfd, sockfd;
 	int					nready, client[FD_SETSIZE];
 	fd_set				rset, allset;
 	char				buf[MAXLINE];
 	socklen_t			clilen;
-	struct sockaddr_in	cliaddr, servaddr;
+	struct sockaddr_in	cliaddr;
 
-	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        printf("could not create socket\n");
-        return NULL;;
-    }
-
-	bzero(&servaddr, sizeof(servaddr));
-	servaddr.sin_family      = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	servaddr.sin_port        = htons(serverport);
-
-	if (bind(listenfd, (struct sockaddr*) &servaddr, sizeof(servaddr))) {
-        printf("could not bind\n");
-        return NULL;
-    }
-	if (listen(listenfd, SOMAXCONN)) {
-        printf("could not listen\n");
-        return NULL;
-    }
-
-	maxfd = listenfd;			// initialize
+	maxfd = ta0->fd;			// initialize
 	maxi = -1;					// index into client[] array
 	for (i = 0; i < FD_SETSIZE; i++)
 		client[i] = -1;			// -1 indicates available entry
 	FD_ZERO(&allset);
-	FD_SET(listenfd, &allset);
+	FD_SET(ta0->fd, &allset);
 
-	for (
-        ;;) {
-
-        printf("listen on %d\n", ta0->serverport);
+	for (;;) {
 
 		rset = allset;		// structure assignment
 		nready = select(maxfd+1, &rset, NULL, NULL, NULL);
 
-		if (FD_ISSET(listenfd, &rset)) {	// new client connection
+		if (FD_ISSET(ta0->fd, &rset)) {	// new client connection
 			clilen = sizeof(cliaddr);
-			connfd = accept(listenfd, (struct sockaddr*) &cliaddr, &clilen);
+			connfd = accept(ta0->fd, (struct sockaddr*) &cliaddr, &clilen);
+            if (connfd == -1) {
+                perror("accept");
+                continue;
+            }
 
 			for (i = 0; i < FD_SETSIZE; i++) {
 				if (client[i] < 0) {
@@ -168,11 +222,8 @@ void *sys_listen2(void *arg)
 			if (i > maxi)
 				maxi = i;				// max index in client[] array
 
-            struct thread_argument *ta = thread_new(NULL, ta0->context->find);
-            ta->listener = listener;
-            ta->fd = connfd;
-            pthread_t child;
-            pthread_create(&child, NULL, connected, ta);
+            struct thread_argument *ta = thread_new(ta0->context, listener, connfd);
+            add_thread(ta, connected, connfd);
 
 			if (--nready <= 0)
 				continue;				// no more readable descriptors
@@ -184,41 +235,64 @@ void *sys_listen2(void *arg)
 
             if ( (sockfd = client[i]) < 0)
 				continue;
+
 			if (FD_ISSET(sockfd, &rset)) {
-				if ( (n = read(sockfd, buf, MAXLINE)) == 0) {
+
+				if ((n = read(sockfd, buf, MAXLINE)) == 0)
+                {
                     // connection closed by client
-					close(sockfd);
+                    disconnect_fd(ta0->context, sockfd, listener);
 					FD_CLR(sockfd, &allset);
 					client[i] = -1;
+
 				} else {
 
-                    struct thread_argument *ta = thread_new(NULL, ta0->context->find);
-                    ta->listener = listener;
-                    ta->fd = connfd;
-                    memcpy((void*)ta->buf, buf, n);
-                    ta->length = n;
-                    ta->event = "messaged";
-                    pthread_t child;
-                    pthread_create(&child, NULL, incoming, ta);
+                    struct thread_argument *ta = thread_new(ta0->context, listener, sockfd);
+                    ta->buf = byte_array_new_size(n);
+                    memcpy((void*)ta->buf->data, buf, n);
+                    ta->event = MESSAGED; // "messaged";
+                    add_thread(ta, incoming, 0);
                 }
 				
-                if (--nready <= 0)
-					break;				// no more readable descriptors
+                if (--nready <= 0) // no more readable descriptors
+					break;
 			}
 		}
 	}
+
+    disconnect_fd(ta0->context, ta0->fd, listener);
 }
 
 // server listens for clients opening connections
-struct variable *sys_listen(struct context *context)
+struct variable *sys_socket_listen(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    struct thread_argument *ta = thread_new(NULL, context->find);
-    ta->serverport = param_int(arguments, 1);
-    ta->listener = param_var(ta->context, arguments, 2);
+    struct variable *listener = param_var(context, arguments, 2);
+    struct thread_argument *ta = thread_new(context, listener, 0);
+    int serverport = param_int(arguments, 1);
 
-    pthread_t child;
-    pthread_create(&child, NULL, sys_listen2, ta);
+	struct sockaddr_in servaddr;
+
+	if ((ta->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        perror("socket");
+        return NULL;
+    }
+
+	bzero(&servaddr, sizeof(servaddr));
+	servaddr.sin_family      = AF_INET;
+	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	servaddr.sin_port        = htons(serverport);
+
+	if (bind(ta->fd, (struct sockaddr*) &servaddr, sizeof(servaddr))) {
+        perror("bind");
+        return NULL;
+    }
+	if (listen(ta->fd, SOMAXCONN)) {
+        perror("listen");
+        return NULL;
+    }
+
+    add_thread(ta, sys_socket_listen2, ta->fd);
 
     return NULL;
 }
@@ -228,54 +302,41 @@ void *sys_connect2(void *arg)
     int result = 0;
     struct thread_argument *ta = (struct thread_argument *)arg;
 
-    sleep(1);
-
-    int sockfd;
-	struct sockaddr_in servaddr;
-
-	// Create Socket file descriptor
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-	bzero(&servaddr, sizeof(servaddr));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_port = htons(ta->serverport);
-	inet_pton(AF_INET, ta->serveraddr, &servaddr.sin_addr);
-
-    printf("connect to %s:%d\n", ta->serveraddr, ta->serverport);
-
-	// Blocking Connect to socket file descriptor
-	if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)))
+    // Blocking Connect to socket file descriptor
+	if (connect(ta->fd, (struct sockaddr *)&ta->servaddr, sizeof(ta->servaddr)))
     {
-        ta->event = "error";
+        ta->event = ERROR;
         printf("error %d\n", errno);
         result = errno;
         struct variable *result2 = variable_new_int(ta->context, result);
+        ta->event = ERROR;
         callback(ta, result2);
 
     } else {
 
-        ta->fd = sockfd;
-        connected(ta);
+        connected(ta);   // callback
 
         for (;;) {
 
             char buf[MAXLINE];
-            int n = recv(sockfd, buf, sizeof(buf), 0);
-            if (n == -1)
-            {
-                perror("recv");
-                close(sockfd);
-                struct variable *result2 = variable_new_int(ta->context, errno);
-                callback(ta, result2);
-
-            } else {
-
-                memcpy((void*)ta->buf, buf, n);
-                ta->length = n;
-                ta->event = "messaged";
-                pthread_t child;
-                pthread_create(&child, NULL, incoming, ta);
-
+            ssize_t n = read(ta->fd, buf, sizeof(buf)); // read from the socket
+            switch (n) {
+                case 0:
+                    disconnect_fd(ta->context, ta->fd, ta->listener);
+                    return NULL;
+                case -1:
+                    //DEBUGPRINT("I am thread %p\n", pthread_self());
+                    //perror("read");
+                    /*disconnect_fd(ta->context, ta->fd, ta->listener);
+                    struct variable *result2 = variable_new_int(ta->context, errno);
+                    callback(ta, result2);*/
+                    break;
+                default:
+                    ta->buf = byte_array_new_size(n);
+                    memcpy((void*)ta->buf->data, buf, n);
+                    ta->event = MESSAGED;
+                    add_thread(ta, incoming, 0);
+                    break;
             }
         }
     }
@@ -288,13 +349,21 @@ struct variable *sys_connect(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
 
-    struct thread_argument *ta = thread_new(NULL, context->find);
-    ta->serveraddr = param_str(arguments, 1);
-    ta->serverport = param_int(arguments, 2);
-    ta->listener   = param_var(ta->context, arguments, 3);
+    struct variable *listener   = param_var(context, arguments, 3);
+    struct thread_argument *ta = thread_new(context, listener, 0);
+    char *serveraddr = param_str(arguments, 1);
+    int serverport = param_int(arguments, 2);
 
-    pthread_t child;
-    pthread_create(&child, NULL, sys_connect2, (void*)ta);
+	// Create Socket file descriptor
+	ta->fd = socket(AF_INET, SOCK_STREAM, 0);
+
+	bzero(&ta->servaddr, sizeof(ta->servaddr));
+	ta->servaddr.sin_family = AF_INET;
+	ta->servaddr.sin_port = htons(serverport);
+	inet_pton(AF_INET, serveraddr, &ta->servaddr.sin_addr);
+
+    //printf("connect to %s:%d on socket %d\n", ta->serveraddr, ta->serverport, sockfd);
+    add_thread(ta, sys_connect2, ta->fd);
 
     return NULL;
 }
@@ -303,11 +372,11 @@ void *sys_send2(void *arg)
 {
     struct thread_argument *ta = (struct thread_argument *)arg;
 
-    if (write(ta->fd, ta->buf, strlen(ta->buf)) != strlen(ta->buf)) {
+    if (write(ta->fd, ta->buf->data, ta->buf->length) != ta->buf->length) {
         struct variable *problem = variable_new_str(ta->context, byte_array_from_string("write error"));
         callback(ta, problem);
     } else {
-        DEBUGPRINT("wrote to socket \n");
+        callback(ta, NULL); // sent
     }
     return NULL;
 }
@@ -316,30 +385,17 @@ void *sys_send2(void *arg)
 struct variable *sys_send(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    struct thread_argument *ta = thread_new(NULL, context->find);
-    ta->fd = param_int(arguments, 1);
+    int fd = param_int(arguments, 1);
+    struct variable *listener = param_var(context, arguments, 3);
+
+    struct thread_argument *ta = thread_new(context, listener, fd);
 
     struct variable *v = param_var(ta->context, arguments, 2);
-    struct byte_array *v2 = variable_serialize(ta->context, NULL, v, true);
-    memcpy(ta->buf, v2->data, v2->length);
-    ta->length = v2->length;
-    ta->listener = param_var(ta->context, arguments, 3);
-    ta->event = "sent";
+    ta->buf = variable_serialize(ta->context, NULL, v, true);
+    ta->event = SENT;
 
-    pthread_t child;
-    pthread_create(&child, NULL, sys_send2, (void*)ta);
+    add_thread(ta, sys_send2, 0);
 
-    return NULL;
-}
-
-void *sys_disconnect2(void *arg)
-{
-    struct thread_argument *ta = (struct thread_argument *)arg;
-
-    if (close(ta->fd)) {
-        struct variable *problem = variable_new_str(ta->context, byte_array_from_string("close error"));
-        callback(ta, problem);
-    }
     return NULL;
 }
 
@@ -347,28 +403,22 @@ void *sys_disconnect2(void *arg)
 struct variable *sys_disconnect(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *listener = param_var(context, arguments, arguments->list->length-1);
 
-    struct thread_argument *ta = thread_new(NULL, context->find);
-    ta->listener = param_var(ta->context, arguments, 1);
-    ta->event = "close";
-
-    if (arguments->list->length < 2)
+    bool specified = (arguments->list->length > 1) && (param_var(context, arguments, 1)->type == VAR_INT);
+    if (specified) // close specified socket
     {
-        struct variable *sockets = (struct variable *)array_get(arguments->list, 1);
-        assert_message(sockets->type == VAR_LST, "non list of sockets");
-        for (int i=0; i<sockets->list->length; i++)
-        {
-            struct thread_argument *tc = (struct thread_argument *)array_get(sockets->list, i);
-            ta->fd = tc->fd; //close(tc->fd);
+        int fd = param_int(arguments, 1);
+        disconnect_fd(context, fd, listener);
+    }
+    else // close all sockets (todo: fix crash)
+    {
+        struct array *sockets = map_keys(context->socket_listeners);
+        for (int i=0; i<sockets->length; i++) {
+            int fd = (int)array_get(sockets, i);
+            disconnect_fd(context, fd, listener);
         }
     }
-    else
-    {
-        ta->fd = param_int(arguments, 1);
-    }
-
-    pthread_t child;
-    pthread_create(&child, NULL, sys_disconnect2, (void*)ta);
 
     return NULL;
 }

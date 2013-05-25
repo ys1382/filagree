@@ -19,7 +19,7 @@ bool run(struct context *context,
 void repl()
 {
     char str[FG_MAX_INPUT];
-    struct context *context = context_new(true, true, NULL);
+    struct context *context = context_new(true, true, true, NULL);
 
     for (;;) {
         fflush(stdin);

@@ -1116,7 +1116,7 @@ struct symbol *parse(struct array *list, uint32_t index)
 {
     if (!list->length)
         return NULL;
-    DEBUGPRINT("parse:\n");
+    //DEBUGPRINT("parse:\n");
     assert_message(list, ERROR_NULL);
     assert_message(index<list->length, ERROR_INDEX);
 
@@ -1125,7 +1125,7 @@ struct symbol *parse(struct array *list, uint32_t index)
 
     struct symbol *p = statements();
 #ifdef DEBUG
-    display_symbol(p, 1);
+    //display_symbol(p, 1);
 #endif
     return p;
 }
@@ -1552,7 +1552,7 @@ struct byte_array *generate_code(struct byte_array *code, struct symbol *root)
 
 struct byte_array *generate_program(struct symbol *root)
 {
-    DEBUGPRINT("generate:\n");
+    // DEBUGPRINT("generate:\n");
     struct byte_array *code = byte_array_new();
     generate_code(code, root);
     return code;
@@ -1563,10 +1563,10 @@ struct byte_array *generate_program(struct symbol *root)
 struct byte_array *build_string(const struct byte_array *input) {
     assert_message(input, ERROR_NULL);
     struct byte_array *input_copy = byte_array_copy(input);
-    DEBUGPRINT("lex %d:\n", input_copy->length);
+    // DEBUGPRINT("lex %d:\n", input_copy->length);
 
     lex_list = array_new();
-    context = context_new(false, false, NULL);
+    context = context_new(false, false, false, NULL);
     imports = map_new(context);
 
     struct array* list = lex(input_copy);

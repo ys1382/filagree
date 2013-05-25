@@ -1,8 +1,7 @@
-/*
- *    serial.c
- *
- *    stream serialization - serialies and deserializes byte_array and calls-back on each element
- */
+//
+//  serial.c
+//  filagree
+//
 
 #include <stdint.h>
 #include <stdio.h>
@@ -31,16 +30,13 @@ struct byte_array *serial_encode_int(struct byte_array *buf, int32_t value)
     uint8_t growth = serial_encode_int_size(value);
     if (buf == NULL)
 		buf = byte_array_new_size(growth);
-//    byte_array_resize(buf, buf->length);
     bool neg = value < 0;
     value = abs(value);
     uint8_t byte = (value & 0x3F) | ((value >= 0x40) ? 0x80 : 0) | (neg ? 0x40 : 0);
-//    *buf->current++ = byte;
     byte_array_add_byte(buf, byte);
     value >>= 6;
     while (value) {
         byte = (value & 0x7F) | ((value >= 0x80) ? 0x80 : 0); 
-//        *buf->current++ = byte;
         byte_array_add_byte(buf, byte);
         value >>= 7;
     }

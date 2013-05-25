@@ -43,6 +43,8 @@ void hal_table (struct context *context,
 
 void hal_save_form(struct context *context, const struct byte_array *key);
 void hal_load_form(struct context *context, const struct byte_array *key);
+void hal_file_listen(const char *path);
+
 
 #endif // NO_UI
 

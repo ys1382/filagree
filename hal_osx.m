@@ -1,3 +1,5 @@
+#import <Foundation/Foundation.h>
+#import <CoreServices/CoreServices.h>
 #import <Cocoa/Cocoa.h>
 #import <objc/objc-class.h>
 
@@ -722,4 +724,42 @@ struct variable *hal_load(struct context *context, const struct byte_array *key)
 void hal_print(const char *str)
 {
     NSLog(@"%s", str);
+}
+
+void file_listener_callback(ConstFSEventStreamRef streamRef,
+                            void *clientCallBackInfo,
+                            size_t numEvents,
+                            void *eventPaths,
+                            const FSEventStreamEventFlags eventFlags[],
+                            const FSEventStreamEventId eventIds[])
+{
+    int i;
+    char **paths = eventPaths;
+    
+    DEBUGPRINT("file_listener_callback:\n");
+    for (i=0; i<numEvents; i++)
+        DEBUGPRINT("\t%s\n", paths[i]);
+}
+
+void hal_file_listen(const char *path)
+{
+    CFStringRef path2 = CFStringCreateWithCString(NULL, path, kCFStringEncodingUTF8);
+    CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path2, 1, NULL);
+    
+    void *callbackInfo = NULL; // put stream-specific data here
+    FSEventStreamRef stream;
+    CFAbsoluteTime latency = 1.0; // seconds
+    
+    stream = FSEventStreamCreate(NULL,
+                                 &file_listener_callback,
+                                 callbackInfo,
+                                 pathsToWatch,
+                                 kFSEventStreamEventIdSinceNow, // Or a previous event ID
+                                 latency,
+                                 kFSEventStreamCreateFlagNone
+                                 );
+    
+    FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+	FSEventStreamStart(stream);
+	CFRunLoopRun();
 }

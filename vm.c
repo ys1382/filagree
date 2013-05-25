@@ -3,11 +3,15 @@
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
+#include <pthread.h>
+#include <errno.h>
+
 #include "util.h"
 #include "serial.h"
 #include "vm.h"
 #include "variable.h"
 #include "sys.h"
+#include "node.h"
 
 bool run(struct context *context, struct byte_array *program, struct map *env, bool in_context);
 void display_code(struct context *context, struct byte_array *code);
@@ -109,7 +113,10 @@ static inline void cfnc_length(struct context *context) {
     stack_push(context->operand_stack, result);
 }
 
-struct context *context_new(bool state, bool sys_funcs, find_c_var *find)
+struct context *context_new(bool state,
+                            bool sys_funcs,
+                            bool runtime,
+                            struct context *parent)
 {
     struct context *context = (struct context*)malloc(sizeof(struct context));
     null_check(context);
@@ -118,22 +125,72 @@ struct context *context_new(bool state, bool sys_funcs, find_c_var *find)
         stack_push(context->program_stack, program_state_new(context, NULL));
     context->all_variables = array_new();
     context->operand_stack = stack_new();
-    context->vm_exception = NULL;
-    context->runtime = true;
+    context->runtime = runtime;
     context->indent = 0;
     context->error = NULL;
+    context->vm_exception = NULL;
     context->sys = sys_funcs ? sys_new(context) : NULL;
-    context->find = find;
+
+    if (parent == NULL) {
+        context->threads = NULL;
+        context->socket_listeners = NULL;
+        context->find = NULL;
+    } else {
+        context->threads = parent->threads;
+        context->socket_listeners = parent->socket_listeners;
+        context->find = parent->find;
+    }
 
     return context;
 }
 
+/*
+struct context *context_copy(struct context *original)
+{
+    struct context *context = context_new(true, true, original->find);
+    for (int i=0; i<original->all_variables->length; i++) {
+        struct variable *v = (struct variable*)array_get(original->all_variables, i);
+        struct variable *u = variable_copy(context, v);
+        array_add(context->all_variables, u);
+    }
+    return context;
+}
+*/
+
 void context_del(struct context *context)
 {
+    //DEBUGPRINT("context_del %p\n", context);
+
+    // wait for threads listening to sockets to end
+    if (context->socket_listeners != NULL) {
+        struct array *socket_threads = map_values(context->socket_listeners);
+        for (int i=0; i<socket_threads->length; i++) {
+            pthread_t *socket_thread = (pthread_t*)array_get(socket_threads, i);
+            thread_wait_for(socket_thread);
+        }
+        array_del(socket_threads);
+        map_del(context->socket_listeners);
+        context->socket_listeners = NULL;
+    }
+
+    // waiting for any threads that did not make a socket (yet) to end
+    if (context->threads != NULL)
+    {
+        for (int i=0; i<context->threads->length; i++)
+        {
+            pthread_t *thread = (pthread_t*)array_get(context->threads, i);
+            thread_wait_for(thread);
+        }
+        array_del(context->threads);
+        context->threads = NULL;
+    }
+
+    //if (context->runtime)
+    //    DEBUGPRINT("\tjoin done for %p\n", context->threads);
+
     struct array *vars = context->all_variables;
     for (int i=0; i<vars->length; i++) {
         struct variable *v = (struct variable *)array_get(vars, i);
-        //DEBUGPRINT("context_del %p : ", context);
         variable_del(context, v);
     }
 
@@ -294,8 +351,7 @@ static void display_program_counter(struct context *context, const struct byte_a
 
 void display_program(struct byte_array *program)
 {
-    struct context *context = context_new(false, false, NULL);
-    context->runtime = false;
+    struct context *context = context_new(false, false, false, NULL);
 
     INDENT
     DEBUGPRINT("%sprogram bytes:\n", indentation(context));
@@ -449,7 +505,6 @@ static void method(struct context *context, struct byte_array *program, bool rea
         index = variable_pop(context);
         if (lookup(context, indexable, index, really))
             DEBUGPRINT("%s...", indentation(context));
-
     }
     func_call(context, VM_MET, program, indexable);
 }
@@ -1155,11 +1210,11 @@ static bool iterate(struct context *context,
     free(str);
     if (!context->runtime) {
         if (where && where->length) {
-            DEBUGPRINT("%s\tWHERE\n", indentation(context));
-            display_code(context, where);
+            DEBUGPRINT("%s\tWHERE %d\n", indentation(context), where->length);
+            //display_code(context, where);
         }
-        DEBUGPRINT("%s\tDO\n", indentation(context));
-        display_code(context, how);
+        DEBUGPRINT("%s\tDO %d\n", indentation(context), how->length);
+        //display_code(context, how);
         goto done;
     }
 #endif
@@ -1207,7 +1262,7 @@ static inline bool vm_trycatch(struct context *context, struct byte_array *progr
     bool returned = false;
     struct byte_array *trial = serial_decode_string(program);
     DEBUGPRINT("TRY %d\n", trial->length);
-    display_code(context, trial);
+    //display_code(context, trial);
     struct byte_array *name = serial_decode_string(program);
     struct byte_array *catcher = serial_decode_string(program);
 #ifdef DEBUG
@@ -1215,7 +1270,7 @@ static inline bool vm_trycatch(struct context *context, struct byte_array *progr
     DEBUGPRINT("%sCATCH %s %d\n", indentation(context), str, catcher->length);
     free(str);
 #endif
-    display_code(context, catcher);
+    //display_code(context, catcher);
     if (!context->runtime)
         goto done;
 
@@ -1361,7 +1416,8 @@ void execute(struct byte_array *program, find_c_var *find)
 #endif
 
     DEBUGPRINT("execute:\n");
-    struct context *context = context_new(false, true, find);
+    struct context *context = context_new(false, true, true, NULL);
+    context->find = find;
 
     null_check(program);
     program = byte_array_copy(program);

@@ -20,6 +20,7 @@
 		88A65DA5147757400055DACF /* vm.c in Sources */ = {isa = PBXBuildFile; fileRef = 88A65D9F147757400055DACF /* vm.c */; };
 		88C760B315428A5F00A4F8E7 /* interpret.c in Sources */ = {isa = PBXBuildFile; fileRef = 88C760B215428A5F00A4F8E7 /* interpret.c */; };
 		88E65DE61510F46F00E6207D /* variable.c in Sources */ = {isa = PBXBuildFile; fileRef = 88E65DE41510F46F00E6207D /* variable.c */; };
+		88E7CCAC173D9A0500A70119 /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 88E7CCAB173D9A0500A70119 /* file.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -65,6 +66,8 @@
 		88E1FA6515CC5263001E6488 /* try.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = try.fg; sourceTree = "<group>"; };
 		88E65DE41510F46F00E6207D /* variable.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = variable.c; sourceTree = "<group>"; };
 		88E65DE51510F46F00E6207D /* variable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = variable.h; sourceTree = "<group>"; };
+		88E7CCAB173D9A0500A70119 /* file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file.c; sourceTree = "<group>"; };
+		88E7CCAD173D9C0400A70119 /* file.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = file.h; sourceTree = "<group>"; };
 		88FAF8A015B9ED5700A9B6D9 /* hal_osx.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = hal_osx.m; sourceTree = "<group>"; };
 		88FAF8A115B9ED5700A9B6D9 /* hal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hal.h; sourceTree = "<group>"; };
 		8DD76FB20486AB0100D96B5E /* filagree */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = filagree; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -102,6 +105,8 @@
 			children = (
 				88A65D9A147757400055DACF /* compile.c */,
 				88A65D95147757400055DACF /* compile.h */,
+				88E7CCAB173D9A0500A70119 /* file.c */,
+				88E7CCAD173D9C0400A70119 /* file.h */,
 				88FAF8A115B9ED5700A9B6D9 /* hal.h */,
 				88FAF8A015B9ED5700A9B6D9 /* hal_osx.m */,
 				88C760B015428A5100A4F8E7 /* interpret.h */,
@@ -212,6 +217,7 @@
 				88E65DE61510F46F00E6207D /* variable.c in Sources */,
 				88C760B315428A5F00A4F8E7 /* interpret.c in Sources */,
 				882E4C3616F045AE00AE6B61 /* node.c in Sources */,
+				88E7CCAC173D9A0500A70119 /* file.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
