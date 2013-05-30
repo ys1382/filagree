@@ -11,7 +11,6 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <fts.h>
-#include <ftw.h>
 #include <limits.h>
 
 
@@ -94,7 +93,7 @@ char* build_path(const char* dir, const char* name)
     return path;
 }
 
-int file_listing(const char *path, int (*fn)(const char*, bool, void*), void *context)
+int file_list(const char *path, int (*fn)(const char*, bool, void*), void *context)
 {
 	const char *paths[2];
 	FTSENT *cur;

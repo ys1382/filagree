@@ -1,7 +1,7 @@
 #ifndef VARIABLE_H
 #define VARIABLE_H
 
-#define VV_SIZE 1000
+#define VV_SIZE 10000
 
 enum VarType {
     VAR_NIL,

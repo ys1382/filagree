@@ -726,6 +726,13 @@ void hal_print(const char *str)
     NSLog(@"%s", str);
 }
 
+#define FILE_EVENT "filed"
+
+struct file_thread {
+    struct context *context;
+    struct variable *listener;
+};
+
 void file_listener_callback(ConstFSEventStreamRef streamRef,
                             void *clientCallBackInfo,
                             size_t numEvents,
@@ -735,24 +742,54 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
 {
     int i;
     char **paths = eventPaths;
-    
+
     DEBUGPRINT("file_listener_callback:\n");
-    for (i=0; i<numEvents; i++)
-        DEBUGPRINT("\t%s\n", paths[i]);
+    for (i=0; i<numEvents; i++) {
+/*
+        FSEventStreamEventFlags event = eventFlags[i];
+
+        bool created  = event & kFSEventStreamEventFlagItemCreated;
+        bool renamed  = event & kFSEventStreamEventFlagItemRenamed;
+        bool deleted  = event & kFSEventStreamEventFlagItemRemoved;
+        bool modified = event & kFSEventStreamEventFlagItemModified;
+
+        DEBUGPRINT("\t%s:\n", paths[i]);
+        if (created)
+            DEBUGPRINT("\t\tcreated\n");
+        if (renamed)
+            DEBUGPRINT("\t\trenamed\n");
+        if (modified)
+            DEBUGPRINT("\t\tmodified\n");
+        if (deleted)
+            DEBUGPRINT("\t\tdeleted\n");
+*/
+        struct file_thread *thread = (struct file_thread*)clientCallBackInfo;
+        struct byte_array *path = byte_array_from_string(paths[i]);
+        struct variable *path2 = variable_new_str(thread->context, path);
+        struct byte_array *method = byte_array_from_string(FILE_EVENT);
+        struct variable *method2 = variable_new_str(thread->context, method);
+        struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
+        if (method3->type != VAR_NIL)
+            vm_call(thread->context, method3, thread->listener, path2);
+    }
 }
 
-void hal_file_listen(const char *path)
+void hal_file_listen(struct context *context, const char *path, struct variable *listener)
 {
+    struct file_thread *ft = (struct file_thread*)malloc((sizeof(struct file_thread)));
+    ft->context = context;
+    ft->listener = listener;
+
     CFStringRef path2 = CFStringCreateWithCString(NULL, path, kCFStringEncodingUTF8);
     CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path2, 1, NULL);
     
-    void *callbackInfo = NULL; // put stream-specific data here
+    FSEventStreamContext fsc = {0, ft, NULL, NULL, NULL};
     FSEventStreamRef stream;
     CFAbsoluteTime latency = 1.0; // seconds
     
     stream = FSEventStreamCreate(NULL,
                                  &file_listener_callback,
-                                 callbackInfo,
+                                 &fsc,
                                  pathsToWatch,
                                  kFSEventStreamEventIdSinceNow, // Or a previous event ID
                                  latency,

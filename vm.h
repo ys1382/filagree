@@ -26,6 +26,9 @@ struct context {
     bool runtime;
     uint8_t indent;
     find_c_var *find;
+#ifdef DEBUG
+    char pcbuf[100];
+#endif
 };
 
 struct program_state {

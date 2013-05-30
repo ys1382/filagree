@@ -1561,7 +1561,7 @@ struct byte_array *generate_program(struct symbol *root)
 // build ///////////////////////////////////////////////////////////////////
 
 struct byte_array *build_string(const struct byte_array *input) {
-    assert_message(input, ERROR_NULL);
+    null_check(input);
     struct byte_array *input_copy = byte_array_copy(input);
     // DEBUGPRINT("lex %d:\n", input_copy->length);
 

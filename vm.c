@@ -346,7 +346,9 @@ const char* indentation(struct context *context)
 static void display_program_counter(struct context *context, const struct byte_array *program)
 {
     null_check(context);
-    DEBUGPRINT("%s%2ld:%3d ", indentation(context), program->current-program->data, *program->current);
+    //sprintf(context->pcbuf, "%s%p - %2ld:%3d ", indentation(context), pthread_self(), program->current-program->data, *program->current);
+    uint16_t thread = ((int)pthread_self() >> 12) & 0xFFF;
+    DEBUGPRINT("%s>%hu - %2ld:%3d ", indentation(context), thread, program->current-program->data, *program->current);
 }
 
 void display_program(struct byte_array *program)

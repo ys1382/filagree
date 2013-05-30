@@ -18,7 +18,6 @@ server_listener = [
 
     'sent' : function(self, id)
         sys.print('server: sent to ' + id)
-        #sys.disconnect() # from all
     end
 
 ]
@@ -40,7 +39,7 @@ client_listener = [
     end
 ]
 
-port = 9997
+port = 9998
 
 #server starts to listen
 sys.listen(port, server_listener)

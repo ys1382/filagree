@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <dirent.h>
-#include <ftw.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>

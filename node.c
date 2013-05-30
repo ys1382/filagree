@@ -34,13 +34,13 @@ struct number_string node_events[] = {
     {ERROR,         "error"},
 };
 
-struct thread_argument {
-    int fd;
-	struct sockaddr_in servaddr;
+struct node_thread {
     struct context *context;
     struct variable *listener;
-    enum Event event;
+	struct sockaddr_in servaddr;
     struct byte_array *buf;
+    enum Event event;
+    int fd;
 };
 
 static bool int_compare(const void *a, const void *b, void *context)
@@ -58,7 +58,7 @@ void *int_copy(const void *x, void *context) { return (void*)x; }
 
 void int_del(const void *x, void *context) {}
 
-struct thread_argument *thread_new(struct context *context, struct variable *listener, int fd)
+struct node_thread *thread_new(struct context *context, struct variable *listener, int fd)
 {
     if (context->threads == NULL)
         context->threads = array_new();
@@ -70,7 +70,7 @@ struct thread_argument *thread_new(struct context *context, struct variable *lis
                                                &int_copy,
                                                &int_del);
 
-    struct thread_argument *ta = (struct thread_argument *)malloc(sizeof(struct thread_argument));
+    struct node_thread *ta = (struct node_thread *)malloc(sizeof(struct node_thread));
     ta->context = context_new(true, true, true, context);
     ta->listener = listener != NULL ? variable_copy(ta->context, listener) : NULL;
     ta->fd = fd;
@@ -85,7 +85,7 @@ void thread_wait_for(pthread_t *thread)
         printf("could not pthread_join, error %d\n", errno);
 }
 
-void callback(struct thread_argument *ta, struct variable *message)
+void node_callback(struct node_thread *ta, struct variable *message)
 {
     if (ta->listener == NULL)
         return;
@@ -94,31 +94,32 @@ void callback(struct thread_argument *ta, struct variable *message)
     struct byte_array *key2 = byte_array_from_string(key);
     struct variable *key3 = variable_new_str(ta->context, key2);
     struct variable *callback = variable_map_get(ta->context, ta->listener, key3);
-    if ((callback != NULL) && (callback->type != VM_NIL)) {
-        struct variable *id = variable_new_int(ta->context, ta->fd);
+
+    struct variable *id = variable_new_int(ta->context, ta->fd);
+    if (callback->type == VAR_NIL)
+        variable_del(ta->context, callback);
+    else if (callback != NULL)
+
         vm_call(ta->context, callback, ta->listener, id, message);
-    } else {
-        //char buf[1000];
-        //DEBUGPRINT("could not find event in %s", variable_value_str(ta->context, ta->listener, buf));
-    }
+
     variable_del(ta->context, key3);
 }
 
 // callback to client when connection is opened (or fails)
 void *connected(void *arg)
 {
-    struct thread_argument *ta = (struct thread_argument *)arg;
+    struct node_thread *ta = (struct node_thread *)arg;
     ta->event = CONNECTED;
-    callback(arg, NULL);
+    node_callback(arg, NULL);
     return NULL;
 }
 
 // callback to client or server when message arrives on socket
 void *incoming(void *arg)
 {
-    struct thread_argument *ta = (struct thread_argument *)arg;
+    struct node_thread *ta = (struct node_thread *)arg;
     struct variable *message = variable_deserialize(ta->context, ta->buf);
-    callback(ta, message);
+    node_callback(ta, message);
 	return NULL;
 }
 
@@ -143,7 +144,7 @@ void disconnect_fd(struct context *context, int fd, struct variable *listener)
         perror("close");
 
     /*if (listener != NULL) {
-        struct thread_argument *ta = thread_new(context, listener, fd);
+        struct node_thread *ta = thread_new(context, listener, fd);
         ta->event = DISCONNECTED;
         callback(ta, NULL);
     }*/
@@ -152,7 +153,7 @@ void disconnect_fd(struct context *context, int fd, struct variable *listener)
 // for use with pthread_join in context_del, so that the context's variables are
 // not all freed before the thread is done
 
-void add_thread(struct thread_argument *ta, void *(*start_routine)(void *), int sockfd)
+void add_thread(struct node_thread *ta, void *(*start_routine)(void *), int sockfd)
 {
     pthread_t *tid = malloc(sizeof(pthread_t));
     if (tid == NULL) {
@@ -176,7 +177,7 @@ void add_thread(struct thread_argument *ta, void *(*start_routine)(void *), int 
 // listens for inbound connections
 void *sys_socket_listen2(void *arg)
 {
-    struct thread_argument *ta0 = (struct thread_argument*)arg;
+    struct node_thread *ta0 = (struct node_thread*)arg;
     struct variable *listener = ta0->listener;
 
 	int					i, maxi, maxfd, connfd, sockfd;
@@ -222,7 +223,7 @@ void *sys_socket_listen2(void *arg)
 			if (i > maxi)
 				maxi = i;				// max index in client[] array
 
-            struct thread_argument *ta = thread_new(ta0->context, listener, connfd);
+            struct node_thread *ta = thread_new(ta0->context, listener, connfd);
             add_thread(ta, connected, connfd);
 
 			if (--nready <= 0)
@@ -247,7 +248,7 @@ void *sys_socket_listen2(void *arg)
 
 				} else {
 
-                    struct thread_argument *ta = thread_new(ta0->context, listener, sockfd);
+                    struct node_thread *ta = thread_new(ta0->context, listener, sockfd);
                     ta->buf = byte_array_new_size(n);
                     memcpy((void*)ta->buf->data, buf, n);
                     ta->event = MESSAGED; // "messaged";
@@ -268,7 +269,7 @@ struct variable *sys_socket_listen(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     struct variable *listener = param_var(context, arguments, 2);
-    struct thread_argument *ta = thread_new(context, listener, 0);
+    struct node_thread *ta = thread_new(context, listener, 0);
     int serverport = param_int(arguments, 1);
 
 	struct sockaddr_in servaddr;
@@ -300,7 +301,7 @@ struct variable *sys_socket_listen(struct context *context)
 void *sys_connect2(void *arg)
 {
     int result = 0;
-    struct thread_argument *ta = (struct thread_argument *)arg;
+    struct node_thread *ta = (struct node_thread *)arg;
 
     // Blocking Connect to socket file descriptor
 	if (connect(ta->fd, (struct sockaddr *)&ta->servaddr, sizeof(ta->servaddr)))
@@ -310,7 +311,7 @@ void *sys_connect2(void *arg)
         result = errno;
         struct variable *result2 = variable_new_int(ta->context, result);
         ta->event = ERROR;
-        callback(ta, result2);
+        node_callback(ta, result2);
 
     } else {
 
@@ -350,7 +351,7 @@ struct variable *sys_connect(struct context *context)
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
 
     struct variable *listener   = param_var(context, arguments, 3);
-    struct thread_argument *ta = thread_new(context, listener, 0);
+    struct node_thread *ta = thread_new(context, listener, 0);
     char *serveraddr = param_str(arguments, 1);
     int serverport = param_int(arguments, 2);
 
@@ -370,13 +371,13 @@ struct variable *sys_connect(struct context *context)
 
 void *sys_send2(void *arg)
 {
-    struct thread_argument *ta = (struct thread_argument *)arg;
+    struct node_thread *ta = (struct node_thread *)arg;
 
     if (write(ta->fd, ta->buf->data, ta->buf->length) != ta->buf->length) {
         struct variable *problem = variable_new_str(ta->context, byte_array_from_string("write error"));
-        callback(ta, problem);
+        node_callback(ta, problem);
     } else {
-        callback(ta, NULL); // sent
+        node_callback(ta, NULL); // sent
     }
     return NULL;
 }
@@ -388,7 +389,7 @@ struct variable *sys_send(struct context *context)
     int fd = param_int(arguments, 1);
     struct variable *listener = param_var(context, arguments, 3);
 
-    struct thread_argument *ta = thread_new(context, listener, fd);
+    struct node_thread *ta = thread_new(context, listener, fd);
 
     struct variable *v = param_var(ta->context, arguments, 2);
     ta->buf = variable_serialize(ta->context, NULL, v, true);
@@ -404,21 +405,7 @@ struct variable *sys_disconnect(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     struct variable *listener = param_var(context, arguments, arguments->list->length-1);
-
-    bool specified = (arguments->list->length > 1) && (param_var(context, arguments, 1)->type == VAR_INT);
-    if (specified) // close specified socket
-    {
-        int fd = param_int(arguments, 1);
-        disconnect_fd(context, fd, listener);
-    }
-    else // close all sockets (todo: fix crash)
-    {
-        struct array *sockets = map_keys(context->socket_listeners);
-        for (int i=0; i<sockets->length; i++) {
-            int fd = (int)array_get(sockets, i);
-            disconnect_fd(context, fd, listener);
-        }
-    }
-
+    int fd = param_int(arguments, 1);
+    disconnect_fd(context, fd, listener);
     return NULL;
 }

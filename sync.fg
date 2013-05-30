@@ -1,0 +1,11 @@
+path = '/Users/yusuf/tmp/synctest'
+
+file_listener = [
+
+    'filed' : function(self, path)
+        l = sys.file_list(path)
+        sys.print('something happened at ' + path + ', its files are:' + l)
+    end
+]
+
+sys.file_listen(path, file_listener)

@@ -45,6 +45,7 @@
 		881AC0FE14B09B2B00EAAE3F /* sys.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sys.h; sourceTree = "<group>"; };
 		881B388416BCC26F00084F96 /* im.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = im.fg; sourceTree = "<group>"; };
 		882A967515BE7CEB00A413CC /* ui.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ui.fg; sourceTree = "<group>"; };
+		882AEE9C1751FEAC0074FC41 /* sync.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync.fg; sourceTree = "<group>"; };
 		882E4C3516F045AE00AE6B61 /* node.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = node.c; sourceTree = "<group>"; };
 		88784E0615CDC8860052A0F2 /* program.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = program.fg; sourceTree = "<group>"; };
 		88A65D95147757400055DACF /* compile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compile.h; sourceTree = "<group>"; };
@@ -141,6 +142,7 @@
 			isa = PBXGroup;
 			children = (
 				881B388416BCC26F00084F96 /* im.fg */,
+				882AEE9C1751FEAC0074FC41 /* sync.fg */,
 				880C5BF616ED1BFC00B66505 /* node.fg */,
 				88784E0615CDC8860052A0F2 /* program.fg */,
 				88AA20D216209EB000634794 /* proto.fg */,

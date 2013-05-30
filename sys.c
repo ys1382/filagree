@@ -356,22 +356,40 @@ struct variable *sys_file_listen(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     const char *path = param_str(arguments, 1);
-    hal_file_listen(path);
+    struct variable *listener = param_var(context, arguments, 2);
+    hal_file_listen(context, path, listener);
     return NULL;
 }
 
-int file_listing_callback(const char *path, bool isDir, void *context)
+struct flc {
+    struct context *context;
+    struct variable *result;
+};
+
+int file_list_callback(const char *path, bool isDir, void *context)
 {
     printf("ftw %s%s\n", path, isDir ? "/" : "");
+
+    struct flc *flc = (struct flc*)context;
+    struct byte_array *path2 = byte_array_from_string(path);
+    struct variable *path3 = variable_new_str(flc->context, path2);
+    struct byte_array *key = byte_array_from_string("dir");
+    struct variable *key2 = variable_new_str(flc->context, key);
+    struct variable *data = variable_new_bool(flc->context, isDir);
+    variable_map_insert(flc->context, path3, key2, data);
+    array_add(flc->result->list, path3);
+
     return 0;
 }
 
-struct variable *sys_file_listing(struct context *context)
+struct variable *sys_file_list(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     const char *path = param_str(arguments, 1);
-    file_listing(path, &file_listing_callback, context);
-    return NULL;
+    struct variable *result = variable_new_list(context, NULL);
+    struct flc flc = {context, result};
+    file_list(path, &file_list_callback, &flc);
+    return flc.result;
 }
 
 struct string_func builtin_funcs[] = {
@@ -391,7 +409,7 @@ struct string_func builtin_funcs[] = {
     {"send",        &sys_send},
     {"connect",     &sys_connect},
     {"disconnect",  &sys_disconnect},
-    {"file_listin", &sys_file_listing},
+    {"file_list",   &sys_file_list},
     {"file_listen", &sys_file_listen},
 #ifndef NO_UI
     {"window",      &sys_window},
