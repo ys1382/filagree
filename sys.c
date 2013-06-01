@@ -191,7 +191,7 @@ struct variable *param_var(struct context *context, const struct variable *value
     //char buf[1000];
     //DEBUGPRINT("param_var %p->%p : %s\n", v, v->map, variable_value_str(context, v, buf));
     
-    return variable_copy(context, v);
+    return v; //variable_copy(context, v);
 }
 
 #ifndef NO_UI

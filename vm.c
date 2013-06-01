@@ -663,6 +663,8 @@ static void list_get(struct context *context, bool really)
     index = variable_pop(context);
     lookup(context, indexable, index, really);
     DEBUGPRINT("\n");
+
+    DEBUGPRINT("got from %p\n", indexable);
 }
 
 static int32_t jump(struct context *context, struct byte_array *program)

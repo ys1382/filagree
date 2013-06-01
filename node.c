@@ -72,7 +72,7 @@ struct node_thread *thread_new(struct context *context, struct variable *listene
 
     struct node_thread *ta = (struct node_thread *)malloc(sizeof(struct node_thread));
     ta->context = context_new(true, true, true, context);
-    ta->listener = listener != NULL ? variable_copy(ta->context, listener) : NULL;
+    ta->listener = listener; // != NULL ? variable_copy(ta->context, listener) : NULL;
     ta->fd = fd;
     //DEBUGPRINT("thread_new on %p\n", context);
     return ta;
@@ -96,7 +96,7 @@ void node_callback(struct node_thread *ta, struct variable *message)
     struct variable *callback = variable_map_get(ta->context, ta->listener, key3);
 
     struct variable *id = variable_new_int(ta->context, ta->fd);
-    if (callback->type == VAR_NIL)
+    if (callback && callback->type == VAR_NIL)
         variable_del(ta->context, callback);
     else if (callback != NULL)
 

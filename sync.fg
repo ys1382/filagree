@@ -1,11 +1,42 @@
-path = '/Users/yusuf/tmp/synctest'
+port = 9999
+monitored = '/Users/yusuf/tmp/synctest'
 
-file_listener = [
+
+server_listener = [
+
+    'connected' : function(self, id)
+        sys.print('server: connected ' + id)
+        self.client = id
+        sys.print('self1 = ' + self)
+    end,
 
     'filed' : function(self, path)
+
+        sys.print('self2 = ' + self)
+        sys.print('filed ' + self.client)
         l = sys.file_list(path)
-        sys.print('something happened at ' + path + ', its files are:' + l)
+        #sys.print('something happened at ' + path + ', its files are: ' + l)
+        sys.send(self.client, l)
+
     end
+
 ]
 
-sys.file_listen(path, file_listener)
+client_listener = [
+
+    'messaged' : function(self, id, msg)
+        sys.print('client: message from ' + id + ': ' + msg)
+    end,
+
+]
+
+
+#server starts to listen
+sys.listen(port, server_listener)
+
+#client connects to server
+sys.connect('127.0.0.1', port, client_listener)
+
+# server listens for file changes
+sys.file_listen(monitored, server_listener)
+

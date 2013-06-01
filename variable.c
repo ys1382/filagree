@@ -535,6 +535,7 @@ struct variable *variable_concatenate(struct context *context, int n, const stru
 
 int variable_map_insert(struct context *context, struct variable* v, struct variable *key, struct variable *datum)
 {
+    DEBUGPRINT("variable_map_insert into %p\n", v);
     assert_message(v->type != VAR_NIL, "can't insert into nil");
     if (v->map == NULL)
         v->map = map_new(context);
@@ -547,6 +548,7 @@ int variable_map_insert(struct context *context, struct variable* v, struct vari
 
 struct variable *variable_map_get(struct context *context, const struct variable* v, const struct variable *key)
 {
+    DEBUGPRINT("variable_map_get from %p\n", v);
     if (v->map == NULL)
         return variable_new_nil(context);
     return (struct variable*)map_get(v->map, key);

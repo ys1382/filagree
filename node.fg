@@ -39,7 +39,7 @@ client_listener = [
     end
 ]
 
-port = 9998
+port = 9990
 
 #server starts to listen
 sys.listen(port, server_listener)
