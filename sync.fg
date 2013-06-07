@@ -1,22 +1,69 @@
-port = 9999
+# todo: make Sync class
+
+port = 9990
 monitored = '/Users/yusuf/tmp/synctest'
 
 
 server_listener = [
 
+    'path' : monitored,
+    'files' : sys.file_list(monitored),
+
     'connected' : function(self, id)
+
         sys.print('server: connected ' + id)
         self.client = id
-        sys.print('self1 = ' + self)
+
+        l = sys.file_list(self.path)
+        msg = ['event' : 'login', 'files' : l]
+        sys.send(self.client, msg)
+
+    end,
+
+    'messaged' : function(self, id, msg)
+
+        sys.print('server: message from ' + id + ': ' + msg)
+
+        if msg.event == 'content-request' then
+            self.handle_content_request(msg)
+        end
+    end,
+
+    'handle_content_request' : function(self, msg)
+        for path in msg.paths
+            content = os.read(path)
+            response = ['event' : file, 'path' : path, 'content' : content]
+            sys.send(id, response)
+        end
     end,
 
     'filed' : function(self, path)
 
-        sys.print('self2 = ' + self)
-        sys.print('filed ' + self.client)
-        l = sys.file_list(path)
-        #sys.print('something happened at ' + path + ', its files are: ' + l)
-        sys.send(self.client, l)
+        sys.print('filed')
+        latest = sys.file_list(path)
+        added, deleted = self.map_delta(self.files, latest)
+        changes = ['added' : added, 'deleted' : deleted]
+        msg = ['event' : 'change', 'changes' : changes]
+        sys.send(self.client, msg)
+        self.files = latest
+
+    end,
+
+    # returns a - b, b - a
+    # todo: add to List class in sys.fg
+    'map_delta' : function(self, a, b)
+
+        a_minus_b = []
+        b_minus_a = b
+        for x in a.keys
+            if not b[x] then
+                a_minus_b[x] = a[x]
+            else
+                b_minus_a[x] = nil
+            end
+        end
+
+        return a_minus_b, b_minus_a
 
     end
 
@@ -24,19 +71,44 @@ server_listener = [
 
 client_listener = [
 
+    'connected' : function(self, id)
+        self.server = id
+    end,
+
     'messaged' : function(self, id, msg)
         sys.print('client: message from ' + id + ': ' + msg)
+
+        if msg.event == 'login' then
+            self.snapshot = msg.files
+        else if msg.event == 'change' then
+            self.handle_change(msg.changes)
+        else if msg.event == 'file' then
+            os.write(msg.path, msg.content)
+        end
+    end,
+
+    'handle_change' : function(self, changez)
+
+        self.snapshot = self.snapshot + changez.added - changez.deleted
+        msg = ['event' : 'content-request', 'paths' : changez.added]
+        sys.send(self.server, msg)
+
+        for f in changez.deleted
+            os.rm(f)
+        end
+
     end,
 
 ]
 
 
-#server starts to listen
+#server listens for incoming socket connections
 sys.listen(port, server_listener)
 
 #client connects to server
 sys.connect('127.0.0.1', port, client_listener)
 
 # server listens for file changes
+# todo: be able to call this anywhere, not only last
 sys.file_listen(monitored, server_listener)
 

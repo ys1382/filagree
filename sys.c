@@ -361,23 +361,20 @@ struct variable *sys_file_listen(struct context *context)
     return NULL;
 }
 
-struct flc {
-    struct context *context;
-    struct variable *result;
-};
-
-int file_list_callback(const char *path, bool isDir, void *context)
+int file_list_callback(const char *path, bool isDir, void *fl_context)
 {
-    printf("ftw %s%s\n", path, isDir ? "/" : "");
+    printf("ftw %s\n", path);//, isDir ? "/" : "");
 
-    struct flc *flc = (struct flc*)context;
+    struct file_list_context *flc = (struct file_list_context*)fl_context;
     struct byte_array *path2 = byte_array_from_string(path);
     struct variable *path3 = variable_new_str(flc->context, path2);
     struct byte_array *key = byte_array_from_string("dir");
     struct variable *key2 = variable_new_str(flc->context, key);
     struct variable *data = variable_new_bool(flc->context, isDir);
-    variable_map_insert(flc->context, path3, key2, data);
-    array_add(flc->result->list, path3);
+
+    struct variable *metadata = variable_new_map(flc->context, NULL);
+    variable_map_insert(flc->context, metadata, key2, data);
+    variable_map_insert(flc->context, flc->result, path3, metadata);
 
     return 0;
 }
@@ -386,8 +383,8 @@ struct variable *sys_file_list(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     const char *path = param_str(arguments, 1);
-    struct variable *result = variable_new_list(context, NULL);
-    struct flc flc = {context, result};
+    struct variable *result = variable_new_map(context, NULL);
+    struct file_list_context flc = {context, result};
     file_list(path, &file_list_callback, &flc);
     return flc.result;
 }
@@ -806,8 +803,6 @@ struct variable *builtin_method(struct context *context,
         result = variable_new_list(context, indexable->list);
 
     else if (!strcmp(idxstr, FNC_KEYS)) {
-        assert_message(it == VAR_LST, "keys are only for list");
-
         struct variable *v = variable_new_list(context, NULL);
         if (indexable->map) {
             struct array *a = map_keys(indexable->map);

@@ -250,6 +250,7 @@ void *sys_socket_listen2(void *arg)
 
                     struct node_thread *ta = thread_new(ta0->context, listener, sockfd);
                     ta->buf = byte_array_new_size(n);
+                    ta->buf->length = n;
                     memcpy((void*)ta->buf->data, buf, n);
                     ta->event = MESSAGED; // "messaged";
                     add_thread(ta, incoming, 0);
@@ -334,6 +335,7 @@ void *sys_connect2(void *arg)
                     break;
                 default:
                     ta->buf = byte_array_new_size(n);
+                    ta->buf->length = n;
                     memcpy((void*)ta->buf->data, buf, n);
                     ta->event = MESSAGED;
                     add_thread(ta, incoming, 0);

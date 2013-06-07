@@ -19,5 +19,10 @@ int32_t param_int(const struct variable *value, uint32_t index);
 
 struct variable *param_var(struct context *context, const struct variable *value, uint32_t index);
 
+struct file_list_context {
+    struct context *context;
+    struct variable *result;
+};
+
 
 #endif // SYS_H

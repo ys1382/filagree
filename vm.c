@@ -159,7 +159,7 @@ struct context *context_copy(struct context *original)
 
 void context_del(struct context *context)
 {
-    //DEBUGPRINT("context_del %p\n", context);
+    DEBUGPRINT("context_del %p\n", context);
 
     // wait for threads listening to sockets to end
     if (context->socket_listeners != NULL) {
@@ -185,8 +185,8 @@ void context_del(struct context *context)
         context->threads = NULL;
     }
 
-    //if (context->runtime)
-    //    DEBUGPRINT("\tjoin done for %p\n", context->threads);
+    if (context->runtime)
+        DEBUGPRINT("\tjoin done for %p\n", context->threads);
 
     struct array *vars = context->all_variables;
     for (int i=0; i<vars->length; i++) {
@@ -664,7 +664,7 @@ static void list_get(struct context *context, bool really)
     lookup(context, indexable, index, really);
     DEBUGPRINT("\n");
 
-    DEBUGPRINT("got from %p\n", indexable);
+    // DEBUGPRINT("got from %p\n", indexable);
 }
 
 static int32_t jump(struct context *context, struct byte_array *program)

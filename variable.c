@@ -253,15 +253,11 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
                 strcat(str, ",");
             strcat(str, "'");
 
-            // char *str3 = byte_array_to_string((struct byte_array*)array_get(a,i));
             int position = strlen(str);
-            struct variable *vai = (struct variable *)array_get(a,i);
             char *str2 = &str[position];
             int len2 = sizeof(str) - position;
-            //const char *vaistr =
+            struct variable *vai = (struct variable *)array_get(a,i);
             variable_value_str2(context, vai, str2, len2);
-//            strcat(str, vaistr);
-            //free(str2);
 
             strcat(str, "'");
             strcat(str, ":");
@@ -269,9 +265,7 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
             position = strlen(str);
             str2 = &str[position];
             len2 = sizeof(str) - position;
-            //const char *bistr =
             variable_value_str2(context, biv, str2, len2);
-//            strcat(str, bistr);
 
         } // for
 
@@ -382,30 +376,36 @@ struct byte_array *variable_serialize(struct context *context,
     if (withType)
         serial_encode_int(bits, in->type);
     switch (in->type) {
-        case VAR_INT:    serial_encode_int(bits, in->integer);    break;
-        case VAR_FLT:    serial_encode_float(bits, in->floater);    break;
+        case VAR_INT:   serial_encode_int(bits, in->integer);   break;
+        case VAR_FLT:   serial_encode_float(bits, in->floater); break;
+        case VAR_BOOL:  serial_encode_int(bits, in->boolean);   break;
         case VAR_STR:
-        case VAR_FNC:    serial_encode_string(bits, in->str);        break;
+        case VAR_FNC:   serial_encode_string(bits, in->str);    break;
         case VAR_LST: {
-            serial_encode_int(bits, in->list->length);
-            for (int i=0; i<in->list->length; i++)
+            uint32_t len = in->list->length;
+            serial_encode_int(bits, len);
+            for (int i=0; i<len; i++)
                 variable_serialize(context, bits, (const struct variable*)array_get(in->list, i), true);
-            if (in->map) {
-                struct array *keys = map_keys(in->map);
-                struct array *values = map_values(in->map);
-                serial_encode_int(bits, keys->length);
-                for (int i=0; i<keys->length; i++) {
-//                    serial_encode_string(bits, ((const struct variable*)array_get(keys, i))->str);
-                    variable_serialize(context, bits, (const struct variable*)array_get(keys, i), true);
-                    variable_serialize(context, bits, (const struct variable*)array_get(values, i), true);
-                }
-                array_del(keys);
-                array_del(values);
-            } else
-                serial_encode_int(bits, 0);
         } break;
-        default:        vm_exit_message(context, "bad var type");                break;
+        case VAR_MAP:
+            break;
+        default:
+            vm_exit_message(context, "bad var type");
+            break;
     }
+
+    if (in->map) {
+        struct array *keys = map_keys(in->map);
+        struct array *values = map_values(in->map);
+        serial_encode_int(bits, keys->length);
+        for (int i=0; i<keys->length; i++) {
+            variable_serialize(context, bits, (const struct variable*)array_get(keys, i), true);
+            variable_serialize(context, bits, (const struct variable*)array_get(values, i), true);
+        }
+        array_del(keys);
+        array_del(values);
+    } else
+        serial_encode_int(bits, 0);
 
     return bits;
 }
@@ -413,13 +413,24 @@ struct byte_array *variable_serialize(struct context *context,
 struct variable *variable_deserialize(struct context *context, struct byte_array *bits)
 {
 	null_check(context);
+    assert_message(bits->length, "zero length serialized variable");
     struct variable *result = NULL;
     struct byte_array *str = NULL;
+
     enum VarType vt = (enum VarType)serial_decode_int(bits);
     switch (vt) {
-        case VAR_NIL:    return variable_new_nil(context);
-        case VAR_INT:    return variable_new_int(context, serial_decode_int(bits));
-        case VAR_FLT:    return variable_new_float(context, serial_decode_float(bits));
+        case VAR_NIL:
+            result = variable_new_nil(context);
+            break;
+        case VAR_BOOL:
+            result = variable_new_bool(context, serial_decode_int(bits));
+            break;
+        case VAR_INT:
+            result = variable_new_int(context, serial_decode_int(bits));
+            break;
+        case VAR_FLT:
+            result = variable_new_float(context, serial_decode_float(bits));
+            break;
         case VAR_FNC:
             str = serial_decode_string(bits);
             result = variable_new_fnc(context, str, NULL);
@@ -429,27 +440,31 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
             result =  variable_new_str(context, str);
             break;
         case VAR_LST: {
-            uint32_t size = serial_decode_int(bits);
-            struct array *list = array_new_size(size);
-            while (size--)
+            uint32_t len = serial_decode_int(bits);
+            struct array *list = array_new_size(len);
+            while (len--)
                 array_add(list, variable_deserialize(context, bits));
-            struct variable *out = variable_new_list(context, list);
+            result = variable_new_list(context, list);
             array_del(list);
-
-            uint32_t map_length = serial_decode_int(bits);
-            if (map_length) {
-                out->map = map_new(context);
-                for (int i=0; i<map_length; i++) {
-                    struct variable *key = variable_deserialize(context, bits);
-                    struct variable *value = variable_deserialize(context, bits);
-                    map_insert(out->map, key, value);
-                }
-            }
-            return out;
+            break;
+        case VAR_MAP:
+            result = variable_new_map(context, NULL);
+            break;
         }
         default:
             vm_exit_message(context, "bad var type");
     }
+
+    uint32_t map_length = serial_decode_int(bits);
+    if (map_length) {
+        result->map = map_new(context);
+        for (int i=0; i<map_length; i++) {
+            struct variable *key = variable_deserialize(context, bits);
+            struct variable *value = variable_deserialize(context, bits);
+            map_insert(result->map, key, value);
+        }
+    }
+
     if (str != NULL)
         byte_array_del(str);
     return result;
@@ -535,7 +550,7 @@ struct variable *variable_concatenate(struct context *context, int n, const stru
 
 int variable_map_insert(struct context *context, struct variable* v, struct variable *key, struct variable *datum)
 {
-    DEBUGPRINT("variable_map_insert into %p\n", v);
+    //DEBUGPRINT("variable_map_insert into %p\n", v);
     assert_message(v->type != VAR_NIL, "can't insert into nil");
     if (v->map == NULL)
         v->map = map_new(context);
@@ -543,12 +558,16 @@ int variable_map_insert(struct context *context, struct variable* v, struct vari
     //char buf[VV_SIZE];
     //DEBUGPRINT("variable_map_insert %p %s into %p\n", datum, variable_value_str(context, datum, buf), v );
 #endif
+
+    // setting a value to nil means removing the key
+    if (datum->type == VAR_NIL)
+        return map_remove(v->map, key);
     return map_insert(v->map, key, datum);
 }
 
 struct variable *variable_map_get(struct context *context, const struct variable* v, const struct variable *key)
 {
-    DEBUGPRINT("variable_map_get from %p\n", v);
+    // DEBUGPRINT("variable_map_get from %p\n", v);
     if (v->map == NULL)
         return variable_new_nil(context);
     return (struct variable*)map_get(v->map, key);

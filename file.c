@@ -2,6 +2,8 @@
 #include "util.h"
 #include "file.h"
 #include "hal.h"
+#include "sys.h"
+
 #include <string.h>
 #include <stdarg.h>
 #include <sys/stat.h>
@@ -55,8 +57,9 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
     if (fclose(file))
         exit_message(ERROR_FCLOSE);
 
-    str[read] = 0;
-    struct byte_array* ba = byte_array_from_string(str);
+    struct byte_array* ba = byte_array_new_size(size);
+    ba->length = size;
+    memcpy(ba->data, str, size);
     free(str);
     return ba;
 }
@@ -93,13 +96,14 @@ char* build_path(const char* dir, const char* name)
     return path;
 }
 
-int file_list(const char *path, int (*fn)(const char*, bool, void*), void *context)
+int file_list(const char *path, int (*fn)(const char*, bool, void*), void *flc)
 {
 	const char *paths[2];
 	FTSENT *cur;
 	FTS *ftsp;
 	int sverrno, error=0;
-    
+
+    DEBUGPRINT("file_list %s\n", path);
 	paths[0] = path;
 	paths[1] = NULL;
 	ftsp = fts_open((char * const *)paths, FTS_COMFOLLOW | FTS_NOCHDIR, NULL);
@@ -117,7 +121,8 @@ int file_list(const char *path, int (*fn)(const char*, bool, void*), void *conte
                 goto done;
 		}
         bool isDir = S_ISDIR(cur->fts_statp->st_mode);
-		error = fn(cur->fts_path, isDir, context);
+        struct file_list_context *flc2 = (struct file_list_context *)flc;
+		error = fn(cur->fts_path, isDir, flc2);
 		if (error != 0) {
             printf("callback failed\n");
 			break;

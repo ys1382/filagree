@@ -428,26 +428,32 @@ bool stack_empty(const struct stack *stack)
 static int32_t default_hashor(const void *x, void *context)
 {
     const struct variable *key = (const struct variable*)x;
-    assert_message(key->type == VAR_STR, "non str in default_hashor");
-    const struct byte_array *name = key->str;
-    int32_t hash = 0;
-    int i = 0;
-    for (i = 0; i<name->length; i++)
-        hash += name->data[i];
-    return hash;
+    switch (key->type) {
+        case VAR_INT:
+            return key->integer;
+        case VAR_FNC:
+        case VAR_BYT:
+        case VAR_STR: {
+            const struct byte_array *name = key->str;
+            int32_t hash = 0;
+            int i = 0;
+            for (i = 0; i<name->length; i++)
+                hash += name->data[i];
+            return hash;
+        }
+        default:
+            exit_message("not handled hash type");
+            return 1;
+    }
 }
 
 static bool default_comparator(const void *a, const void *b, void *context) {
     return variable_compare((struct context *)context, (struct variable *)a, (struct variable *)b);
-//    return byte_array_equals((struct byte_array*)a, (struct byte_array*)b);
 }
 
 static void *default_copyor(const void *key, void *context)
 {
-//    struct variable *key2 = (struct variable *)key;
-//    return byte_array_copy(key2->str);
     return variable_copy((struct context *)context, (struct variable *)key);
-//    return (void*)key;
 }
 
 static void default_rm(const void *key, void *context) {}

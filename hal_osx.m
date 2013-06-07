@@ -747,30 +747,25 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
     for (i=0; i<numEvents; i++) {
 /*
         FSEventStreamEventFlags event = eventFlags[i];
-
-        bool created  = event & kFSEventStreamEventFlagItemCreated;
-        bool renamed  = event & kFSEventStreamEventFlagItemRenamed;
-        bool deleted  = event & kFSEventStreamEventFlagItemRemoved;
-        bool modified = event & kFSEventStreamEventFlagItemModified;
-
-        DEBUGPRINT("\t%s:\n", paths[i]);
-        if (created)
-            DEBUGPRINT("\t\tcreated\n");
-        if (renamed)
-            DEBUGPRINT("\t\trenamed\n");
-        if (modified)
-            DEBUGPRINT("\t\tmodified\n");
-        if (deleted)
-            DEBUGPRINT("\t\tdeleted\n");
+        if (event & kFSEventStreamEventFlagItemCreated)     DEBUGPRINT("\t\tcreated\n");
+        if (event & kFSEventStreamEventFlagItemRenamed)     DEBUGPRINT("\t\trenamed\n");
+        if (event & kFSEventStreamEventFlagItemRemoved)     DEBUGPRINT("\t\tdeleted\n");
+        if (event & kFSEventStreamEventFlagItemModified)    DEBUGPRINT("\t\tmodified\n");
 */
         struct file_thread *thread = (struct file_thread*)clientCallBackInfo;
-        struct byte_array *path = byte_array_from_string(paths[i]);
-        struct variable *path2 = variable_new_str(thread->context, path);
+
+        char *path = (char*)paths[i];
+        int len = strlen(path) - 1;
+        if (path[len] == '/') path[len] = 0; // pesky trailing slash
+        struct byte_array *path2 = byte_array_from_string(path);
+        struct variable *path3 = variable_new_str(thread->context, path2);
+
         struct byte_array *method = byte_array_from_string(FILE_EVENT);
         struct variable *method2 = variable_new_str(thread->context, method);
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
+
         if (method3->type != VAR_NIL)
-            vm_call(thread->context, method3, thread->listener, path2);
+            vm_call(thread->context, method3, thread->listener, path3);
     }
 }
 
@@ -786,7 +781,9 @@ void hal_file_listen(struct context *context, const char *path, struct variable 
     FSEventStreamContext fsc = {0, ft, NULL, NULL, NULL};
     FSEventStreamRef stream;
     CFAbsoluteTime latency = 1.0; // seconds
-    
+
+    DEBUGPRINT("hal_file_listen %s\n", path);
+
     stream = FSEventStreamCreate(NULL,
                                  &file_listener_callback,
                                  &fsc,

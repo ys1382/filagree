@@ -142,10 +142,10 @@
 			isa = PBXGroup;
 			children = (
 				881B388416BCC26F00084F96 /* im.fg */,
-				882AEE9C1751FEAC0074FC41 /* sync.fg */,
 				880C5BF616ED1BFC00B66505 /* node.fg */,
 				88784E0615CDC8860052A0F2 /* program.fg */,
 				88AA20D216209EB000634794 /* proto.fg */,
+				882AEE9C1751FEAC0074FC41 /* sync.fg */,
 				880E6A3F15FB1B0B008A06F7 /* sys.fg */,
 				88A65DA81477574E0055DACF /* test.fg */,
 				88E1FA6515CC5263001E6488 /* try.fg */,
