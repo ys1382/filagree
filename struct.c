@@ -321,10 +321,31 @@ int32_t byte_array_find(struct byte_array *within, struct byte_array *sought, ui
     uint8_t *wd = within->data;
     uint8_t *sd = sought->data;
     for (int32_t i=start; i<ws-ss+1; i++)
-        if (!memcmp(wd + i, sd, ss)) 
-            return i; 
+        if (!memcmp(wd + i, sd, ss))
+            return i;
 
     return -1;
+}
+
+struct byte_array *byte_array_replace_all(struct byte_array *original, struct byte_array *a, struct byte_array *b)
+{
+    /*DEBUGPRINT("replace in %s: %s -> %s\n",
+               byte_array_to_string(original),
+               byte_array_to_string(a),
+               byte_array_to_string(b));*/
+
+    struct byte_array *replaced = byte_array_copy(original);
+    int where = 0;
+
+    for(;;) { // replace all
+
+        if ((where = byte_array_find(replaced, a, where)) < 0)
+            break;
+        struct byte_array *replaced2 = byte_array_replace(replaced, b, where++, a->length);
+        byte_array_del(replaced);
+        replaced = replaced2;
+    }
+    return replaced;
 }
 
 struct byte_array *byte_array_replace(struct byte_array *within, struct byte_array *replacement, uint32_t start, int32_t length)
@@ -342,7 +363,9 @@ struct byte_array *byte_array_replace(struct byte_array *within, struct byte_arr
 
     memcpy(replaced->data, within->data, start);
     memcpy(replaced->data + start, replacement->data, replacement->length);
-    memcpy(replaced->data + start + replacement->length, within->data + start + length, within->length - start - length);
+    memcpy(replaced->data + start + replacement->length,
+           within->data + start + length,
+           within->length - start - length);
 
     //DEBUGPRINT("byte_array_replace %p->%p\n", replaced, replaced->data);
     return replaced;
@@ -627,8 +650,23 @@ int map_resize(struct map *m, size_t size)
     return 0;
 }
 
-// b into a; in case of intersection, a wins
-void map_update(struct map *a, const struct map *b)
+// a - b
+void map_minus(struct map *a, const struct map *b)
+{
+    if ((a == NULL) || (b == NULL))
+        return;
+    struct array *keys = map_keys(b);
+    for (int i=0; i<keys->length; i++) {
+        const void *key = array_get(keys, i);
+        if (map_has(a, key)) {
+            map_remove(a, key);
+        }
+    }
+    array_del(keys);
+}
+
+// a + b; in case of intersection, a wins
+void map_union(struct map *a, const struct map *b)
 {
     if ((a == NULL) || (b == NULL))
         return;
@@ -651,6 +689,6 @@ struct map *map_copy(void *context, struct map *original)
         return NULL;
     struct map *copy;
     copy = map_new_ex(context, original->comparator, original->hash_func, original->copyor, original->deletor);
-    map_update(copy, original);
+    map_union(copy, original);
     return copy;
 }

@@ -160,7 +160,7 @@ struct variable *variable_new_list(struct context *context, struct array *list)
         if (u->type == VAR_MAP) {
             if (v->map == NULL)
                 v->map = map_new(context);
-            map_update(v->map, u->map);
+            map_union(v->map, u->map);
         } else
             array_set(v->list, v->list->length, u);
     }

@@ -64,8 +64,8 @@ struct variable *sys_load(struct context *context)
 struct variable *sys_write(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *v = (struct variable*)array_get(value->list, 1);
-    struct variable *path = (struct variable*)array_get(value->list, 2);
+    struct variable *path = (struct variable*)array_get(value->list, 1);
+    struct variable *v = (struct variable*)array_get(value->list, 2);
 
     struct byte_array *bytes = byte_array_new();
     variable_serialize(context, bytes, v, true);
@@ -724,14 +724,14 @@ struct variable *cfnc_replace(struct context *context)
     null_check(b);
     assert_message(self->type == VAR_STR, "searching in a non-string");
 
-    int32_t where = 0;
     struct byte_array *replaced = NULL;
 
     if (a->type == VAR_STR) { // find a, replace with b
 
         assert_message(b->type == VAR_STR, "non-string replacement");
+        int32_t where = 0;
 
-        if (c) { // replace first match after index b
+        if (c) { // replace first match after index c
 
             assert_message(c->type == VAR_INT, "non-integer index");
             if (((where = byte_array_find(self->str, a->str, c->integer)) >= 0))
@@ -739,16 +739,7 @@ struct variable *cfnc_replace(struct context *context)
 
         } else {
 
-            replaced = byte_array_copy(self->str);
-
-            for(;;) { // replace all
-
-                if ((where = byte_array_find(self->str, a->str, where)) < 0)
-                    break;
-                struct byte_array *replaced2 = byte_array_replace(replaced, b->str, where++, a->str->length);
-                byte_array_del(replaced);
-                replaced = replaced2;
-            }
+            replaced = byte_array_replace_all(self->str, a->str, b->str);
         }
 
     } else if (a->type == VAR_INT ) { // replace at index a, length b, insert c

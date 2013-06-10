@@ -83,10 +83,10 @@ tester.test('comment',
 
 
 tester.test('float',
-      function()
+    function()
         x = 1.2
-      y = 3.4
-      return x + y > 4
+        y = 3.4
+        return x + y > 4
     end,
     1)
 

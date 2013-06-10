@@ -55,7 +55,7 @@ void byte_array_del(struct byte_array* ba);
 struct byte_array *byte_array_copy(const struct byte_array* original);
 struct byte_array *byte_array_add_byte(struct byte_array *a, uint8_t b);
 void byte_array_reset(struct byte_array* ba);
-//void byte_array_resize(struct byte_array* ba, uint32_t size);
+struct byte_array *byte_array_replace_all(struct byte_array *original, struct byte_array *a, struct byte_array *b);
 bool byte_array_equals(const struct byte_array *a, const struct byte_array* b);
 struct byte_array *byte_array_concatenate(int n, const struct byte_array* ba, ...);
 void byte_array_print(char* into, size_t size, const struct byte_array* ba);
@@ -117,10 +117,10 @@ int map_insert(struct map* map, const void *key, void *data);
 int map_remove(struct map* map, const void *key);
 void *map_get(const struct map* map, const void *key);
 bool map_has(const struct map* map, const void *key);
-//int map_resize(struct map* map, size_t size);
 struct array* map_keys(const struct map* m);
 struct array* map_values(const struct map* m);
-void map_update(struct map *a, const struct map *b);
+void map_union(struct map *a, const struct map *b);
+void map_minus(struct map *a, const struct map *b);
 struct map *map_copy(void *context, struct map *map);
 
 #endif // STRUCT_H

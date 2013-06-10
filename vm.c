@@ -525,7 +525,7 @@ static void push_list(struct context *context, struct byte_array *program)
         if (v->type == VAR_MAP) {
             if (map == NULL)
                 map = map_new(context, NULL);
-            map_update(map, v->map); // mapped values are stored in the map, not list
+            map_union(map, v->map); // mapped values are stored in the map, not list
         }
         else
             array_insert(items, 0, v);
@@ -979,7 +979,13 @@ static struct variable *binary_op_float(struct context *context,
                                         const struct variable *v)
 {
     float m = u->floater;
-    float n = v->floater;
+    float n;
+    switch (v->type) {
+        case VAR_FLT:   n = v->floater;         break;
+        case VAR_INT:   n = (float)v->integer;  break;
+        default:
+            exit_message("can't compare with float");
+    }
     float f = 0;
     switch (op) {
         case VM_MUL:    f = m * n;                                  break;
@@ -987,10 +993,10 @@ static struct variable *binary_op_float(struct context *context,
         case VM_ADD:    f = m + n;                                  break;
         case VM_SUB:    f = m - n;                                  break;
         case VM_NEQ:    f = m != n;                                 break;
-        case VM_GTN:    return variable_new_int(context, n > m);
-        case VM_LTN:    return variable_new_int(context, n < m);
-        case VM_GRQ:    return variable_new_int(context, n >= m);
-        case VM_LEQ:    return variable_new_int(context, n <= m);
+        case VM_GTN:    return variable_new_int(context, m > n);
+        case VM_LTN:    return variable_new_int(context, m < n);
+        case VM_GRQ:    return variable_new_int(context, m >= n);
+        case VM_LEQ:    return variable_new_int(context, m <= n);
         default:
             return (struct variable*)vm_exit_message(context, "bad math float operator");
     }
@@ -1020,6 +1026,11 @@ static struct variable *binary_op_str(struct context *context,
         case VM_EQU:
             w = variable_new_int(context, byte_array_equals(ustr, vstr));
             break;
+        case VM_SUB: {
+            struct byte_array *nada = byte_array_from_string("");
+            struct byte_array *wstr = byte_array_replace_all(vstr, ustr, nada);
+            w = variable_new_str(context, wstr);
+        } break;
         default:
             w = (struct variable*)vm_exit_message(context, "unknown string operation");
             break;
@@ -1032,23 +1043,54 @@ static struct variable *binary_op_str(struct context *context,
     return w;
 }
 
+static struct variable *binary_op_map(struct context *context,
+                                      enum Opcode op,
+                                      struct variable *u,
+                                      struct variable *v)
+{
+    struct map *a = map_copy(context, u->map);
+    struct map *b = v->map;
+    switch (op) {
+        case VM_ADD:    map_union(a, b);    break;
+        case VM_SUB:
+        {            char p[1000], q[1000], r[1000];
+            char *aa = variable_value_str(context, u, p);
+            char *bb = variable_value_str(context, v, q);
+            map_minus(a, b);
+            char *c = variable_value_str(context, variable_new_map(context, a), r);
+            DEBUGPRINT("mapminusmap: %s - %s = %s\n", aa,bb,c);
+        }   break;
+        default:
+            exit_message("missing map operation implementation");
+            return NULL;
+    }
+    return variable_new_map(context, a);
+}
+
 static struct variable *binary_op_lst(struct context *context,
                                       enum Opcode op,
-                                      const struct variable *u,
-                                      const struct variable *v)
+                                      struct variable *u,
+                                      struct variable *v)
 {
     vm_assert(context, u->type==VAR_LST && v->type==VAR_LST, "list op with non-lists");
-    struct variable *w = NULL;
+    struct variable *w = variable_copy(context, v);
 
     switch (op) {
         case VM_ADD:
-            w = variable_copy(context, v);
             for (int i=0; i<u->list->length; i++)
                 array_add(w->list, array_get(u->list, i));
-            map_update(w->map, u->map);
+            map_union(w->map, u->map);
+            break;
+        case VM_SUB:
+            map_minus(w->map, u->map);
+            char p[1000], q[1000], r[1000];
+            char *a = variable_value_str(context, u, p);
+            char *b = variable_value_str(context, v, q);
+            char *c = variable_value_str(context, w, r);
+            DEBUGPRINT("mapminuslist: %s - %s = %s\n", a,b,c);
             break;
         default:
-            return (struct variable*)vm_exit_message(context, "unknown string operation");
+            return (struct variable*)vm_exit_message(context, "unknown list operation");
     }
 
     return w;
@@ -1119,11 +1161,13 @@ static void binary_op(struct context *context, enum Opcode op)
     } else if ((op == VM_EQU) || (op == VM_NEQ)) {
         bool same = variable_compare(context, u, v) ^ (op == VM_NEQ);
         w = variable_new_bool(context, same);
+    } else if (vt == VAR_MAP || ut == VAR_MAP) {
+        w = binary_op_map(context, op, v, u);
     } else {
         bool floater = (ut == VAR_FLT && is_num(vt)) || (vt == VAR_FLT && is_num(ut));
         bool inter = (ut==VAR_INT || ut==VAR_BOOL) && (vt==VAR_INT || vt==VAR_BOOL);
 
-        if (floater)                                w = binary_op_float(context, op, u, v);
+        if (floater)                                w = binary_op_float(context, op, v, u);
         else if (inter)                             w = binary_op_int(context, op, v, u);
         else if (vt == VAR_STR || ut == VAR_STR)    w = binary_op_str(context, op, u, v);
         else if (vt == VAR_LST)                     w = binary_op_lst(context, op, u, v);

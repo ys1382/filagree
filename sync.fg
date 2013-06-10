@@ -1,20 +1,20 @@
 # todo: make Sync class
 
 port = 9990
-monitored = '/Users/yusuf/tmp/synctest'
-
+server_dir = '/Users/yusuf/tmp/synctest/server'
+client_dir = '/Users/yusuf/tmp/synctest/client'
 
 server_listener = [
 
-    'path' : monitored,
-    'files' : sys.file_list(monitored),
+    'monitored' : server_dir,
+    'files' : [f - monitored for f in sys.file_list(server_dir)],
 
     'connected' : function(self, id)
 
         sys.print('server: connected ' + id)
         self.client = id
 
-        l = sys.file_list(self.path)
+        l = sys.file_list(self.monitored)
         msg = ['event' : 'login', 'files' : l]
         sys.send(self.client, msg)
 
@@ -25,48 +25,29 @@ server_listener = [
         sys.print('server: message from ' + id + ': ' + msg)
 
         if msg.event == 'content-request' then
-            self.handle_content_request(msg)
+            self.handle_content_request(id, msg)
         end
     end,
 
-    'handle_content_request' : function(self, msg)
-        for path in msg.paths
-            content = os.read(path)
-            response = ['event' : file, 'path' : path, 'content' : content]
+    'handle_content_request' : function(self, id, msg)
+        for path in msg.paths.keys
+            content = sys.read(path)
+            response = ['event' : 'content', 'path' : path, 'content' : content]
             sys.send(id, response)
         end
     end,
 
     'filed' : function(self, path)
 
-        sys.print('filed')
-        latest = sys.file_list(path)
-        added, deleted = self.map_delta(self.files, latest)
+        latest = [f - self.monitored for f in sys.file_list(path)]
+        added = latest - self.files
+        deleted = self.files - latest
         changes = ['added' : added, 'deleted' : deleted]
         msg = ['event' : 'change', 'changes' : changes]
         sys.send(self.client, msg)
         self.files = latest
 
     end,
-
-    # returns a - b, b - a
-    # todo: add to List class in sys.fg
-    'map_delta' : function(self, a, b)
-
-        a_minus_b = []
-        b_minus_a = b
-        for x in a.keys
-            if not b[x] then
-                a_minus_b[x] = a[x]
-            else
-                b_minus_a[x] = nil
-            end
-        end
-
-        return a_minus_b, b_minus_a
-
-    end
-
 ]
 
 client_listener = [
@@ -82,8 +63,8 @@ client_listener = [
             self.snapshot = msg.files
         else if msg.event == 'change' then
             self.handle_change(msg.changes)
-        else if msg.event == 'file' then
-            os.write(msg.path, msg.content)
+        else if msg.event == 'content' then
+            sys.write(msg.path, msg.content)
         end
     end,
 
@@ -93,12 +74,11 @@ client_listener = [
         msg = ['event' : 'content-request', 'paths' : changez.added]
         sys.send(self.server, msg)
 
-        for f in changez.deleted
-            os.rm(f)
+        for f in changez.deleted.keys
+            sys.remove(f)
         end
 
     end,
-
 ]
 
 
@@ -110,5 +90,5 @@ sys.connect('127.0.0.1', port, client_listener)
 
 # server listens for file changes
 # todo: be able to call this anywhere, not only last
-sys.file_listen(monitored, server_listener)
+sys.file_listen(server_dir, server_listener)
 

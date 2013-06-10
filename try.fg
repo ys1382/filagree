@@ -1,18 +1,3 @@
-map_delta = function(a, b)
-    a_minus_b = []
-    b_minus_a = b
-    for x in a.keys
-        if not b[x] then
-            a_minus_b[x] = a[x]
-        else
-            b_minus_a[x] = nil
-        end
-    end
-
-    return a_minus_b, b_minus_a
-end
-
-p = ['i':2, 'j':3]
-q = ['j':4, 'k':5]
-
-r,s = map_delta(p,q)
+x = ['abc', 'dcecf', 'ghci']
+y = [a - 'c' for a in x]
+sys.print(y)
