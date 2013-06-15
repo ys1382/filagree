@@ -2,6 +2,6 @@ a = [7,8,9]
 b = a - [8]
 c = a - 9
 
-sys.print(a)
-sys.print(b)
-sys.print(c)
+#sys.print(a)
+#sys.print(b)
+#sys.print(c)

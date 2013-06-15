@@ -333,7 +333,7 @@ tester.test('map args',
         return f('p':7, 'q':8)
     end,
     15)
-
+/*
 tester.test('list class',
     function()
         list = sys.List(5)
@@ -353,6 +353,6 @@ tester.test('string class',
         return (a*10) + b
     end,
     10)
-
+*/
 
 tester.done()

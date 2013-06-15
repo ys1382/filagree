@@ -1094,9 +1094,7 @@ static struct variable *binary_op_lst(struct context *context,
                                       struct variable *v)
 {
     vm_assert(context, u->type==VAR_LST || v->type==VAR_LST, "list op with non-lists");
-    enum VarType ut = u->type, vt = v->type;
-    if (ut != VAR_LST)
-        return binary_op_lst(context, op, v, u);
+    enum VarType vt = v->type;
 
     struct variable *w = variable_copy(context, u);
 
@@ -1114,10 +1112,10 @@ static struct variable *binary_op_lst(struct context *context,
             if (vt == VAR_LST) {
                 for (int i=0; i<v->list->length; i++) {
                     struct variable *item = (struct variable*)array_get(v->list, i);
-                    variable_purge(context, u, item);
+                    variable_purge(context, w, item);
                 }
             } else {
-                variable_purge(context, u, v);
+                variable_purge(context, w, v);
             }
             map_minus(w->map, u->map);
             //char p[1000], q[1000], r[1000];
@@ -1209,7 +1207,7 @@ static void binary_op(struct context *context, enum Opcode op)
         if (floater)                                w = binary_op_float(context, op, v, u);
         else if (inter)                             w = binary_op_int(context, op, v, u);
         else if (vt == VAR_STR || ut == VAR_STR)    w = binary_op_str(context, op, u, v);
-        else if (vt == VAR_LST)                     w = binary_op_lst(context, op, u, v);
+        else if (vt == VAR_LST)                     w = binary_op_lst(context, op, v, u);
         else
             vm_exit_message(context, "unknown binary op");
     }
