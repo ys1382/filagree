@@ -177,10 +177,13 @@ char *param_str(const struct variable *value, uint32_t index)
     return str;
 }
 
+// todo: handle nil return
 int32_t param_int(const struct variable *value, uint32_t index) {
     if (index >= value->list->length)
         return 0;
-    return ((struct variable*)array_get(value->list, index))->integer;
+    struct variable *result = (struct variable*)array_get(value->list, index);
+    assert_message(result->type == VAR_INT, "not an int");
+    return result->integer;
 }
 
 struct variable *param_var(struct context *context, const struct variable *value, uint32_t index) {
@@ -613,28 +616,10 @@ struct variable *cfnc_find2(struct context *context, bool has)
     null_check(self);
     null_check(sought);
 
-    struct variable *result = NULL;
-
-    if (self->type == VAR_STR && sought->type == VAR_STR) {                     // search for substring
-        assert_message(!start || start->type == VAR_INT, "non-integer index");
-        int32_t beginning = start ? start->integer : 0;
-        int32_t index = byte_array_find(self->str, sought->str, beginning);
-        if (has)
-            result = variable_new_bool(context, index != -1);
-        else
-            result = variable_new_int(context, index);
-
-    } else if (self->type == VAR_LST) {
-        for (int i=0; i<self->list->length; i++) {
-            struct variable *v = (struct variable*)array_get(self->list, i);
-            if ((sought->type == VAR_INT && v->type == VAR_INT && v->integer == sought->integer) ||
-                (sought->type == VAR_STR && v->type == VAR_STR && byte_array_equals(sought->str, v->str)))
-                result = has ? variable_new_bool(context, true) : v;
-        }
-    }
-    if ((result == NULL) && (self->map != NULL) && (sought->type == VAR_STR))
-        result = (struct variable*)map_get(self->map, sought);
-    return result ? result : variable_new_nil(context);
+    struct variable *result = variable_find(context, self, sought, start);
+    if (has)
+        return variable_new_bool(context, result->type != VAR_NIL);
+    return result;
 }
 
 struct variable *cfnc_find(struct context *context) {

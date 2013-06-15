@@ -96,10 +96,10 @@ void node_callback(struct node_thread *ta, struct variable *message)
     struct variable *callback = variable_map_get(ta->context, ta->listener, key3);
 
     struct variable *id = variable_new_int(ta->context, ta->fd);
-    if (callback && callback->type == VAR_NIL)
-        variable_del(ta->context, callback);
-    else if (callback != NULL)
-
+    //if (callback && callback->type == VAR_NIL)
+    //    variable_del(ta->context, callback);
+    //else
+    if (callback != NULL)
         vm_call(ta->context, callback, ta->listener, id, message);
 
     variable_del(ta->context, key3);
@@ -253,6 +253,7 @@ void *sys_socket_listen2(void *arg)
                     ta->buf->length = n;
                     memcpy((void*)ta->buf->data, buf, n);
                     ta->event = MESSAGED; // "messaged";
+                    DEBUGPRINT("incoming1 %d\n", sockfd);
                     add_thread(ta, incoming, 0);
                 }
 				
@@ -338,6 +339,7 @@ void *sys_connect2(void *arg)
                     ta->buf->length = n;
                     memcpy((void*)ta->buf->data, buf, n);
                     ta->event = MESSAGED;
+                    DEBUGPRINT("incoming2 %d\n", ta->fd);
                     add_thread(ta, incoming, 0);
                     break;
             }
@@ -376,9 +378,11 @@ void *sys_send2(void *arg)
     struct node_thread *ta = (struct node_thread *)arg;
 
     if (write(ta->fd, ta->buf->data, ta->buf->length) != ta->buf->length) {
+        DEBUGPRINT("write error\n");
         struct variable *problem = variable_new_str(ta->context, byte_array_from_string("write error"));
         node_callback(ta, problem);
     } else {
+        DEBUGPRINT("sent to %d\n", ta->fd);
         node_callback(ta, NULL); // sent
     }
     return NULL;
@@ -389,6 +393,7 @@ struct variable *sys_send(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     int fd = param_int(arguments, 1);
+    assert_message(fd < 10, "bad fd");
     struct variable *listener = param_var(context, arguments, 3);
 
     struct node_thread *ta = thread_new(context, listener, fd);

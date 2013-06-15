@@ -1,3 +1,7 @@
-x = ['abc', 'dcecf', 'ghci']
-y = [a - 'c' for a in x]
-sys.print(y)
+a = [7,8,9]
+b = a - [8]
+c = a - 9
+
+sys.print(a)
+sys.print(b)
+sys.print(c)

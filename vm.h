@@ -27,7 +27,7 @@ struct context {
     uint8_t indent;
     find_c_var *find;
 #ifdef DEBUG
-    char pcbuf[100];
+    char pcbuf[10000]; // todo: check boundary
 #endif
 };
 
@@ -105,6 +105,7 @@ void vm_call(struct context *context, struct variable *func, struct variable *ar
 void *vm_exit_message(struct context *context, const char *format, ...);
 void vm_null_check(struct context *context, const void* p);
 void vm_assert(struct context *context, bool assertion, const char *format, ...);
+struct variable *lookup(struct context *context, struct variable *indexable, struct variable *index, bool really);
 //void print_operand_stack(struct context *context);
 
 

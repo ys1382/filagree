@@ -764,7 +764,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
         struct variable *method2 = variable_new_str(thread->context, method);
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
 
-        if (method3->type != VAR_NIL)
+        if ((method3 != NULL) && (method3->type != VAR_NIL))
             vm_call(thread->context, method3, thread->listener, path3);
     }
 }

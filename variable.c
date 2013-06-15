@@ -565,12 +565,12 @@ int variable_map_insert(struct context *context, struct variable* v, struct vari
     return map_insert(v->map, key, datum);
 }
 
-struct variable *variable_map_get(struct context *context, const struct variable* v, const struct variable *key)
+struct variable *variable_map_get(struct context *context, struct variable *v, struct variable *key)
 {
-    // DEBUGPRINT("variable_map_get from %p\n", v);
-    if (v->map == NULL)
-        return variable_new_nil(context);
-    return (struct variable*)map_get(v->map, key);
+    struct variable *result = lookup(context, v, key, false);
+    if (result->type == VAR_SRC)
+        result = array_get(result->list, 0);
+    return result;
 }
 
 static bool variable_compare_maps(struct context *context, const struct map *umap, const struct map *vmap)
@@ -663,3 +663,33 @@ struct variable* variable_copy(struct context *context, const struct variable* v
     return u;
 }
 
+struct variable *variable_find(struct context *context,
+                               struct variable *self,
+                               struct variable *sought,
+                               struct variable *start)
+{
+    struct variable *result = NULL;
+    
+    if (self->type == VAR_STR && sought->type == VAR_STR) {                     // search for substring
+        assert_message(!start || start->type == VAR_INT, "non-integer index");
+        int32_t beginning = start ? start->integer : 0;
+        int32_t index = byte_array_find(self->str, sought->str, beginning);
+        if (index == -1)
+            return variable_new_nil(context);
+        return variable_new_int(context, index);
+        
+    }
+    
+    if (self->type == VAR_LST) {
+        for (int i=0; !result && i<self->list->length; i++) {
+            struct variable *v = (struct variable*)array_get(self->list, i);
+            if ((sought->type == VAR_INT && v->type == VAR_INT && v->integer == sought->integer) ||
+                (sought->type == VAR_STR && v->type == VAR_STR && byte_array_equals(sought->str, v->str)))
+                return variable_new_int(context, i);
+        }
+    }
+    
+    if (self->type == VAR_MAP)
+        result = (struct variable*)map_get(self->map, sought);
+    return result ? result : variable_new_nil(context);
+}

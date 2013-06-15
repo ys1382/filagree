@@ -31,12 +31,12 @@ sys.class = function(self, init, super)
 
         # when any instance's member is requested,
         # first look in meta, then the instance
-        self!get = function(self, sought)
-            g = self!meta.find(sought)
+        self!get = function(self, sought1)
+            g = self!meta.find(sought1)
             if (g==nil) and (self!meta.super) then
-                g = self!meta.super[sought]
+                g = self!meta.super[sought1]
             end
-            return g or self{sought}
+            return g or self{sought1}
         end
 
         # instance and class share the same meta
@@ -48,7 +48,7 @@ sys.class = function(self, init, super)
 
     # when any class's member is getted or setted, do so in meta
     f!set = function(self, key, value) self!meta[key] = value sys.print(self) end
-    f!get = function(self, sought) return self!meta[sought] end
+    f!get = function(self, sought2) return self!meta[sought2] end
     f!meta = meta
 
     # the class
