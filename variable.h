@@ -11,7 +11,7 @@ enum VarType {
     VAR_STR,
     VAR_FNC,
     VAR_LST,
-    VAR_MAP,
+    VAR_KVP,
     VAR_SRC,
     VAR_ERR,
     VAR_BYT,
@@ -39,6 +39,9 @@ struct variable {
         int32_t integer;
         float floater;
         bool boolean;
+        struct {
+            struct variable *key, *val;
+        } kvp;
         struct variable*(*cfnc)(context_p);
     };
     struct map *map;
@@ -49,8 +52,7 @@ void variable_del(struct context *context, struct variable *v);
 struct byte_array* variable_value(struct context *context, struct variable* v);
 char* variable_value_str(struct context *context, struct variable* v, char *buf);
 struct byte_array *variable_serialize(struct context *context, struct byte_array *bits,
-                                      const struct variable *in,
-                                      bool withType);
+                                      const struct variable *in);
 struct variable *variable_deserialize(struct context *context, struct byte_array *str);
 
 struct variable* variable_new_bool(struct context *context, bool b);
@@ -58,10 +60,10 @@ struct variable *variable_new_err(struct context *context, const char* message);
 struct variable *variable_new_c(struct context *context, callback2func *cfnc);
 struct variable *variable_new_int(struct context *context, int32_t i);
 struct variable *variable_new_nil(struct context *context);
-struct variable *variable_new_map(struct context *context, struct map *map);
+struct variable *variable_new_kvp(struct context *context, struct variable *key, struct variable *val);
 struct variable *variable_new_float(struct context *context, float f);
 struct variable *variable_new_str(struct context *context, struct byte_array *str);
-struct variable *variable_new_fnc(struct context *context, struct byte_array *body, struct map *closures);
+struct variable *variable_new_fnc(struct context *context, struct byte_array *body, struct variable *closures);
 struct variable *variable_new_list(struct context *context, struct array *list);
 struct variable *variable_new_src(struct context *context, uint32_t size);
 struct variable *variable_new_bytes(struct context *context, struct byte_array *bytes, uint32_t size);

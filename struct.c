@@ -666,10 +666,12 @@ void map_minus(struct map *a, const struct map *b)
 }
 
 // a + b; in case of intersection, a wins
-void map_union(struct map *a, const struct map *b)
+struct map *map_union(struct map *a, const struct map *b)
 {
-    if ((a == NULL) || (b == NULL))
-        return;
+    if (b == NULL)
+        return a;
+    if (a == NULL)
+        return map_copy(b->context, b);
     struct array *keys = map_keys(b);
     for (int i=0; i<keys->length; i++) {
         const void *key = array_get(keys, i);
@@ -681,14 +683,14 @@ void map_union(struct map *a, const struct map *b)
         }
     }
     array_del(keys);
+    return a;
 }
 
-struct map *map_copy(void *context, struct map *original)
+struct map *map_copy(void *context, const struct map *original)
 {
     if (original == NULL)
         return NULL;
     struct map *copy;
     copy = map_new_ex(context, original->comparator, original->hash_func, original->copyor, original->deletor);
-    map_union(copy, original);
-    return copy;
+    return map_union(copy, original);
 }

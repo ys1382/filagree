@@ -1,7 +1,46 @@
+/*
 a = [7,8,9]
 b = a - [8]
 c = a - 9
 
+a = 3:4
+b = a.key
+c = a.val
+*/
+
+#z = [2,3] + 4
+
+#a = [2:3, 4:5, 6:7, 8:9]
+
+#b = [f for f in a.keys where (not (f == 8))]
+
 #sys.print(a)
 #sys.print(b)
 #sys.print(c)
+
+/*
+a = [1,2,3,'p':4,'q':5]
+b = [3,4,'q':6,'r':7]
+c = a+b
+*/
+
+/*
+x='y'
+a = [2,3,4,'x':7,x:8]
+a['z'] = 9
+result = a.string +
+    a.type   +
+    a.length +
+    a.list   +
+    a.keys   +
+    a.vals
+*/
+
+
+f = function()
+    a = sys.args()
+    return a.p + a.q
+end
+x = f(6 ,'p':7, 'q':8)
+
+

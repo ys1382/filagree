@@ -1,4 +1,4 @@
-port = 9928
+port = 9929
 
 server_dir = '/Users/yusuf/tmp/synctest/server'
 client_dir = '/Users/yusuf/tmp/synctest/client'
@@ -18,7 +18,7 @@ Sync = [
     'local_snapshot' : function(self)
 
         list = sys.file_list(self.watched) - self.watched
-        normalized = [f - self.watched for f in list.keys]
+        normalized = [<(f-self.watched):list[f]> for f in list.keys]
         return normalized
 
     end,

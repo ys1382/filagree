@@ -1,6 +1,5 @@
 # test.fg ###################################################################
 
-import 'sys'
 import 'unit_test'
 
 tester.test('add integers',
@@ -112,7 +111,7 @@ tester.test('map',
             a.length +
             a.list   +
             a.keys   +
-            a.values
+            a.vals
         sys.print(a)
         return result
     end,
@@ -204,6 +203,7 @@ tester.test('replace',
     end,
     'on3 2 gl33 f0ur')
 
+
 tester.test('for each',
     function()
         x = [3,1,4,1,5,9]
@@ -286,34 +286,6 @@ tester.test('short circuit',
     end,
     14)
 
-tester.test('custom getter',
-    function()
-        x = ['get':
-                function(self, y)
-                    if not self!list then self!list = [] end
-                    if y == 'p' then return 2 else return 3 end
-                end
-        ]
-        return 10*x.p + x.q
-    end,
-    23)
-
-tester.test('custom setter',
-    function()
-        x = ['set':
-                function(self, y, z)
-                    if y == 'p' then
-                        self!a = z*2
-                    else
-                        self!b = z*4
-                    end
-                end
-            ]
-        x.p = 6
-        return 10*x.a + (x.b or 5)
-    end,
-    125)
-
 tester.test('assignment expression',
     function()
         a,b = c,d,e,f,g = 7,8,9
@@ -333,26 +305,5 @@ tester.test('map args',
         return f('p':7, 'q':8)
     end,
     15)
-/*
-tester.test('list class',
-    function()
-        list = sys.List(5)
-        list.insert(6)
-        a = list.has(6)
-        b = list.has(7)
-        return (a*10) + b
-    end,
-    10)
-
-tester.test('string class',
-    function()
-        x = sys.String('abc')
-        y = sys.String('def')
-        b = x.has('z')
-        a = y.has('f')
-        return (a*10) + b
-    end,
-    10)
-*/
 
 tester.done()

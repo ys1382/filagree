@@ -43,7 +43,7 @@ struct variable *sys_save(struct context *context)
     struct variable *v = (struct variable*)array_get(value->list, 1);
     struct variable *path = (struct variable*)array_get(value->list, 2);
     struct byte_array *bytes = byte_array_new();
-    variable_serialize(context, bytes, v, true);
+    variable_serialize(context, bytes, v);
     int w = write_file(path->str, bytes);
     byte_array_del(bytes);
     return variable_new_int(context, w);
@@ -68,7 +68,7 @@ struct variable *sys_write(struct context *context)
     struct variable *v = (struct variable*)array_get(value->list, 2);
 
     struct byte_array *bytes = byte_array_new();
-    variable_serialize(context, bytes, v, true);
+    variable_serialize(context, bytes, v);
     int w = write_file(path->str, bytes);
     return variable_new_int(context, w);
 }
@@ -120,7 +120,9 @@ struct variable *sys_args(struct context *context)
 {
     stack_pop(context->operand_stack); // self
     struct program_state *above = (struct program_state*)stack_peek(context->program_stack, 1);
-    return variable_new_list(context, above->args);
+    struct variable *result = variable_copy(context, above->args);
+    result->type = VAR_LST;
+    return result;
 }
 
 struct variable *sys_bytes(struct context *context)
@@ -375,8 +377,7 @@ int file_list_callback(const char *path, bool isDir, void *fl_context)
     struct variable *key2 = variable_new_str(flc->context, key);
     struct variable *data = variable_new_bool(flc->context, isDir);
 
-    struct variable *metadata = variable_new_map(flc->context, NULL);
-    variable_map_insert(flc->context, metadata, key2, data);
+    struct variable *metadata = variable_new_kvp(flc->context, key2, data);
     variable_map_insert(flc->context, flc->result, path3, metadata);
 
     return 0;
@@ -386,7 +387,7 @@ struct variable *sys_file_list(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     const char *path = param_str(arguments, 1);
-    struct variable *result = variable_new_map(context, NULL);
+    struct variable *result = variable_new_list(context, NULL);
     struct file_list_context flc = {context, result};
     file_list(path, &file_list_callback, &flc);
     return flc.result;
@@ -428,15 +429,16 @@ struct string_func builtin_funcs[] = {
 
 struct variable *sys_new(struct context *context)
 {
-    struct map *sys_func_map = map_new(context);
+    struct variable *sys = variable_new_list(context, NULL);
+
     for (int i=0; i<ARRAY_LEN(builtin_funcs); i++) {
         struct byte_array *name = byte_array_from_string(builtin_funcs[i].name);
         struct variable *key = variable_new_str(context, name);
         byte_array_del(name);
         struct variable *value = variable_new_c(context, builtin_funcs[i].func);
-        map_insert(sys_func_map, key, value);
+        variable_map_insert(context, sys, key, value);
     }
-    return variable_new_map(context, sys_func_map);
+    return sys;
 }
 
 // built-in member functions
@@ -447,8 +449,10 @@ struct variable *sys_new(struct context *context)
 #define FNC_LENGTH      "length"
 #define FNC_CHAR        "char"
 #define FNC_HAS         "has"
+#define FNC_KEY         "key"
+#define FNC_VAL         "val"
 #define FNC_KEYS        "keys"
-#define FNC_VALUES      "values"
+#define FNC_VALS        "vals"
 #define FNC_SERIALIZE   "serialize"
 #define FNC_DESERIALIZE "deserialize"
 #define FNC_SORT        "sort"
@@ -676,10 +680,8 @@ struct variable *cfnc_serialize(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *indexable = (struct variable*)array_get(args->list, 0);
-    struct variable *typer = args->list->length > 1 ? (struct variable*)array_get(args->list, 1) : NULL;
-    bool withType = !typer || typer->boolean; // default to true
 
-    struct byte_array *bits = variable_serialize(context, NULL, indexable, withType);
+    struct byte_array *bits = variable_serialize(context, NULL, indexable);
     struct variable *result = variable_new_str(context, bits);
     byte_array_del(bits);
     return result;
@@ -770,13 +772,37 @@ struct variable *builtin_method(struct context *context,
     }
 
     else if (!strcmp(idxstr, FNC_STRING)) {
-        struct byte_array *vv = variable_value(context, indexable);
-        result = variable_new_str(context, vv);
-        byte_array_del(vv);
+        switch (indexable->type) {
+            case VAR_STR:
+            case VAR_BYT:
+            case VAR_FNC:
+                result = variable_copy(context, indexable);
+                break;
+            default: {
+                struct byte_array *vv = variable_value(context, indexable);
+                result = variable_new_str(context, vv);
+                byte_array_del(vv);
+                break;
+            }
+        }
     }
 
     else if (!strcmp(idxstr, FNC_LIST))
         result = variable_new_list(context, indexable->list);
+
+    else if (!strcmp(idxstr, FNC_KEY)) {
+        if (indexable->type == VAR_KVP)
+            result = indexable->kvp.key;
+        else
+            result = variable_new_nil(context);
+    }
+
+    else if (!strcmp(idxstr, FNC_VAL)) {
+        if (indexable->type == VAR_KVP)
+            result = indexable->kvp.val;
+        else
+            result = variable_new_nil(context);
+    }
 
     else if (!strcmp(idxstr, FNC_KEYS)) {
         struct variable *v = variable_new_list(context, NULL);
@@ -790,8 +816,8 @@ struct variable *builtin_method(struct context *context,
         }
         result = v;
     }
-
-    else if (!strcmp(idxstr, FNC_VALUES)) {
+    
+    else if (!strcmp(idxstr, FNC_VALS)) {
         assert_message(it == VAR_LST, "values are only for list");
         if (indexable->map == NULL)
             result = variable_new_list(context, NULL);

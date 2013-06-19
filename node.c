@@ -399,7 +399,7 @@ struct variable *sys_send(struct context *context)
     struct node_thread *ta = thread_new(context, listener, fd);
 
     struct variable *v = param_var(ta->context, arguments, 2);
-    ta->buf = variable_serialize(ta->context, NULL, v, true);
+    ta->buf = variable_serialize(ta->context, NULL, v);
     ta->event = SENT;
 
     add_thread(ta, sys_send2, 0);

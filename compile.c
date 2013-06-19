@@ -60,14 +60,11 @@ static struct context *context;
         LEX_COMMA,
         LEX_PERIOD,
         LEX_COLON,
-        LEX_BANG,
         LEX_LINE_COMMENT,
         LEX_LEFTHESIS,
         LEX_RIGHTHESIS,
         LEX_LEFTSQUARE,
         LEX_RIGHTSQUARE,
-        LEX_LEFTSTACHE,
-        LEX_RIGHTSTACHE,
         LEX_IDENTIFIER,
         LEX_STRING,
         LEX_INTEGER,
@@ -127,13 +124,10 @@ struct number_string lexemes[] = {
     {LEX_COMMA,                 ","},
     {LEX_PERIOD,                "."},
     {LEX_COLON,                 ":"},
-    {LEX_BANG,                  "!"},
     {LEX_LEFTHESIS,             "("},
     {LEX_RIGHTHESIS,            ")"},
     {LEX_LEFTSQUARE,            "["},
     {LEX_RIGHTSQUARE,           "]"},
-    {LEX_LEFTSTACHE,            "{"},
-    {LEX_RIGHTSTACHE,           "}"},
     {LEX_TRUE,                  "true"},
     {LEX_FALSE,                 "false"},
     {LEX_IF,                    "if"},
@@ -405,18 +399,18 @@ BNF:
 <exp2> --> <exp3> ( ( LEX_PLUS | LEX_MINUS ) <exp3> )*
 <exp3> --> <exp4> ( ( LEX_TIMES | LEX_DIVIDE | LEX_MODULO | LEX_AND | LEX_OR
                       LEX_BAND | LEX_BOR | LEX_XOR | LEX_LSHIFT | LEX_RSHIFT) <exp3> )*
-<exp4> --> (LEX_NOT | LEX_MINUS | LEX_INVERSE)? <exp5>
-<exp5> --> <exp6> ( <call> | <member> )*
-<exp6> --> ( LEX_LEFTTHESIS <expression> LEX_RIGHTTHESIS ) | <atom>
+<exp4> --> <exp5> ( LEX_COLON <expression> )?
+<exp5> --> (LEX_NOT | LEX_MINUS | LEX_INVERSE)? <exp6>
+<exp6> --> <exp7> ( <call> | <member> )*
+<exp7> --> ( LEX_LEFTTHESIS <expression> LEX_RIGHTTHESIS ) | <atom>
 <atom> -->  LEX_IDENTIFIER | <float> | <integer> | <boolean> | <nil> | <table> | <comprehension> | <fdecl>
 
 <variable> --> LEX_IDENTIFIER
 <boolean> --> LEX_TRUE | LEX_FALSE
 <floater> --> LEX_INTEGER LEX_PERIOD LEX_INTEGER
 <string> --> LEX_STRING
-<table> --> LEX_LEFTSQUARE <element>, LEX_RIGHTSQUARE
-<element> --> <expression> ( LEX_COLON <expression> )?
-<member> --> ( LEX_LEFTSQUARE <expression> LEX_RIGHTSQUARE ) | ( ( LEX_PERIOD | LEX_BANG ) LEX_STRING ) | ( LEX_LEFTSTACHE <expression> LEX_RIGHTSTACHE )
+<table> --> LEX_LEFTSQUARE <expression>, LEX_RIGHTSQUARE
+<member> --> ( LEX_LEFTSQUARE <expression> LEX_RIGHTSQUARE ) | ( LEX_PERIOD LEX_STRING )
 
 *///////////////////////////////////////////////////////////////////////////
 
@@ -762,24 +756,10 @@ struct symbol *fdecl()
     return s;
 }
 
-// <element> --> <expression> ( LEX_COLON <expression> )?
-struct symbol *element()
-{
-    struct symbol *e = expression();
-    if (fetch(LEX_COLON)) { // i.e. x:y
-        struct symbol *p = symbol_new(SYMBOL_PAIR);
-        p->index = e;
-        p->value = expression();
-        return p;
-    } else {
-        return e;
-    }
-}
-
-// <table> --> LEX_LEFTSQUARE <element>, LEX_RIGHTSQUARE
+// <table> --> LEX_LEFTSQUARE <expression>, LEX_RIGHTSQUARE
 struct symbol *table() {
     FETCH_OR_QUIT(LEX_LEFTSQUARE);
-    struct symbol *s = repeated(SYMBOL_TABLE, &element);
+    struct symbol *s = repeated(SYMBOL_TABLE, &expression);
     FETCH_OR_ERROR(LEX_RIGHTSQUARE);
     return s;
 }
@@ -872,21 +852,19 @@ struct symbol *exp5()
     return atom();
 }
 
-// <member> --> ( LEX_LEFTSQUARE <expression> LEX_RIGHTSQUARE ) | ( ( LEX_PERIOD | LEX_BANG ) LEX_STRING )
+// <member> --> ( LEX_LEFTSQUARE <expression> LEX_RIGHTSQUARE ) | ( LEX_PERIOD LEX_STRING )
 struct symbol *member()
 {
     struct symbol *m = symbol_new(SYMBOL_MEMBER);
 
-    if ((m->token = fetch_lookahead(LEX_PERIOD, LEX_BANG, NULL))) {
+    if ((m->token = fetch_lookahead(LEX_PERIOD, NULL))) {
         if ((m->index = variable()) == NULL)
             return NULL;
         m->index->nonterminal = SYMBOL_STRING;
     }
-    else if ((m->token = fetch_lookahead(LEX_LEFTSQUARE, LEX_LEFTSTACHE, NULL))) {
-        enum Lexeme right = m->token->lexeme == LEX_LEFTSQUARE ? LEX_RIGHTSQUARE : LEX_RIGHTSTACHE;
+    else if ((m->token = fetch_lookahead(LEX_LEFTSQUARE, NULL))) {
         m->index = expression();
-        // FETCH_OR_QUIT(right);
-        if (fetch(right) == NULL) {
+        if (fetch(LEX_RIGHTSQUARE) == NULL) {
             symbol_del(m);
             return NULL;
         }
@@ -901,7 +879,7 @@ struct symbol *member()
 struct symbol *call()
 {
     FETCH_OR_QUIT(LEX_LEFTHESIS);
-    struct symbol *s = repeated(SYMBOL_CALL, &element); // arguments
+    struct symbol *s = repeated(SYMBOL_CALL, &expression); // [map] arguments
     FETCH_OR_ERROR(LEX_RIGHTHESIS);
     return s;
 }
@@ -918,11 +896,11 @@ struct symbol *exp4()
     return f;
 }
 
-// <exp3> --> (NOT | LEX_MINUS)? <exp4>
+// <exp3> --> (LEX_NOT | LEX_NEG | LEX_INVERSE )? <pair>
 struct symbol *exp3()
 {
     struct symbol *e;
-    if ((e = symbol_fetch(SYMBOL_EXPRESSION, LEX_MINUS, LEX_NEG, LEX_NOT, NULL))) {
+    if ((e = symbol_fetch(SYMBOL_EXPRESSION, LEX_MINUS, LEX_NOT, LEX_INVERSE, NULL))) {
         if (e->token->lexeme == LEX_MINUS)
             e->token->lexeme = LEX_NEG;
         return symbol_add(e, exp4());
@@ -930,13 +908,30 @@ struct symbol *exp3()
     return exp4();
 }
 
-// <exp2> --> (<exp3> ( ( LEX_PLUS | LEX_MINUS | LEX_TIMES | LEX_DIVIDE | LEX_MODULO ))* <exp3>
+// <pair> --> <exp4> ( LEX_COLON <expression> )?
+struct symbol *pair()
+{
+    struct symbol *e = exp3();
+    if (fetch(LEX_COLON)) { // i.e. x:y
+        struct symbol *p = symbol_new(SYMBOL_PAIR);
+        p->index = e;
+        p->value = exp3();
+        return p;
+    } else {
+        return e;
+    }
+}
+
+// <exp2> --> (<exp3> ( ( LEX_PLUS | LEX_MINUS | LEX_TIMES | LEX_DIVIDE | LEX_MODULO |
+//                        LEX_BAND | LEX_BOR   | LEX_XOR   | LEX_LSHIFT | LEX_RSHIFT ) )* <exp3>
 struct symbol *expTwo()
 {
     struct symbol *e, *f;
-    e = exp3();
-    while (e && (f = symbol_fetch(SYMBOL_EXPRESSION, LEX_PLUS, LEX_MINUS, LEX_TIMES, LEX_DIVIDE, LEX_MODULO, LEX_OR, LEX_AND, NULL)))
-        e = symbol_adds(f, e, exp3(), NULL);
+    e = pair();
+    while (e && (f = symbol_fetch(SYMBOL_EXPRESSION, LEX_PLUS, LEX_MINUS, LEX_TIMES, LEX_DIVIDE,
+                                  LEX_MODULO, LEX_OR, LEX_AND, LEX_BOR, LEX_BAND, LEX_XOR,
+                                  LEX_LSHIFT, LEX_RSHIFT, NULL)))
+        e = symbol_adds(f, e, pair(), NULL);
     return e;
 }
 
@@ -1125,7 +1120,7 @@ struct symbol *parse(struct array *list, uint32_t index)
 
     struct symbol *p = statements();
 #ifdef DEBUG
-    //display_symbol(p, 1);
+    display_symbol(p, 1);
 #endif
     return p;
 }
@@ -1285,7 +1280,7 @@ void generate_pair(struct byte_array *code, struct symbol *root)
 {
     generate_code(code, root->index);
     generate_code(code, root->value);
-    generate_step(code, 2, VM_MAP, 1);
+    generate_step(code, 1, VM_KVP);
 }
 
 void generate_member(struct byte_array *code, struct symbol *root)
@@ -1301,8 +1296,6 @@ void generate_member(struct byte_array *code, struct symbol *root)
         default: exit_message("bad exp type");
     }
 
-    if (root->token && (root->token->lexeme == LEX_BANG || root->token->lexeme == LEX_LEFTSTACHE))
-        op |= VM_RLY;
     generate_step(code, 1, op);
 }
 
@@ -1312,11 +1305,7 @@ void generate_fcall(struct byte_array *code, struct symbol *root)
         generate_items(code, root);                 // arguments
         generate_code(code, root->value->index);    // member
         generate_code(code, root->value->value);    // function
-        struct token *token = root->value->token;
         enum Opcode op = VM_MET;
-        if ((token != NULL) &&
-            (token->lexeme == LEX_BANG || token->lexeme == LEX_LEFTSTACHE))
-            op |= VM_RLY;
         generate_step(code, 1, op);
     } else {
         generate_items(code, root);                 // arguments

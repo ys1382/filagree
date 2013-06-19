@@ -17,6 +17,6 @@ tester = [
 	end,
 
 	'done' : function(self)
-		sys.print('unit tests done -- ', self.passed +'/'+ self.tested +' passed')
+		sys.print('unit tests done -- ' + self.passed +'/'+ self.tested +' passed')
 	end
 ]

@@ -694,7 +694,7 @@ void hal_save(struct context *context, const struct byte_array *key, const struc
     const char *key2 = byte_array_to_string(key);
     NSString *key3 = [NSString stringWithUTF8String:key2];
 
-    struct byte_array *bits = variable_serialize(context, NULL, value, true);
+    struct byte_array *bits = variable_serialize(context, NULL, value);
     NSData *value2 = [NSData dataWithBytes:bits->data length:bits->length];
 
     byte_array_reset(bits);

@@ -32,12 +32,10 @@ struct context {
 };
 
 struct program_state {
-    struct array *args;
+    struct variable *args;
     struct map *named_variables;
     uint32_t pc;
 };
-
-#define VM_RLY 0x80 // high bit set to mean don't override
 
 enum Opcode {
     VM_NIL, // push nil
@@ -52,7 +50,7 @@ enum Opcode {
     VM_DST, // done with assignment
     VM_SRC, // push a set of values
     VM_LST, // push a list
-    VM_MAP, // push a map
+    VM_KVP, // push a key-value-pair
     VM_GET, // get an item from a list or map
     VM_PUT, // put an item in a list or map
     VM_SUB, // subtract two values
@@ -105,7 +103,7 @@ void vm_call(struct context *context, struct variable *func, struct variable *ar
 void *vm_exit_message(struct context *context, const char *format, ...);
 void vm_null_check(struct context *context, const void* p);
 void vm_assert(struct context *context, bool assertion, const char *format, ...);
-struct variable *lookup(struct context *context, struct variable *indexable, struct variable *index, bool really);
+struct variable *lookup(struct context *context, struct variable *indexable, struct variable *index);
 //void print_operand_stack(struct context *context);
 
 
