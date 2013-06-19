@@ -943,6 +943,7 @@ static struct variable *binary_op_flt(struct context *context,
         case VAR_INT:   n = (float)v->integer;  break;
         default:
             exit_message("can't compare with float");
+	    return NULL;
     }
     float f = 0;
     switch (op) {

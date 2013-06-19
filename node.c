@@ -125,13 +125,13 @@ void *incoming(void *arg)
 
 void disconnect_fd(struct context *context, int fd, struct variable *listener)
 {
-    pthread_t *thread = map_get(context->socket_listeners, fd);
+    pthread_t *thread = map_get(context->socket_listeners, (void*)(VOID_INT)fd);
     //DEBUGPRINT("close %d, cancel %p\n", fd, thread);
-    map_remove(context->socket_listeners, fd);
+    map_remove(context->socket_listeners, (void*)(VOID_INT)fd);
 
     pthread_t moi = pthread_self();
     if (moi == *thread) {
-        printf("suicide %p on fd %d\n", *thread, fd);
+        printf("suicide %p on fd %d\n", (void*)*thread, fd);
         return;
     }
     
@@ -169,7 +169,7 @@ void add_thread(struct node_thread *ta, void *(*start_routine)(void *), int sock
 
     //DEBUGPRINT("add_thread %p to fd %d\n", *tid, sockfd);
     if (sockfd)
-        map_insert(ta->context->socket_listeners, sockfd, tid);
+        map_insert(ta->context->socket_listeners, (void*)(VOID_INT)sockfd, tid);
     else
         array_add(ta->context->threads, tid);
 }
