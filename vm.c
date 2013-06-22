@@ -33,7 +33,7 @@ void display_code(struct context *context, struct byte_array *code);
 #define RESERVED_SET    "set"
 #define RESERVED_SYS    "sys"
 
-#define VAR_MAX         999
+#define VAR_MAX         9999
 
 // assertions //////////////////////////////////////////////////////////////
 
@@ -1057,6 +1057,7 @@ static struct variable *binary_op_lst(struct context *context,
             } else {
                 variable_purge(context, w, v);
             }
+            w->map = map_minus(w->map, v->map);
             break;
         default:
             return (struct variable*)vm_exit_message(context, "unknown list operation");

@@ -187,12 +187,12 @@ static void variable_value_strcat(struct context *context, char *str, struct var
     int position = strlen(str);
     char *str2 = &str[position];
     int len2 = sizeof(str) - position;
-    bool bracket = (inkvp && (v->type == VAR_KVP));
-    if (bracket)
-        strcat(str2, "[");
+    bool kk = (inkvp && (v->type == VAR_KVP));
+    if (kk)
+        strcat(str2, "(");
     variable_value_str2(context, v, str2, len2);
-    if (bracket)
-        strcat(str2, "]");
+    if (kk)
+        strcat(str2, ")");
 }
 
 static void variable_value_str2(struct context *context, struct variable* v, char *str, size_t size)

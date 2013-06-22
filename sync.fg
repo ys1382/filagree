@@ -1,4 +1,4 @@
-port = 9958
+port = 9967
 
 server_dir = '/Users/yusuf/tmp/synctest/server'
 client_dir = '/Users/yusuf/tmp/synctest/client'
@@ -18,8 +18,19 @@ Sync = [
     'local_snapshot' : function(self)
 
         list = sys.file_list(self.watched) - self.watched
-        normalized = [(f-self.watched):list[f] for f in list.keys]
+        normalized = [(f-self.watched):list[f] for f in list.keys where not self.ignore(f)]
         return normalized
+
+    end,
+
+    'ignore' : function(self, path)
+
+        i = path.length - 1
+        while ((path[i] != '/') and (i >= 0))
+            i = i - 1
+        end
+
+        return (i >= 0) and (path[i+1] == '.') # ignore .*
 
     end,
 
@@ -43,17 +54,17 @@ Sync = [
         else if msg4.event == 'change' then
             self.handle_change(msg4.changes)
         else if msg4.event == 'content' then
-            sys.write(msg4.path, msg4.content)
+            sys.write(self.watched + msg4.path, msg4.content)
         end
 
     end,
 
     'handle_content_request' : function(self, id, msg5)
 
-        for path in msg5.paths
+        for path in msg5.paths.keys
 
-            path = self.watched + path
-            content = sys.read(path)
+            fullpath = self.watched + path
+            content = sys.read(fullpath)
             response = ['event' : 'content', 'path' : path, 'content' : content]
             sys.send(id, response)
 

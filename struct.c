@@ -108,7 +108,6 @@ void list_remove(void *data, uint32_t *end, uint32_t start, int32_t length, size
 
     memmove((uint8_t*)data+start*width, (uint8_t*)data+(start+length)*width, (*end-start-length)*width);
     *end -= (uint32_t)length;
-//    return realloc(data, *end * width);
 }
 
 void array_remove(struct array *a, uint32_t start, int32_t length) {
@@ -653,10 +652,10 @@ int map_resize(struct map *m, size_t size)
 }
 
 // a - b
-void map_minus(struct map *a, const struct map *b)
+struct map *map_minus(struct map *a, const struct map *b)
 {
     if ((a == NULL) || (b == NULL))
-        return;
+        return a;
     struct array *keys = map_keys(b);
     for (int i=0; i<keys->length; i++) {
         const void *key = array_get(keys, i);
@@ -665,6 +664,7 @@ void map_minus(struct map *a, const struct map *b)
         }
     }
     array_del(keys);
+    return a;
 }
 
 // a + b; in case of intersection, a wins

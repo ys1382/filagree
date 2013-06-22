@@ -1,12 +1,8 @@
+z = 'ab/cd/ef'
 
+i = z.length - 1
+while ((z[i] != '/') and (i >= 0))
+    i = i - 1
+end
 
-x='y'
-a = [2,3,4,'x':7, x:8]
-a['z'] = 9:10
-
-sys.print(a)
-
-b = a.serialize()
-c = b.deserialize()
-
-sys.print(c)
+sys.print(i)
