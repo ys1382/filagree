@@ -464,6 +464,8 @@ static int32_t default_hashor(const void *x, void *context)
                 hash += name->data[i];
             return hash;
         }
+        case VAR_NIL:
+            return 0;
         default:
             exit_message("not handled hash type");
             return 1;

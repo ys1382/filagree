@@ -80,9 +80,10 @@ struct node_thread *thread_new(struct context *context, struct variable *listene
 
 void thread_wait_for(pthread_t *thread)
 {
-    //DEBUGPRINT("\tpthread_join on thread %p\n", thread);
-    if (pthread_join(*thread, NULL))
-        printf("could not pthread_join, error %d\n", errno);
+    int ptj;
+    DEBUGPRINT("\tpthread_join on thread %p\n", thread);
+    if ((ptj = pthread_join(*thread, NULL)))
+        printf("could not pthread_join %p, error %d\n", thread, ptj);
 }
 
 void node_callback(struct node_thread *ta, struct variable *message)
@@ -114,10 +115,24 @@ void *connected(void *arg)
     return NULL;
 }
 
+void checksum(const char *tag, const struct byte_array *ba)
+{
+    int n = 0;
+    for (int i=0; i<ba->length; i++)
+        n = n + ba->data[i];
+    
+    char str[1000];
+    byte_array_print(str, 1000, ba);
+    DEBUGPRINT("%s %d bytes, checksum %d, data %s\n", tag, ba->length, n, str);
+}
+
 // callback to client or server when message arrives on socket
 void *incoming(void *arg)
 {
     struct node_thread *ta = (struct node_thread *)arg;
+
+    checksum("incoming", ta->buf);
+
     struct variable *message = variable_deserialize(ta->context, ta->buf);
     node_callback(ta, message);
 	return NULL;
@@ -134,7 +149,7 @@ void disconnect_fd(struct context *context, int fd, struct variable *listener)
         printf("suicide %p on fd %d\n", (void*)*thread, fd);
         return;
     }
-    
+
     //DEBUGPRINT("cancel thread %p\n", *thread);
     if (pthread_cancel(*thread))
         perror("pthread_cancel");
@@ -164,10 +179,10 @@ void add_thread(struct node_thread *ta, void *(*start_routine)(void *), int sock
         perror("pthread_create");
         return;
     }
-    
+
     //pthread_t moi = pthread_self();
 
-    //DEBUGPRINT("add_thread %p to fd %d\n", *tid, sockfd);
+    DEBUGPRINT("add_thread %p to fd %d\n", *tid, sockfd);
     if (sockfd)
         map_insert(ta->context->socket_listeners, (void*)(VOID_INT)sockfd, tid);
     else
@@ -377,6 +392,8 @@ void *sys_send2(void *arg)
 {
     struct node_thread *ta = (struct node_thread *)arg;
 
+    checksum("send", ta->buf);
+    
     if (write(ta->fd, ta->buf->data, ta->buf->length) != ta->buf->length) {
         DEBUGPRINT("write error\n");
         struct variable *problem = variable_new_str(ta->context, byte_array_from_string("write error"));
@@ -402,6 +419,11 @@ struct variable *sys_send(struct context *context)
     ta->buf = variable_serialize(ta->context, NULL, v);
     ta->event = SENT;
 
+    // debug double-check
+    byte_array_reset(ta->buf);
+    struct variable *message = variable_deserialize(ta->context, ta->buf);
+    null_check(message);
+    
     add_thread(ta, sys_send2, 0);
 
     return NULL;

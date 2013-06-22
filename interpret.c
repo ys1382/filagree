@@ -115,7 +115,7 @@ int main (int argc, char** argv)
                 case 3:     compile_file(argv[1]);          break;
                 default:    exit_message(ERROR_USAGE);      break;
         }
-    sleep(10);
+    //sleep(10);
 
 }
 

@@ -40,7 +40,7 @@ void display_code(struct context *context, struct byte_array *code);
 jmp_buf trying;
 
 static void vm_exit() {
-    DEBUGPRINT("exiting thread %x\n", ((int)pthread_self() >> 12) & 0xFFF);
+    DEBUGPRINT("exiting thread %x\n", ((unsigned int)(VOID_INT)pthread_self() >> 12) & 0xFFF);
     longjmp(trying, 1);
 }
 
@@ -92,7 +92,7 @@ struct program_state *program_state_new(struct context *context, struct map *env
     null_check(context);
     struct program_state *state = (struct program_state*)malloc(sizeof(struct program_state));
     state->named_variables = env ? map_copy(context, env) : map_new(context);
-    state->args = variable_new_list(context, NULL);
+    state->args = variable_new_list(context, NULL); // todo: prevent GC
     stack_push(context->program_stack, state);
     return state;
 }
@@ -118,10 +118,10 @@ struct context *context_new(bool state,
 {
     struct context *context = (struct context*)malloc(sizeof(struct context));
     null_check(context);
+    context->all_variables = array_new();
     context->program_stack = stack_new();
     if (state)
         stack_push(context->program_stack, program_state_new(context, NULL));
-    context->all_variables = array_new();
     context->operand_stack = stack_new();
     context->runtime = runtime;
     context->indent = 0;
@@ -157,7 +157,7 @@ struct context *context_copy(struct context *original)
 
 void context_del(struct context *context)
 {
-    //DEBUGPRINT("context_del %p\n", context);
+    DEBUGPRINT("context_del %p\n", context);
 
     // wait for threads listening to sockets to end
     if (context->socket_listeners != NULL) {
@@ -344,7 +344,7 @@ const char* indentation(struct context *context)
 static void display_program_counter(struct context *context, const struct byte_array *program)
 {
     null_check(context);
-    uint16_t thread = ((int)pthread_self() >> 12) & 0xFFF;
+    uint16_t thread = ((unsigned int)(VOID_INT)pthread_self() >> 12) & 0xFFF;
     sprintf(context->pcbuf, "%s>%x - %2ld:%3d ", indentation(context), thread, program->current-program->data, *program->current);
     //DEBUGPRINT("%s>%hu - %2ld:%3d ", indentation(context), thread, program->current-program->data, *program->current);
 }
@@ -530,7 +530,7 @@ static void push_list(struct context *context, struct byte_array *program)
 
 static void push_kvp(struct context *context, struct byte_array *program)
 {
-    sprintf(context->pcbuf, "%sMAP %s", context->pcbuf, !context->runtime?"\n":"");
+    sprintf(context->pcbuf, "%sKVP %s", context->pcbuf, !context->runtime?"\n":"");
     if (!context->runtime)
         return;
     struct variable* val = variable_pop(context);
@@ -800,9 +800,14 @@ static struct variable *get_value(struct context *context, enum Opcode op)
 
     if (value->type == VAR_SRC) {
         struct array *values = value->list;
-        if (values->length > values->current - values->data)
+        struct map *kvps = value->map;
+        bool listvar = values->length > values->current - values->data;
+        if (listvar)
             value = (struct variable*)*values->current++;
-        else
+        else if (kvps != NULL) {
+            value = variable_new_list(context, NULL);
+            value->map = map_copy(context, kvps);
+        } else
             value = variable_new_nil(context);
     }
     else if (!interim)
@@ -1052,12 +1057,6 @@ static struct variable *binary_op_lst(struct context *context,
             } else {
                 variable_purge(context, w, v);
             }
-            //map_minus(w->map, u->map);
-            //char p[1000], q[1000], r[1000];
-            //char *a = variable_value_str(context, u, p);
-            //char *b = variable_value_str(context, v, q);
-            //char *c = variable_value_str(context, w, r);
-            //DEBUGPRINT("mapminuslist: %s - %s = %s\n", a,b,c);
             break;
         default:
             return (struct variable*)vm_exit_message(context, "unknown list operation");
@@ -1129,17 +1128,17 @@ static void binary_op(struct context *context, enum Opcode op)
     enum VarType vt = (enum VarType)v->type;
     struct variable *w;
 
-    if (ut == VAR_NIL || vt == VAR_NIL) {
-        w = binary_op_nil(context, op, u, v);
-    } else if ((op == VM_EQU) || (op == VM_NEQ)) {
+    if ((op == VM_EQU) || (op == VM_NEQ)) {
         bool same = variable_compare(context, u, v) ^ (op == VM_NEQ);
         w = variable_new_bool(context, same);
+    } else if (ut == VAR_LST) {
+        w = binary_op_lst(context, op, u, v);
+    } else if (ut == VAR_NIL || vt == VAR_NIL) {
+        w = binary_op_nil(context, op, u, v);
     } else if (vt == VAR_KVP && ut == VAR_KVP) {
         w = binary_op_map(context, op, u, v);
     } else if (ut == VAR_STR || vt == VAR_STR) {
         w = binary_op_str(context, op, u, v);
-    } else if (ut == VAR_LST) {
-        w = binary_op_lst(context, op, u, v);
     } else {
         bool floater = (ut == VAR_FLT && is_num(vt)) || (vt == VAR_FLT && is_num(ut));
         bool inter = (ut==VAR_INT || ut==VAR_BOOL) && (vt==VAR_INT || vt==VAR_BOOL);
@@ -1277,7 +1276,10 @@ static bool iterate(struct context *context,
 
             if (comprehending) {
                 struct variable *item = (struct variable*)stack_pop(context->operand_stack);
-                array_add(result->list, item);
+                if (item->type == VAR_KVP)
+                    variable_map_insert(context, result, item->kvp.key, item->kvp.val);
+                else
+                    array_add(result->list, item);
             }
         }
     }
