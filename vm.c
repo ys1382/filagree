@@ -1348,7 +1348,6 @@ bool run(struct context *context,
     while (program->current < program->data + program->length) {
 
         if (context->singleton->tick++ > GIL_SWITCH) {
-            DEBUGPRINT("GIL switch %d\n", context->singleton->tick);
             context->singleton->tick = 0;
             pthread_mutex_unlock(&context->singleton->gil);
             pthread_mutex_lock(&context->singleton->gil);

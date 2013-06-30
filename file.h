@@ -18,6 +18,6 @@
 struct byte_array *read_file(const struct byte_array *filename);
 int write_file(const struct byte_array* filename, struct byte_array* bytes);
 long fsize(FILE* file);
-int file_list(const char *path, int (*fn)(const char*, bool, void*), void *context);
+int file_list(const char *path, int (*fn)(const char*, bool, long, void*), void *context);
 
 #endif // FILE_H

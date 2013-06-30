@@ -96,7 +96,7 @@ char* build_path(const char* dir, const char* name)
     return path;
 }
 
-int file_list(const char *path, int (*fn)(const char*, bool, void*), void *flc)
+int file_list(const char *path, int (*fn)(const char*, bool, long, void*), void *flc)
 {
 	const char *paths[2];
 	FTSENT *cur;
@@ -120,9 +120,10 @@ int file_list(const char *path, int (*fn)(const char*, bool, void*), void *flc)
                 error = -1;
                 goto done;
 		}
-        bool isDir = S_ISDIR(cur->fts_statp->st_mode);
+        bool dir = S_ISDIR(cur->fts_statp->st_mode);
+        long mod = cur->fts_statp->st_mtimespec.tv_sec;
         struct file_list_context *flc2 = (struct file_list_context *)flc;
-		error = fn(cur->fts_path, isDir, flc2);
+		error = fn(cur->fts_path, dir, mod, flc2);
 		if (error != 0) {
             printf("callback failed\n");
 			break;

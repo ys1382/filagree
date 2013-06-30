@@ -1,4 +1,4 @@
-port = 9983
+port = 9989
 
 server_dir = '/Users/yusuf/tmp/synctest/server'
 client_dir = '/Users/yusuf/tmp/synctest/client'
@@ -88,12 +88,13 @@ Sync = [
     'handle_change' : function(self, changez)
 
         self.snapshot = self.snapshot + changez.added - changez.deleted
-        msg3 = ['event' : 'content-request', 'paths' : changez.added]
-        changee = self.peer
-        sys.send(self.peer, msg3)
+        if changez.added.keys.length then
+            msg3 = ['event' : 'content-request', 'paths' : changez.added]
+            sys.send(self.peer, msg3)
+        end
 
         for f in changez.deleted.keys
-            sys.remove(f)
+            sys.remove(self.watched + f)
         end
 
     end    

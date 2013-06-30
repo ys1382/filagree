@@ -44,21 +44,6 @@ struct node_thread {
     int fd;
 };
 
-static bool int_compare(const void *a, const void *b, void *context)
-{
-    int32_t i = (VOID_INT)a;
-    int32_t j = (VOID_INT)b;
-    return  i == j;
-}
-
-static int32_t int_hash(const void* x, void *context) {
-    return (int32_t)(VOID_INT)x;
-}
-
-void *int_copy(const void *x, void *context) { return (void*)x; }
-
-void int_del(const void *x, void *context) {}
-
 struct node_thread *thread_new(struct context *context,
                                struct variable *listener,
                                void *(*start_routine)(void *),
@@ -245,6 +230,7 @@ void *sys_socket_listen2(void *arg)
 			}
 		}
 	}
+    return NULL;
 }
 
 // server listens for clients opening connections
