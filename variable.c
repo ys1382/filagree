@@ -36,7 +36,7 @@ struct variable* variable_new(struct context *context, enum VarType type)
     v->map = NULL;
     v->mark = 0;
     v->visited = VISITED_NOT;
-    array_add(context->all_variables, v);
+    array_add(context->singleton->all_variables, v);
     //DEBUGPRINT("variable_new %d %p\n", type, v);
     return v;
 }

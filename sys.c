@@ -83,7 +83,7 @@ struct variable *sys_read(struct context *context)
         result = variable_new_str(context, bytes);
     else {
         bytes = byte_array_from_string("could not load file");
-        context->vm_exception = variable_new_str(context, bytes);
+        context->error = variable_new_str(context, bytes);
     }
     byte_array_del(bytes);
     return result;

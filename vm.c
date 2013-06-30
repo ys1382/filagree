@@ -34,6 +34,7 @@ void display_code(struct context *context, struct byte_array *code);
 #define RESERVED_SYS    "sys"
 
 #define VAR_MAX         9999
+#define GIL_SWITCH      100
 
 // assertions //////////////////////////////////////////////////////////////
 
@@ -118,7 +119,21 @@ struct context *context_new(bool state,
 {
     struct context *context = (struct context*)malloc(sizeof(struct context));
     null_check(context);
-    context->all_variables = array_new();
+
+    if (parent == NULL)
+    {
+        struct context_shared *singleton = malloc(sizeof(struct context_shared));
+        assert_message(!pthread_mutex_init(&singleton->gil, NULL), "gil init");
+        assert_message(!pthread_cond_init(&singleton->thread_cond, NULL), "threads init");
+        singleton->all_variables = array_new();
+        singleton->find = NULL;
+        singleton->tick = 0;
+        singleton->num_threads = 0;
+        context->singleton = singleton;
+    } else {
+        context->singleton = parent->singleton;
+    }
+
     context->program_stack = stack_new();
     if (state)
         stack_push(context->program_stack, program_state_new(context, NULL));
@@ -126,71 +141,38 @@ struct context *context_new(bool state,
     context->runtime = runtime;
     context->indent = 0;
     context->error = NULL;
-    context->vm_exception = NULL;
     context->sys = sys_funcs ? sys_new(context) : NULL;
 
-    if (parent == NULL) {
-        context->threads = NULL;
-        context->socket_listeners = NULL;
-        context->find = NULL;
-    } else {
-        context->threads = parent->threads;
-        context->socket_listeners = parent->socket_listeners;
-        context->find = parent->find;
-    }
-
     return context;
 }
-
-/*
-struct context *context_copy(struct context *original)
-{
-    struct context *context = context_new(true, true, original->find);
-    for (int i=0; i<original->all_variables->length; i++) {
-        struct variable *v = (struct variable*)array_get(original->all_variables, i);
-        struct variable *u = variable_copy(context, v);
-        array_add(context->all_variables, u);
-    }
-    return context;
-}
-*/
 
 void context_del(struct context *context)
 {
     DEBUGPRINT("context_del %p\n", context);
 
-    // wait for threads listening to sockets to end
-    if (context->socket_listeners != NULL) {
-        struct array *socket_threads = map_values(context->socket_listeners);
-        for (int i=0; i<socket_threads->length; i++) {
-            pthread_t *socket_thread = (pthread_t*)array_get(socket_threads, i);
-            thread_wait_for(socket_thread);
-        }
-        array_del(socket_threads);
-        map_del(context->socket_listeners);
-        context->socket_listeners = NULL;
-    }
-
-    // waiting for any threads that did not make a socket (yet) to end
-    if (context->threads != NULL)
+    // wait for spawned threads
+    struct context_shared *s = context->singleton;
+    pthread_mutex_lock(&s->gil);
+    if (s->num_threads > 0)
     {
-        for (int i=0; i<context->threads->length; i++)
+        pthread_cond_wait(&s->thread_cond, &s->gil);
+
+        if (s->num_threads == 0) // last remaining thread
         {
-            pthread_t *thread = (pthread_t*)array_get(context->threads, i);
-            thread_wait_for(thread);
+            pthread_mutex_unlock(&s->gil);
+            pthread_cond_destroy(&s->thread_cond);
+            pthread_mutex_destroy(&s->gil);
+
+            struct array *vars = s->all_variables;
+            for (int i=0; i<vars->length; i++)
+            {
+                struct variable *v = (struct variable *)array_get(vars, i);
+                variable_del(context, v);
+            }
+            array_del(vars);
         }
-        array_del(context->threads);
-        context->threads = NULL;
-    }
-
-    //if (context->runtime)
-    //    DEBUGPRINT("\tjoin done for %p\n", context->threads);
-
-    struct array *vars = context->all_variables;
-    for (int i=0; i<vars->length; i++) {
-        struct variable *v = (struct variable *)array_get(vars, i);
-        variable_del(context, v);
-    }
+    } else
+        pthread_mutex_unlock(&s->gil);
 
     while (!stack_empty(context->program_stack))
     {
@@ -200,7 +182,6 @@ void context_del(struct context *context)
 
     stack_del(context->program_stack);
     stack_del(context->operand_stack);
-    array_del(context->all_variables);
     free(context);
 }
 
@@ -208,7 +189,7 @@ void context_del(struct context *context)
 
 void unmark_all(struct context *context)
 {
-    struct array *vars = context->all_variables;
+    struct array *vars = context->singleton->all_variables;
     for (int i=0; i<vars->length; i++) {
         struct variable *v = (struct variable*)array_get(vars, i);
         variable_unmark(v);
@@ -243,7 +224,7 @@ void garbage_collect(struct context *context)
     null_check(context);
     if (!context->runtime)
         return;
-    if (context->all_variables->length < VAR_MAX)
+    if (context->singleton->all_variables->length < VAR_MAX)
         return;
 
     struct variable *v;
@@ -265,12 +246,12 @@ void garbage_collect(struct context *context)
     variable_mark(context->sys);
 
     // sweep
-    struct array *vars = context->all_variables;
+    struct array *vars = context->singleton->all_variables;
     for (i=0; i<vars->length; i++) {
         struct variable *v = (struct variable*)array_get(vars, i);
         if (v->visited == VISITED_NOT) {
             variable_del(context, v);
-            array_remove(context->all_variables, i--, 1);
+            array_remove(context->singleton->all_variables, i--, 1);
         }
     }
 
@@ -706,8 +687,8 @@ struct variable *find_var(struct context *context, const struct variable *key)
     struct variable *v = (struct variable*)map_get(var_map, key);
     // DEBUGPRINT(" find_var %s in {p:%p, s:%p, m:%p}: %p\n", byte_array_to_string(name), context->program_stack, state, var_map, v);
 
-    if ((v == NULL) && context->find)
-        v = context->find(context, key);
+    if ((v == NULL) && context->singleton->find)
+        v = context->singleton->find(context, key);
     if ((v == NULL) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS)))
         v = context->sys;
     return v;
@@ -1313,9 +1294,9 @@ static inline bool vm_trycatch(struct context *context, struct byte_array *progr
         goto done;
 
     run(context, trial, NULL, true);
-    if (context->vm_exception) {
-        set_named_variable(context, NULL, name, context->vm_exception);
-        context->vm_exception = NULL;
+    if (context->error) {
+        set_named_variable(context, NULL, name, context->error);
+        context->error = NULL;
         returned = run(context, catcher, NULL, true);
     }
 done:
@@ -1336,7 +1317,7 @@ static inline bool tro(struct context *context)
     sprintf(context->pcbuf, "%sTHROW\n", context->pcbuf);
     if (!context->runtime)
         return false;
-    context->vm_exception = (struct variable*)stack_pop(context->operand_stack);
+    context->error = (struct variable*)stack_pop(context->operand_stack);
     return true;
 }
 
@@ -1365,6 +1346,14 @@ bool run(struct context *context,
     }
 
     while (program->current < program->data + program->length) {
+
+        if (context->singleton->tick++ > GIL_SWITCH) {
+            DEBUGPRINT("GIL switch %d\n", context->singleton->tick);
+            context->singleton->tick = 0;
+            pthread_mutex_unlock(&context->singleton->gil);
+            pthread_mutex_lock(&context->singleton->gil);
+        }
+
         inst = (enum Opcode)*program->current;
 
 #ifdef DEBUG
@@ -1427,7 +1416,8 @@ bool run(struct context *context,
         }
         program->current += pc_offset;
         DEBUGPRINT("%s", context->pcbuf);
-    }
+        
+    } // while
 
     byte_array_del(program);
     program = NULL;
@@ -1453,7 +1443,7 @@ void execute(struct byte_array *program, find_c_var *find)
 
     DEBUGPRINT("execute:\n");
     struct context *context = context_new(false, true, true, NULL);
-    context->find = find;
+    context->singleton->find = find;
 
     null_check(program);
     program = byte_array_copy(program);
@@ -1463,7 +1453,11 @@ void execute(struct byte_array *program, find_c_var *find)
     context->indent = 1;
 #endif
     if (!setjmp(trying))
+    {
+        pthread_mutex_lock(&context->singleton->gil);
         run(context, program, NULL, false);
+        pthread_mutex_unlock(&context->singleton->gil);
+    }
 
     if (context->error)
         DEBUGPRINT("error: %s\n", context->error->str->data);

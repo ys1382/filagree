@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <inttypes.h>
+#include <pthread.h>
 #include "struct.h"
 #include "util.h"
 #include "variable.h"
@@ -13,22 +14,27 @@
 #define RESERVED_ENV "env"
 #define RESERVED_GET "get"
 
+struct context_shared {
+    struct array *all_variables;
+    find_c_var *find;
+    uint32_t tick;
+    pthread_mutex_t gil;
+    pthread_cond_t thread_cond;
+    uint32_t num_threads;
+};
+
 struct context {
     struct variable *sys;
-    struct variable *vm_exception;
     struct variable* error;
     struct stack *program_stack;
     struct stack *operand_stack;
     struct byte_array *program;
-    struct array *all_variables;
-    struct map *socket_listeners; // maps port to listener
-    struct array *threads;
     bool runtime;
     uint8_t indent;
-    find_c_var *find;
 #ifdef DEBUG
     char pcbuf[10000]; // todo: check boundary
 #endif
+    struct context_shared *singleton;
 };
 
 struct program_state {
