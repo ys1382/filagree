@@ -102,6 +102,8 @@ void *incoming(void *arg)
 
     pthread_mutex_lock(&ta->context->singleton->gil);
     struct variable *message = variable_deserialize(ta->context, ta->buf);
+    char buf[1000];
+    DEBUGPRINT("received %s\n", variable_value_str(ta->context, message, buf));
     pthread_mutex_unlock(&ta->context->singleton->gil);
 
     node_callback(ta, message);
@@ -362,11 +364,6 @@ struct variable *sys_send(struct context *context)
     struct variable *v = param_var(ta->context, arguments, 2);
     ta->buf = variable_serialize(ta->context, NULL, v);
     ta->event = SENT;
-
-    // debug double-check
-    byte_array_reset(ta->buf);
-    struct variable *message = variable_deserialize(ta->context, ta->buf);
-    null_check(message);
 
     DEBUGPRINT("listen\n");
     add_thread(ta, 0);

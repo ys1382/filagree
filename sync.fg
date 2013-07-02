@@ -1,4 +1,4 @@
-port = 9989
+port = 9912
 
 server_dir = '/Users/yusuf/tmp/synctest/server'
 client_dir = '/Users/yusuf/tmp/synctest/client'
@@ -69,15 +69,22 @@ Sync = [
             sys.send(id, response)
 
         end
-
     end,
 
     'filed' : function(self, path)
 
         latest = self.local_snapshot()
-        added = latest - self.files
+        updated = latest - self.files
         deleted = self.files - latest
-        changes = ['added' : added, 'deleted' : deleted]
+        for f in self.files.keys
+            g = self.files[f]
+            mod = g.modified
+            h = latest[f]
+            if h and (mod != h.modified) then
+                updated = updated + f:g
+            end
+        end
+        changes = ['updated' : updated, 'deleted' : deleted]
         msg2 = ['event' : 'change', 'changes' : changes]
         filedd = self.peer
         sys.send(self.peer, msg2)
@@ -87,9 +94,9 @@ Sync = [
 
     'handle_change' : function(self, changez)
 
-        self.snapshot = self.snapshot + changez.added - changez.deleted
-        if changez.added.keys.length then
-            msg3 = ['event' : 'content-request', 'paths' : changez.added]
+        self.snapshot = self.snapshot + changez.updated - changez.deleted
+        if changez.updated.keys.length then
+            msg3 = ['event' : 'content-request', 'paths' : changez.updated]
             sys.send(self.peer, msg3)
         end
 

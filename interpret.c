@@ -5,10 +5,11 @@
 
 #include <unistd.h>
 #include "vm.h"
+#include "file.h"
 #include "compile.h"
 #include "interpret.h"
 
-#define FG_MAX_INPUT     256
+#define FG_MAX_INPUT   256
 #define ERROR_USAGE    "usage: filagree [file]"
 
 bool run(struct context *context,

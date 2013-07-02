@@ -1024,6 +1024,8 @@ static struct variable *binary_op_lst(struct context *context,
             if (vt == VAR_LST) {
                 for (int i=0; i<v->list->length; i++)
                     array_add(w->list, array_get(v->list, i));
+            } else if (vt == VAR_KVP) {
+                variable_map_insert(context, w, v->kvp.key, v->kvp.val);
             } else {
                 array_add(w->list, (void*)v);
             }
@@ -1241,6 +1243,7 @@ static bool iterate(struct context *context,
     uint32_t len = variable_length(context, what);
     for (int i=0; i<len; i++) {
 
+        INDENT;
         assert_message(what->type == VAR_LST, "iterating over non-list");
         struct variable *that = (struct variable*)array_get(what->list, i);
         set_named_variable(context, state, who, that);
@@ -1251,8 +1254,11 @@ static bool iterate(struct context *context,
             run(context, where, NULL, true);
         if ((where == NULL) || !where->length || test_operand(context)) {
 
+            DEBUGPRINT("\n");
+            INDENT;
             if (run(context, how, NULL, true)) { // true if run hit VM_RET
                 returned = true;
+                UNDENT; UNDENT;
                 goto done;
             }
 
@@ -1263,7 +1269,9 @@ static bool iterate(struct context *context,
                 else
                     array_add(result->list, item);
             }
+            UNDENT;
         }
+        UNDENT;
     }
 
     if (comprehending)

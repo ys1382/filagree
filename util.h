@@ -31,17 +31,6 @@ void null_check(const void* p);
 #define DEBUGPRINT(...) {};
 #endif // #ifdef DEBUG
 
-// file
-
-#define ERROR_FSIZE     "Could not get length of file"
-#define ERROR_FOPEN     "Could not open file"
-#define ERROR_FREAD     "Could not read file"
-#define ERROR_FCLOSE    "Could not close file"
-
-struct byte_array *read_file(const struct byte_array *filename);
-int write_file(const struct byte_array* filename, struct byte_array* bytes);
-long fsize(FILE* file);
-
 struct number_string {
     uint8_t number;
     char* chars;

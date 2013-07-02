@@ -376,14 +376,14 @@ int file_list_callback(const char *path, bool dir, long mod, void *fl_context)
 
     struct byte_array *key = byte_array_from_string("dir");
     struct variable *key2 = variable_new_str(flc->context, key);
-    struct variable *data = variable_new_bool(flc->context, dir);
-    struct variable *metadata = variable_new_kvp(flc->context, key2, data);
-    variable_map_insert(flc->context, flc->result, path3, metadata);
-    
+    struct variable *value = variable_new_bool(flc->context, dir);
+    struct variable *metadata = variable_new_list(flc->context, NULL);
+    variable_map_insert(flc->context, metadata, key2, value);
+
     key = byte_array_from_string("modified");
     key2 = variable_new_str(flc->context, key);
-    data = variable_new_int(flc->context, time);
-    metadata = variable_new_kvp(flc->context, key2, data);
+    value = variable_new_int(flc->context, mod);
+    variable_map_insert(flc->context, metadata, key2, value);
     variable_map_insert(flc->context, flc->result, path3, metadata);
     
     return 0;

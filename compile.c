@@ -11,6 +11,7 @@
 #include "compile.h"
 #include "vm.h"
 #include "variable.h"
+#include "file.h"
 
 #define TAG              "compile"
 #define ERROR_LEX        "Lexigraphical error"
