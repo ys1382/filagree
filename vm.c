@@ -1088,7 +1088,7 @@ static int32_t boolean_op(struct context *context, struct byte_array *program, e
         case VAR_BOOL:  indeed_quite_so = v->boolean;   break;
         case VAR_FLT:   indeed_quite_so = v->floater;   break;
         case VAR_INT:   indeed_quite_so = v->integer;   break;
-        case VAR_NIL:   return 0;
+        case VAR_NIL:   indeed_quite_so = false;        break;
         default:        indeed_quite_so = true;         break;
     }
     if (indeed_quite_so ^ (op == VM_AND)) {

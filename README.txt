@@ -164,29 +164,6 @@ Closure:
     end 
     g = f(3)        # g = 10
 
-Custom get and set:
-
-    x = ['get': function(self, y)  # custom getter
-            if not self!list then  # '!' means don't use custom getter
-                self!list = []
-            end
-            if y == 'p' then
-                return 2
-            else
-                return 3
-            end
-        end ]
-    y = 10*x.p + x.q    # y = 23
-
-    x = ['set': function(self, y, z) # custom setter
-            if y == 'p' then
-                self!a = z*2    # '!' means don't use custom setter
-            else
-                self!b = z*4
-            end
-        end ]
-    x.p = 6
-    y = 10*x.a + (x.b or 5)    # y = 125
 
 C integration:
 
@@ -204,7 +181,7 @@ C integration:
 
 Code Structure
 
-filagree source code consists of eight modules:
+filagree source code consists of these modules:
 
 - compile: compile fg code into byte code
 - interpret: runs either fg code or byte code
@@ -214,6 +191,7 @@ filagree source code consists of eight modules:
 - serial: serializes and deserializes primitives
 - struct: array, byte array, map and stack data structures
 - hal: hardware abstraction layer
+- file: file access
 - util: miscellaneous
 
 The source code includes ports to:

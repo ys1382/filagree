@@ -307,22 +307,31 @@ void byte_array_print(char* into, size_t size, const struct byte_array* ba) {
         sprintf(into+(i+1)*2, "%02X", ba->data[i]);
 }
 
-int32_t byte_array_find(struct byte_array *within, struct byte_array *sought, uint32_t start)
+int32_t byte_array_find(struct byte_array *within, struct byte_array *sought, int32_t start)
 {
     null_check(within);
     null_check(sought);
 
-    uint32_t ws = within->length;
-    uint32_t ss = sought->length;
-    if (start + ss >= within->length)
+    int32_t ws = within->length;
+    int32_t ss = sought->length;
+    if ((start + ss) >= (int32_t)within->length)
         return -1;
 
     uint8_t *wd = within->data;
     uint8_t *sd = sought->data;
-    for (int32_t i=start; i<ws-ss+1; i++)
-        if (!memcmp(wd + i, sd, ss))
-            return i;
 
+    if (start >= 0) // forward search
+    {
+        for (int32_t i=start; i<=ws-ss; i++)
+            if (!memcmp(wd + i, sd, ss))
+                return i;
+
+    } else { // reverse search
+
+        for (int32_t i=ws-ss+start+2; i>=0; i--)
+            if (!memcmp(wd + i, sd, ss))
+                return i;
+    }
     return -1;
 }
 
@@ -334,7 +343,7 @@ struct byte_array *byte_array_replace_all(struct byte_array *original, struct by
                byte_array_to_string(b));*/
 
     struct byte_array *replaced = byte_array_copy(original);
-    int where = 0;
+    int32_t where = 0;
 
     for(;;) { // replace all
 

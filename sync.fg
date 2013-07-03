@@ -1,7 +1,7 @@
-port = 9912
+port = 9919
 
-server_dir = '/Users/yusuf/tmp/synctest/server'
-client_dir = '/Users/yusuf/tmp/synctest/client'
+server_dir = 'synctest/server'
+client_dir = 'synctest/client'
 
 #######
 
@@ -25,11 +25,7 @@ Sync = [
 
     'ignore' : function(self, path)
 
-        i = path.length - 1
-        while ((path[i] != '/') and (i >= 0))
-            i = i - 1
-        end
-
+        i = path.find('/', -1) # get last path component
         return (i >= 0) and (path[i+1] == '.') # ignore .*
 
     end,
@@ -37,7 +33,6 @@ Sync = [
     'connected' : function(self, id)
 
         self.peer = id
-        connectionn = self.peer
 
         msg1 = ['event' : 'login', 'files' : self.files]
         sys.send(self.peer, msg1)

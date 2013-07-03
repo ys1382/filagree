@@ -1,3 +1,2 @@
-a = ['event':'change','changes':['updated':['/x.txt':['modified':1372728893,'dir':false]],'deleted':[]]]
-b = a.serialize()
-c = b.deserialize()
+a = 'abcdeabcdx'
+b = a.find('cd', -1)
