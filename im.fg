@@ -1,9 +1,61 @@
-# todo:
-#    ui fit
+port = 9998
+
+####### net
+
+# node.fg demo:
+#
+# 1) server listens
+# 2) client connects
+# 3) clients sends 'hi'
+# 4) server responds with 'hi2'
+
+server = [
+
+    'connected' : function(self, id)
+        sys.print('server: connected ' + id)
+    end,
+
+    'messaged' : function(self, id, msg)
+        sys.print('server: message from ' + id + ': ' + msg)
+        sys.send(id, msg + '2', self)
+    end,
+
+    'sent' : function(self, id)
+        sys.print('server: sent to ' + id)
+    end
+
+]
+
+client = [
+
+    'connected' : function(self, id)
+        sys.print('client: connected ' + id)
+        sys.send(id, 'hi', self)
+    end,
+
+    'messaged' : function(self, id, msg)
+        sys.print('client: message from ' + id + ': ' + msg)
+        sys.disconnect(id)
+    end,
+
+    'sent' : function(self, id)
+        sys.print('client: sent to ' + id)
+    end
+]
+
+
+#server starts to listen
+sys.listen(port, server)
+
+
+
+####### ui
 
 import 'ui'
 
-ctx = ['w':240, 'h':320]
+ctx = ['w':240, 'h':320,
+       'client' : client,
+       'port' : port]
 
 ctx.select = function(ctx)
     sys.print('select ' + sys.args())
@@ -46,6 +98,7 @@ end
 
 
 ctx.signup = function(ctx)
+    sys.connect('127.0.0.1', ctx.port, ctx.client)
     ctx.main()
 end
 

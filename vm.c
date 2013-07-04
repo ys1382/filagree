@@ -706,7 +706,7 @@ static void push_var(struct context *context, struct byte_array *program)
 #endif // DEBUG
     struct variable *key = variable_new_str(context, name);
     struct variable *v = find_var(context, key);
-    vm_assert(context, v, "variable not found");
+    vm_assert(context, v, "variable not found\n");
     //printf("pushed %p\n", v);
     variable_push(context, v);
     byte_array_del(name);
