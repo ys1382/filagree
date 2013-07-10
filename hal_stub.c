@@ -14,10 +14,11 @@ void hal_window(struct context *context,
 void hal_label (int32_t x, int32_t y,
                 int32_t *w, int32_t *h,
                 const char *str) {}
-void hal_input (struct variable *uictx,
-                int32_t x, int32_t y,
-                int32_t *w, int32_t *h,
-                const char *str, bool multiline) {}
+void *hal_input (struct variable *uictx,
+                 int32_t x, int32_t y,
+                 int32_t *w, int32_t *h,
+                 struct variable *name,
+                 bool multiline) { return NULL; }
 void hal_button(struct context *context,
                 struct variable *uictx,
                 int32_t x, int32_t y, int32_t *w, int32_t *h,

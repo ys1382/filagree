@@ -120,7 +120,7 @@ struct context *context_new(bool state,
     struct context *context = (struct context*)malloc(sizeof(struct context));
     null_check(context);
 
-    if (parent == NULL)
+    if (parent == NULL) // I am the mother of all contexts
     {
         struct context_shared *singleton = malloc(sizeof(struct context_shared));
         assert_message(!pthread_mutex_init(&singleton->gil, NULL), "gil init");
@@ -141,6 +141,7 @@ struct context *context_new(bool state,
     context->runtime = runtime;
     context->indent = 0;
     context->error = NULL;
+    context->inputs = NULL;
     context->sys = sys_funcs ? sys_new(context) : NULL;
 
     return context;
@@ -152,6 +153,7 @@ void context_del(struct context *context)
 
     // wait for spawned threads
     struct context_shared *s = context->singleton;
+    DEBUGPRINT("mutex_lock3\n");
     pthread_mutex_lock(&s->gil);
     if (s->num_threads > 0)
     {
@@ -159,6 +161,7 @@ void context_del(struct context *context)
 
         if (s->num_threads == 0) // last remaining thread
         {
+            DEBUGPRINT("mutex_unlock3a\n");
             pthread_mutex_unlock(&s->gil);
             pthread_cond_destroy(&s->thread_cond);
             pthread_mutex_destroy(&s->gil);
@@ -171,8 +174,10 @@ void context_del(struct context *context)
             }
             array_del(vars);
         }
-    } else
+    } else {
+        DEBUGPRINT("mutex_unlock3b\n");
         pthread_mutex_unlock(&s->gil);
+    }
 
     while (!stack_empty(context->program_stack))
     {
@@ -1357,7 +1362,9 @@ bool run(struct context *context,
 
         if (context->singleton->tick++ > GIL_SWITCH) {
             context->singleton->tick = 0;
+            DEBUGPRINT("mutex_unlock2\n");
             pthread_mutex_unlock(&context->singleton->gil);
+            DEBUGPRINT("mutex_lock2\n");
             pthread_mutex_lock(&context->singleton->gil);
         }
 
@@ -1461,8 +1468,10 @@ void execute(struct byte_array *program, find_c_var *find)
 #endif
     if (!setjmp(trying))
     {
+        DEBUGPRINT("mutex_lock1\n");
         pthread_mutex_lock(&context->singleton->gil);
         run(context, program, NULL, false);
+        DEBUGPRINT("mutex_unlock1\n");
         pthread_mutex_unlock(&context->singleton->gil);
     }
 

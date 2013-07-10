@@ -1,4 +1,4 @@
-port = 9998
+port = 9989
 
 ####### net
 
@@ -29,24 +29,19 @@ server = [
 client = [
 
     'connected' : function(self, id)
+        self.server_id = id
         sys.print('client: connected ' + id)
         sys.send(id, 'hi', self)
     end,
 
     'messaged' : function(self, id, msg)
         sys.print('client: message from ' + id + ': ' + msg)
-        sys.disconnect(id)
     end,
 
     'sent' : function(self, id)
         sys.print('client: sent to ' + id)
     end
 ]
-
-
-#server starts to listen
-sys.listen(port, server)
-
 
 
 ####### ui
@@ -66,13 +61,14 @@ ctx.settings = function(ctx)
             ['form', ['display name', 'username', 'password']],
 
             ['horizontal', [
-                ['button', ['text':'save',   'logic':sys.form_saver('settings')]],
+                ['button', ['text':'save',   'logic':sys.save(sys.form_get(), 'settings')]],
                 ['button', ['text':'cancel', 'logic':ctx.main]],
                 ['button', ['text':'logout', 'logic':ctx.main]],
             ]],
         ],
         ctx.w, ctx.h)
-    sys.load_form('settings')
+    f = sys.load('settings')
+    sys.form_set(f)
 end
 
 ctx.main = function(ctx)
@@ -98,7 +94,8 @@ end
 
 
 ctx.signup = function(ctx)
-    sys.connect('127.0.0.1', ctx.port, ctx.client)
+    msg = ['action' : 'signup', sys.form_get()]
+    sys.send(ctx.client.server_id, msg)
     ctx.main()
 end
 
@@ -113,5 +110,9 @@ sys.ui(ctx,
             ]]
         ],
         ctx.w, ctx.h)
+
+
+sys.listen(port, server)
+sys.connect('127.0.0.1', port, client)
 
 sys.loop()

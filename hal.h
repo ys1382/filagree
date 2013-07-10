@@ -27,10 +27,12 @@ void hal_synth(const uint8_t *bytes, uint32_t length);
 void hal_label (int32_t x, int32_t y,
                 int32_t *w, int32_t *h,
                 const char *str);
-void hal_input (struct variable *uictx,
-                int32_t x, int32_t y,
-                int32_t *w, int32_t *h,
-                const char *str, bool multiline);
+void *hal_input (struct variable *uictx,
+                 int32_t x, int32_t y,
+                 int32_t *w, int32_t *h,
+                 struct variable *hint,
+                 bool multiline);
+struct variable *hal_input_value(struct context *context, void *input);
 void hal_button(struct context *context,
                 struct variable *uictx,
                 int32_t x, int32_t y, int32_t *w, int32_t *h,
@@ -41,8 +43,11 @@ void hal_table (struct context *context,
                 int x, int y, int w, int h,
                 struct variable *list, struct variable *logic);
 
-void hal_save_form(struct context *context, const struct byte_array *key);
-void hal_load_form(struct context *context, const struct byte_array *key);
+struct variable *hal_input_get(struct context *context, void *input);
+void hal_input_set(void *input, struct variable *value);
+struct variable *hal_form_get(struct context *context);
+void hal_form_set(struct context *context, struct variable *values);
+
 void hal_file_listen(struct context *context, const char *path, struct variable *listener);
 
 

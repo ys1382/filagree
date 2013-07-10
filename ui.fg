@@ -22,7 +22,7 @@ end
 
 sys.ui2 = function(self, uictx, parent, type, item, x, y)
 
-    sys.print('item = ' + item)
+    #sys.print('item = ' + item)
     if (type == 'vertical') then
         w = h = 0
         for i in item
@@ -45,7 +45,7 @@ sys.ui2 = function(self, uictx, parent, type, item, x, y)
         for name in item
             field = ['horizontal', [
                 ['label', name],
-                ['input', ' '],
+                ['input', name],
             ]]
             fields.insert(field)
         end

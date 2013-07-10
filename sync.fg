@@ -1,4 +1,4 @@
-port = 9919
+port = 9917
 
 server_dir = 'synctest/server'
 client_dir = 'synctest/client'

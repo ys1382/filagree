@@ -18,9 +18,7 @@
 #include "hal.h"
 #include "struct.h"
 
-
 static NSWindow *window = NULL;
-static NSMutableArray *inputs = NULL;
 
 void hal_loop() {
     [NSApp run];
@@ -444,7 +442,8 @@ void hal_label (int32_t x, int32_t y,
     resize(textField, x, y, w, h);
 }
 
-@interface Actionifier  : NSObject <NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate> {
+@interface Actionifier  : NSObject <NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate>
+{
     struct variable *logic;
     struct context *context;
     struct variable *uictx;
@@ -458,9 +457,9 @@ void hal_label (int32_t x, int32_t y,
 @implementation Actionifier
 
 +(Actionifier*) fContext:(struct context *)f
-                 uiContext:(struct variable*)u
-                  callback:(struct variable*)c
-                  userData:(struct variable*)d
+               uiContext:(struct variable*)u
+                callback:(struct variable*)c
+                userData:(struct variable*)d
 {
     Actionifier *bp = [Actionifier alloc];
     bp->logic = c;
@@ -531,9 +530,9 @@ void hal_button(struct context *context,
     }
 
     Actionifier *bp = [Actionifier fContext:context
-                                          uiContext:uictx
-                                           callback:logic
-                                           userData:NULL];
+                                  uiContext:uictx
+                                   callback:logic
+                                   userData:NULL];
     [my setTarget:bp];
     [my setAction:@selector(pressed:)];
     [my setButtonType:NSMomentaryLightButton];
@@ -541,16 +540,18 @@ void hal_button(struct context *context,
     resize(my, x, y, w, h);
 }
 
-void hal_input(struct variable *uictx,
-               int32_t x, int32_t y,
-               int32_t *w, int32_t *h,
-               const char *str, bool multiline)
+void *hal_input(struct variable *uictx,
+                int32_t x, int32_t y,
+                int32_t *w, int32_t *h,
+                struct variable *hint,
+                bool multiline)
 {
     NSView *content = [window contentView];
     *w = [content frame].size.width / 2;
     *h = 20;
     NSRect rect = whereAmI(x,y,*w,*h);
-    NSString *string = [NSString stringWithUTF8String:str];
+    char *hint2 = byte_array_to_string(hint->str);
+    NSString *string = [NSString stringWithUTF8String:hint2];
 
     NSView *textField;
     if (multiline)
@@ -560,7 +561,24 @@ void hal_input(struct variable *uictx,
     [textField insertText:string];
 
     [content addSubview:textField];
-    [inputs addObject:textField];
+    return textField;
+}
+
+struct variable *hal_input_get(struct context *context, void *input)
+{
+    NSTextField *input2 = (NSTextField*)input;
+    NSString *value = [input2 stringValue];
+    const char *value2 = [value UTF8String];
+    struct byte_array *value3 = byte_array_from_string(value2);
+    return variable_new_str(context, value3);
+}
+
+void hal_input_set(void *input, struct variable *value)
+{
+    NSTextField *input2 = (NSTextField *)input;
+    const char *value2 = byte_array_to_string(value->str);
+    NSString *value3 = [NSString stringWithUTF8String:value2];
+    [input2 setStringValue:value3];
 }
 
 void hal_table(struct context *context,
@@ -580,9 +598,9 @@ void hal_table(struct context *context,
 
     [tableView addTableColumn:column1];
     Actionifier *a = [Actionifier fContext:context
-                                          uiContext:uictx
-                                           callback:logic
-                                           userData:list];
+                                 uiContext:uictx
+                                  callback:logic
+                                  userData:list];
     [tableView setDelegate:a];
     [tableView setDataSource:(id<NSTableViewDataSource>)a];
     //  [tableView reloadData];
@@ -602,7 +620,7 @@ void hal_window(struct context *context,
          @selector(removeFromSuperviewWithoutNeedingDisplay)];
         [content setNeedsDisplay: YES];
 
-        [inputs removeAllObjects];
+        //[inputs removeAllObjects];
         NSSize size = [content frame].size;
         *w = size.width;
         *h = size.height;
@@ -631,18 +649,18 @@ void hal_window(struct context *context,
     [appMenuItem setSubmenu:appMenu];
     window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, *w, *h)
                                          styleMask:NSTitledWindowMask |
-                                                   NSClosableWindowMask |
-                                                   NSMiniaturizableWindowMask |
-                                                   NSResizableWindowMask
+              NSClosableWindowMask |
+              NSMiniaturizableWindowMask |
+              NSResizableWindowMask
                                            backing:NSBackingStoreBuffered
                                              defer:NO];
     [window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
     [window setTitle:appName];
     [window makeKeyAndOrderFront:nil];
     Actionifier *a = [Actionifier fContext:context
-                                          uiContext:uictx
-                                           callback:logic
-                                           userData:NULL];
+                                 uiContext:uictx
+                                  callback:logic
+                                  userData:NULL];
     [window setDelegate:a];
     //NSLog(@"window %@ %d,%d", [window contentView], w,h);
 
@@ -654,37 +672,7 @@ void hal_window(struct context *context,
     }
 
     [NSApp activateIgnoringOtherApps:YES];
-
-    inputs = [NSMutableArray array];
-    for (NSTextField *i in inputs)
-        NSLog(@"%@", i);
-}
-
-void hal_save_form(struct context *context, const struct byte_array *key)
-{
-    struct array *list = array_new();
-    for (NSTextField *i in inputs) {
-        NSString *str = [i stringValue];
-        const char *str2 = [str UTF8String];
-        struct byte_array *str3 = byte_array_from_string(str2);
-        struct variable *v = variable_new_str(context, str3);
-        byte_array_del(str3);
-        array_set(list, list->length, v);
-    }
-    struct variable *u = variable_new_list(context, list);
-    hal_save(context, key, u);
-}
-
-void hal_load_form(struct context *context, const struct byte_array *key)
-{
-    struct variable *v = hal_load(context, key);
-    for (int i=0; v->type==VAR_LST && i<v->list->length; i++) {
-        NSTextField *input = [inputs objectAtIndex:i];
-        struct variable *u = (struct variable*)array_get(v->list, i);
-        const char *str = byte_array_to_string(u->str);
-        NSString *str2 = [NSString stringWithUTF8String:str];
-        [input setStringValue:str2];
-    }
+//    [NSApp runModalForWindow:window];
 }
 
 void hal_save(struct context *context, const struct byte_array *key, const struct variable *value)
@@ -704,7 +692,6 @@ void hal_save(struct context *context, const struct byte_array *key, const struc
 
     [defaults setObject:value2 forKey:key3];
     [defaults synchronize];
-
 }
 
 struct variable *hal_load(struct context *context, const struct byte_array *key)
@@ -745,13 +732,13 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
 
     DEBUGPRINT("file_listener_callback:\n");
     for (i=0; i<numEvents; i++) {
-/*
-        FSEventStreamEventFlags event = eventFlags[i];
-        if (event & kFSEventStreamEventFlagItemCreated)     DEBUGPRINT("\t\tcreated\n");
-        if (event & kFSEventStreamEventFlagItemRenamed)     DEBUGPRINT("\t\trenamed\n");
-        if (event & kFSEventStreamEventFlagItemRemoved)     DEBUGPRINT("\t\tdeleted\n");
-        if (event & kFSEventStreamEventFlagItemModified)    DEBUGPRINT("\t\tmodified\n");
-*/
+        /*
+         FSEventStreamEventFlags event = eventFlags[i];
+         if (event & kFSEventStreamEventFlagItemCreated)     DEBUGPRINT("\t\tcreated\n");
+         if (event & kFSEventStreamEventFlagItemRenamed)     DEBUGPRINT("\t\trenamed\n");
+         if (event & kFSEventStreamEventFlagItemRemoved)     DEBUGPRINT("\t\tdeleted\n");
+         if (event & kFSEventStreamEventFlagItemModified)    DEBUGPRINT("\t\tmodified\n");
+         */
         struct file_thread *thread = (struct file_thread*)clientCallBackInfo;
 
         char *path = (char*)paths[i];
@@ -777,7 +764,7 @@ void hal_file_listen(struct context *context, const char *path, struct variable 
 
     CFStringRef path2 = CFStringCreateWithCString(NULL, path, kCFStringEncodingUTF8);
     CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path2, 1, NULL);
-    
+
     FSEventStreamContext fsc = {0, ft, NULL, NULL, NULL};
     FSEventStreamRef stream;
     CFAbsoluteTime latency = 1.0; // seconds
@@ -792,7 +779,7 @@ void hal_file_listen(struct context *context, const char *path, struct variable 
                                  latency,
                                  kFSEventStreamCreateFlagNone
                                  );
-    
+
     FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 	FSEventStreamStart(stream);
 	CFRunLoopRun();

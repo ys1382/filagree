@@ -58,19 +58,12 @@ struct node_thread *thread_new(struct context *context,
     return ta;
 }
 
-void thread_wait_for(pthread_t *thread)
-{
-    int ptj;
-    DEBUGPRINT("\tpthread_join on thread %p\n", thread);
-    if ((ptj = pthread_join(*thread, NULL)))
-        printf("could not pthread_join %p, error %d\n", thread, ptj);
-}
-
 void node_callback(struct node_thread *ta, struct variable *message)
 {
     if (ta->listener == NULL)
         return;
 
+    DEBUGPRINT("mutex_lock5\n");
     pthread_mutex_lock(&ta->context->singleton->gil);
     
     const char *key = NUM_TO_STRING(node_events, ta->event);
@@ -83,6 +76,7 @@ void node_callback(struct node_thread *ta, struct variable *message)
 
     variable_del(ta->context, key3);
 
+    DEBUGPRINT("mutex_unlock5\n");
     pthread_mutex_unlock(&ta->context->singleton->gil);
 }
 
@@ -100,18 +94,17 @@ void *incoming(void *arg)
 {
     struct node_thread *ta = (struct node_thread *)arg;
 
+    DEBUGPRINT("mutex_lock1\n");
     pthread_mutex_lock(&ta->context->singleton->gil);
     struct variable *message = variable_deserialize(ta->context, ta->buf);
     char buf[1000];
     DEBUGPRINT("received %s\n", variable_value_str(ta->context, message, buf));
+    DEBUGPRINT("mutex_unlock1\n");
     pthread_mutex_unlock(&ta->context->singleton->gil);
 
     node_callback(ta, message);
 	return NULL;
 }
-
-// for use with pthread_join in context_del, so that the context's variables are
-// not all freed before the thread is done
 
 void *thread_wrapper(void *param)
 {
@@ -122,6 +115,7 @@ void *thread_wrapper(void *param)
     ta->start_routine(ta);
 
     pthread_cond_signal(&s->thread_cond);
+    DEBUGPRINT("mutex_unlock0\n");
     pthread_mutex_unlock(&s->gil);
     s->num_threads--;
     return NULL;

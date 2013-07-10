@@ -1,2 +1,2 @@
-a = 'abcdeabcdx'
-b = a.find('cd', -1)
+import 'ui'
+testui()

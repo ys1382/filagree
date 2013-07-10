@@ -195,7 +195,7 @@ struct variable *param_var(struct context *context, const struct variable *value
 
     //char buf[1000];
     //DEBUGPRINT("param_var %p->%p : %s\n", v, v->map, variable_value_str(context, v, buf));
-    
+
     return v; //variable_copy(context, v);
 }
 
@@ -222,14 +222,22 @@ struct variable *sys_label(struct context *context)
 
 struct variable *sys_input(struct context *context)
 {
-    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *uictx = (struct variable*)array_get(value->list, 1);
-    int32_t x = param_int(value, 2);
-    int32_t y = param_int(value, 3);
-    const char *str = param_str(value, 4);
-
+    struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *uictx = (struct variable*)array_get(arguments->list, 1);
+    int32_t x = param_int(arguments, 2);
+    int32_t y = param_int(arguments, 3);
     int32_t w=0, h=0;
-    hal_input(uictx, x, y, &w, &h, str, false);
+
+    struct variable *values = (struct variable*)array_get(arguments->list, 4);
+    struct variable *name, *hint;
+    if (values->type == VAR_LST) {
+        name = (struct variable *)array_get(values->list, 0);
+        hint = (struct variable *)array_get(values->list, 1);
+    } else {
+        name = values;
+    }
+    void *input = hal_input(uictx, x, y, &w, &h, hint, false);
+    map_insert(context->inputs, name, input);
     return two_ints(context, w, h);
 }
 
@@ -262,7 +270,7 @@ struct variable *sys_button(struct context *context)
                variable_map_get(context, item, logic2),
                variable_keyed_string(context, item, "text"),
                variable_keyed_string(context, item, "image"));
-    
+
     byte_array_del(logic);
     return two_ints(context, w, h);
 }
@@ -327,30 +335,18 @@ struct variable *sys_window(struct context *context)
 
     struct variable *uictx = param_var(context, value, 2);
     struct variable *logic = param_var(context, value, 3);
-    
+
+    context->inputs = map_new();
+    context->singleton->num_threads++;
     hal_window(context, uictx, &w, &h, logic);
     return two_ints(context, w, h);
-}
-
-struct variable *sys_load_form(struct context *context)
-{
-    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    const struct byte_array *key = ((struct variable*)array_get(value->list, 1))->str;
-    hal_load_form(context, key);
-    return NULL;
-}
-
-struct variable *sys_save_form(struct context *context)
-{
-    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    const struct byte_array *key = ((struct variable*)array_get(value->list, 1))->str;
-    hal_save_form(context, key);
-    return NULL;
 }
 
 struct variable *sys_loop(struct context *context)
 {
     stack_pop(context->operand_stack); // self
+    DEBUGPRINT("mutex_unlockz\n");
+    pthread_mutex_unlock(&context->singleton->gil);
     hal_loop();
     return NULL;
 }
@@ -385,7 +381,7 @@ int file_list_callback(const char *path, bool dir, long mod, void *fl_context)
     value = variable_new_int(flc->context, mod);
     variable_map_insert(flc->context, metadata, key2, value);
     variable_map_insert(flc->context, flc->result, path3, metadata);
-    
+
     return 0;
 }
 
@@ -399,6 +395,44 @@ struct variable *sys_file_list(struct context *context)
     return flc.result;
 }
 
+struct variable *sys_form_get(struct context *context)
+{
+    stack_pop(context->operand_stack);
+    struct array *keys = map_keys(context->inputs);
+    struct array *fields = map_values(context->inputs);
+    struct variable *result = variable_new_list(context, NULL);
+    uint32_t len = keys->length;
+
+    for (int i=0; i<len; i++)
+    {
+        struct variable *key = array_get(keys, i);
+        void *field = array_get(fields, i);
+        struct variable *value = hal_input_get(context, field);
+        variable_map_insert(context, result, key, value);
+    }
+    return result;
+}
+
+struct variable *sys_form_set(struct context *context)
+{
+    struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *fields = array_get(arguments->list, 1);
+    struct array *keys = map_keys(context->inputs);
+    struct array *values = map_values(context->inputs);
+    uint32_t len = values->length;
+    
+    for (int i=0; i<len; i++)
+    {
+        struct variable *key = array_get(keys, i);
+        struct variable *field = variable_map_get(context, fields, key);
+        if ((field == NULL) || (field->type == VAR_NIL))
+            continue;
+        struct variable *value = array_get(values, i);
+        hal_input_set(field, value);
+    }
+    return NULL;
+}
+
 struct string_func builtin_funcs[] = {
 	{"args",        &sys_args},
     {"print",       &sys_print},
@@ -407,6 +441,8 @@ struct string_func builtin_funcs[] = {
     {"write",       &sys_write},
     {"save",        &sys_save},
     {"load",        &sys_load},
+    {"form_get",    &sys_form_get},
+    {"form_set",    &sys_form_set},
     {"remove",      &sys_rm},
     {"bytes",       &sys_bytes},
     {"sin",         &sys_sin},
@@ -420,8 +456,6 @@ struct string_func builtin_funcs[] = {
     {"file_listen", &sys_file_listen},
 #ifndef NO_UI
     {"window",      &sys_window},
-    {"load_form",   &sys_load_form},
-    {"save_form",   &sys_save_form},
     {"loop",        &sys_loop},
     {"label",       &sys_label},
     {"button",      &sys_button},
@@ -640,7 +674,7 @@ struct variable *cfnc_has(struct context *context) {
     return cfnc_find2(context, true);
 }
 
-struct variable *cfnc_insert(struct context *context)
+struct variable *cfnc_insert(struct context *context) // todo: test
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *self = (struct variable*)array_get(args->list, 0);
@@ -667,7 +701,7 @@ struct variable *cfnc_insert(struct context *context)
             exit_message("bad insertion destination");
             break;
     }
-    position = start ? start->integer : 0;
+    //position = start ? start->integer : 0;
 
     struct variable *first = variable_part(context, variable_copy(context, self), 0, position);
     struct variable *second = variable_part(context, variable_copy(context, self), position, -1);
@@ -746,7 +780,7 @@ struct variable *cfnc_replace(struct context *context)
     null_check(replaced);
     struct variable *result = variable_new_str(context, replaced);
     byte_array_del(replaced);
-    
+
     return result;
 }
 
@@ -822,7 +856,7 @@ struct variable *builtin_method(struct context *context,
         }
         result = v;
     }
-    
+
     else if (!strcmp(idxstr, FNC_VALS)) {
         assert_message(it == VAR_LST, "values are only for list");
         if (indexable->map == NULL)

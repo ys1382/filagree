@@ -31,6 +31,7 @@ struct context {
     struct byte_array *program;
     bool runtime;
     uint8_t indent;
+    struct map *inputs;
 #ifdef DEBUG
     char pcbuf[10000]; // todo: check boundary
 #endif
