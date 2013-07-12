@@ -62,9 +62,7 @@ void node_callback(struct node_thread *ta, struct variable *message)
 {
     if (ta->listener == NULL)
         return;
-
-    DEBUGPRINT("mutex_lock5\n");
-    pthread_mutex_lock(&ta->context->singleton->gil);
+    gil_lock(ta->context, "node_callback");
     
     const char *key = NUM_TO_STRING(node_events, ta->event);
     struct byte_array *key2 = byte_array_from_string(key);
@@ -76,8 +74,7 @@ void node_callback(struct node_thread *ta, struct variable *message)
 
     variable_del(ta->context, key3);
 
-    DEBUGPRINT("mutex_unlock5\n");
-    pthread_mutex_unlock(&ta->context->singleton->gil);
+    gil_unlock(ta->context, "node_callback");
 }
 
 // callback to client when connection is opened (or fails)
@@ -94,13 +91,11 @@ void *incoming(void *arg)
 {
     struct node_thread *ta = (struct node_thread *)arg;
 
-    DEBUGPRINT("mutex_lock1\n");
-    pthread_mutex_lock(&ta->context->singleton->gil);
+    gil_lock(ta->context, "incoming");
     struct variable *message = variable_deserialize(ta->context, ta->buf);
     char buf[1000];
     DEBUGPRINT("received %s\n", variable_value_str(ta->context, message, buf));
-    DEBUGPRINT("mutex_unlock1\n");
-    pthread_mutex_unlock(&ta->context->singleton->gil);
+    gil_unlock(ta->context, "incoming");
 
     node_callback(ta, message);
 	return NULL;
@@ -110,14 +105,18 @@ void *thread_wrapper(void *param)
 {
     struct node_thread *ta = (struct node_thread *)param;
     struct context_shared *s = ta->context->singleton;
+
+    gil_lock(ta->context, "thread_wrapper");
     s->num_threads++;
+    gil_unlock(ta->context, "thread_wrapper");
 
     ta->start_routine(ta);
 
-    pthread_cond_signal(&s->thread_cond);
-    DEBUGPRINT("mutex_unlock0\n");
-    pthread_mutex_unlock(&s->gil);
+    gil_lock(ta->context, "thread_wrapper b");
     s->num_threads--;
+    pthread_cond_signal(&s->thread_cond);
+    gil_unlock(ta->context, "thread_wrapper b");
+
     return NULL;
 }
 
@@ -132,8 +131,6 @@ void add_thread(struct node_thread *ta, int sockfd)
         perror("pthread_create");
         return;
     }
-
-    DEBUGPRINT("add_thread %p to fd %d\n", *tid, sockfd);
 }
 
 // listens for inbound connections
@@ -265,18 +262,13 @@ struct variable *sys_socket_listen(struct context *context)
 
 void *sys_connect2(void *arg)
 {
-    int result = 0;
     struct node_thread *ta = (struct node_thread *)arg;
 
     // Blocking connect to socket file descriptor
 	if (connect(ta->fd, (struct sockaddr *)&ta->servaddr, sizeof(ta->servaddr)))
     {
-        ta->event = ERROR;
-        printf("error %d\n", errno);
-        result = errno;
-        struct variable *result2 = variable_new_int(ta->context, result);
-        ta->event = ERROR;
-        node_callback(ta, result2);
+        perror("connect");
+        return NULL;
 
     } else {
 
@@ -336,8 +328,6 @@ void *sys_send2(void *arg)
 
     if (write(ta->fd, ta->buf->data, ta->buf->length) != ta->buf->length) {
         DEBUGPRINT("write error\n");
-        struct variable *problem = variable_new_str(ta->context, byte_array_from_string("write error"));
-        node_callback(ta, problem);
     } else {
         DEBUGPRINT("sent to %d\n", ta->fd);
         node_callback(ta, NULL); // sent
@@ -359,7 +349,6 @@ struct variable *sys_send(struct context *context)
     ta->buf = variable_serialize(ta->context, NULL, v);
     ta->event = SENT;
 
-    DEBUGPRINT("listen\n");
     add_thread(ta, 0);
 
     return NULL;

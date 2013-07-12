@@ -111,7 +111,8 @@ void *vm_exit_message(struct context *context, const char *format, ...);
 void vm_null_check(struct context *context, const void* p);
 void vm_assert(struct context *context, bool assertion, const char *format, ...);
 struct variable *lookup(struct context *context, struct variable *indexable, struct variable *index);
-//void print_operand_stack(struct context *context);
+void gil_lock(struct context *context, const char *who);
+void gil_unlock(struct context *context, const char *who);
 
 
 #endif // VM_H

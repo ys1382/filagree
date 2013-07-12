@@ -1,15 +1,10 @@
-port = 9989
+port = 9984
 
 ####### net
 
-# node.fg demo:
-#
-# 1) server listens
-# 2) client connects
-# 3) clients sends 'hi'
-# 4) server responds with 'hi2'
-
 server = [
+
+    'users' : sys.load('users'),
 
     'connected' : function(self, id)
         sys.print('server: connected ' + id)
@@ -17,13 +12,21 @@ server = [
 
     'messaged' : function(self, id, msg)
         sys.print('server: message from ' + id + ': ' + msg)
-        sys.send(id, msg + '2', self)
+        self[msg.action](id, msg.data)
     end,
 
-    'sent' : function(self, id)
-        sys.print('server: sent to ' + id)
-    end
+    'signup' : function(self, id, data)
+        self.users = users + data
+        sys.save(self.users)
+    end,
 
+    'signin' : function(self, id, data)
+        if self.users(data.username) == data.password then
+            sys.send(id, 'ok')
+        else
+            sys.send(id, 'no')
+        end
+    end,
 ]
 
 client = [
@@ -94,7 +97,7 @@ end
 
 
 ctx.signup = function(ctx)
-    msg = ['action' : 'signup', sys.form_get()]
+    msg = ['action' : 'signup', 'data' : sys.form_get()]
     sys.send(ctx.client.server_id, msg)
     ctx.main()
 end

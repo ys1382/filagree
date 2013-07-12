@@ -40,8 +40,12 @@ void display_code(struct context *context, struct byte_array *code);
 
 jmp_buf trying;
 
+static uint16_t current_thread_id() {
+    return ((unsigned int)(VOID_INT)pthread_self() >> 12) & 0xFFF;
+}
+
 static void vm_exit() {
-    DEBUGPRINT("exiting thread %x\n", ((unsigned int)(VOID_INT)pthread_self() >> 12) & 0xFFF);
+    DEBUGPRINT("exiting thread %" PRIu16 "\n", current_thread_id());
     longjmp(trying, 1);
 }
 
@@ -153,16 +157,14 @@ void context_del(struct context *context)
 
     // wait for spawned threads
     struct context_shared *s = context->singleton;
-    DEBUGPRINT("mutex_lock3\n");
-    pthread_mutex_lock(&s->gil);
+    gil_lock(context, "context_del");
     if (s->num_threads > 0)
     {
         pthread_cond_wait(&s->thread_cond, &s->gil);
 
         if (s->num_threads == 0) // last remaining thread
         {
-            DEBUGPRINT("mutex_unlock3a\n");
-            pthread_mutex_unlock(&s->gil);
+            gil_unlock(context, "context_del b");
             pthread_cond_destroy(&s->thread_cond);
             pthread_mutex_destroy(&s->gil);
 
@@ -175,8 +177,7 @@ void context_del(struct context *context)
             array_del(vars);
         }
     } else {
-        DEBUGPRINT("mutex_unlock3b\n");
-        pthread_mutex_unlock(&s->gil);
+        gil_unlock(context, "context_del c");
     }
 
     while (!stack_empty(context->program_stack))
@@ -330,9 +331,8 @@ const char* indentation(struct context *context)
 static void display_program_counter(struct context *context, const struct byte_array *program)
 {
     null_check(context);
-    uint16_t thread = ((unsigned int)(VOID_INT)pthread_self() >> 12) & 0xFFF;
-    sprintf(context->pcbuf, "%s>%x - %2ld:%3d ", indentation(context), thread, program->current-program->data, *program->current);
-    //DEBUGPRINT("%s>%hu - %2ld:%3d ", indentation(context), thread, program->current-program->data, *program->current);
+    sprintf(context->pcbuf, "%s>%" PRIu16 " - %2ld:%3d ",
+            indentation(context), current_thread_id(), program->current-program->data, *program->current);
 }
 
 void display_program(struct byte_array *program)
@@ -375,6 +375,26 @@ const char* indentation(struct context *context) { return ""; }
 void display_code(struct context *context, struct byte_array *code) {}
 
 #endif // DEBUG
+
+// global interpreter lock
+
+void gil_lock(struct context *context, const char *who)
+{
+    pthread_mutex_lock(&context->singleton->gil);
+#ifdef DEBUG
+    if (who != NULL)
+        DEBUGPRINT("\n%s>%" PRIu16 " lock %s\n", indentation(context), current_thread_id(), who);
+#endif
+}
+
+void gil_unlock(struct context *context, const char *who)
+{
+    pthread_mutex_unlock(&context->singleton->gil);
+#ifdef DEBUG
+    if (who != NULL)
+        DEBUGPRINT("\n%s>%" PRIu16 " unlock %s\n", indentation(context), current_thread_id(), who);
+#endif
+}
 
 // instruction implementations /////////////////////////////////////////////
 
@@ -424,7 +444,7 @@ void vm_call_src(struct context *context, struct variable *func)
             stack_push(context->operand_stack, v); // push the result
         } break;
         case VAR_NIL:
-            vm_exit_message(context, "can't find function");
+            DEBUGPRINT("nil func\n");
             break;
         default:
             vm_exit_message(context, "not a function");
@@ -1362,10 +1382,8 @@ bool run(struct context *context,
 
         if (context->singleton->tick++ > GIL_SWITCH) {
             context->singleton->tick = 0;
-            DEBUGPRINT("mutex_unlock2\n");
-            pthread_mutex_unlock(&context->singleton->gil);
-            DEBUGPRINT("mutex_lock2\n");
-            pthread_mutex_lock(&context->singleton->gil);
+            gil_unlock(context, "run");
+            gil_lock(context, "run");
         }
 
         inst = (enum Opcode)*program->current;
@@ -1451,10 +1469,6 @@ done:
 
 void execute(struct byte_array *program, find_c_var *find)
 {
-#ifdef DEBUG
-//    display_program(program);
-#endif
-
     DEBUGPRINT("execute:\n");
     struct context *context = context_new(false, true, true, NULL);
     context->singleton->find = find;
@@ -1468,17 +1482,14 @@ void execute(struct byte_array *program, find_c_var *find)
 #endif
     if (!setjmp(trying))
     {
-        DEBUGPRINT("mutex_lock1\n");
-        pthread_mutex_lock(&context->singleton->gil);
         run(context, program, NULL, false);
-        DEBUGPRINT("mutex_unlock1\n");
-        pthread_mutex_unlock(&context->singleton->gil);
     }
 
     if (context->error)
         DEBUGPRINT("error: %s\n", context->error->str->data);
     if (!stack_empty(context->operand_stack))
         DEBUGPRINT("warning: operand stack not empty\n");
+    gil_unlock(context, "execute");
     context_del(context);
     byte_array_del(program);
 }

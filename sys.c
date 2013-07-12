@@ -345,8 +345,7 @@ struct variable *sys_window(struct context *context)
 struct variable *sys_loop(struct context *context)
 {
     stack_pop(context->operand_stack); // self
-    DEBUGPRINT("mutex_unlockz\n");
-    pthread_mutex_unlock(&context->singleton->gil);
+    gil_unlock(context, "sys_loop");
     hal_loop();
     return NULL;
 }
@@ -358,6 +357,7 @@ struct variable *sys_file_listen(struct context *context)
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     const char *path = param_str(arguments, 1);
     struct variable *listener = param_var(context, arguments, 2);
+    gil_unlock(context, "sys_file_listen");
     hal_file_listen(context, path, listener);
     return NULL;
 }

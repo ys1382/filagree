@@ -38,8 +38,11 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
     
     char* filename_str = byte_array_to_string(filename_ba);
 
-    if (!(file = fopen(filename_str, "rb")))
-        exit_message("\nCould not open file %s", filename_str);
+    if (!(file = fopen(filename_str, "rb"))) {
+        free(filename_str);
+        DEBUGPRINT("\nCould not open file %s", filename_str);
+        return NULL;
+    }
     free(filename_str);
 
     if ((size = fsize(file)) < 0)

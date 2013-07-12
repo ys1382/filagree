@@ -500,9 +500,14 @@ objectValueForTableColumn:(NSTableColumn *) aTableColumn
     [self pressed:notification];
 }
 
--(IBAction)pressed:(id)sender {
+-(IBAction)pressed:(id)sender
+{
     if (self->logic && self->logic->type != VAR_NIL)
+    {
+        gil_lock(self->context, "pressed");
         vm_call(self->context, self->logic, self->uictx, NULL);
+        gil_unlock(self->context, "pressed");
+    }
 }
 
 @end // Actionifier implementation
@@ -672,7 +677,6 @@ void hal_window(struct context *context,
     }
 
     [NSApp activateIgnoringOtherApps:YES];
-//    [NSApp runModalForWindow:window];
 }
 
 void hal_save(struct context *context, const struct byte_array *key, const struct variable *value)
@@ -729,8 +733,10 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
 {
     int i;
     char **paths = eventPaths;
+    struct file_thread *thread = (struct file_thread*)clientCallBackInfo;
 
-    DEBUGPRINT("file_listener_callback:\n");
+    gil_lock(thread->context, "file_listener_callback");
+
     for (i=0; i<numEvents; i++) {
         /*
          FSEventStreamEventFlags event = eventFlags[i];
@@ -739,7 +745,6 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
          if (event & kFSEventStreamEventFlagItemRemoved)     DEBUGPRINT("\t\tdeleted\n");
          if (event & kFSEventStreamEventFlagItemModified)    DEBUGPRINT("\t\tmodified\n");
          */
-        struct file_thread *thread = (struct file_thread*)clientCallBackInfo;
 
         char *path = (char*)paths[i];
         int len = strlen(path) - 1;
@@ -754,6 +759,8 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
         if ((method3 != NULL) && (method3->type != VAR_NIL))
             vm_call(thread->context, method3, thread->listener, path3);
     }
+
+    gil_unlock(thread->context, "file_listener_callback");
 }
 
 void hal_file_listen(struct context *context, const char *path, struct variable *listener)

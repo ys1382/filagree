@@ -474,6 +474,7 @@ static int32_t default_hashor(const void *x, void *context)
         }
         case VAR_NIL:
             return 0;
+            break;
         default:
             exit_message("not handled hash type");
             return 1;
