@@ -56,7 +56,7 @@ ctx = ['w':240, 'h':320,
        'port' : port]
 
 ctx.select = function(ctx)
-    sys.print('select ' + sys.args())
+    sys.print('select ' + sys.args()[1])
 end
 
 ctx.settings = function(ctx)

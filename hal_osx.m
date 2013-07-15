@@ -447,6 +447,7 @@ void hal_label (int32_t x, int32_t y,
     struct variable *logic;
     struct context *context;
     struct variable *uictx;
+    struct variable *param;
     const struct variable *data;
 }
 
@@ -466,6 +467,7 @@ void hal_label (int32_t x, int32_t y,
     bp->context = f;
     bp->uictx = u;
     bp->data = d;
+    bp->param = NULL;
     return bp;
 }
 
@@ -475,7 +477,7 @@ void hal_label (int32_t x, int32_t y,
 	CGFloat w = [window frame].size.width;
 	CGFloat h = [window frame].size.height;
     NSLog(@"resized to %f,%f", w, h);
-    [self pressed:nil];
+    //[self pressed:nil];
 }
 
 - (id)          tableView:(NSTableView *) aTableView
@@ -497,6 +499,7 @@ objectValueForTableColumn:(NSTableColumn *) aTableColumn
     int row = [table selectedRow];
     if (row == -1)
         return;
+    self->param = variable_new_int(self->context, row);
     [self pressed:notification];
 }
 
@@ -505,7 +508,7 @@ objectValueForTableColumn:(NSTableColumn *) aTableColumn
     if (self->logic && self->logic->type != VAR_NIL)
     {
         gil_lock(self->context, "pressed");
-        vm_call(self->context, self->logic, self->uictx, NULL);
+        vm_call(self->context, self->logic, self->uictx, self->param, NULL);
         gil_unlock(self->context, "pressed");
     }
 }
