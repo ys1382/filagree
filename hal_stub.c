@@ -35,4 +35,7 @@ struct variable *hal_load(struct context *context, const struct byte_array *key)
 void hal_save_form(struct context *context, const struct byte_array *key) {}
 void hal_load_form(struct context *context, const struct byte_array *key) {}
 void hal_file_listen(struct context *context, const char *path, struct variable *listener) {}
-
+struct variable *hal_input_get(struct context *context, void *input) {}
+void hal_input_set(void *input, struct variable *value) {}
+struct variable *hal_form_get(struct context *context) {}
+void hal_form_set(struct context *context, struct variable *values) {}

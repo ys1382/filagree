@@ -297,6 +297,7 @@ int import(const char* input, int i)
     byte_array_append(path, dotsrc);
     byte_array_del(dotsrc);
 
+    uint32_t line2 = line;
     struct variable *path2 = variable_new_str(context, path);
     if (!map_has(imports, path2)) {
         map_insert(imports, path2, NULL);
@@ -305,6 +306,7 @@ int import(const char* input, int i)
         byte_array_del(imported);
     }
     byte_array_del(path);
+    line = line2;
 
     return i+1;
 }
@@ -494,14 +496,12 @@ struct symbol *comprehension();
 
 struct symbol *symbol_new(enum Nonterminal nonterminal)
 {
-    //    DEBUGPRINT("symbol_new %s\n", NUM_TO_STRING(nonterminals, ARRAY_LEN(nonterminals), nonterminal));
     struct symbol *s = (struct symbol*)malloc(sizeof(struct symbol));
     s->nonterminal = nonterminal;
     s->list = array_new();
     s->index = s->value = s->other = NULL;
     s->exp = RHS;
     s->token = NULL;
-    //DEBUGPRINT("symbol_new %p\n", s);
     return s;
 }
 
@@ -618,17 +618,18 @@ enum Lexeme lookahead(int n) {
     return token->lexeme;
 }
 
-struct token *fetch(enum Lexeme lexeme) {
+// fetches the next token
+struct token *fetch(enum Lexeme lexeme)
+{
     if (parse_index >= parse_list->length)
         return NULL;
+
     struct token *token = (struct token*)parse_list->data[parse_index];
     if (token->lexeme != lexeme) {
-        //DEBUGPRINT("fetchd %s instead of %s at %d\n", lexeme_to_string(token->lexeme), lexeme_to_string(lexeme), parse_index);
         return NULL;
     }
-    //DEBUGPRINT("fetched %s at %d\n", lexeme_to_string(lexeme), parse_index);
-    //display_token(token, 0);
 
+    line = token->at_line;
     parse_index++;
     return token;
 }
@@ -670,6 +671,7 @@ struct symbol *symbol_fetch(enum Nonterminal n, enum Lexeme goal, ...)
     struct token *token = (struct token*)parse_list->data[parse_index];
     assert_message(token!=0, ERROR_NULL);
     enum Lexeme lexeme = token->lexeme;
+    line = token->at_line;
 
     struct symbol *symbol = NULL;
 
@@ -681,8 +683,6 @@ struct symbol *symbol_fetch(enum Nonterminal n, enum Lexeme goal, ...)
 
             symbol = symbol_new(n);
             symbol->token = token;
-            //DEBUGPRINT("fetched %s at %d\n", lexeme_to_string(lexeme), parse_index);
-            //display_token(token, 0);
 
             parse_index++;
             break;
@@ -976,7 +976,8 @@ struct symbol *ifthenelse()
 {
     FETCH_OR_QUIT(LEX_IF);
     struct symbol *e, *f = symbol_new(SYMBOL_IF_THEN_ELSE);
-    e = expression();
+    if (!(e = expression()))
+        return NULL;
     if (e->nonterminal == SYMBOL_ASSIGNMENT)
         e->exp = BHS;
     symbol_add(f, e);

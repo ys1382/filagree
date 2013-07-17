@@ -1,10 +1,10 @@
-port = 9984
+port = 9993
 
 ####### net
 
 server = [
 
-    'users' : sys.load('users'),
+    'users' : sys.load('users') or [],
 
     'connected' : function(self, id)
         sys.print('server: connected ' + id)
@@ -16,8 +16,8 @@ server = [
     end,
 
     'signup' : function(self, id, data)
-        self.users = users + data
-        sys.save(self.users)
+        self.users = self.users + data
+        sys.save(self.users, 'users')
     end,
 
     'signin' : function(self, id, data)
@@ -53,7 +53,9 @@ import 'ui'
 
 ctx = ['w':240, 'h':320,
        'client' : client,
-       'port' : port]
+       'port' : port,
+       'friends' : (sys.load('friends') or []),
+      ]
 
 ctx.select = function(ctx)
     sys.print('select ' + sys.args()[1])
@@ -80,7 +82,7 @@ ctx.main = function(ctx)
                     ['button', ['text':'add',      'logic':ctx.add]],
                     ['button', ['text':'settings', 'logic':ctx.settings]],
                 ]],
-                ['table', ['list':[7, 8, 9, 'x', 'y', 'z'], 'logic':ctx.select]]
+                ['table', ['list':ctx.friends, 'logic':ctx.select]]
             ],
             ctx.w, ctx.h)
 end
@@ -89,12 +91,18 @@ ctx.add = function(ctx)
     sys.ui(ctx,'vertical', [
             ['form', ['username']],
             ['horizontal', [
-                ['button', ['text':'add',       'logic':ctx.main]],
+                ['button', ['text':'add',       'logic':ctx.added]],
                 ['button', ['text':'nevermind', 'logic':ctx.main]],
             ]]],
             ctx.w, ctx.h)
 end
 
+ctx.added = function(ctx)
+    friend = sys.form_get().username
+    ctx.friends = ctx.friends + friend
+    sys.save(ctx.friends, 'friends')
+    ctx.main()
+end
 
 ctx.signup = function(ctx)
     msg = ['action' : 'signup', 'data' : sys.form_get()]

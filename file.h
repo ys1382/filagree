@@ -9,12 +9,6 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-
-#define ERROR_FSIZE     "Could not get length of file"
-#define ERROR_FOPEN     "Could not open file"
-#define ERROR_FREAD     "Could not read file"
-#define ERROR_FCLOSE    "Could not close file"
-
 struct byte_array *read_file(const struct byte_array *filename);
 int write_file(const struct byte_array* filename, struct byte_array* bytes);
 long fsize(FILE* file);

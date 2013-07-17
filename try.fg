@@ -1,2 +1,4 @@
-import 'ui'
-testui()
+f = sys.load('friends') or []
+f = f + 'x'
+sys.save(f, 'test')
+g = sys.load('test')

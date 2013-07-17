@@ -153,8 +153,6 @@ struct context *context_new(bool state,
 
 void context_del(struct context *context)
 {
-    DEBUGPRINT("context_del %p\n", context);
-
     // wait for spawned threads
     struct context_shared *s = context->singleton;
     gil_lock(context, "context_del");

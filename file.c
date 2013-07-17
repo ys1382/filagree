@@ -17,7 +17,6 @@
 
 
 #define INPUT_MAX_LEN    100000
-#define ERROR_BIG        "Input file is too big"
 
 
 long fsize(FILE* file) {
@@ -40,25 +39,25 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
 
     if (!(file = fopen(filename_str, "rb"))) {
         free(filename_str);
-        DEBUGPRINT("\nCould not open file %s", filename_str);
+        DEBUGPRINT("\nCould not read file %s", filename_str);
         return NULL;
     }
     free(filename_str);
 
     if ((size = fsize(file)) < 0)
-        exit_message(ERROR_FSIZE);
+        exit_message("could not get file size");
     if (size == 0)
         return byte_array_new();
     if (size > INPUT_MAX_LEN)
-        exit_message(ERROR_BIG);
+        exit_message("input file is too big");
     if (!(str = (char*)malloc((size_t)size + 1)))
-        exit_message(ERROR_ALLOC);
+        exit_message("could not malloc");
 
     read = fread(str, 1, (size_t)size, file);
     if (feof(file) || ferror(file))
-        exit_message(ERROR_FREAD);
+        exit_message("could not read file");
     if (fclose(file))
-        exit_message(ERROR_FCLOSE);
+        exit_message("could not close file");
 
     struct byte_array* ba = byte_array_new_size(size);
     ba->length = size;
@@ -78,7 +77,7 @@ int write_file(const struct byte_array* filename, struct byte_array* bytes)
     char *fname = byte_array_to_string(filename);
     FILE* file = fopen(fname, "w");
     if (file == NULL) {
-        DEBUGPRINT("could not open file %s\n", fname);
+        DEBUGPRINT("could not write file %s\n", fname);
         free(fname);
         return -1;
     }

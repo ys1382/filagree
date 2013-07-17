@@ -593,7 +593,10 @@ void hal_table(struct context *context,
                struct variable *uictx,
                int x, int y, int w, int h,
                struct variable *list,
-               struct variable *logic) {
+               struct variable *logic)
+{
+    assert_message(list->type == VAR_LST, "not a list");
+
     NSView *content = [window contentView];
     NSRect rect = whereAmI(x,y,w,h);
     NSScrollView * tableContainer = [[NSScrollView alloc] initWithFrame:rect];

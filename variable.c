@@ -1,9 +1,9 @@
 #include <string.h>
 #include "vm.h"
+#include "util.h"
 #include "struct.h"
 #include "serial.h"
 #include "variable.h"
-#include "util.h"
 
 extern void mark_map(struct map *map, bool mark);
 static void variable_value_str2(struct context *context, struct variable* v, char *str, size_t size);
@@ -37,7 +37,6 @@ struct variable* variable_new(struct context *context, enum VarType type)
     v->mark = 0;
     v->visited = VISITED_NOT;
     array_add(context->singleton->all_variables, v);
-    //DEBUGPRINT("variable_new %d %p\n", type, v);
     return v;
 }
 
@@ -389,6 +388,8 @@ struct byte_array *variable_serialize(struct context *context,
         case VAR_KVP:
             variable_serialize(context, bits, in->kvp.key);
             variable_serialize(context, bits, in->kvp.val);
+            break;
+        case VAR_NIL:
             break;
         default:
             vm_exit_message(context, "bad var type");
