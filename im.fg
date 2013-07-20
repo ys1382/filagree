@@ -123,6 +123,8 @@ sys.ui(ctx,
         ctx.w, ctx.h)
 
 
+####### main
+
 sys.listen(port, server)
 sys.connect('127.0.0.1', port, client)
 

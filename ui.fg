@@ -1,12 +1,5 @@
 # ui.fg ###################################################################
 
-sys.max = function(self,a,b)
-    if a > b then
-        return a
-    end
-    return b
-end
-
 sys.form_saver = function(self, key)
     f = function()(key)
         sys.save_form(key)
@@ -14,75 +7,80 @@ sys.form_saver = function(self, key)
     return f
 end
 
-sys.ui = function(self, uictx, type, item, w, h)
-    w,h = sys.window(w,h)
-    parent = ['w':w, 'h':h]
-    sys.ui2(uictx, parent, type, item, 0, 0)
-end
+sys.ui = function(self, uictx, item, parent, x, y)
 
-sys.ui2 = function(self, uictx, parent, type, item, x, y)
+    if not parent then
+        w,h = sys.window(item.w, item.h)
+        parent = ['w':item.w, 'h':item.h]
+        return sys.ui(uictx, item, parent, 0, 0)
+    end
 
-    #sys.print('item = ' + item)
+    type = item[0]
+    tail = item.part(1)
     if (type == 'vertical') then
         w = h = 0
-        for i in item
+        for i in tail
             i.x,i.y = x,y+h
             sys.print('i = ' + i)
-            a,b = sys.ui2(uictx, parent, i[0], i[1], x, y+h)
-            w = sys.max(w, a)
+            a,b = sys.ui(uictx, i, parent, x, y+h)
+            if a > w then w = a end
             h = h + b
         end
     else if (type == 'horizontal') then
         w = h = 0
-        for i in item
+        for i in tail
             i.x,i.y = x+w,y
-            a,b = sys.ui2(uictx, parent, i[0], i[1], x+w, y)
+            a,b = sys.ui(uictx, i, parent, x+w, y)
             w = w + a
-            h = sys.max(h, b)
+            if b > h then h = b end
         end
     else if type == 'form' then
         fields = []
-        for name in item
-            field = ['horizontal', [
+        for name in tail
+            field = ['horizontal',
                 ['label', name],
                 ['input', name],
-            ]]
+            ]
             fields.insert(field)
         end
-        w,h = sys.ui2(uictx, parent, 'vertical', fields)
+        w,h = sys.ui(uictx, ['vertical'] + fields, parent)
 
     else if type == 'label' then
-        w,h = sys.label(x, y, item)
+        w,h = sys.label(x, y, tail[0])
+    else if type == 'input' then
+        w,h = sys.input(uictx, x, y, tail[0])
     else if type == 'button' then
         w,h = sys.button(uictx, x, y, 0, 0, item)
-    else if type == 'input' then
-        w,h = sys.input(uictx, x, y, item)
     else if type == 'table' then
-        sys.print('parent= ' + parent + ', pw=' + parent.w)
-        w,h = sys.table(uictx, x, y, parent.w, parent.h, item)
+        w,h = sys.table(uictx, x, y, parent.w-x, parent.h-y, item)
     end
 
     return w,h
 end
 
 
+# todo: sys.ui returns map of named items, update()
+
 testui = function()
 
-    sys.ui(nil,
-           'vertical', [
+    tester = [ 'select' : function(ctx)
+                                sys.print('select ' + sys.args()[1])
+                                ctx.ui.testable.update([3,1,4,1,5])
+                            end ]
 
-                ['form', ['username', 'password']],
-
-                ['horizontal', [
-                    ['button', ['text':'signin']],
-                    ['button', ['text':'signup']],
-                ]]
-            ],
-            240,
-            320)
+    tester.ui = sys.ui( tester,
+                        ['vertical',
+                            ['form', 'username', 'password'],
+                            ['horizontal',
+                                 ['button', 'text':'signin'],
+                                 ['button', 'text':'signup']
+                            ],
+                            ['table', 'name':'testable', 'list':[7,8,9], 'logic':tester.select],
+                            'w':240, 'h':320
+                        ] )
 
     sys.loop()
 
 end
 
-#testui()
+testui()
