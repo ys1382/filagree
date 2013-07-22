@@ -293,11 +293,16 @@ struct variable *sys_table(struct context *context)
     struct variable *list = variable_map_get(context, item, balist2);
     struct variable *logic = variable_map_get(context, item, balogic2);
 
-    hal_table(context, uictx, x, y, w, h, list, logic);
+    void *table = hal_table(context, uictx, x, y, w, h, list, logic);
+    struct variable *table2 = variable_new_void(context, table);
 
     byte_array_del(balist);
     byte_array_del(balogic);
-    return NULL;
+
+    variable_push(context, table2);
+    variable_push(context, variable_new_int(context, w));
+    variable_push(context, variable_new_int(context, h));
+    return variable_new_src(context, 3);
 }
 
 struct variable *sys_graphics(struct context *context)

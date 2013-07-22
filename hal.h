@@ -24,24 +24,24 @@ void hal_window(struct context *context,
                 struct variable *logic);
 void hal_graphics(const struct variable *shape);
 void hal_synth(const uint8_t *bytes, uint32_t length);
-void hal_label (int32_t x, int32_t y,
-                int32_t *w, int32_t *h,
-                const char *str);
+void *hal_label (int32_t x, int32_t y,
+                 int32_t *w, int32_t *h,
+                 const char *str);
 void *hal_input (struct variable *uictx,
                  int32_t x, int32_t y,
                  int32_t *w, int32_t *h,
                  struct variable *hint,
                  bool multiline);
 struct variable *hal_input_value(struct context *context, void *input);
-void hal_button(struct context *context,
-                struct variable *uictx,
-                int32_t x, int32_t y, int32_t *w, int32_t *h,
-                struct variable *logic,
-                const char *str, const char *img);
-void hal_table (struct context *context,
-                struct variable *uictx,
-                int x, int y, int w, int h,
-                struct variable *list, struct variable *logic);
+void *hal_button(struct context *context,
+                 struct variable *uictx,
+                 int32_t x, int32_t y, int32_t *w, int32_t *h,
+                 struct variable *logic,
+                 const char *str, const char *img);
+void *hal_table (struct context *context,
+                 struct variable *uictx,
+                 int x, int y, int w, int h,
+                 struct variable *list, struct variable *logic);
 
 struct variable *hal_input_get(struct context *context, void *input);
 void hal_input_set(void *input, struct variable *value);

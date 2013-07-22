@@ -15,14 +15,16 @@ sys.ui = function(self, uictx, item, parent, x, y)
         return sys.ui(uictx, item, parent, 0, 0)
     end
 
+    o = nil
+    item.name = [item.name]
     type = item[0]
     tail = item.part(1)
     if (type == 'vertical') then
         w = h = 0
         for i in tail
             i.x,i.y = x,y+h
-            sys.print('i = ' + i)
-            a,b = sys.ui(uictx, i, parent, x, y+h)
+            n,a,b = sys.ui(uictx, i, parent, x, y+h)
+            item.name = item.name + n
             if a > w then w = a end
             h = h + b
         end
@@ -30,7 +32,8 @@ sys.ui = function(self, uictx, item, parent, x, y)
         w = h = 0
         for i in tail
             i.x,i.y = x+w,y
-            a,b = sys.ui(uictx, i, parent, x+w, y)
+            n,a,b = sys.ui(uictx, i, parent, x+w, y)
+            item.name = item.name + n
             w = w + a
             if b > h then h = b end
         end
@@ -39,23 +42,25 @@ sys.ui = function(self, uictx, item, parent, x, y)
         for name in tail
             field = ['horizontal',
                 ['label', name],
-                ['input', name],
+                ['input', name, 'name':name],
             ]
             fields.insert(field)
         end
-        w,h = sys.ui(uictx, ['vertical'] + fields, parent)
+        n,w,h = sys.ui(uictx, ['vertical'] + fields, parent)
+        item.name = item.name + n
 
-    else if type == 'label' then
-        w,h = sys.label(x, y, tail[0])
     else if type == 'input' then
-        w,h = sys.input(uictx, x, y, tail[0])
+        o,w,h = sys.input(uictx, x, y, tail[0])
+    else if type == 'label' then
+        o,w,h = sys.label(x, y, tail[0])
     else if type == 'button' then
-        w,h = sys.button(uictx, x, y, 0, 0, item)
+        o,w,h = sys.button(uictx, x, y, 0, 0, item)
     else if type == 'table' then
-        w,h = sys.table(uictx, x, y, parent.w-x, parent.h-y, item)
+        o,w,h = sys.table(uictx, x, y, parent.w-x, parent.h-y, item)
     end
 
-    return w,h
+    if o and item.name then item.name = [item.name[0] : o] end
+    return item.name, w, h
 end
 
 
@@ -70,17 +75,16 @@ testui = function()
 
     tester.ui = sys.ui( tester,
                         ['vertical',
-                            ['form', 'username', 'password'],
-                            ['horizontal',
-                                 ['button', 'text':'signin'],
-                                 ['button', 'text':'signup']
-                            ],
                             ['table', 'name':'testable', 'list':[7,8,9], 'logic':tester.select],
                             'w':240, 'h':320
                         ] )
 
+    sys.print(tester.ui) # all the named ui items
+
     sys.loop()
 
 end
+
+
 
 testui()

@@ -15,6 +15,7 @@ enum VarType {
     VAR_SRC,
     VAR_ERR,
     VAR_BYT,
+    VAR_VOID,
     VAR_C,
 };    
 
@@ -39,6 +40,7 @@ struct variable {
         int32_t integer;
         float floater;
         bool boolean;
+        void *ptr;
         struct {
             struct variable *key, *val;
         } kvp;
@@ -67,6 +69,7 @@ struct variable *variable_new_fnc(struct context *context, struct byte_array *bo
 struct variable *variable_new_list(struct context *context, struct array *list);
 struct variable *variable_new_src(struct context *context, uint32_t size);
 struct variable *variable_new_bytes(struct context *context, struct byte_array *bytes, uint32_t size);
+struct variable *variable_new_void(struct context *context, void *p);
 
 struct variable *variable_copy(struct context *context, const struct variable *v);
 struct variable *variable_pop(struct context *context);

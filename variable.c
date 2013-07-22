@@ -35,8 +35,16 @@ struct variable* variable_new(struct context *context, enum VarType type)
     v->type = type;
     v->map = NULL;
     v->mark = 0;
+    v->ptr = NULL;
     v->visited = VISITED_NOT;
     array_add(context->singleton->all_variables, v);
+    return v;
+}
+
+struct variable *variable_new_void(struct context *context, void *p)
+{
+    struct variable *v = variable_new(context, VAR_VOID);
+    v->ptr = p;
     return v;
 }
 
@@ -210,12 +218,16 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
     }
 
     switch (vt) {
-        case VAR_NIL:    sprintf(str, "%snil", str);                               break;
-        case VAR_INT:    sprintf(str, "%s%d", str, v->integer);                    break;
-        case VAR_BOOL:   sprintf(str, "%s%s", str, v->boolean ? "true" : "false"); break;
-        case VAR_FLT:    sprintf(str, "%s%f", str, v->floater);                    break;
-        case VAR_FNC:    sprintf(str, "%sf(%dB)", str, v->str->length);            break;
-        case VAR_C:      sprintf(str, "%sc-function", str);                        break;
+        case VAR_NIL:    sprintf(str, "%snil", str);                                break;
+        case VAR_INT:    sprintf(str, "%s%d", str, v->integer);                     break;
+        case VAR_BOOL:   sprintf(str, "%s%s", str, v->boolean ? "true" : "false");  break;
+        case VAR_FLT:    sprintf(str, "%s%f", str, v->floater);                     break;
+        case VAR_FNC:    sprintf(str, "%sf(%dB)", str, v->str->length);             break;
+        case VAR_C:      sprintf(str, "%sc-function", str);                         break;
+        case VAR_VOID:   sprintf(str, "%s%p", str, v->ptr);                         break;
+        case VAR_BYT:
+            byte_array_print(str, VV_SIZE, v->str);
+            break;
         case VAR_KVP:
             variable_value_strcat(context, str, v->kvp.key, true);
             strcat(str, ":");
@@ -243,9 +255,6 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
             strcpy(str, str2);
             free(str2);
         } break;
-        case VAR_BYT:
-            byte_array_print(str, VV_SIZE, v->str);
-            break;
         default:
             vm_exit_message(context, ERROR_VAR_TYPE);
             break;
@@ -633,6 +642,7 @@ bool variable_compare(struct context *context, const struct variable *u, const s
         case VAR_INT:   return (u->integer == v->integer);
         case VAR_FLT:   return (u->floater == v->floater);
         case VAR_STR:   return (byte_array_equals(u->str, v->str));
+        case VAR_NIL:   return true;
         default:
             return (bool)vm_exit_message(context, "bad comparison");
     }
@@ -654,6 +664,7 @@ struct variable* variable_set(struct context *context, struct variable *dst, con
         case VAR_SRC:
         case VAR_LST:   dst->list = array_copy(src->list);      break;
         case VAR_KVP:   dst->kvp = src->kvp;                    break;
+        case VAR_VOID:  dst->ptr = src->ptr;                    break;
         default:
             vm_exit_message(context, "bad var type");
             break;

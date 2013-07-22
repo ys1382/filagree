@@ -520,9 +520,10 @@ static void push_list(struct context *context, struct byte_array *program)
     struct variable *list = variable_new_list(context, NULL);
     while (num_items--) {
         struct variable* v = variable_pop(context);
-        if (v->type == VAR_KVP)
+        enum VarType vt = v->type;
+        if (vt == VAR_KVP)
             variable_map_insert(context, list, v->kvp.key, v->kvp.val);
-        else
+        else if (vt != VAR_NIL)
             array_insert(list->list, 0, v);
     }
 #ifdef DEBUG
@@ -1049,7 +1050,7 @@ static struct variable *binary_op_lst(struct context *context,
                     array_add(w->list, array_get(v->list, i));
             } else if (vt == VAR_KVP) {
                 variable_map_insert(context, w, v->kvp.key, v->kvp.val);
-            } else {
+            } else if (vt != VAR_NIL) {
                 array_add(w->list, (void*)v);
             }
             w->map = map_union(w->map, v->map);

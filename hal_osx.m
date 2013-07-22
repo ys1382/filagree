@@ -424,9 +424,9 @@ void resize(NSControl *control,
     [control setFrame:rect];
 }
 
-void hal_label (int32_t x, int32_t y,
-                int32_t *w, int32_t *h,
-                const char *str)
+void *hal_label (int32_t x, int32_t y,
+                 int32_t *w, int32_t *h,
+                 const char *str)
 {
     NSRect rect = whereAmI(x,y,*w,*h);
     NSTextField *textField = [[NSTextField alloc] initWithFrame:rect];
@@ -440,6 +440,7 @@ void hal_label (int32_t x, int32_t y,
     [content addSubview:textField];
 
     resize(textField, x, y, w, h);
+    return textField;
 }
 
 @interface Actionifier  : NSObject <NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate>
@@ -515,12 +516,12 @@ objectValueForTableColumn:(NSTableColumn *) aTableColumn
 
 @end // Actionifier implementation
 
-void hal_button(struct context *context,
-                struct variable *uictx,
-                int32_t x, int32_t y,
-                int32_t *w, int32_t *h,
-                struct variable *logic,
-                const char *str, const char *img)
+void *hal_button(struct context *context,
+                 struct variable *uictx,
+                 int32_t x, int32_t y,
+                 int32_t *w, int32_t *h,
+                 struct variable *logic,
+                 const char *str, const char *img)
 {
     NSView *content = [window contentView];
     NSRect rect = whereAmI(x,y,*w,*h);
@@ -546,6 +547,7 @@ void hal_button(struct context *context,
     [my setButtonType:NSMomentaryLightButton];
     [my setBezelStyle:NSTexturedSquareBezelStyle];
     resize(my, x, y, w, h);
+    return my;
 }
 
 void *hal_input(struct variable *uictx,
@@ -589,11 +591,11 @@ void hal_input_set(void *input, struct variable *value)
     [input2 setStringValue:value3];
 }
 
-void hal_table(struct context *context,
-               struct variable *uictx,
-               int x, int y, int w, int h,
-               struct variable *list,
-               struct variable *logic)
+void *hal_table(struct context *context,
+                struct variable *uictx,
+                int x, int y, int w, int h,
+                struct variable *list,
+                struct variable *logic)
 {
     assert_message(list->type == VAR_LST, "not a list");
 
@@ -618,6 +620,7 @@ void hal_table(struct context *context,
     [tableContainer setDocumentView:tableView];
     [tableContainer setHasVerticalScroller:YES];
     [content addSubview:tableContainer];
+    return tableView;
 }
 
 void hal_window(struct context *context,
