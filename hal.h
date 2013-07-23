@@ -32,7 +32,6 @@ void *hal_input (struct variable *uictx,
                  int32_t *w, int32_t *h,
                  struct variable *hint,
                  bool multiline);
-struct variable *hal_input_value(struct context *context, void *input);
 void *hal_button(struct context *context,
                  struct variable *uictx,
                  int32_t x, int32_t y, int32_t *w, int32_t *h,
@@ -43,10 +42,8 @@ void *hal_table (struct context *context,
                  int x, int y, int w, int h,
                  struct variable *list, struct variable *logic);
 
-struct variable *hal_input_get(struct context *context, void *input);
-void hal_input_set(void *input, struct variable *value);
-struct variable *hal_form_get(struct context *context);
-void hal_form_set(struct context *context, struct variable *values);
+struct variable *hal_ui_get(struct context *context, void *field);
+void hal_ui_set(void *field, struct variable *value);
 
 void hal_file_listen(struct context *context, const char *path, struct variable *listener);
 

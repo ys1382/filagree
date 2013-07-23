@@ -449,9 +449,10 @@ void *hal_label (int32_t x, int32_t y,
     struct context *context;
     struct variable *uictx;
     struct variable *param;
-    const struct variable *data;
+    struct variable *data;
 }
 
+-(void)setData:(struct variable*)value;
 -(IBAction)pressed:(id)sender;
 
 @end
@@ -470,6 +471,10 @@ void *hal_label (int32_t x, int32_t y,
     bp->data = d;
     bp->param = NULL;
     return bp;
+}
+
+-(void)setData:(struct variable*)value {
+    self->data = value;
 }
 
 - (void)windowDidResize:(NSNotification*)notification
@@ -574,21 +579,41 @@ void *hal_input(struct variable *uictx,
     return textField;
 }
 
-struct variable *hal_input_get(struct context *context, void *input)
+struct variable *hal_ui_get(struct context *context, void *widget)
 {
-    NSTextField *input2 = (NSTextField*)input;
-    NSString *value = [input2 stringValue];
-    const char *value2 = [value UTF8String];
-    struct byte_array *value3 = byte_array_from_string(value2);
-    return variable_new_str(context, value3);
+    NSObject *widget2 = (NSObject*)widget;
+    if ([widget2 isKindOfClass:[NSTextField class]])
+    {
+        NSTextField *widget3 = (NSTextField*)widget;
+        NSString *value = [widget3 stringValue];
+        const char *value2 = [value UTF8String];
+        struct byte_array *value3 = byte_array_from_string(value2);
+        return variable_new_str(context, value3);
+    }
+    return variable_new_nil(context);
 }
 
-void hal_input_set(void *input, struct variable *value)
+void hal_ui_set(void *widget, struct variable *value)
 {
-    NSTextField *input2 = (NSTextField *)input;
-    const char *value2 = byte_array_to_string(value->str);
-    NSString *value3 = [NSString stringWithUTF8String:value2];
-    [input2 setStringValue:value3];
+    NSObject *widget2 = (NSObject*)widget;
+
+    if ([widget2 isKindOfClass:[NSTextField class]])
+    {
+        NSTextField *widget3 = (NSTextField*)widget;
+        const char *value2 = byte_array_to_string(value->str);
+        NSString *value3 = [NSString stringWithUTF8String:value2];
+        [widget3 setStringValue:value3];
+    }
+
+    else if ([widget2 isKindOfClass:[NSTableView class]])
+    {
+        NSTableView *widget3 = (NSTableView*)widget;
+        Actionifier *a = (Actionifier*)[widget3 delegate];
+        [a setData:value];
+        [widget3 reloadData];
+    }
+    else
+        exit_message("unknown ui widget type");
 }
 
 void *hal_table(struct context *context,
@@ -606,17 +631,17 @@ void *hal_table(struct context *context,
     rect = NSMakeRect(x, y, w, h);
     NSTableView *tableView = [[NSTableView alloc] initWithFrame:rect];
     NSTableColumn * column1 = [[NSTableColumn alloc] initWithIdentifier:@"Col1"];
-    // [[column1 headerCell] setStringValue:@"yo"];
     [tableView setHeaderView:nil];
 
     [tableView addTableColumn:column1];
+
     Actionifier *a = [Actionifier fContext:context
                                  uiContext:uictx
                                   callback:logic
                                   userData:list];
     [tableView setDelegate:a];
     [tableView setDataSource:(id<NSTableViewDataSource>)a];
-    //  [tableView reloadData];
+
     [tableContainer setDocumentView:tableView];
     [tableContainer setHasVerticalScroller:YES];
     [content addSubview:tableContainer];

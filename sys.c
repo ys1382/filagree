@@ -305,6 +305,15 @@ struct variable *sys_table(struct context *context)
     return variable_new_src(context, 3);
 }
 
+struct variable *sys_update(struct context *context)
+{
+    struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *widget    = (struct variable*)array_get(arguments->list, 1);
+    struct variable *value     = (struct variable*)array_get(arguments->list, 2);
+    hal_ui_set(widget->ptr, value);
+    return NULL;
+}
+
 struct variable *sys_graphics(struct context *context)
 {
     const struct variable *value = (const struct variable*)stack_pop(context->operand_stack);
@@ -412,7 +421,7 @@ struct variable *sys_form_get(struct context *context)
     {
         struct variable *key = array_get(keys, i);
         void *field = array_get(fields, i);
-        struct variable *value = hal_input_get(context, field);
+        struct variable *value = hal_ui_get(context, field);
         variable_map_insert(context, result, key, value);
     }
     return result;
@@ -433,7 +442,7 @@ struct variable *sys_form_set(struct context *context)
         if ((field == NULL) || (field->type == VAR_NIL))
             continue;
         struct variable *value = array_get(values, i);
-        hal_input_set(field, value);
+        hal_ui_set(field, value);
     }
     return NULL;
 }
@@ -446,8 +455,9 @@ struct string_func builtin_funcs[] = {
     {"write",       &sys_write},
     {"save",        &sys_save},
     {"load",        &sys_load},
-    {"form_get",    &sys_form_get},
-    {"form_set",    &sys_form_set},
+    {"update",      &sys_update},
+//    {"form_get",    &sys_form_get},
+//    {"form_set",    &sys_form_set},
     {"remove",      &sys_rm},
     {"bytes",       &sys_bytes},
     {"sin",         &sys_sin},

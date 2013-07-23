@@ -64,13 +64,11 @@ sys.ui = function(self, uictx, item, parent, x, y)
 end
 
 
-# todo: sys.ui returns map of named items, update()
-
 testui = function()
 
     tester = [ 'select' : function(ctx)
                                 sys.print('select ' + sys.args()[1])
-                                ctx.ui.testable.update([3,1,4,1,5])
+                                sys.update(ctx.ui.testable, [3,1,4,1,5])
                             end ]
 
     tester.ui = sys.ui( tester,
@@ -85,6 +83,4 @@ testui = function()
 
 end
 
-
-
-testui()
+# testui()
