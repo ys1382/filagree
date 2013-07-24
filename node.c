@@ -72,8 +72,6 @@ void node_callback(struct node_thread *ta, struct variable *message)
     if (callback != NULL)
         vm_call(ta->context, callback, ta->listener, id, message);
 
-    variable_del(ta->context, key3);
-
     gil_unlock(ta->context, "node_callback");
 }
 

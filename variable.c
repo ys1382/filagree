@@ -21,6 +21,8 @@ const struct number_string var_types[] = {
     {VAR_FNC,   "function"},
     {VAR_ERR,   "error"},
     {VAR_C,     "c-function"},
+    {VAR_SRC,   "source"},
+    {VAR_VOID,  "void"},
 };
 
 const char *var_type_str(enum VarType vt)
@@ -30,7 +32,6 @@ const char *var_type_str(enum VarType vt)
 
 struct variable* variable_new(struct context *context, enum VarType type)
 {
-    null_check(context);
     struct variable* v = (struct variable*)malloc(sizeof(struct variable));
     v->type = type;
     v->map = NULL;
@@ -38,6 +39,7 @@ struct variable* variable_new(struct context *context, enum VarType type)
     v->ptr = NULL;
     v->visited = VISITED_NOT;
     array_add(context->singleton->all_variables, v);
+    //DEBUGPRINT("variable_new %s %p\n", var_type_str(type), v);
     return v;
 }
 
@@ -75,7 +77,7 @@ struct variable* variable_new_bool(struct context *context, bool b)
 
 void variable_del(struct context *context, struct variable *v)
 {
-    // DEBUGPRINT("variable_del %p->%p\n", v, v->list);
+    //DEBUGPRINT("variable_del %p->%p\n", v, v->list);
     switch (v->type) {
         case VAR_C:
         case VAR_NIL:
@@ -90,8 +92,9 @@ void variable_del(struct context *context, struct variable *v)
             break;
         case VAR_STR:
         case VAR_FNC:
-            //DEBUGPRINT("variable_del str %p->%s\n", v, byte_array_to_string(v->str));
             byte_array_del(v->str);
+            break;
+        case VAR_VOID: // todo: I suppose I should do something here
             break;
         default:
             vm_exit_message(context, "bad var type");
@@ -318,6 +321,7 @@ void variable_mark(struct variable *v)
 
 void variable_unmark(struct variable *v)
 {
+    assert_message(v->type < VAR_LAST, "corrupt variable");
     if (v->visited == VISITED_NOT)
         return;
     v->mark = 0;

@@ -17,6 +17,7 @@ enum VarType {
     VAR_BYT,
     VAR_VOID,
     VAR_C,
+    VAR_LAST,
 };    
 
 enum Visited {
