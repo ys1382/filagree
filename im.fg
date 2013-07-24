@@ -51,7 +51,7 @@ client = [
 
 import 'ui'
 
-ctx = ['w':240, 'h':320,
+ctx = ['w':('w':240), 'h':('h':320),
        'client' : client,
        'port' : port,
        'friends' : (sys.load('friends') or []),
@@ -111,16 +111,16 @@ ctx.signup = function(ctx)
 end
 
 sys.ui(ctx,
-       'vertical', [
+       ['vertical',
 
-            ['form', ['username', 'password']],
+            ['form', 'username', 'password'],
 
-            ['horizontal', [
-                ['button', ['text':'signin', 'logic':ctx.main]],
-                ['button', ['text':'signup', 'logic':ctx.signup]],
-            ]]
-        ],
-        ctx.w, ctx.h)
+            ['horizontal',
+                ['button', 'text':'signin', 'logic':ctx.main],
+                ['button', 'text':'signup', 'logic':ctx.signup],
+            ],
+            ctx.w, ctx.h
+        ])
 
 
 ####### main

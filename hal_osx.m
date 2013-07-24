@@ -648,7 +648,7 @@ void *hal_table(struct context *context,
     return tableView;
 }
 
-void hal_window(struct context *context,
+void *hal_window(struct context *context,
                 struct variable *uictx,
                 int32_t *w, int32_t *h,
                 struct variable *logic)
@@ -663,7 +663,7 @@ void hal_window(struct context *context,
         NSSize size = [content frame].size;
         *w = size.width;
         *h = size.height;
-        return;
+        return window;
     }
 
     if ((w == NULL) || (h == NULL)) {
@@ -701,7 +701,6 @@ void hal_window(struct context *context,
                                   callback:logic
                                   userData:NULL];
     [window setDelegate:a];
-    //NSLog(@"window %@ %d,%d", [window contentView], w,h);
 
     NSString *path = @"icon.png";
     if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
@@ -711,6 +710,8 @@ void hal_window(struct context *context,
     }
 
     [NSApp activateIgnoringOtherApps:YES];
+
+    return window;
 }
 
 void hal_save(struct context *context, const struct byte_array *key, const struct variable *value)

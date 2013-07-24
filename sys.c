@@ -201,11 +201,13 @@ struct variable *param_var(struct context *context, const struct variable *value
 
 #ifndef NO_UI
 
-struct variable *two_ints(struct context *context, int32_t w, int32_t h)
+struct variable *two_ints(struct context *context, void *widget, int32_t w, int32_t h)
 {
+    struct variable *widget2 = variable_new_void(context, widget);
+    variable_push(context, widget2);
     variable_push(context, variable_new_int(context, w));
     variable_push(context, variable_new_int(context, h));
-    return variable_new_src(context, 2);
+    return variable_new_src(context, 3);
 }
 
 struct variable *sys_label(struct context *context)
@@ -216,8 +218,8 @@ struct variable *sys_label(struct context *context)
     const char *str = param_str(value, 3);
 
     int32_t w=0,h=0;
-    hal_label(x, y, &w, &h, str);
-    return two_ints(context, w, h);
+    void *label = hal_label(x, y, &w, &h, str);
+    return two_ints(context, label, w, h);
 }
 
 struct variable *sys_input(struct context *context)
@@ -237,8 +239,7 @@ struct variable *sys_input(struct context *context)
         name = values;
     }
     void *input = hal_input(uictx, x, y, &w, &h, hint, false);
-    map_insert(context->inputs, name, input);
-    return two_ints(context, w, h);
+    return two_ints(context, input, w, h);
 }
 
 const char *variable_keyed_string(struct context *context, struct variable *v, const char *key)
@@ -263,16 +264,17 @@ struct variable *sys_button(struct context *context)
     int32_t w = param_int(value, 4);
     int32_t h = param_int(value, 5);
     struct variable *item = (struct variable*)array_get(value->list, 6);
+
     struct byte_array *logic = byte_array_from_string("logic");
     struct variable *logic2 = variable_new_str(context, logic);
 
-    hal_button(context, uictx, x, y, &w, &h,
-               variable_map_get(context, item, logic2),
-               variable_keyed_string(context, item, "text"),
-               variable_keyed_string(context, item, "image"));
+    void *button = hal_button(context, uictx, x, y, &w, &h,
+                              variable_map_get(context, item, logic2),
+                              variable_keyed_string(context, item, "text"),
+                              variable_keyed_string(context, item, "image"));
 
     byte_array_del(logic);
-    return two_ints(context, w, h);
+    return two_ints(context, button, w, h);
 }
 
 struct variable *sys_table(struct context *context)
@@ -294,15 +296,11 @@ struct variable *sys_table(struct context *context)
     struct variable *logic = variable_map_get(context, item, balogic2);
 
     void *table = hal_table(context, uictx, x, y, w, h, list, logic);
-    struct variable *table2 = variable_new_void(context, table);
 
     byte_array_del(balist);
     byte_array_del(balogic);
 
-    variable_push(context, table2);
-    variable_push(context, variable_new_int(context, w));
-    variable_push(context, variable_new_int(context, h));
-    return variable_new_src(context, 3);
+    return two_ints(context, table, w, h);
 }
 
 struct variable *sys_update(struct context *context)
@@ -350,10 +348,9 @@ struct variable *sys_window(struct context *context)
     struct variable *uictx = param_var(context, value, 2);
     struct variable *logic = param_var(context, value, 3);
 
-    context->inputs = map_new();
     context->singleton->num_threads++;
-    hal_window(context, uictx, &w, &h, logic);
-    return two_ints(context, w, h);
+    void *window = hal_window(context, uictx, &w, &h, logic);
+    return two_ints(context, window, w, h);
 }
 
 struct variable *sys_loop(struct context *context)
@@ -409,44 +406,6 @@ struct variable *sys_file_list(struct context *context)
     return flc.result;
 }
 
-struct variable *sys_form_get(struct context *context)
-{
-    stack_pop(context->operand_stack);
-    struct array *keys = map_keys(context->inputs);
-    struct array *fields = map_values(context->inputs);
-    struct variable *result = variable_new_list(context, NULL);
-    uint32_t len = keys->length;
-
-    for (int i=0; i<len; i++)
-    {
-        struct variable *key = array_get(keys, i);
-        void *field = array_get(fields, i);
-        struct variable *value = hal_ui_get(context, field);
-        variable_map_insert(context, result, key, value);
-    }
-    return result;
-}
-
-struct variable *sys_form_set(struct context *context)
-{
-    struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *fields = array_get(arguments->list, 1);
-    struct array *keys = map_keys(context->inputs);
-    struct array *values = map_values(context->inputs);
-    uint32_t len = values->length;
-    
-    for (int i=0; i<len; i++)
-    {
-        struct variable *key = array_get(keys, i);
-        struct variable *field = variable_map_get(context, fields, key);
-        if ((field == NULL) || (field->type == VAR_NIL))
-            continue;
-        struct variable *value = array_get(values, i);
-        hal_ui_set(field, value);
-    }
-    return NULL;
-}
-
 struct string_func builtin_funcs[] = {
 	{"args",        &sys_args},
     {"print",       &sys_print},
@@ -456,8 +415,6 @@ struct string_func builtin_funcs[] = {
     {"save",        &sys_save},
     {"load",        &sys_load},
     {"update",      &sys_update},
-//    {"form_get",    &sys_form_get},
-//    {"form_set",    &sys_form_set},
     {"remove",      &sys_rm},
     {"bytes",       &sys_bytes},
     {"sin",         &sys_sin},

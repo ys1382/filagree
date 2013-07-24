@@ -7,6 +7,26 @@ sys.form_saver = function(self, key)
     return f
 end
 
+sys.form_get = function(self, form)
+
+    result = []
+
+    for item in form
+        result = result + (item.name : sys.get_value(item.item) )
+    end
+
+    return result
+
+end
+
+sys.form_set = function(self, form, values)
+
+    for item in form
+        sys.set_value(item, form[item.name], values[item.name])
+    end
+
+end
+
 sys.ui = function(self, uictx, item, parent, x, y)
 
     if not parent then
@@ -16,12 +36,13 @@ sys.ui = function(self, uictx, item, parent, x, y)
     end
 
     o = nil
+    named = item.name != nil
     item.name = [item.name]
     type = item[0]
-    tail = item.part(1)
+    details = item.part(1)
     if (type == 'vertical') then
         w = h = 0
-        for i in tail
+        for i in details
             i.x,i.y = x,y+h
             n,a,b = sys.ui(uictx, i, parent, x, y+h)
             item.name = item.name + n
@@ -30,7 +51,7 @@ sys.ui = function(self, uictx, item, parent, x, y)
         end
     else if (type == 'horizontal') then
         w = h = 0
-        for i in tail
+        for i in details
             i.x,i.y = x+w,y
             n,a,b = sys.ui(uictx, i, parent, x+w, y)
             item.name = item.name + n
@@ -39,7 +60,7 @@ sys.ui = function(self, uictx, item, parent, x, y)
         end
     else if type == 'form' then
         fields = []
-        for name in tail
+        for name in details
             field = ['horizontal',
                 ['label', name],
                 ['input', name, 'name':name],
@@ -50,16 +71,17 @@ sys.ui = function(self, uictx, item, parent, x, y)
         item.name = item.name + n
 
     else if type == 'input' then
-        o,w,h = sys.input(uictx, x, y, tail[0])
+        o,w,h = sys.input(uictx, x, y, details[0])
     else if type == 'label' then
-        o,w,h = sys.label(x, y, tail[0])
+        o,w,h = sys.label(x, y, details[0])
     else if type == 'button' then
         o,w,h = sys.button(uictx, x, y, 0, 0, item)
     else if type == 'table' then
         o,w,h = sys.table(uictx, x, y, parent.w-x, parent.h-y, item)
     end
 
-    if o and item.name then item.name = [item.name[0] : o] end
+    sys.print('i.n = ' + item.name)
+    if (o and named) then item.name = [item.name[0] : o] end
     return item.name, w, h
 end
 
@@ -72,8 +94,18 @@ testui = function()
                             end ]
 
     tester.ui = sys.ui( tester,
+
                         ['vertical',
+
+                            ['form', 'username', 'password'],
+
+                            ['horizontal',
+                                ['button', 'text':'submit'],
+                                ['button', 'text':'cancel']
+                            ],
+
                             ['table', 'name':'testable', 'list':[7,8,9], 'logic':tester.select],
+
                             'w':240, 'h':320
                         ] )
 
@@ -83,4 +115,4 @@ testui = function()
 
 end
 
-# testui()
+testui()

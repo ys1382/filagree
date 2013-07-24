@@ -145,7 +145,6 @@ struct context *context_new(bool state,
     context->runtime = runtime;
     context->indent = 0;
     context->error = NULL;
-    context->inputs = NULL;
     context->sys = sys_funcs ? sys_new(context) : NULL;
 
     return context;
