@@ -378,19 +378,13 @@ void display_code(struct context *context, struct byte_array *code) {}
 void gil_lock(struct context *context, const char *who)
 {
     pthread_mutex_lock(&context->singleton->gil);
-#ifdef DEBUG
-    if (who != NULL)
-        DEBUGPRINT("\n%s>%" PRIu16 " lock %s\n", indentation(context), current_thread_id(), who);
-#endif
+    // DEBUGPRINT("\n%s>%" PRIu16 " lock %s\n", indentation(context), current_thread_id(), who);
 }
 
 void gil_unlock(struct context *context, const char *who)
 {
     pthread_mutex_unlock(&context->singleton->gil);
-#ifdef DEBUG
-    if (who != NULL)
-        DEBUGPRINT("\n%s>%" PRIu16 " unlock %s\n", indentation(context), current_thread_id(), who);
-#endif
+    // DEBUGPRINT("\n%s>%" PRIu16 " unlock %s\n", indentation(context), current_thread_id(), who);
 }
 
 // instruction implementations /////////////////////////////////////////////
@@ -430,7 +424,7 @@ void vm_call_src(struct context *context, struct variable *func)
         case VAR_FNC:
             run(context, func->str, env, false);
             break;
-        case VAR_C: {
+        case VAR_CFNC: {
             struct variable *v = func->cfnc(context);
             if (v == NULL)
                 v = variable_new_src(context, 0);

@@ -173,9 +173,12 @@ char *param_str(const struct variable *value, uint32_t index)
     if (index >= value->list->length)
         return NULL;
     const struct variable *strv = (struct variable*)array_get(value->list, index);
-    assert_message(strv->type == VAR_STR, "param is not string");
-    const struct byte_array *strb = strv->str;
-    char *str = byte_array_to_string(strb);
+    char *str = NULL;
+    switch (strv->type) {
+        case VAR_NIL:                                           break;
+        case VAR_STR: str = byte_array_to_string(strv->str);    break;
+        default:      exit_message("wrong param type");         break;
+    }
     return str;
 }
 
@@ -201,7 +204,7 @@ struct variable *param_var(struct context *context, const struct variable *value
 
 #ifndef NO_UI
 
-struct variable *two_ints(struct context *context, void *widget, int32_t w, int32_t h)
+struct variable *ui_result(struct context *context, void *widget, int32_t w, int32_t h)
 {
     struct variable *widget2 = variable_new_void(context, widget);
     variable_push(context, widget2);
@@ -219,7 +222,7 @@ struct variable *sys_label(struct context *context)
 
     int32_t w=0,h=0;
     void *label = hal_label(x, y, &w, &h, str);
-    return two_ints(context, label, w, h);
+    return ui_result(context, label, w, h);
 }
 
 struct variable *sys_input(struct context *context)
@@ -239,9 +242,10 @@ struct variable *sys_input(struct context *context)
         name = values;
     }
     void *input = hal_input(uictx, x, y, &w, &h, hint, false);
-    return two_ints(context, input, w, h);
+    return ui_result(context, input, w, h);
 }
 
+/*
 const char *variable_keyed_string(struct context *context, struct variable *v, const char *key)
 {
     if ((v == NULL) || (v->map == NULL))
@@ -254,6 +258,7 @@ const char *variable_keyed_string(struct context *context, struct variable *v, c
         return NULL;
     return byte_array_to_string(u->str);
 }
+*/
 
 struct variable *sys_button(struct context *context)
 {
@@ -263,18 +268,13 @@ struct variable *sys_button(struct context *context)
     int32_t y = param_int(value, 3);
     int32_t w = param_int(value, 4);
     int32_t h = param_int(value, 5);
-    struct variable *item = (struct variable*)array_get(value->list, 6);
+    struct variable *logic = param_var(context, value, 6);
+    char *text = param_str(value, 7);
+    char *image = param_str(value, 8);
 
-    struct byte_array *logic = byte_array_from_string("logic");
-    struct variable *logic2 = variable_new_str(context, logic);
+    void *button = hal_button(context, uictx, x, y, &w, &h, logic, text, image);
 
-    void *button = hal_button(context, uictx, x, y, &w, &h,
-                              variable_map_get(context, item, logic2),
-                              variable_keyed_string(context, item, "text"),
-                              variable_keyed_string(context, item, "image"));
-
-    byte_array_del(logic);
-    return two_ints(context, button, w, h);
+    return ui_result(context, button, w, h);
 }
 
 struct variable *sys_table(struct context *context)
@@ -285,22 +285,12 @@ struct variable *sys_table(struct context *context)
     int32_t y = param_int(value, 3);
     int32_t w = param_int(value, 4);
     int32_t h = param_int(value, 5);
-
-    struct byte_array *balist = byte_array_from_string("list");
-    struct variable *balist2 = variable_new_str(context, balist);
-    struct byte_array *balogic = byte_array_from_string("logic");
-    struct variable *balogic2 = variable_new_str(context, balogic);
-
-    struct variable *item = (struct variable*)array_get(value->list, 6);
-    struct variable *list = variable_map_get(context, item, balist2);
-    struct variable *logic = variable_map_get(context, item, balogic2);
+    struct variable *list = param_var(context, value, 6);
+    struct variable *logic = param_var(context, value, 7);
 
     void *table = hal_table(context, uictx, x, y, w, h, list, logic);
 
-    byte_array_del(balist);
-    byte_array_del(balogic);
-
-    return two_ints(context, table, w, h);
+    return ui_result(context, table, w, h);
 }
 
 struct variable *sys_update(struct context *context)
@@ -350,7 +340,7 @@ struct variable *sys_window(struct context *context)
 
     context->singleton->num_threads++;
     void *window = hal_window(context, uictx, &w, &h, logic);
-    return two_ints(context, window, w, h);
+    return ui_result(context, window, w, h);
 }
 
 struct variable *sys_loop(struct context *context)

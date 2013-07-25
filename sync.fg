@@ -1,4 +1,4 @@
-port = 9932
+port = 9993
 
 server_dir = 'synctest/server'
 client_dir = 'synctest/client'
@@ -46,11 +46,12 @@ Sync = [
             self.handle_content_request(id, msg4)
         else if msg4.event == 'login' then
             self.snapshot = msg4.files
-            self.ctx.ui.files.set(self.snapshot)
         else if msg4.event == 'change' then
             self.handle_change(msg4.changes)
         else if msg4.event == 'content' then
-            sys.write(self.watched + msg4.path, msg4.content)
+            sys.write(self.watched + msg4.path, msg4.content)   # save file
+            files = self.local_snapshot().keys
+            sys.update(self.ctx.ui.files, files)                # update ui
         end
 
     end,
@@ -91,7 +92,6 @@ Sync = [
     'handle_change' : function(self, changez)
 
         self.snapshot = self.snapshot + changez.updated - changez.deleted
-        self.ctx.ui.files.set(self.snapshot)
         if changez.updated.keys.length then
             msg3 = ['event' : 'content-request', 'paths' : changez.updated]
             sys.send(self.peer, msg3)
@@ -108,20 +108,22 @@ server = Sync.init(nil, server_dir)
 
 client = ['select' : function(ctx)
               sys.print('select ' + sys.args()[1])
-          end,
-          ]
-
-client.sync = Sync.init(client, client_dir)
-
-####### ui
+          end]
 
 import 'ui'
 
-client.ui = sys.ui(client,
-                'vertical', [
-                    ['table', ['name' : 'files', 'list':ctx.client.files, 'logic':ctx.select]]
-                ],
-                240, 320)
+client.ui = sys.ui( client,
+
+                    ['vertical',
+
+                        ['table', 'name':'files', 'list':client.sync.files, 'logic':client.select],
+
+                        'w':240, 'h':320
+                    ] )
+
+client.sync = Sync.init(client, client_dir)
+
+sys.print('client==='+client)
 
 ####### main
 

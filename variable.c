@@ -13,15 +13,15 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
 const struct number_string var_types[] = {
     {VAR_NIL,   "nil"},
     {VAR_INT,   "integer"},
-    {VAR_BOOL,  "boolean"},
     {VAR_FLT,   "float"},
     {VAR_STR,   "string"},
     {VAR_KVP,   "key-value-pair"},
     {VAR_LST,   "list"},
     {VAR_FNC,   "function"},
     {VAR_ERR,   "error"},
-    {VAR_C,     "c-function"},
     {VAR_SRC,   "source"},
+    {VAR_BOOL,  "boolean"},
+    {VAR_CFNC,  "c-function"},
     {VAR_VOID,  "void"},
 };
 
@@ -79,7 +79,7 @@ void variable_del(struct context *context, struct variable *v)
 {
     //DEBUGPRINT("variable_del %p->%p\n", v, v->list);
     switch (v->type) {
-        case VAR_C:
+        case VAR_CFNC:
         case VAR_NIL:
         case VAR_INT:
         case VAR_FLT:
@@ -186,7 +186,7 @@ struct variable *variable_new_kvp(struct context *context, struct variable *key,
 }
 
 struct variable *variable_new_c(struct context *context, callback2func *cfnc) {
-    struct variable *v = variable_new(context, VAR_C);
+    struct variable *v = variable_new(context, VAR_CFNC);
     v->cfnc = cfnc;
     return v;
 }
@@ -226,7 +226,7 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
         case VAR_BOOL:   sprintf(str, "%s%s", str, v->boolean ? "true" : "false");  break;
         case VAR_FLT:    sprintf(str, "%s%f", str, v->floater);                     break;
         case VAR_FNC:    sprintf(str, "%sf(%dB)", str, v->str->length);             break;
-        case VAR_C:      sprintf(str, "%sc-function", str);                         break;
+        case VAR_CFNC:   sprintf(str, "%sc-function", str);                         break;
         case VAR_VOID:   sprintf(str, "%s%p", str, v->ptr);                         break;
         case VAR_BYT:
             byte_array_print(str, VV_SIZE, v->str);
@@ -658,16 +658,16 @@ struct variable* variable_set(struct context *context, struct variable *dst, con
     vm_null_check(context, src);
     switch (src->type) {
         case VAR_NIL:                                           break;
-        case VAR_BOOL:  dst->boolean = src->boolean;            break;
         case VAR_INT:   dst->integer = src->integer;            break;
         case VAR_FLT:   dst->floater = src->floater;            break;
-        case VAR_C:     dst->cfnc = src->cfnc;                  break;
         case VAR_FNC:
         case VAR_BYT:
         case VAR_STR:   dst->str = byte_array_copy(src->str);   break;
         case VAR_SRC:
         case VAR_LST:   dst->list = array_copy(src->list);      break;
         case VAR_KVP:   dst->kvp = src->kvp;                    break;
+        case VAR_CFNC:  dst->cfnc = src->cfnc;                  break;
+        case VAR_BOOL:  dst->boolean = src->boolean;            break;
         case VAR_VOID:  dst->ptr = src->ptr;                    break;
         default:
             vm_exit_message(context, "bad var type");

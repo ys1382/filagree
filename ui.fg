@@ -40,24 +40,25 @@ sys.ui = function(self, uictx, item, parent, x, y)
     item.name = [item.name]
     type = item[0]
     details = item.part(1)
+
     if (type == 'vertical') then
         w = h = 0
         for i in details
-            i.x,i.y = x,y+h
             n,a,b = sys.ui(uictx, i, parent, x, y+h)
             item.name = item.name + n
             if a > w then w = a end
             h = h + b
         end
+
     else if (type == 'horizontal') then
         w = h = 0
         for i in details
-            i.x,i.y = x+w,y
             n,a,b = sys.ui(uictx, i, parent, x+w, y)
             item.name = item.name + n
             w = w + a
             if b > h then h = b end
         end
+
     else if type == 'form' then
         fields = []
         for name in details
@@ -72,12 +73,15 @@ sys.ui = function(self, uictx, item, parent, x, y)
 
     else if type == 'input' then
         o,w,h = sys.input(uictx, x, y, details[0])
+
     else if type == 'label' then
         o,w,h = sys.label(x, y, details[0])
+
     else if type == 'button' then
-        o,w,h = sys.button(uictx, x, y, 0, 0, item)
+        o,w,h = sys.button(uictx, x, y, 0, 0, item.logic, item.text, item.image)
+
     else if type == 'table' then
-        o,w,h = sys.table(uictx, x, y, parent.w-x, parent.h-y, item)
+        o,w,h = sys.table(uictx, x, y, parent.w-x, parent.h-y, item.list, item.logic)
     end
 
     sys.print('i.n = ' + item.name)
@@ -85,7 +89,7 @@ sys.ui = function(self, uictx, item, parent, x, y)
     return item.name, w, h
 end
 
-
+/*
 testui = function()
 
     tester = [ 'select' : function(ctx)
@@ -115,4 +119,5 @@ testui = function()
 
 end
 
-# testui()
+testui()
+*/

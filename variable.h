@@ -7,7 +7,6 @@ enum VarType {
     VAR_NIL,
     VAR_INT,
     VAR_FLT,
-    VAR_BOOL,
     VAR_STR,
     VAR_FNC,
     VAR_LST,
@@ -15,8 +14,9 @@ enum VarType {
     VAR_SRC,
     VAR_ERR,
     VAR_BYT,
+    VAR_BOOL,
     VAR_VOID,
-    VAR_C,
+    VAR_CFNC,
     VAR_LAST,
 };    
 

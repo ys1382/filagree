@@ -424,9 +424,9 @@ void resize(NSControl *control,
     [control setFrame:rect];
 }
 
-void *hal_label (int32_t x, int32_t y,
-                 int32_t *w, int32_t *h,
-                 const char *str)
+void *hal_label(int32_t x, int32_t y,
+                int32_t *w, int32_t *h,
+                const char *str)
 {
     NSRect rect = whereAmI(x,y,*w,*h);
     NSTextField *textField = [[NSTextField alloc] initWithFrame:rect];
@@ -483,7 +483,6 @@ void *hal_label (int32_t x, int32_t y,
 	CGFloat w = [window frame].size.width;
 	CGFloat h = [window frame].size.height;
     NSLog(@"resized to %f,%f", w, h);
-    //[self pressed:nil];
 }
 
 - (id)          tableView:(NSTableView *) aTableView
