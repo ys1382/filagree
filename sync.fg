@@ -1,4 +1,4 @@
-port = 9993
+port = 9999
 
 server_dir = 'synctest/server'
 client_dir = 'synctest/client'
@@ -11,6 +11,9 @@ Sync = [
 
         self = ['ctx' : ctx, 'watched' : watched] + self
         self.files = self.local_snapshot()
+        if ctx and ctx.ui then
+            sys.update(ctx.ui.files, self.files.keys)     # update ui
+        end
         return self
 
     end,
@@ -116,7 +119,7 @@ client.ui = sys.ui( client,
 
                     ['vertical',
 
-                        ['table', 'name':'files', 'list':client.sync.files, 'logic':client.select],
+                        ['table', 'name':'files', 'list':[], 'logic':client.select],
 
                         'w':240, 'h':320
                     ] )
