@@ -29,7 +29,7 @@ enum Visited {
 
 typedef struct context *context_p; // forward declaration
 typedef struct variable *(callback2func)(context_p context);
-typedef struct variable *(find_c_var)(context_p context, const struct variable *key);
+//typedef struct variable *(find_c_var)(context_p context, const struct variable *key);
 
 struct variable {
     enum VarType type;

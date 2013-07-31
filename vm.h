@@ -16,7 +16,7 @@
 
 struct context_shared {
     struct array *all_variables;
-    find_c_var *find;
+    struct variable *find;
     uint32_t tick;
     pthread_mutex_t gil;
     pthread_cond_t thread_cond;
@@ -98,13 +98,14 @@ enum Opcode {
 #ifdef DEBUG
 void display_program(struct byte_array* program);
 #endif
+
 struct context *context_new(bool state,
                             bool sys_funcs,
                             bool runtime,
                             struct context *parent);
 struct context *context_copy(struct context *original);
 void context_del();
-void execute(struct byte_array *program, find_c_var *find);
+struct context * execute(struct byte_array *program, struct variable *find, bool finish);
 void garbage_collect(struct context *context);
 void vm_call(struct context *context, struct variable *func, struct variable *arg,...);
 void *vm_exit_message(struct context *context, const char *format, ...);

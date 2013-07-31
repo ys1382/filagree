@@ -46,20 +46,20 @@ void repl()
     context_del(context);
 }
 
-void interpret_file(const struct byte_array *filename, find_c_var *find)
+void interpret_file(const struct byte_array *filename, struct variable *find)
 {
     struct byte_array *program = build_file(filename);
-    execute(program, find);
+    execute(program, find, true);
     byte_array_del(program);
 }
 
-void execute_file(const struct byte_array* filename, find_c_var *find)
+void execute_file(const struct byte_array* filename, struct variable *find)
 {
     struct byte_array *program = read_file(filename);
-    execute(program, find);
+    execute(program, find, true);
 }
 
-void run_file(const char* str, find_c_var *find, struct map *env)
+void run_file(const char* str, struct variable *find, struct map *env)
 {
     struct byte_array *filename = byte_array_from_string(str);
     struct byte_array *dotfgbc = byte_array_from_string(EXTENSION_BC);
@@ -82,11 +82,11 @@ void run_file(const char* str, find_c_var *find, struct map *env)
     byte_array_del(dotfgbc);
 }
 
-void interpret_string(const char *str, find_c_var *find)
+void interpret_string(const char *str, struct variable *find)
 {
     struct byte_array *input = byte_array_from_string(str);
     struct byte_array *program = build_string(input);
-    execute(program, find);
+    execute(program, find, true);
     byte_array_del(input);
     byte_array_del(program);
 }

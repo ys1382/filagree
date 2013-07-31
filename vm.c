@@ -155,9 +155,10 @@ void context_del(struct context *context)
     // wait for spawned threads
     struct context_shared *s = context->singleton;
     gil_lock(context, "context_del");
-    if (s->num_threads > 0)
+
+    while (s->num_threads > 0)
     {
-        pthread_cond_wait(&s->thread_cond, &s->gil);
+        assert_message(!pthread_cond_wait(&s->thread_cond, &s->gil), "could not wait");
 
         if (s->num_threads == 0) // last remaining thread
         {
@@ -173,9 +174,9 @@ void context_del(struct context *context)
             }
             array_del(vars);
         }
-    } else {
-        gil_unlock(context, "context_del c");
     }
+
+    gil_unlock(context, "context_del c");
 
     while (!stack_empty(context->program_stack))
     {
@@ -695,7 +696,7 @@ static void push_float(struct context *context, struct byte_array *program)
     variable_push(context, var);
 }
 
-struct variable *find_var(struct context *context, const struct variable *key)
+struct variable *find_var(struct context *context, struct variable *key)
 {
     null_check(key);
 
@@ -705,7 +706,7 @@ struct variable *find_var(struct context *context, const struct variable *key)
     // DEBUGPRINT(" find_var %s in {p:%p, s:%p, m:%p}: %p\n", byte_array_to_string(name), context->program_stack, state, var_map, v);
 
     if ((v == NULL) && context->singleton->find)
-        v = context->singleton->find(context, key);
+        v = variable_map_get(context, context->singleton->find, key);
     if ((v == NULL) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS)))
         v = context->sys;
     return v;
@@ -1459,7 +1460,7 @@ done:
     return inst == VM_RET;
 }
 
-void execute(struct byte_array *program, find_c_var *find)
+struct context *execute(struct byte_array *program, struct variable *find, bool finish)
 {
     DEBUGPRINT("execute:\n");
     struct context *context = context_new(false, true, true, NULL);
@@ -1482,6 +1483,10 @@ void execute(struct byte_array *program, find_c_var *find)
     if (!stack_empty(context->operand_stack))
         DEBUGPRINT("warning: operand stack not empty\n");
     gil_unlock(context, "execute");
-    context_del(context);
     byte_array_del(program);
+    if (finish) {
+        context_del(context);
+        return NULL;
+    }
+    return context;
 }

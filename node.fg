@@ -5,6 +5,9 @@
 # 3) clients sends 'hi'
 # 4) server responds with 'hi2'
 
+port = 9992
+
+
 server_listener = [
 
     'connected' : function(self, id)
@@ -39,10 +42,10 @@ client_listener = [
     end
 ]
 
-port = 9999
-
 #server starts to listen
 sys.listen(port, server_listener)
 
 #client connects to server
 sys.connect('127.0.0.1', port, client_listener)
+
+sys.loop()

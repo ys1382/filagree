@@ -278,9 +278,8 @@ void *sys_connect2(void *arg)
             ssize_t n = read(ta->fd, buf, sizeof(buf)); // read from the socket
             switch (n) {
                 case 0:
-                    return NULL;
                 case -1:
-                    break;
+                    return NULL;
                 default:
                     ta->buf = byte_array_new_size(n);
                     ta->buf->length = n;

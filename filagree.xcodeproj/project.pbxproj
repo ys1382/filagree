@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		88063DE317A511FE0072D959 /* JniSample.c in Sources */ = {isa = PBXBuildFile; fileRef = 88063DE217A511FE0072D959 /* JniSample.c */; };
 		880BFE9A15B7192400A90585 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 880BFE9915B7192400A90585 /* OpenGL.framework */; };
 		880BFE9C15B7192A00A90585 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 880BFE9B15B7192A00A90585 /* OpenAL.framework */; };
 		880BFE9E15B7194400A90585 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 880BFE9D15B7194400A90585 /* Cocoa.framework */; };
@@ -36,6 +37,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		88063DE217A511FE0072D959 /* JniSample.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = JniSample.c; sourceTree = "<group>"; };
 		880BFE9915B7192400A90585 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		880BFE9B15B7192A00A90585 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		880BFE9D15B7194400A90585 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -109,6 +111,7 @@
 				88FAF8A015B9ED5700A9B6D9 /* hal_osx.m */,
 				88C760B215428A5F00A4F8E7 /* interpret.c */,
 				88C760B015428A5100A4F8E7 /* interpret.h */,
+				88063DE217A511FE0072D959 /* JniSample.c */,
 				882E4C3516F045AE00AE6B61 /* node.c */,
 				88D5124016F15D5A00A0D28D /* node.h */,
 				88A65D9B147757400055DACF /* serial.c */,
@@ -214,6 +217,7 @@
 				88C760B315428A5F00A4F8E7 /* interpret.c in Sources */,
 				882E4C3616F045AE00AE6B61 /* node.c in Sources */,
 				88E7CCAC173D9A0500A70119 /* file.c in Sources */,
+				88063DE317A511FE0072D959 /* JniSample.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -228,6 +232,7 @@
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				"HEADER_SEARCH_PATHS[arch=*]" = /System/Library/Frameworks/JavaVM.framework/Headers;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_CFLAGS = (
 					"-DDEBUG",
@@ -245,6 +250,7 @@
 				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_MODEL_TUNING = G5;
+				"HEADER_SEARCH_PATHS[arch=*]" = /System/Library/Frameworks/JavaVM.framework/Headers;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_CFLAGS = "-DCLI";
 				OTHER_LDFLAGS = "-lcyassl";

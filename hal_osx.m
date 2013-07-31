@@ -20,7 +20,7 @@
 
 static NSWindow *window = NULL;
 
-void hal_loop() {
+void hal_loop(struct context *context) {
     [NSApp run];
 }
 

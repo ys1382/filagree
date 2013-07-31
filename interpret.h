@@ -8,7 +8,7 @@
 
 #include "vm.h"
 
-void interpret_file(const struct byte_array *filename, find_c_var *find);
-void interpret_string(const char *str, find_c_var *find);
+void interpret_file(const struct byte_array *filename, struct variable *find);
+void interpret_string(const char *str, struct variable *find);
 
 #endif // INTERPRET_H

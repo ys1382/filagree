@@ -93,7 +93,7 @@ struct variable *sys_run(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *script = (struct variable*)array_get(value->list, 1);
-    execute(script->str, NULL);
+    execute(script->str, NULL, true);
     return NULL;
 }
 
@@ -347,7 +347,7 @@ struct variable *sys_loop(struct context *context)
 {
     stack_pop(context->operand_stack); // self
     gil_unlock(context, "sys_loop");
-    hal_loop();
+    hal_loop(context);
     return NULL;
 }
 
