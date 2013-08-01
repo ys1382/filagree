@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		88063DE317A511FE0072D959 /* JniSample.c in Sources */ = {isa = PBXBuildFile; fileRef = 88063DE217A511FE0072D959 /* JniSample.c */; };
 		880BFE9A15B7192400A90585 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 880BFE9915B7192400A90585 /* OpenGL.framework */; };
 		880BFE9C15B7192A00A90585 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 880BFE9B15B7192A00A90585 /* OpenAL.framework */; };
 		880BFE9E15B7194400A90585 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 880BFE9D15B7194400A90585 /* Cocoa.framework */; };
@@ -37,7 +36,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		88063DE217A511FE0072D959 /* JniSample.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = JniSample.c; sourceTree = "<group>"; };
 		880BFE9915B7192400A90585 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		880BFE9B15B7192A00A90585 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		880BFE9D15B7194400A90585 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -62,6 +60,9 @@
 		88A65DA91477574E0055DACF /* unit_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = unit_test.fg; sourceTree = "<group>"; };
 		88C760B015428A5100A4F8E7 /* interpret.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = interpret.h; sourceTree = "<group>"; };
 		88C760B215428A5F00A4F8E7 /* interpret.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = interpret.c; sourceTree = "<group>"; };
+		88CB4F9117A9D325006D3717 /* javagree.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = javagree.c; sourceTree = "<group>"; };
+		88CB4F9217A9D325006D3717 /* javagree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = javagree.h; sourceTree = "<group>"; };
+		88CB4F9317A9D325006D3717 /* javagree.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = javagree.java; sourceTree = "<group>"; };
 		88D5124016F15D5A00A0D28D /* node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = node.h; sourceTree = "<group>"; };
 		88E1FA6515CC5263001E6488 /* try.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = try.fg; sourceTree = "<group>"; };
 		88E65DE41510F46F00E6207D /* variable.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = variable.c; sourceTree = "<group>"; };
@@ -111,7 +112,9 @@
 				88FAF8A015B9ED5700A9B6D9 /* hal_osx.m */,
 				88C760B215428A5F00A4F8E7 /* interpret.c */,
 				88C760B015428A5100A4F8E7 /* interpret.h */,
-				88063DE217A511FE0072D959 /* JniSample.c */,
+				88CB4F9117A9D325006D3717 /* javagree.c */,
+				88CB4F9217A9D325006D3717 /* javagree.h */,
+				88CB4F9317A9D325006D3717 /* javagree.java */,
 				882E4C3516F045AE00AE6B61 /* node.c */,
 				88D5124016F15D5A00A0D28D /* node.h */,
 				88A65D9B147757400055DACF /* serial.c */,
@@ -217,7 +220,6 @@
 				88C760B315428A5F00A4F8E7 /* interpret.c in Sources */,
 				882E4C3616F045AE00AE6B61 /* node.c in Sources */,
 				88E7CCAC173D9A0500A70119 /* file.c in Sources */,
-				88063DE317A511FE0072D959 /* JniSample.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -234,10 +236,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				"HEADER_SEARCH_PATHS[arch=*]" = /System/Library/Frameworks/JavaVM.framework/Headers;
 				INSTALL_PATH = /usr/local/bin;
-				OTHER_CFLAGS = (
-					"-DDEBUG",
-					"-DCLI",
-				);
+				OTHER_CFLAGS = "-DDEBUG";
 				OTHER_LDFLAGS = "-lcyassl";
 				PRODUCT_NAME = filagree;
 			};
@@ -252,7 +251,7 @@
 				GCC_MODEL_TUNING = G5;
 				"HEADER_SEARCH_PATHS[arch=*]" = /System/Library/Frameworks/JavaVM.framework/Headers;
 				INSTALL_PATH = /usr/local/bin;
-				OTHER_CFLAGS = "-DCLI";
+				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "-lcyassl";
 				PRODUCT_NAME = filagree;
 			};
@@ -270,10 +269,7 @@
 				"LIBRARY_SEARCH_PATHS[arch=*]" = /usr/local/lib/;
 				MACOSX_DEPLOYMENT_TARGET = "";
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"-DCLI",
-					"-fnested-functions",
-				);
+				OTHER_CFLAGS = "-fnested-functions";
 				SDKROOT = macosx;
 				VALID_ARCHS = x86_64;
 			};
@@ -290,10 +286,7 @@
 				"LIBRARY_SEARCH_PATHS[arch=*]" = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = "";
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"-DCLI",
-					"-fnested-functions",
-				);
+				OTHER_CFLAGS = "-fnested-functions";
 				SDKROOT = macosx;
 				VALID_ARCHS = x86_64;
 			};

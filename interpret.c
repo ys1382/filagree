@@ -91,7 +91,7 @@ void interpret_string(const char *str, struct variable *find)
     byte_array_del(program);
 }
 
-#ifdef CLI
+#ifndef FG_LIB
 
 #include <signal.h>
 
@@ -120,5 +120,5 @@ int main (int argc, char** argv)
 
 }
 
-#endif // EXECUTABLE
+#endif // FG_LIB
 

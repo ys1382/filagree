@@ -9,7 +9,7 @@
 #include "vm.h"
 
 void hal_print(const char *str);
-void hal_loop(struct context *context);
+void hal_loop();
 void hal_save(struct context *context, const struct byte_array *key, const struct variable *value);
 struct variable *hal_load(struct context *context, const struct byte_array *key);
 

@@ -37,7 +37,6 @@ void hal_save(struct context *context, const struct byte_array *key, const struc
 struct variable *hal_load(struct context *context, const struct byte_array *key) { return NULL; }
 
 void hal_file_listen(struct context *context, const char *path, struct variable *listener) {}
-struct variable *hal_input_get(struct context *context, void *input) {}
 
 struct variable *hal_ui_get(struct context *context, void *field) { return NULL; }
 void hal_ui_set(void *field, struct variable *value) {}
