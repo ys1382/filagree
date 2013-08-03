@@ -40,6 +40,7 @@ struct node_thread {
 	struct sockaddr_in servaddr;
     struct byte_array *buf;
     enum Event event;
+    struct variable *message;
     void *(*start_routine)(void *);
     int fd;
 };
@@ -53,15 +54,18 @@ struct node_thread *thread_new(struct context *context,
     ta->context = context_new(true, true, true, context);
     ta->listener = listener; // != NULL ? variable_copy(ta->context, listener) : NULL;
     ta->fd = fd;
+    ta->message = NULL;
+    ta->buf = NULL;
     ta->start_routine = start_routine;
     //DEBUGPRINT("thread_new on %p\n", context);
     return ta;
 }
 
-void node_callback(struct node_thread *ta, struct variable *message)
+void *node_callback(void *arg)
 {
+    struct node_thread *ta = (struct node_thread *)arg;
     if (ta->listener == NULL)
-        return;
+        return NULL;
     gil_lock(ta->context, "node_callback");
     
     const char *key = NUM_TO_STRING(node_events, ta->event);
@@ -70,17 +74,9 @@ void node_callback(struct node_thread *ta, struct variable *message)
     struct variable *callback = variable_map_get(ta->context, ta->listener, key3);
     struct variable *id = variable_new_int(ta->context, ta->fd);
     if (callback != NULL)
-        vm_call(ta->context, callback, ta->listener, id, message);
+        vm_call(ta->context, callback, ta->listener, id, ta->message, NULL);
 
     gil_unlock(ta->context, "node_callback");
-}
-
-// callback to client when connection is opened (or fails)
-void *connected(void *arg)
-{
-    struct node_thread *ta = (struct node_thread *)arg;
-    ta->event = CONNECTED;
-    node_callback(arg, NULL);
     return NULL;
 }
 
@@ -90,12 +86,12 @@ void *incoming(void *arg)
     struct node_thread *ta = (struct node_thread *)arg;
 
     gil_lock(ta->context, "incoming");
-    struct variable *message = variable_deserialize(ta->context, ta->buf);
+    ta->message = variable_deserialize(ta->context, ta->buf);
     char buf[1000];
-    DEBUGPRINT("received %s\n", variable_value_str(ta->context, message, buf));
+    DEBUGPRINT("received %s\n", variable_value_str(ta->context, ta->message, buf));
     gil_unlock(ta->context, "incoming");
 
-    node_callback(ta, message);
+    node_callback(ta);
 	return NULL;
 }
 
@@ -183,7 +179,8 @@ void *sys_socket_listen2(void *arg)
 			if (i > maxi)
 				maxi = i;				// max index in client[] array
 
-            struct node_thread *ta = thread_new(ta0->context, listener, connected, connfd);
+            struct node_thread *ta = thread_new(ta0->context, listener, node_callback, connfd);
+            ta->event = CONNECTED;
             add_thread(ta, connfd);
 
 			if (--nready <= 0)
@@ -193,17 +190,21 @@ void *sys_socket_listen2(void *arg)
         // check all clients for data
 		for (i = 0; i <= maxi; i++)
         {
-			ssize_t	n;
             if ( (sockfd = client[i]) < 0)
 				continue;
 
 			if (FD_ISSET(sockfd, &rset))
             {
-				if ((n = read(sockfd, buf, MAXLINE)) == 0)
+                ssize_t n;
+				if ((n = read(sockfd, buf, MAXLINE)) <= 0)
                 {
                     // connection closed by client
 					FD_CLR(sockfd, &allset);
 					client[i] = -1;
+
+                    struct node_thread *ta = thread_new(ta0->context, listener, node_callback, sockfd);
+                    ta->event = DISCONNECTED;
+                    add_thread(ta, 0);
 
 				} else {
 
@@ -211,7 +212,7 @@ void *sys_socket_listen2(void *arg)
                     ta->buf = byte_array_new_size(n);
                     ta->buf->length = n;
                     memcpy((void*)ta->buf->data, buf, n);
-                    ta->event = MESSAGED; // "messaged";
+                    ta->event = MESSAGED;
                     DEBUGPRINT("incoming1 %d\n", sockfd);
                     add_thread(ta, 0);
                 }
@@ -270,26 +271,23 @@ void *sys_connect2(void *arg)
 
     } else {
 
-        connected(ta);   // callback
+        ta->event = CONNECTED;
+        node_callback(ta);
 
-        for (;;) {
-
+        for (;;)
+        {
             char buf[MAXLINE];
             ssize_t n = read(ta->fd, buf, sizeof(buf)); // read from the socket
-            switch (n) {
-                case 0:
-                case -1:
+            if (n <= 0)
                     return NULL;
-                default:
-                    ta->buf = byte_array_new_size(n);
-                    ta->buf->length = n;
-                    memcpy((void*)ta->buf->data, buf, n);
-                    ta->event = MESSAGED;
-                    DEBUGPRINT("incoming2 %d\n", ta->fd);
-                    ta->start_routine = incoming;
-                    add_thread(ta, 0);
-                    break;
-            }
+
+            ta->buf = byte_array_new_size(n);
+            ta->buf->length = n;
+            memcpy((void*)ta->buf->data, buf, n);
+            ta->event = MESSAGED;
+            DEBUGPRINT("incoming2 %d\n", ta->fd);
+            ta->start_routine = incoming;
+            add_thread(ta, 0);
         }
     }
 
@@ -327,7 +325,6 @@ void *sys_send2(void *arg)
         DEBUGPRINT("write error\n");
     } else {
         DEBUGPRINT("sent to %d\n", ta->fd);
-        node_callback(ta, NULL); // sent
     }
     return NULL;
 }
@@ -351,13 +348,11 @@ struct variable *sys_send(struct context *context)
     return NULL;
 }
 
-// close socket[s]
+// close socket
 struct variable *sys_disconnect(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    //struct variable *listener = param_var(context, arguments, arguments->list->length-1);
     int fd = param_int(arguments, 1);
-    //disconnect_fd(context, fd, listener);
     if (close(fd))
         perror("close");
     return NULL;

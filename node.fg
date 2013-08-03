@@ -14,6 +14,10 @@ server_listener = [
         sys.print('server: connected ' + id)
     end,
 
+    'disconnected' : function(self, id)
+        sys.print('server: disconnected ' + id)
+    end,
+
     'messaged' : function(self, id, msg)
         sys.print('server: message from ' + id + ': ' + msg)
         sys.send(id, msg + '2', self)
@@ -47,5 +51,3 @@ sys.listen(port, server_listener)
 
 #client connects to server
 sys.connect('127.0.0.1', port, client_listener)
-
-sys.loop()

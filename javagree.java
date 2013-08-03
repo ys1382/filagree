@@ -34,7 +34,7 @@ public class javagree {
      * @param c implements JavagreeCallback
      * @param o arguments
      */
-    public native long filagree(Object c,
+    public native long filagreeEval(Object c,
                                 Object... o);
 
     /**
@@ -42,8 +42,9 @@ public class javagree {
      */
     public static void main(String[] args) {
 
+        System.loadLibrary("javagree");
         javagree j = new javagree();
-        Object result = j.filagree(j, "world!");
-        System.out.println("in Java, the result is " + (String)result);
+        Object result = j.filagreeEval(j, "sys.print('hi')");
+        System.out.println("in Java, the result is " + String.valueOf(result));
     }
 }

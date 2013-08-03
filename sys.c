@@ -463,6 +463,7 @@ struct variable *sys_new(struct context *context)
 #define FNC_PART        "part"
 #define FNC_REMOVE      "remove"
 #define FNC_INSERT      "insert"
+#define FNC_EXIT        "exit"
 
 
 int compar(struct context *context, const void *a, const void *b, struct variable *comparator)
@@ -698,6 +699,14 @@ struct variable *cfnc_deserialize(struct context *context)
     return variable_deserialize(context, bits);
 }
 
+struct variable *cfnc_exit(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    int32_t ret = param_int(args, 1);
+    exit(ret);
+    return NULL;
+}
+
 //    a                b        c
 // <sought> <replacement> [<start>]
 // <start> <length> <replacement>
@@ -862,6 +871,9 @@ struct variable *builtin_method(struct context *context,
     else if (!strcmp(idxstr, FNC_REPLACE))
         result = variable_new_c(context, &cfnc_replace);
 
+    else if (!strcmp(idxstr, FNC_EXIT))
+        result = variable_new_c(context, &cfnc_exit);
+    
     free(idxstr);
     return result;
 }

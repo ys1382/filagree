@@ -9,10 +9,10 @@ extern "C" {
 #endif
 /*
  * Class:     javagree
- * Method:    filagree
+ * Method:    filagreeEval
  * Signature: (Ljava/lang/Object;[Ljava/lang/Object;)J
  */
-JNIEXPORT jlong JNICALL Java_javagree_filagree
+JNIEXPORT jlong JNICALL Java_javagree_filagreeEval
   (JNIEnv *, jobject, jobject, jobjectArray);
 
 #ifdef __cplusplus
