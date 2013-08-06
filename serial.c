@@ -74,7 +74,6 @@ struct byte_array* serial_decode_string(struct byte_array* buf)
     int32_t len = serial_decode_int(buf);
 	assert_message(len>=0, "negative malloc");
     struct byte_array* ba = byte_array_new_size(len);
-    //ba->data = ba->current = (uint8_t*)malloc(len);
 	null_check(ba->data);
     memcpy(ba->data, buf->current, len);
     buf->current += len;

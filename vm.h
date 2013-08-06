@@ -14,13 +14,14 @@
 #define RESERVED_ENV "env"
 #define RESERVED_GET "get"
 
+
 struct context_shared {
     struct array *all_variables;
-    struct variable *find;
     uint32_t tick;
     pthread_mutex_t gil;
     pthread_cond_t thread_cond;
     uint32_t num_threads;
+    struct variable *callback;
 };
 
 struct context {
@@ -31,7 +32,6 @@ struct context {
     struct byte_array *program;
     bool runtime;
     uint8_t indent;
-//    struct map *inputs;
 #ifdef DEBUG
     char pcbuf[10000]; // todo: check boundary
 #endif
@@ -99,13 +99,10 @@ enum Opcode {
 void display_program(struct byte_array* program);
 #endif
 
-struct context *context_new(bool state,
-                            bool sys_funcs,
+struct context *context_new(struct context *parent,
                             bool runtime,
-                            struct context *parent);
-struct context *context_copy(struct context *original);
+                            bool sys_funcs);
 void context_del();
-struct context * execute(struct byte_array *program, struct variable *find, bool finish);
 void garbage_collect(struct context *context);
 void vm_call(struct context *context, struct variable *func, struct variable *arg,...);
 void *vm_exit_message(struct context *context, const char *format, ...);
@@ -115,5 +112,8 @@ struct variable *lookup(struct context *context, struct variable *indexable, str
 void gil_lock(struct context *context, const char *who);
 void gil_unlock(struct context *context, const char *who);
 
+void execute(struct byte_array *program);
+void execute_with(struct context *context,
+                  struct byte_array *program);
 
 #endif // VM_H

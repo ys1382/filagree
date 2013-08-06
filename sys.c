@@ -93,7 +93,7 @@ struct variable *sys_run(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *script = (struct variable*)array_get(value->list, 1);
-    execute(script->str, NULL, true);
+    execute_with(context, script->str);
     return NULL;
 }
 
@@ -102,7 +102,7 @@ struct variable *sys_interpret(struct context *context)
     stack_pop(context->operand_stack); // self
     struct variable *script = (struct variable*)stack_pop(context->operand_stack);
     char *str = byte_array_to_string(script->str);
-    interpret_string(str, NULL);
+    interpret_string(context, str);
     return NULL;
 }
 
@@ -437,7 +437,7 @@ struct variable *sys_new(struct context *context)
         struct byte_array *name = byte_array_from_string(builtin_funcs[i].name);
         struct variable *key = variable_new_str(context, name);
         byte_array_del(name);
-        struct variable *value = variable_new_c(context, builtin_funcs[i].func);
+        struct variable *value = variable_new_cfnc(context, builtin_funcs[i].func);
         variable_map_insert(context, sys, key, value);
     }
     return sys;
@@ -840,39 +840,39 @@ struct variable *builtin_method(struct context *context,
     }
 
     else if (!strcmp(idxstr, FNC_SERIALIZE))
-        result = variable_new_c(context, &cfnc_serialize);
+        result = variable_new_cfnc(context, &cfnc_serialize);
 
     else if (!strcmp(idxstr, FNC_DESERIALIZE))
-        result = variable_new_c(context, &cfnc_deserialize);
+        result = variable_new_cfnc(context, &cfnc_deserialize);
 
     else if (!strcmp(idxstr, FNC_SORT)) {
         assert_message(indexable->type == VAR_LST, "sorting non-list");
-        result = variable_new_c(context, &cfnc_sort);
+        result = variable_new_cfnc(context, &cfnc_sort);
     }
 
     else if (!strcmp(idxstr, FNC_CHAR))
-        result = variable_new_c(context, &cfnc_char);
+        result = variable_new_cfnc(context, &cfnc_char);
 
     else if (!strcmp(idxstr, FNC_HAS))
-        result = variable_new_c(context, &cfnc_has);
+        result = variable_new_cfnc(context, &cfnc_has);
 
     else if (!strcmp(idxstr, FNC_FIND))
-        result = variable_new_c(context, &cfnc_find);
+        result = variable_new_cfnc(context, &cfnc_find);
 
     else if (!strcmp(idxstr, FNC_PART))
-        result = variable_new_c(context, &cfnc_part);
+        result = variable_new_cfnc(context, &cfnc_part);
 
     else if (!strcmp(idxstr, FNC_REMOVE))
-        result = variable_new_c(context, &cfnc_remove);
+        result = variable_new_cfnc(context, &cfnc_remove);
 
     else if (!strcmp(idxstr, FNC_INSERT))
-        result = variable_new_c(context, &cfnc_insert);
+        result = variable_new_cfnc(context, &cfnc_insert);
 
     else if (!strcmp(idxstr, FNC_REPLACE))
-        result = variable_new_c(context, &cfnc_replace);
+        result = variable_new_cfnc(context, &cfnc_replace);
 
     else if (!strcmp(idxstr, FNC_EXIT))
-        result = variable_new_c(context, &cfnc_exit);
+        result = variable_new_cfnc(context, &cfnc_exit);
     
     free(idxstr);
     return result;

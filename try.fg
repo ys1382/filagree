@@ -1,1 +1,2 @@
-a = [nil]
+a = 'z'
+sys.print(a)

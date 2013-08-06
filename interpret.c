@@ -20,7 +20,7 @@ bool run(struct context *context,
 void repl()
 {
     char str[FG_MAX_INPUT];
-    struct context *context = context_new(true, true, true, NULL);
+    struct context *context = context_new(NULL, true, true);
 
     for (;;) {
         fflush(stdin);
@@ -46,49 +46,45 @@ void repl()
     context_del(context);
 }
 
-void interpret_file(const struct byte_array *filename, struct variable *find)
+void interpret_string(struct context *context, const char *str)
 {
-    struct byte_array *program = build_file(filename);
-    execute(program, find, true);
+    struct byte_array *input = byte_array_from_string(str);
+    struct byte_array *program = build_string(input);
+
+    execute_with(context, program);
+
+    byte_array_del(input);
     byte_array_del(program);
 }
 
-void execute_file(const struct byte_array* filename, struct variable *find)
+void interpret_file(const char* str)
 {
-    struct byte_array *program = read_file(filename);
-    execute(program, find, true);
-}
-
-void run_file(const char* str, struct variable *find, struct map *env)
-{
+    // find file
     struct byte_array *filename = byte_array_from_string(str);
     struct byte_array *dotfgbc = byte_array_from_string(EXTENSION_BC);
     struct byte_array *dotfg = byte_array_from_string(EXTENSION_SRC);
-
     int fgbc = byte_array_find(filename, dotfgbc, 0);
-    if (fgbc > 0) {
-        execute_file(filename, find);
+
+    if (fgbc > 0) // already compiled, just run bytecode
+    {
+        struct byte_array *program = read_file(filename);
+        execute(program);
         return;
     }
     int fg = byte_array_find(filename, dotfg, 0);
 
-    if (fg > 0)
-        interpret_file(filename, find);
+    if (fg > 0) // compile and run fg file
+    {
+        struct byte_array *program = build_file(filename);
+        execute(program);
+        byte_array_del(program);
+    }
     else
         fprintf(stderr, "invalid file name\n");
 
     byte_array_del(filename);
     byte_array_del(dotfg);
     byte_array_del(dotfgbc);
-}
-
-void interpret_string(const char *str, struct variable *find)
-{
-    struct byte_array *input = byte_array_from_string(str);
-    struct byte_array *program = build_string(input);
-    execute(program, find, true);
-    byte_array_del(input);
-    byte_array_del(program);
 }
 
 #ifndef FG_LIB
@@ -109,14 +105,12 @@ int main (int argc, char** argv)
 	act.sa_flags = 0;
 	sigaction(SIGINT, &act, &oact);
 
-    //for (;;) {
-        switch (argc) {
-                case 1:     repl();                         break;
-                case 2:     run_file(argv[1], NULL, NULL);  break;
-                case 3:     compile_file(argv[1]);          break;
-                default:    exit_message(ERROR_USAGE);      break;
-        }
-    //sleep(10);
+    switch (argc) {
+        case 1:     repl();                     break;
+        case 2:     interpret_file(argv[1]);    break;
+        case 3:     compile_file(argv[1]);      break;
+        default:    exit_message(ERROR_USAGE);  break;
+    }
 
 }
 

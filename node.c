@@ -51,7 +51,7 @@ struct node_thread *thread_new(struct context *context,
                                int fd)
 {
     struct node_thread *ta = (struct node_thread *)malloc(sizeof(struct node_thread));
-    ta->context = context_new(true, true, true, context);
+    ta->context = context_new(context, true, true);
     ta->listener = listener; // != NULL ? variable_copy(ta->context, listener) : NULL;
     ta->fd = fd;
     ta->message = NULL;

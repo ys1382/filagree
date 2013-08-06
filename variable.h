@@ -29,7 +29,6 @@ enum Visited {
 
 typedef struct context *context_p; // forward declaration
 typedef struct variable *(callback2func)(context_p context);
-//typedef struct variable *(find_c_var)(context_p context, const struct variable *key);
 
 struct variable {
     enum VarType type;
@@ -60,7 +59,7 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
 
 struct variable* variable_new_bool(struct context *context, bool b);
 struct variable *variable_new_err(struct context *context, const char* message);
-struct variable *variable_new_c(struct context *context, callback2func *cfnc);
+struct variable *variable_new_cfnc(struct context *context, callback2func *cfnc);
 struct variable *variable_new_int(struct context *context, int32_t i);
 struct variable *variable_new_nil(struct context *context);
 struct variable *variable_new_kvp(struct context *context, struct variable *key, struct variable *val);

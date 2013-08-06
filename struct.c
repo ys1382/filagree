@@ -22,7 +22,7 @@
 
 struct array *array_new() {
     struct array *a = array_new_size(0);
-    ///DEBUGPRINT("array_new %p->%p\n", a, a->data);
+    //DEBUGPRINT("array_new %p->%p\n", a, a->data);
     return a;
 }
 
@@ -125,7 +125,7 @@ struct array *array_copy(const struct array* original) {
     copy->length = original->length;
     copy->current = original->current;
     copy->size = original->size;
-//    DEBUGPRINT("array_copy %p->%p\n", copy, copy->data);
+    //DEBUGPRINT("array_copy %p->%p\n", copy, copy->data);
     return copy;
 }
 
@@ -157,7 +157,7 @@ struct byte_array *byte_array_new() {
 }
 
 void byte_array_del(struct byte_array* ba) {
-    //printf("byte_array_del %p->%p\n", ba, ba->data);
+    //DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
     if (ba->data != NULL)
         free(ba->data);
     free(ba);
@@ -169,7 +169,7 @@ struct byte_array *byte_array_new_size(uint32_t size) {
     ba->data = ba->current = (uint8_t*)malloc(size);
     ba->length = 0;
     ba->size = size;
-    //printf("byte_array_new_size %p->%p\n", ba, ba->data);
+    //DEBUGPRINT("byte_array_new_size %p->%p\n", ba, ba->data);
     return ba;
 }
 
@@ -182,7 +182,7 @@ void byte_array_resize(struct byte_array* ba, uint32_t size) {
     assert_message(ba->data, "could not reallocate data");
     ba->current = ba->data + delta;
     ba->size = size;
-    //printf("byte_array_resize %p->%p\n", ba, ba->data);
+    //DEBUGPRINT("byte_array_resize %p->%p\n", ba, ba->data);
 }
 
 bool byte_array_equals(const struct byte_array *a, const struct byte_array* b)
@@ -203,7 +203,6 @@ struct byte_array *byte_array_copy(const struct byte_array* original) {
     memcpy(copy->data, original->data, original->length);
     copy->length = original->length;
     copy->current = copy->data + (original->current - original->data);
-//    printf("byte_array_copy %p->%p\n", copy, copy->data);
     return copy;
 }
 
@@ -235,7 +234,7 @@ void byte_array_append(struct byte_array *a, const struct byte_array* b) {
 void byte_array_remove(struct byte_array *self, uint32_t start, int32_t length) {
     list_remove(self->data, &self->length, start, length, sizeof(uint8_t));
     byte_array_resize(self, self->length);
-    DEBUGPRINT("byte_array_remove %p->%p\n", self, self->data);
+    //DEBUGPRINT("byte_array_remove %p->%p\n", self, self->data);
 }
 
 struct byte_array *byte_array_part(struct byte_array *within, uint32_t start, uint32_t length)
@@ -253,7 +252,7 @@ struct byte_array *byte_array_from_string(const char* str)
     struct byte_array* ba = byte_array_new_size(len);
     memcpy(ba->data, str, len);
     ba->length = len;
-    // DEBUGPRINT("byte_array_from_string %s %p->%p\n", str, ba, ba->data);
+    //DEBUGPRINT("byte_array_from_string %s %p->%p\n", str, ba, ba->data);
     return ba;
 }
 
@@ -522,7 +521,7 @@ void map_del(struct map *m)
     //DEBUGPRINT("map_del %p\n", m);
     struct hash_node *node, *oldnode;
 
-    for(size_t n = 0; n<m->size; ++n) {
+    for (size_t n = 0; n<m->size; ++n) {
         node = m->nodes[n];
         while (node) {
             m->deletor(node->key, m->context);
@@ -635,7 +634,7 @@ void *map_get(const struct map *m, const void *key)
 
 int map_resize(struct map *m, size_t size)
 {
-    DEBUGPRINT("map_resize\n");
+    //DEBUGPRINT("map_resize\n");
     struct map newtbl;
     size_t n;
     struct hash_node *node,*next;

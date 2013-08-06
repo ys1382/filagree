@@ -116,10 +116,9 @@ static inline void cfnc_length(struct context *context) {
     stack_push(context->operand_stack, result);
 }
 
-struct context *context_new(bool state,
-                            bool sys_funcs,
-                            bool runtime,
-                            struct context *parent)
+struct context *context_new(struct context *parent, // parent context
+                            bool runtime,           // for interpreting bytecode
+                            bool sys_funcs)         // create sys funcs
 {
     struct context *context = (struct context*)malloc(sizeof(struct context));
     null_check(context);
@@ -130,7 +129,7 @@ struct context *context_new(bool state,
         assert_message(!pthread_mutex_init(&singleton->gil, NULL), "gil init");
         assert_message(!pthread_cond_init(&singleton->thread_cond, NULL), "threads init");
         singleton->all_variables = array_new();
-        singleton->find = NULL;
+        singleton->callback = NULL;
         singleton->tick = 0;
         singleton->num_threads = 0;
         context->singleton = singleton;
@@ -139,8 +138,6 @@ struct context *context_new(bool state,
     }
 
     context->program_stack = stack_new();
-    if (state)
-        stack_push(context->program_stack, program_state_new(context, NULL));
     context->operand_stack = stack_new();
     context->runtime = runtime;
     context->indent = 0;
@@ -335,7 +332,7 @@ static void display_program_counter(struct context *context, const struct byte_a
 
 void display_program(struct byte_array *program)
 {
-    struct context *context = context_new(false, false, false, NULL);
+    struct context *context = context_new(NULL, false, false);
 
     INDENT
     DEBUGPRINT("%sprogram bytes:\n", indentation(context));
@@ -703,12 +700,15 @@ struct variable *find_var(struct context *context, struct variable *key)
     const struct program_state *state = (const struct program_state*)stack_peek(context->program_stack, 0);
     struct map *var_map = state->named_variables;
     struct variable *v = (struct variable*)map_get(var_map, key);
-    // DEBUGPRINT(" find_var %s in {p:%p, s:%p, m:%p}: %p\n", byte_array_to_string(name), context->program_stack, state, var_map, v);
 
-    if ((v == NULL) && context->singleton->find)
-        v = variable_map_get(context, context->singleton->find, key);
-    if ((v == NULL) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS)))
+    if ((v == NULL) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS))) {
+#ifdef DEBUG
+        sprintf(context->pcbuf, "%ssys ", context->pcbuf);
+#endif
         v = context->sys;
+    }
+    if ((v == NULL) && context->singleton->callback)
+        v = variable_map_get(context, context->singleton->callback, key);
     return v;
 }
 
@@ -716,18 +716,21 @@ static void push_var(struct context *context, struct byte_array *program)
 {
     struct byte_array* name = serial_decode_string(program);
 #ifdef DEBUG
-    char *str = byte_array_to_string(name);
-    sprintf(context->pcbuf, "%sVAR %s\n", context->pcbuf, str);
-    free(str);
-    if (!context->runtime)
+    if (!context->runtime) {
+        char *str = byte_array_to_string(name);
+        sprintf(context->pcbuf, "%sVAR %s\n", context->pcbuf, str);
+        free(str);
         return;
+    } else {
+        sprintf(context->pcbuf, "%sVAR ", context->pcbuf);
+    }
 #endif // DEBUG
     struct variable *key = variable_new_str(context, name);
     struct variable *v = find_var(context, key);
     vm_assert(context, v, "variable not found\n");
-    //printf("pushed %p\n", v);
     variable_push(context, v);
     byte_array_del(name);
+    sprintf(context->pcbuf, "%s\n", context->pcbuf);
 }
 
 static void push_str(struct context *context, struct byte_array *program)
@@ -1460,12 +1463,10 @@ done:
     return inst == VM_RET;
 }
 
-struct context *execute(struct byte_array *program, struct variable *find, bool finish)
+void execute_with(struct context *context, struct byte_array *program)
 {
     DEBUGPRINT("execute:\n");
-    struct context *context = context_new(false, true, true, NULL);
-    context->singleton->find = find;
-
+    
     null_check(program);
     program = byte_array_copy(program);
     byte_array_reset(program);
@@ -1474,9 +1475,7 @@ struct context *execute(struct byte_array *program, struct variable *find, bool 
     context->indent = 1;
 #endif
     if (!setjmp(trying))
-    {
         run(context, program, NULL, false);
-    }
 
     if (context->error)
         DEBUGPRINT("error: %s\n", context->error->str->data);
@@ -1484,9 +1483,11 @@ struct context *execute(struct byte_array *program, struct variable *find, bool 
         DEBUGPRINT("warning: operand stack not empty\n");
     gil_unlock(context, "execute");
     byte_array_del(program);
-    if (finish) {
-        context_del(context);
-        return NULL;
-    }
-    return context;
+}
+
+void execute(struct byte_array *program)
+{
+    struct context *context = context_new(NULL, true, true);
+    execute_with(context, program);
+    context_del(context);
 }

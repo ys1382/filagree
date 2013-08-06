@@ -145,7 +145,7 @@ struct variable* variable_new_float(struct context *context, float f)
 struct variable *variable_new_str(struct context *context, struct byte_array *str) {
     struct variable *v = variable_new(context, VAR_STR);
     v->str = byte_array_copy(str);
-//    DEBUGPRINT("variable_new_str %p->%s\n", v, byte_array_to_string(str));
+    //DEBUGPRINT("variable_new_str %p->%s\n", v, byte_array_to_string(str));
     return v;
 }
 
@@ -185,7 +185,7 @@ struct variable *variable_new_kvp(struct context *context, struct variable *key,
     return v;
 }
 
-struct variable *variable_new_c(struct context *context, callback2func *cfnc) {
+struct variable *variable_new_cfnc(struct context *context, callback2func *cfnc) {
     struct variable *v = variable_new(context, VAR_CFNC);
     v->cfnc = cfnc;
     return v;
@@ -370,8 +370,7 @@ struct variable *variable_pop(struct context *context)
     return v;
 }
 
-void variable_push(struct context *context, struct variable *v)
-{
+void inline variable_push(struct context *context, struct variable *v) {
     stack_push(context->operand_stack, v);
 }
 
