@@ -17,7 +17,7 @@ $(EXECUTABLE): $(OBJECTS)
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
 
-java: $(OBJECTS) javagree.java javagree.c
+javagree: $(OBJECTS) javagree.java javagree.c
 	javac javagree.java 
 	javah -jni javagree
 	cc -c -fPIC -DDEBUG -I/System/Library/Frameworks/JavaVM.framework/Headers javagree.c -o libjavagree.o

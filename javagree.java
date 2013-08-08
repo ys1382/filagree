@@ -44,7 +44,7 @@ public class javagree {
 
         System.loadLibrary("javagree");
         javagree j = new javagree();
-        Object result = j.filagreeEval(j, "sys.print(a)");
+        Object result = j.filagreeEval(j, "sys.print(args)");
         System.out.println("in Java, the result is " + String.valueOf(result));
     }
 }

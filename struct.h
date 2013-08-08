@@ -28,7 +28,6 @@ struct array {
 struct array *array_new();
 void array_del(struct array *a);
 struct array *array_new_size(uint32_t size);
-//void array_resize(struct array *a, uint32_t length);
 uint32_t array_add(struct array *a , void *datum);
 void array_insert(struct array *a, uint32_t index, void *datam);
 void* array_get(const struct array *a, uint32_t index);
