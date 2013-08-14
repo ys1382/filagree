@@ -30,10 +30,12 @@ enum Visited {
 typedef struct context *context_p; // forward declaration
 typedef struct variable *(callback2func)(context_p context);
 
-struct variable {
+struct variable
+{
     enum VarType type;
     enum Visited visited;
     uint32_t mark;
+
     union {
         struct byte_array* str;
         struct array *list;
@@ -46,7 +48,11 @@ struct variable {
         } kvp;
         struct variable*(*cfnc)(context_p);
     };
-    struct map *map;
+
+    union {
+        struct map *map;            // for lists
+        struct variable *closure;   // for functions
+    };
 };
 
 struct variable* variable_new(struct context *context, enum VarType type);

@@ -1,4 +1,4 @@
-port = 9999
+port = 9992
 
 server_dir = 'synctest/server'
 client_dir = 'synctest/client'
@@ -12,7 +12,7 @@ Sync = [
         self = ['ctx' : ctx, 'watched' : watched] + self
         self.files = self.local_snapshot()
         if ctx and ctx.ui then
-            sys.update(ctx.ui.files, self.files.keys)     # update ui
+            sys.ui_set(ctx.ui.files, self.files.keys)     # update ui
         end
         return self
 
@@ -54,7 +54,7 @@ Sync = [
         else if msg4.event == 'content' then
             sys.write(self.watched + msg4.path, msg4.content)   # save file
             files = self.local_snapshot().keys
-            sys.update(self.ctx.ui.files, files)                # update ui
+            sys.ui_set(self.ctx.ui.files, files)                # update ui
         end
 
     end,

@@ -1,4 +1,4 @@
-port = 9997
+port = 9996
 
 ####### net
 
@@ -63,18 +63,18 @@ end
 
 ctx.settings = function(ctx)
 
-    sys.ui(ctx, ['vertical',
+    ctx.ui = sys.ui(ctx, ['vertical',
 
-                    ['form', 'display name', 'username', 'password'],
+                        ['form', 'display name', 'username', 'password'],
 
-                    ['horizontal',
-                        ['button', 'text':'save',   'logic':sys.save(sys.form_get(), 'settings')],
-                        ['button', 'text':'cancel', 'logic':ctx.main],
-                        ['button', 'text':'logout', 'logic':ctx.main],
-                    ],
+                        ['horizontal',
+                            ['button', 'text':'save',   'logic':sys.save(sys.form_get(ctx.ui), 'settings')],
+                            ['button', 'text':'cancel', 'logic':ctx.main],
+                            ['button', 'text':'logout', 'logic':ctx.main],
+                        ],
 
-                    ctx.w, ctx.h
-                ])
+                        ctx.w, ctx.h
+                    ])
 
     f = sys.load('settings')
     sys.form_set(f)
@@ -97,28 +97,29 @@ end
 
 ctx.add = function(ctx)
 
-    sys.ui(ctx, ['vertical',
+    ctx.ui = sys.ui(ctx, ['vertical',
 
-                    ['form', ['username']],
+                        ['form', 'username'],
 
-                    ['horizontal',
-                        ['button', 'text':'add',       'logic':ctx.added],
-                        ['button', 'text':'nevermind', 'logic':ctx.main],
-                    ],
+                        ['horizontal',
+                            ['button', 'text':'add',       'logic':ctx.added],
+                            ['button', 'text':'nevermind', 'logic':ctx.main],
+                        ],
 
-                    ctx.w, ctx.h
-                ])
+                        ctx.w, ctx.h
+                    ])
 end
 
 ctx.added = function(ctx)
-    friend = sys.form_get().username
+    friend = sys.form_get(ctx.ui).username
     ctx.friends = ctx.friends + friend
+    sys.print('fz ' + friend + ' -- ' + ctx.friends)
     sys.save(ctx.friends, 'friends')
     ctx.main()
 end
 
 ctx.signup = function(ctx)
-    msg = ['action' : 'signup', 'data' : sys.form_get()]
+    msg = ['action' : 'signup', 'data' : sys.form_get(ctx.ui)]
     sys.send(ctx.client.server_id, msg)
     ctx.main()
 end

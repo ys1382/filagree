@@ -412,6 +412,8 @@ void vm_call_src(struct context *context, struct variable *func)
     }
 
     struct program_state *state = (struct program_state*)stack_peek(context->program_stack, 0);
+    if (state == NULL)
+        state = program_state_new(context, NULL);
     struct variable *s = (struct variable*)stack_peek(context->operand_stack, 0);
     state->args = variable_copy(context, s);
 
@@ -1362,6 +1364,7 @@ bool run(struct context *context,
     program->current = program->data;
     struct program_state *state = NULL;
     enum Opcode inst = VM_NIL;
+
     if (context->runtime) {
         if (in_context) {
             if (state == NULL)

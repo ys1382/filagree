@@ -11,8 +11,9 @@ sys.form_get = function(self, form)
 
     result = []
 
-    for item in form
-        result = result + (item.name : sys.get_value(item.item) )
+    for key in form.keys
+    sys.print('form key ' + key)
+        result = result + (key : sys.ui_get(form[key]))
     end
 
     return result

@@ -85,6 +85,7 @@ void stack_push(struct stack* stack, void* data);
 void* stack_pop(struct stack* stack);
 void* stack_peek(const struct stack* stack, uint8_t index);
 bool stack_empty(const struct stack* stack);
+uint32_t stack_depth(struct stack *stack);
 
 // map /////////////////////////////////////////////////////////////////////
 

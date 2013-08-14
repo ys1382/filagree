@@ -1,50 +1,43 @@
 import java.lang.reflect.Method;
 
 /**
+ *
  * Java - filagree bridge
+ *
  */
-public class javagree {
+public class Javagree {
+
+    static { System.loadLibrary("javagree"); }
 
     /**
-     * Callback implementation
-     * @param arguments arguments
-     */
-    public Object callback(Object... arguments) {
-        System.out.println("Java - callback:");
-        for (Object o : arguments)
-            System.out.println("\t" + o);
-        return null;
-    }
-
-    /**
-     * Callback interface
-     */
-    public interface JavagreeCallback {
-        /**
-         * callback function
-         *
-         * @param arguments arguments
-         */
-        public Object callback(Object...arguments);
-    }
-
-    /**
+     *
      * Evaluates string in filagree
      *
-     * @param c implements JavagreeCallback
-     * @param o arguments
+     * @param callback object
+     * @param name of callback object
+     * @param program program
+     *
      */
-    public native long filagreeEval(Object c,
-                                Object... o);
-
+    public native long eval(Object callback, String name, String program);
+    
+    class TestCallback {
+        public int x = 1;
+        int y(int z) {
+            System.out.println("z = " + z);
+            return x;
+        }
+    }
+    
     /**
+     *
      * main
+     *
+     * to test javagree functionality
+     *
      */
     public static void main(String[] args) {
-
-        System.loadLibrary("javagree");
-        javagree j = new javagree();
-        Object result = j.filagreeEval(j, "sys.print(args)");
-        System.out.println("in Java, the result is " + String.valueOf(result));
+        Javagree j = new Javagree();
+        TestCallback testCallback = j.new TestCallback();
+        Object result = j.eval(testCallback, "tc", "sys.print(tc.x + tc.y())");
     }
 }

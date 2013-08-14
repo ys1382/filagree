@@ -1,6 +1,9 @@
 #include "hal.h"
 
-void hal_print(const char *str) {}
+void hal_print(const char *str) {
+	printf("%s\n", str);
+}
+
 void hal_loop() {}
 void hal_graphics(const struct variable *shape) {}
 void hal_image() {}

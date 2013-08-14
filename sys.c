@@ -293,13 +293,20 @@ struct variable *sys_table(struct context *context)
     return ui_result(context, table, w, h);
 }
 
-struct variable *sys_update(struct context *context)
+struct variable *sys_ui_set(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     struct variable *widget    = (struct variable*)array_get(arguments->list, 1);
     struct variable *value     = (struct variable*)array_get(arguments->list, 2);
     hal_ui_set(widget->ptr, value);
     return NULL;
+}
+
+struct variable *sys_ui_get(struct context *context)
+{
+    struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *widget    = (struct variable*)array_get(arguments->list, 1);
+    return hal_ui_get(context, widget->ptr);
 }
 
 struct variable *sys_graphics(struct context *context)
@@ -404,7 +411,6 @@ struct string_func builtin_funcs[] = {
     {"write",       &sys_write},
     {"save",        &sys_save},
     {"load",        &sys_load},
-    {"update",      &sys_update},
     {"remove",      &sys_rm},
     {"bytes",       &sys_bytes},
     {"sin",         &sys_sin},
@@ -426,6 +432,8 @@ struct string_func builtin_funcs[] = {
     {"sound",       &sys_sound},
     {"table",       &sys_table},
     {"graphics",    &sys_graphics},
+    {"ui_get",      &sys_ui_get},
+    {"ui_set",      &sys_ui_set},
 #endif // NO_UI
 };
 

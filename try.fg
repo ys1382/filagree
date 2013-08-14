@@ -1,2 +1,3 @@
-a = 'z'
-sys.print(a)
+x = function() sys.print(sys.args()) end
+
+x(7,8,9)
