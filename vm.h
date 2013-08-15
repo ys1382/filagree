@@ -11,10 +11,6 @@
 #define ERROR_NULL  "null pointer"
 #define ERROR_INDEX "index out of bounds"
 
-#define RESERVED_ENV "env"
-#define RESERVED_GET "get"
-
-
 struct context_shared {
     struct array *all_variables;
     uint32_t tick;

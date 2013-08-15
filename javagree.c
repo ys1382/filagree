@@ -4,45 +4,7 @@
 #include "compile.h"
 
 struct variable *variable_new_j2f(struct context *context, JNIEnv *env, jobject jo);
-
-/*
-struct variable *c_callback(struct context *context)
-{
-    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    printf("c callback %u\n", args->list->length);
-    return NULL;
-}
-
-void *variable_map_str2obj(struct context *context, struct variable *v, const char *key)
-{
-    struct byte_array *key2 = byte_array_from_string(key);
-    struct variable *key3 = variable_new_str(context, key2);
-    struct variable *key4 = variable_map_get(context, context->singleton->callback, key3);
-    return key4->ptr;
-}
-
-// construct variable with key-value pairs
-struct variable *variable_new_map_str(struct context *context, const char *key, ...)
-{
-    struct variable *v = variable_new_list(context, NULL);
-
-    va_list argp;
-    va_start(argp, key);
-
-    for (; key; key = va_arg(argp, const char*))
-    {
-        void *val = va_arg(argp, void*);
-        struct byte_array *key2 = byte_array_from_string(key);
-        struct variable *key3 = variable_new_str(context, key2);
-
-        variable_map_insert(context, v, key3, val);
-    }
-
-    va_end(argp);
-
-    return v;
-}
-*/
+struct variable *variable_new_j2f_ex(struct context *context, JNIEnv *env, jobject jo, jobject parent);
 
 // gets jni class name
 const char *jni_class_name(JNIEnv *env, jobject jo)
@@ -52,13 +14,13 @@ const char *jni_class_name(JNIEnv *env, jobject jo)
         DEBUGPRINT("cannot GetObjectClass\n");
         return NULL;
     }
-    
+
     jclass clscls = (*env)->FindClass(env, "java/lang/Class");
     if (NULL == clscls) {
         DEBUGPRINT("cannot get Class\n");
         return NULL;
     }
-    
+
     jmethodID getName = (*env)->GetMethodID(env, clscls, "getName", "()Ljava/lang/String;");
     if (NULL == getName) {
         DEBUGPRINT("cannot GetMethodID getName\n");
@@ -72,7 +34,7 @@ const char *jni_class_name(JNIEnv *env, jobject jo)
     }
     
     const char *name2 = (*env)->GetStringUTFChars(env, name, NULL);
-    DEBUGPRINT("vj2f %s\n", name2);
+    //DEBUGPRINT("vj2f %s\n", name2);
     return name2;
 }
 
@@ -87,6 +49,7 @@ struct variable *vj2f_str(struct context *context, JNIEnv *jenv, jstring js)
 // Integer -> variable
 struct variable *vj2f_int(struct context *context, JNIEnv *env, jobject ji)
 {
+    DEBUGPRINT("vj2f_int\n");
     // get class Integer
     jclass jclass_of_integer = (*env)->GetObjectClass(env, ji);
     assert_message(jclass_of_integer, "no class Integer");
@@ -197,27 +160,132 @@ struct variable *vj2f_complex(struct context *context, JNIEnv *env, jobject jo)
         return NULL;
     }
 
-    jmethodID getMethods = env->GetMethodID(jCls, "getMethods", "()[Ljava/lang/reflect/Method;");
+    jclass clscls = (*env)->FindClass(env, "java/lang/Class");
+    if (NULL == clscls) {
+        DEBUGPRINT("cannot get Class\n");
+        return NULL;
+    }
+
+    jmethodID getMethods = (*env)->GetMethodID(env, clscls, "getMethods", "()[Ljava/lang/reflect/Method;");
     if (NULL == getMethods) {
         DEBUGPRINT("cannot getMethods\n");
         return NULL;
     }
 
-    jmethodID getFields  = env->GetMethodID(jCls, "getFields",  "()[Ljava/lang/reflect/Field;" );
+    jmethodID getFields  = (*env)->GetMethodID(env, clscls, "getFields",  "()[Ljava/lang/reflect/Field;" );
     if (NULL == getFields) {
         DEBUGPRINT("cannot getFields\n");
         return NULL;
     }
+    
+    jobjectArray methods = (jobjectArray)(*env)->CallObjectMethod(env, jocls, getMethods);
+    jobjectArray fields  = (jobjectArray)(*env)->CallObjectMethod(env, jocls, getFields );
 
-    jobjectArray methods = (jobjectArray)env->CallObjectMethod(cls, midGetMethods);
-    jobjectArray fields  = (jobjectArray)env->CallObjectMethod(cls, midGetFields );
+    jint numMethods = (*env)->GetArrayLength(env, methods);
+    jint numFields = (*env)->GetArrayLength(env, fields);
 
+    struct array *members = array_new();
 
-    // todo: add closures to C functions
+    DEBUGPRINT("# methods: %d\n", numMethods);
+    DEBUGPRINT("# fields: %d\n", numFields);
+
+    struct variable *result = variable_new_list(context, NULL);
+
+    for (int i=0; i<numMethods; i++) {
+        jobject m = (*env)->GetObjectArrayElement(env, methods, i);
+        struct variable *v = variable_new_j2f(context, env, m);
+        variable_map_insert(context, result, v->kvp.key, v->kvp.val);
+    }
+
+    for (int i=0; i<numFields; i++) {
+        jobject f = (*env)->GetObjectArrayElement(env, fields, i);
+        struct variable *v = variable_new_j2f_ex(context, env, f, jo);
+        variable_map_insert(context, result, v->kvp.key, v->kvp.val);
+    }
+
+    return result;
+}
+
+struct variable *cgree(struct context *context)
+{
+    struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
+    jobject method = (jobject)array_get(arguments->list, 1);
+    // todo: var_src -> java arg list
+    return NULL;
+}
+
+struct byte_array *byte_array_from_jstring(JNIEnv *env, jstring string)
+{
+    const char *string2 = (*env)->GetStringUTFChars(env, string, NULL);
+    return byte_array_from_string(string2);
+}
+
+struct variable *jobject_name(struct context *context, JNIEnv *env, jobject jo)
+{
+    jclass jocls = (*env)->GetObjectClass(env, jo);
+    if (NULL == jocls) {
+        DEBUGPRINT("cannot GetObjectClass\n");
+        return NULL;
+    }
+
+    jmethodID getName = (*env)->GetMethodID(env, jocls, "getName", "()Ljava/lang/String;");
+    if (NULL == getName) {
+        DEBUGPRINT("cannot GetMethodID Method.getName\n");
+        return NULL;
+    }
+    
+    jstring name = (*env)->CallObjectMethod(env, jo, getName);
+    if (NULL == name) {
+        DEBUGPRINT("cannot call getName\n");
+        return NULL;
+    }
+
+    struct byte_array *name2 = byte_array_from_jstring(env, name);
+    //DEBUGPRINT("jobject_name %s\n", byte_array_to_string(name2));
+    return variable_new_str(context, name2);
+}
+
+struct variable *vj2f_fnc(struct context *context, JNIEnv *env, jobject jo)
+{
+    struct variable *key = jobject_name(context, env, jo);
+    struct variable *val = variable_new_cfnc(context, &cgree);
+    val->closure = jo;
+    return variable_new_kvp(context, key, val);
+}
+
+struct variable *vj2f_fld(struct context *context, JNIEnv *env, jobject fld, jobject parent)
+{
+    DEBUGPRINT("vj2f_fld a\n");
+    jclass fldcls = (*env)->GetObjectClass(env, fld);
+    if (NULL == fldcls) {
+        DEBUGPRINT("cannot GetObjectClass\n");
+        return NULL;
+    }
+
+    DEBUGPRINT("vj2f_fld b\n");
+    jmethodID get = (*env)->GetMethodID(env, fldcls, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+    if (NULL == get) {
+        DEBUGPRINT("cannot GetMethodID Field.get\n");
+        return NULL;
+    }
+
+    DEBUGPRINT("vj2f_fld c\n");
+    jobject value = (*env)->CallObjectMethod(env, fld, get, parent);
+    if (NULL == value) {
+        DEBUGPRINT("cannot call get\n");
+        return NULL;
+    }
+    DEBUGPRINT("vj2f_fld d\n");
+
+    struct variable *key = jobject_name(context, env, fld);
+    DEBUGPRINT("vj2f_fld c\n");
+    struct variable *val = variable_new_j2f(context, env, value);
+    DEBUGPRINT("vj2f_fld z\n");
+    return variable_new_kvp(context, key, val);
 }
 
 // jobject -> variable
-struct variable *variable_new_j2f(struct context *context, JNIEnv *env, jobject jo)
+struct variable *variable_new_j2f_ex(struct context *context, JNIEnv *env, jobject jo, jobject parent)
 {
     const char *name = jni_class_name(env, jo);
     if (NULL == name) {
@@ -232,17 +300,19 @@ struct variable *variable_new_j2f(struct context *context, JNIEnv *env, jobject 
     if (!strcmp(name, "java.lang.String"))
         return vj2f_str(context, env, (jstring)jo);
     if (!strcmp(name, "java.util.HashMap"))
-        return vj2f_map(context, env, (jobject)jo);
+        return vj2f_map(context, env, jo);
+    if (!strcmp(name, "java.lang.reflect.Method"))
+        return vj2f_fnc(context, env, jo);
+    if (!strcmp(name, "java.lang.reflect.Field"))
+        return vj2f_fld(context, env, jo, parent);
 
-    return vj2f_complex(context, env, (jobject)jo);
+    DEBUGPRINT("unknown class %s\n", name);
+    return vj2f_complex(context, env, jo);
 }
 
-struct byte_array *byte_array_from_jstring(JNIEnv *env, jstring string)
+struct variable *variable_new_j2f(struct context *context, JNIEnv *env, jobject jo)
 {
-    printf("byte_array_from_jstring %s\n", jni_class_name(env, string));
-    const char *string2 = (*env)->GetStringUTFChars(env, string, NULL);
-    printf("c\n");
-    return byte_array_from_string(string2);
+    return variable_new_j2f_ex(context, env, jo, NULL);
 }
 
 struct variable *variable_new_java_find(struct context *context,
@@ -250,21 +320,17 @@ struct variable *variable_new_java_find(struct context *context,
                                         jobject callback,
                                         jstring name)
 {
-    printf("variable_new_java_find0\n");
     // java callback object name
     struct byte_array *name2 = byte_array_from_jstring(env, name);
     struct variable *name3 = variable_new_str(context, name2);
 
-    printf("a\n");
     // java callback object, converted to filagree object
     struct variable *callback2 = variable_new_j2f(context, env, callback);
 
-    printf("b\n");
     // filagree callback object
     struct variable *find = variable_new_list(context, NULL);
     variable_map_insert(context, find, name3, callback2);
 
-    printf("variable_new_java_find1\n");
     return find;
 }
 
@@ -274,7 +340,6 @@ JNIEXPORT jlong JNICALL Java_Javagree_eval(JNIEnv *env,
                                            jstring name,
                                            jstring program)
 {
-    printf("Java_Javagree_eval 0\n");
     // create filagree context
     struct context *context = context_new(NULL, true, true);
 
@@ -290,6 +355,5 @@ JNIEXPORT jlong JNICALL Java_Javagree_eval(JNIEnv *env,
     execute_with(context, program3);
 
     // return context for later use
-    printf("Java_Javagree_eval 1\n");
     return (jlong)context;
 }

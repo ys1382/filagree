@@ -153,12 +153,7 @@ struct variable *variable_new_fnc(struct context *context, struct byte_array *bo
 {
     struct variable *v = variable_new(context, VAR_FNC);
     v->str = byte_array_copy(body);
-    if (closures) {
-        struct byte_array *str = byte_array_from_string(RESERVED_ENV);
-        struct variable *env = variable_new_str(context, str);
-        variable_map_insert(context, v, env, closures);
-        byte_array_del(str);
-    }
+    v->map = closures ? map_copy(context, closures->map) : NULL;
     return v;
 }
 

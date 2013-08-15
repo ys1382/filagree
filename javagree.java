@@ -19,15 +19,23 @@ public class Javagree {
      *
      */
     public native long eval(Object callback, String name, String program);
-    
-    class TestCallback {
-        public int x = 1;
-        int y(int z) {
-            System.out.println("z = " + z);
-            return x;
+
+    /**
+     *
+     * Test
+     *
+     * to test javagree functionality
+     *
+     */
+    static class Test {
+
+        public int x = 7;
+
+        public int y(int z) {
+            return x + z;
         }
     }
-    
+
     /**
      *
      * main
@@ -37,7 +45,7 @@ public class Javagree {
      */
     public static void main(String[] args) {
         Javagree j = new Javagree();
-        TestCallback testCallback = j.new TestCallback();
-        Object result = j.eval(testCallback, "tc", "sys.print(tc.x + tc.y())");
+        Test test = new Test();
+        Object result = j.eval(test, "tc", "sys.print(tc.x)");
     }
 }

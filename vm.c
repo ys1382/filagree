@@ -400,17 +400,6 @@ struct variable *src(struct context *context, enum Opcode op, struct byte_array 
 
 void vm_call_src(struct context *context, struct variable *func)
 {
-    // check for closure
-    struct map *env = NULL;
-    if (func->map) {
-        struct byte_array *env2 = byte_array_from_string(RESERVED_ENV);
-        struct variable *env3 = variable_new_str(context, env2);
-        struct variable *v = (struct variable*)lookup(context, func, env3);
-        byte_array_del(env2);
-        if (v)
-            env = v->map;
-    }
-
     struct program_state *state = (struct program_state*)stack_peek(context->program_stack, 0);
     if (state == NULL)
         state = program_state_new(context, NULL);
@@ -422,7 +411,7 @@ void vm_call_src(struct context *context, struct variable *func)
     // call the function
     switch (func->type) {
         case VAR_FNC:
-            run(context, func->str, env, false);
+            run(context, func->str, func->map, false);
             break;
         case VAR_CFNC: {
             struct variable *v = func->cfnc(context);

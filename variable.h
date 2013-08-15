@@ -51,7 +51,7 @@ struct variable
 
     union {
         struct map *map;            // for lists
-        struct variable *closure;   // for functions
+        void *closure;              // for c functions
     };
 };
 
