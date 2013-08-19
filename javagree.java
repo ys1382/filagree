@@ -31,8 +31,9 @@ public class Javagree {
 
         public int x = 7;
 
-        public int y(int z) {
-            return x + z;
+        public Integer y(Integer z) {
+            System.out.println("in y");
+            return new Integer(x + z);
         }
     }
 
@@ -46,6 +47,6 @@ public class Javagree {
     public static void main(String[] args) {
         Javagree j = new Javagree();
         Test test = new Test();
-        Object result = j.eval(test, "tc", "sys.print(tc.x)");
+        Object result = j.eval(test, "tc", "sys.print(tc.x + tc.y(9))");
     }
 }

@@ -118,7 +118,7 @@ int map_remove(struct map* map, const void *key);
 void *map_get(const struct map* map, const void *key);
 bool map_has(const struct map* map, const void *key);
 struct array* map_keys(const struct map* m);
-struct array* map_values(const struct map* m);
+struct array* map_vals(const struct map* m);
 struct map *map_union(struct map *a, const struct map *b);
 struct map *map_minus(struct map *a, const struct map *b);
 struct map *map_copy(void *context, const struct map *map);

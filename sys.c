@@ -841,7 +841,7 @@ struct variable *builtin_method(struct context *context,
         if (indexable->map == NULL)
             result = variable_new_list(context, NULL);
         else {
-            struct array *values = map_values(indexable->map);
+            struct array *values = map_vals(indexable->map);
             result = variable_new_list(context, (struct array*)values);
             array_del(values);
         }

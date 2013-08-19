@@ -203,7 +203,7 @@ void mark_map(struct map *map, bool mark)
         return;
 
     struct array *a = map_keys(map);
-    struct array *b = map_values(map);
+    struct array *b = map_vals(map);
     for (int i=0; i<a->length; i++) {
         struct variable *aiv = (struct variable*)array_get(a,i);
         struct variable *biv = (struct variable*)array_get(b,i);
@@ -404,6 +404,10 @@ void vm_call_src(struct context *context, struct variable *func)
     if (state == NULL)
         state = program_state_new(context, NULL);
     struct variable *s = (struct variable*)stack_peek(context->operand_stack, 0);
+
+    if (func->closure)
+        array_insert(s->list, 1, func->closure); // first argument
+
     state->args = variable_copy(context, s);
 
     INDENT
@@ -421,6 +425,7 @@ void vm_call_src(struct context *context, struct variable *func)
                 stack_push(context->operand_stack, v);
                 v = variable_new_src(context, 1);
             }
+
             stack_push(context->operand_stack, v); // push the result
         } break;
         case VAR_NIL:
@@ -439,16 +444,20 @@ void vm_call_src(struct context *context, struct variable *func)
 void vm_call(struct context *context, struct variable *func, struct variable *arg, ...)
 {
     // add variables from vararg
-    if (arg) {
+    if (arg)
+    {
         va_list argp;
         va_start(argp, arg);
+
         struct variable *s = (struct variable*)stack_peek(context->operand_stack, 0);
         if (s && s->type == VAR_SRC)
             s = (struct variable*)stack_pop(context->operand_stack);
         else
             s = variable_new_src(context, 0);
+
         for (; arg; arg = va_arg(argp, struct variable*))
             array_add(s->list, arg);
+
         va_end(argp);
         variable_push(context, s);
     }

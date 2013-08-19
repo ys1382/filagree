@@ -221,7 +221,7 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
         case VAR_BOOL:   sprintf(str, "%s%s", str, v->boolean ? "true" : "false");  break;
         case VAR_FLT:    sprintf(str, "%s%f", str, v->floater);                     break;
         case VAR_FNC:    sprintf(str, "%sf(%dB)", str, v->str->length);             break;
-        case VAR_CFNC:   sprintf(str, "%sc-function", str);                         break;
+        case VAR_CFNC:   sprintf(str, "%sc-fnc", str);                              break;
         case VAR_VOID:   sprintf(str, "%s%p", str, v->ptr);                         break;
         case VAR_BYT:
             byte_array_print(str, VV_SIZE, v->str);
@@ -261,7 +261,7 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
     if (v->map) {
 
         struct array *keys = map_keys(v->map);
-        struct array *vals = map_values(v->map);
+        struct array *vals = map_vals(v->map);
 
         for (int i=0; i<keys->length; i++) {
             if (v->list->length + i)
@@ -405,7 +405,7 @@ struct byte_array *variable_serialize(struct context *context,
 
     if (NULL != in->map) {
         struct array *keys = map_keys(in->map);
-        struct array *values = map_values(in->map);
+        struct array *values = map_vals(in->map);
         serial_encode_int(bits, keys->length);
         for (int i=0; i<keys->length; i++) {
             const struct variable *key = (const struct variable*)array_get(keys, i);

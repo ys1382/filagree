@@ -577,7 +577,7 @@ struct array* map_keys(const struct map *m) {
     return a;
 }
 
-struct array* map_values(const struct map *m) {
+struct array* map_vals(const struct map *m) {
     struct array *a = array_new();
     for (int i=0; i<m->size; i++)
         for (const struct hash_node* n = m->nodes[i]; n; n=n->next)
