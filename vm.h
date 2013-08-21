@@ -11,33 +11,39 @@
 #define ERROR_NULL  "null pointer"
 #define ERROR_INDEX "index out of bounds"
 
-struct context_shared {
-    struct array *all_variables;
-    uint32_t tick;
-    pthread_mutex_t gil;
-    pthread_cond_t thread_cond;
-    uint32_t num_threads;
-    struct variable *callback;
+// shared among all contexts
+struct context_shared
+{
+    struct array *all_variables;        // list of all variables
+    uint32_t tick;                      // VM clock tick
+    pthread_mutex_t gil;                // global interpreter lock
+    pthread_cond_t thread_cond;         // condition for thread death
+    uint32_t num_threads;               // number of active threads
+    struct variable *callback;          // for calling back into C
 };
 
-struct context {
-    struct variable *sys;
-    struct variable* error;
-    struct stack *program_stack;
-    struct stack *operand_stack;
-    struct byte_array *program;
-    bool runtime;
-    uint8_t indent;
+// thread context
+struct context
+{
+    struct variable *sys;               // sys calls (print, save, etc.)
+    struct variable* error;             // for reporting exception
+    struct stack *program_stack;        // call stack
+    struct stack *operand_stack;        // operand stack
+    struct byte_array *program;         // bytecode
+    bool runtime;                       // false when just displaying
+    uint8_t indent;                     // for formatted display
+    struct context_shared *singleton;   // shared state
 #ifdef DEBUG
     char pcbuf[10000]; // todo: check boundary
 #endif
-    struct context_shared *singleton;
 };
 
-struct program_state {
-    struct variable *args;
-    struct map *named_variables;
-    uint32_t pc;
+// program state
+struct program_state
+{
+    struct variable *args;              // function arguments
+    struct map *named_variables;        // variables in scope
+    uint32_t pc;                        // program counter
 };
 
 enum Opcode {

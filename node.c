@@ -52,12 +52,11 @@ struct node_thread *thread_new(struct context *context,
 {
     struct node_thread *ta = (struct node_thread *)malloc(sizeof(struct node_thread));
     ta->context = context_new(context, true, true);
-    ta->listener = listener; // != NULL ? variable_copy(ta->context, listener) : NULL;
+    ta->listener = listener;
     ta->fd = fd;
     ta->message = NULL;
     ta->buf = NULL;
     ta->start_routine = start_routine;
-    //DEBUGPRINT("thread_new on %p\n", context);
     return ta;
 }
 

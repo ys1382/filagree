@@ -56,18 +56,15 @@ void array_resize(struct array *a, uint32_t size)
     uint32_t delta = a->current - a->data;
     a->data = (void**)realloc(a->data, size * sizeof(void*));
     null_check(a->data);
-    //memset(&a->data[a->size], 0, size - a->size);
     a->size = size;
     a->current = a->data + delta;
-    //DEBUGPRINT("array_resize %d-%d %p->%p\n", size, a, a->data);
     return;
 }
 
-uint32_t array_add(struct array *a, void *datum) {
+uint32_t array_add(struct array *a, void *datum)
+{
     array_resize(a, a->length + 1);
-    //a->data = (void**)realloc(a->data, (a->length+1) * sizeof(void*));
     a->data[a->length++] = datum;
-    //DEBUGPRINT("array_add %p->%p\n", a, a->data);
     return a->length-1;
 }
 
@@ -79,7 +76,6 @@ void array_insert(struct array *a, uint32_t index, void *datum)
         a->data[i] = a->data[i-1];
     a->data[i] = datum;
     a->length++;
-    //("array_insert %p->%p\n", a, a->data);
 }
 
 void* array_get(const struct array *a, uint32_t index) {
@@ -555,7 +551,8 @@ int map_insert(struct map *m, const void *key, void *data)
 
     if ((node = (struct hash_node*)malloc(sizeof(struct hash_node))) == NULL)
         return -1;
-    if ((node->key = m->copyor(key, m->context)) == NULL) {
+    if ((node->key = m->copyor(key, m->context)) == NULL)
+    {
         free(node);
         return -1;
     }
@@ -566,7 +563,8 @@ int map_insert(struct map *m, const void *key, void *data)
     return 0;
 }
 
-struct array* map_keys(const struct map *m) {
+struct array* map_keys(const struct map *m)
+{
     null_check(m);
     struct array *a = array_new();
     for (int i=0; i<m->size; i++)
@@ -577,7 +575,8 @@ struct array* map_keys(const struct map *m) {
     return a;
 }
 
-struct array* map_vals(const struct map *m) {
+struct array* map_vals(const struct map *m)
+{
     struct array *a = array_new();
     for (int i=0; i<m->size; i++)
         for (const struct hash_node* n = m->nodes[i]; n; n=n->next)
@@ -593,7 +592,8 @@ int map_remove(struct map *m, const void *key)
 
     node = m->nodes[hash];
     while(node) {
-        if (map_key_equals(m, node->key, key)) {
+        if (map_key_equals(m, node->key, key))
+        {
             m->deletor(node->key, m->context);
             if (prevnode) prevnode->next = node->next;
             else m->nodes[hash] = node->next;

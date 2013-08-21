@@ -15,6 +15,7 @@
 
 bool run(struct context *context, struct byte_array *program, struct map *env, bool in_context);
 void display_code(struct context *context, struct byte_array *code);
+const char* indentation(struct context *context);
 
 #ifdef DEBUG
 
@@ -229,7 +230,7 @@ void garbage_collect(struct context *context)
         return;
 
     struct variable *v;
-    DEBUGPRINT("garbage collect\n");
+    DEBUGPRINT("\n>%" PRIu16 " - garbage collect\n", current_thread_id());
 
     unmark_all(context);
 
@@ -302,16 +303,6 @@ const struct number_string opcodes[] = {
     {VM_TRY,    "TRY"},
 };
 
-/*
-void print_operand_stack(struct context *context)
-{
-    null_check(context);
-    struct variable *operand;
-    for (int i=0; (operand = stack_peek(context->operand_stack, i)); i++)
-        DEBUGPRINT("\t%s\n", variable_value_str(context, operand));
-}
-*/
-
 const char* indentation(struct context *context)
 {
     null_check(context);
@@ -327,7 +318,10 @@ static void display_program_counter(struct context *context, const struct byte_a
 {
     null_check(context);
     sprintf(context->pcbuf, "%s>%" PRIu16 " - %2ld:%3d ",
-            indentation(context), current_thread_id(), program->current-program->data, *program->current);
+            indentation(context),
+            current_thread_id(),
+            program->current-program->data,
+            *program->current);
 }
 
 void display_program(struct byte_array *program)

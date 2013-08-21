@@ -38,6 +38,7 @@ struct variable* variable_new(struct context *context, enum VarType type)
     v->mark = 0;
     v->ptr = NULL;
     v->visited = VISITED_NOT;
+
     array_add(context->singleton->all_variables, v);
     //DEBUGPRINT("variable_new %s %p\n", var_type_str(type), v);
     return v;
@@ -77,7 +78,7 @@ struct variable* variable_new_bool(struct context *context, bool b)
 
 void variable_del(struct context *context, struct variable *v)
 {
-    //DEBUGPRINT("variable_del %p->%p\n", v, v->list);
+    DEBUGPRINT("variable_del %p->%p %s\n", v, v->list, var_type_str(v->type));
     switch (v->type) {
         case VAR_CFNC:
         case VAR_NIL:
@@ -202,7 +203,9 @@ static void variable_value_strcat(struct context *context, char *str, struct var
 
 static void variable_value_str2(struct context *context, struct variable* v, char *str, size_t size)
 {
+    assert_message(v && (v->visited < VISITED_LAST), "corrupt variable");
     null_check(v);
+    
     enum VarType vt = (enum VarType)v->type;
     struct array* list = v->list;
 
@@ -258,12 +261,13 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
             break;
     }
 
-    if (v->map) {
-
+    if (v->map)
+    {
         struct array *keys = map_keys(v->map);
         struct array *vals = map_vals(v->map);
 
-        for (int i=0; i<keys->length; i++) {
+        for (int i=0; i<keys->length; i++)
+        {
             if (v->list->length + i)
                 strcat(str, ",");
 
@@ -287,9 +291,9 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
 
 static void variable_mark2(struct variable *v, uint32_t *marker)
 {
-    if (v->visited == VISITED_MORE)
+    if (VISITED_MORE == v->visited)
         return;
-    if (v->visited == VISITED_ONCE) {
+    if (VISITED_ONCE == v->visited) {
         v->visited = VISITED_MORE;
         return;
     }
@@ -298,14 +302,21 @@ static void variable_mark2(struct variable *v, uint32_t *marker)
     v->mark = ++(*marker);
     v->visited = VISITED_ONCE;
 
-    if (v->type == VAR_LST) {
+    if (VAR_LST == v->type)
+    {
         for (int i=0; i<v->list->length; i++)
             variable_mark2((struct variable*)array_get(v->list, i), marker);
+    }
+    else if (VAR_KVP == v->type)
+    {
+        variable_mark2((struct variable*)v->kvp.key, marker);
+        variable_mark2((struct variable*)v->kvp.val, marker);
     }
 
     //DEBUGPRINT("variable_mark2 %p->%p\n", v, v->map);
 
-    mark_map(v->map, true);
+    if (VAR_LST == v->type)
+        mark_map(v->map, true);
 }
 
 void variable_mark(struct variable *v)
@@ -317,7 +328,7 @@ void variable_mark(struct variable *v)
 void variable_unmark(struct variable *v)
 {
     assert_message(v->type < VAR_LAST, "corrupt variable");
-    if (v->visited == VISITED_NOT)
+    if (VISITED_NOT == v->visited)
         return;
     v->mark = 0;
     v->visited = VISITED_NOT;

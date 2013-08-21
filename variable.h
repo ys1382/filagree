@@ -24,7 +24,8 @@ enum Visited {
     VISITED_NOT,
     VISITED_ONCE,
     VISITED_MORE,
-    VISITED_X
+    VISITED_X,
+    VISITED_LAST
 };
 
 typedef struct context *context_p; // forward declaration
