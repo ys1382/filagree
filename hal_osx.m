@@ -80,7 +80,7 @@ void hal_loop(struct context *context) {
     glColor3f(1.0f, 0.85f, 0.35f);
     glBegin(GL_TRIANGLES);
     {
-        if (self->shape == NULL) {
+        if (NULL == self->shape) {
             glVertex3f(  0.0,  0.6, 0.0);
             glVertex3f( -0.2, -0.3, 0.0);
             glVertex3f(  0.2, -0.3 ,0.0);
@@ -665,7 +665,7 @@ void *hal_window(struct context *context,
         return window;
     }
 
-    if ((w == NULL) || (h == NULL)) {
+    if ((NULL == w) || (NULL == h)) {
         NSLog(@"warning: zero-size window");
         *w = 240;
         *h = 320;
@@ -738,7 +738,7 @@ struct variable *hal_load(struct context *context, const struct byte_array *key)
     const char *key2 = byte_array_to_string(key);
     NSString *key3 = [NSString stringWithUTF8String:key2];
     NSData *value2 = [defaults dataForKey:key3];
-    if (value2 == NULL)
+    if (NULL == value2)
         return variable_new_nil(context);
     struct byte_array bits = {(uint8_t*)[value2 bytes], NULL, [value2 length]};
     bits.current = bits.data;
@@ -789,7 +789,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
         struct variable *method2 = variable_new_str(thread->context, method);
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
 
-        if ((method3 != NULL) && (method3->type != VAR_NIL))
+        if ((NULL != method3) && (method3->type != VAR_NIL))
             vm_call(thread->context, method3, thread->listener, path3);
     }
 

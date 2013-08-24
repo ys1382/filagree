@@ -310,8 +310,9 @@ struct variable *invoke(struct context *context,
     jmethodID invoke = (*env)->GetMethodID(env, m_cls, "invoke", param_list);
     assert_message(invoke, "cannot GetMethodID Method.invoke");
 
-    DEBUGPRINT("CallObjectMethodA %p %p\n", this, args->l);
-
+    DEBUGPRINT("CallObjectMethodA %p %p\n", this, args[0].l);
+    
+    invoke = (*env)->FromReflectedMethod (env, method);
     // invoke invoke
     jobject result = (*env)->CallObjectMethodA(env, this, invoke, args);
     assert_message(result, "cannot call Method.invoke. Oh, the irony!");
@@ -355,13 +356,20 @@ struct variable *cgree(struct context *context)
 
     // build argument list
     array_remove(arguments->list, 0, 2); // don't pass "this" or closure in args
-    jobject jargs = vf2j(env, arguments);
-    jvalue jargs2;
-    jargs2.l = jargs;
-    DEBUGPRINT("args = %p\n", jargs2.l);
+    
+    jobjectArray jargs = vf2j(env, arguments);
+    int length = (*env)->GetArrayLength (env, jargs);
+    jvalue *jargs2 = (jvalue *)malloc (sizeof (jvalue) * length);
+    for (int i = 0; i < length; i ++)
+    {
+        jargs2[i].l = (*env)->GetObjectArrayElement (env, jargs, i);
+    }
+    
+    //jargs2.l = jargs;
+    DEBUGPRINT("args = %p\n", jargs2[0].l);
 
     // call method
-    return invoke(context, env, this, method, &jargs2);
+    return invoke(context, env, this, method, jargs2);
 }
 
 struct byte_array *byte_array_from_jstring(JNIEnv *env, jstring string)

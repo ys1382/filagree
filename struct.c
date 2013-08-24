@@ -154,7 +154,7 @@ struct byte_array *byte_array_new() {
 
 void byte_array_del(struct byte_array* ba) {
     //DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
-    if (ba->data != NULL)
+    if (NULL != ba->data)
         free(ba->data);
     free(ba);
     //DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
@@ -428,7 +428,7 @@ void* stack_pop(struct stack *stack)
     stack->head = stack->head->next;
     if (stack->head == NULL)
         stack->tail = NULL;
-    if (oldnode != NULL)
+    if (NULL != oldnode)
         free(oldnode);
     null_check(data);
     //DEBUGPRINT("stack_pop %x from %x:%d\n", data, stack, stack_depth(stack));

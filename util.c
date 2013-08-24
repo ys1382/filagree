@@ -54,7 +54,7 @@ void *exit_message(const char *format, ...)
 }
 
 void null_check(const void *pointer) {
-    if (pointer == NULL)
+    if (NULL == pointer)
         exit_message("null pointer");
 }
 

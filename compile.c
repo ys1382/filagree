@@ -220,7 +220,7 @@ void token_del(struct token *t)
 {
     if (t == NULL)
         return;
-    if (t->string != NULL)
+    if (NULL != t->string)
         byte_array_del(t->string);
     free(t);
 }
@@ -960,7 +960,7 @@ struct symbol *destination()
     struct symbol *a, *b;
     if ((a = variable()) == NULL)
         return NULL;  
-    while ((b = member()) != NULL) {
+    while (NULL != (b = member())) {
         b->value = a;
         a = b;
     }

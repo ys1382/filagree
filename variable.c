@@ -101,7 +101,7 @@ void variable_del(struct context *context, struct variable *v)
             vm_exit_message(context, "bad var type");
             break;
     }
-    if (v->map != NULL)
+    if (NULL != v->map)
         map_del(v->map);
 
     free(v);
@@ -386,7 +386,7 @@ struct byte_array *variable_serialize(struct context *context,
 {
 	null_check(context);
     //DEBUGPRINT("\tserialize:%s\n", variable_value_str(context, (struct variable*)in));
-    if (bits == NULL)
+    if (NULL == bits)
         bits = byte_array_new();
         serial_encode_int(bits, in->type);
     switch (in->type) {
@@ -493,7 +493,7 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
         }
     }
 
-    if (str != NULL)
+    if (NULL != str)
         byte_array_del(str);
     return result;
 }
@@ -563,7 +563,7 @@ struct variable *variable_concatenate(struct context *context, int n, const stru
     va_list argp;
     for(va_start(argp, v); --n;) {
         struct variable* parameter = va_arg(argp, struct variable* );
-        if (parameter == NULL)
+        if (NULL == parameter)
             continue;
         else switch (result->type) {
             case VAR_STR: byte_array_append(result->str, parameter->str); break;
@@ -580,7 +580,7 @@ int variable_map_insert(struct context *context, struct variable* v, struct vari
 {
     //DEBUGPRINT("variable_map_insert into %p\n", v);
     assert_message(v->type != VAR_NIL, "can't insert into nil");
-    if (v->map == NULL)
+    if (NULL == v->map)
         v->map = map_new(context);
 #ifdef DEBUG
     //char buf[VV_SIZE];
@@ -604,13 +604,13 @@ struct variable *variable_map_get(struct context *context, struct variable *v, s
 
 static bool variable_compare_maps(struct context *context, const struct map *umap, const struct map *vmap)
 {
-    if ((umap == NULL) && (vmap == NULL))
+    if ((NULL == umap) && (NULL == vmap))
         return true;
-    if (umap == NULL)
+    if (NULL == umap)
         return variable_compare_maps(context, vmap, umap);
     struct array *keys = map_keys(umap);
     bool result = true;
-    if (vmap == NULL)
+    if (NULL == vmap)
         result = !keys->length;
     else for (int i=0; i<keys->length; i++) {
         struct variable *key = (struct variable*)array_get(keys, i);
@@ -627,7 +627,7 @@ static bool variable_compare_maps(struct context *context, const struct map *uma
 
 bool variable_compare(struct context *context, const struct variable *u, const struct variable *v)
 {
-    if ((u == NULL) != (v == NULL))
+    if ((NULL == u) != (NULL == v))
         return false;
     enum VarType ut = (enum VarType)u->type;
     enum VarType vt = (enum VarType)v->type;
@@ -719,5 +719,5 @@ struct variable *variable_find(struct context *context,
         }
     }
 
-    return (result == NULL) ? variable_new_nil(context) : result;
+    return (NULL == result) ? variable_new_nil(context) : result;
 }

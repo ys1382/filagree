@@ -28,7 +28,7 @@ uint8_t serial_encode_int_size(int32_t value)
 struct byte_array *serial_encode_int(struct byte_array *buf, int32_t value)
 {
     uint8_t growth = serial_encode_int_size(value);
-    if (buf == NULL)
+    if (NULL == buf)
 		buf = byte_array_new_size(growth);
     bool neg = value < 0;
     value = abs(value);
@@ -130,14 +130,14 @@ struct byte_array *encode_float(struct byte_array *buf, float f)
 }
 
 struct byte_array* serial_encode_float(struct byte_array* buf, float value) {
-    if (buf == NULL)
+    if (NULL == buf)
         buf = byte_array_new();
     encode_float(buf, value);
     return buf;
 }
 
 uint8_t serial_encode_string_size(int32_t key, const struct byte_array* string) {
-    if (string == NULL)
+    if (NULL == string)
         return 0;
     return (key ? serial_encode_int_size(key) : 0) +
            serial_encode_int_size(string->length) +
@@ -146,9 +146,9 @@ uint8_t serial_encode_string_size(int32_t key, const struct byte_array* string) 
 
 struct byte_array* serial_encode_string(struct byte_array* buf, const struct byte_array* bytes)
 {
-    if (bytes == NULL)
+    if (NULL == bytes)
         return buf;
-    if (buf == NULL)
+    if (NULL == buf)
         buf = byte_array_new();
 
     serial_encode_int(buf, bytes->length);

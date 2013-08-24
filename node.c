@@ -63,7 +63,7 @@ struct node_thread *thread_new(struct context *context,
 void *node_callback(void *arg)
 {
     struct node_thread *ta = (struct node_thread *)arg;
-    if (ta->listener == NULL)
+    if (NULL == ta->listener)
         return NULL;
     gil_lock(ta->context, "node_callback");
     
@@ -72,7 +72,7 @@ void *node_callback(void *arg)
     struct variable *key3 = variable_new_str(ta->context, key2);
     struct variable *callback = variable_map_get(ta->context, ta->listener, key3);
     struct variable *id = variable_new_int(ta->context, ta->fd);
-    if (callback != NULL)
+    if (NULL != callback)
         vm_call(ta->context, callback, ta->listener, id, ta->message, NULL);
 
     gil_unlock(ta->context, "node_callback");
@@ -116,7 +116,7 @@ void *thread_wrapper(void *param)
 void add_thread(struct node_thread *ta, int sockfd)
 {
     pthread_t *tid = malloc(sizeof(pthread_t));
-    if (tid == NULL) {
+    if (NULL == tid) {
         perror("malloc");
         return;
     }

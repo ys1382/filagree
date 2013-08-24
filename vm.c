@@ -585,11 +585,11 @@ struct variable *lookup(struct context *context, struct variable *indexable, str
                 return NULL;
         }
     }
-    if ((item == NULL) && (indexable->map != NULL))
+    if ((NULL == item) && (NULL != indexable->map))
         item = map_get(indexable->map, index);
-    if ((item == NULL) && (index->type == VAR_STR))
+    if ((NULL == item) && (index->type == VAR_STR))
         item = builtin_method(context, indexable, index);
-    if (item == NULL)
+    if (NULL == item )
         item = variable_new_nil(context);
     return item;
 }
@@ -800,7 +800,7 @@ static struct variable *get_value(struct context *context, enum Opcode op)
         bool listvar = values->length > values->current - values->data;
         if (listvar)
             value = (struct variable*)*values->current++;
-        else if (kvps != NULL) {
+        else if (NULL != kvps) {
             value = variable_new_list(context, NULL);
             value->map = map_copy(context, kvps);
         } else
@@ -1020,7 +1020,7 @@ static void variable_purge(struct context *context, struct variable *v, struct v
     struct variable *position = variable_find(context, v, p, NULL);
     if (position->type != VAR_NIL)
         array_remove(v->list, position->integer, 1);
-    else if (v->map != NULL)
+    else if (NULL != v->map)
         map_remove(v->map, p);
 }
 
@@ -1452,7 +1452,7 @@ done:
         stack_pop(context->program_stack);
     if (local_state)
         program_state_del(context, state);
-    if (program != NULL)
+    if (NULL != program)
         byte_array_del(program);
     garbage_collect(context);
     return inst == VM_RET;

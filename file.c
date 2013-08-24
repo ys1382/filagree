@@ -76,7 +76,7 @@ int write_file(const struct byte_array* filename, struct byte_array* bytes)
 {
     char *fname = byte_array_to_string(filename);
     FILE* file = fopen(fname, "w");
-    if (file == NULL) {
+    if (NULL == file) {
         DEBUGPRINT("could not write file %s\n", fname);
         free(fname);
         return -1;
@@ -109,11 +109,11 @@ int file_list(const char *path, int (*fn)(const char*, bool, long, void*), void 
 	paths[0] = path;
 	paths[1] = NULL;
 	ftsp = fts_open((char * const *)paths, FTS_COMFOLLOW | FTS_NOCHDIR, NULL);
-	if (ftsp == NULL) {
+	if (NULL == ftsp) {
         printf("cannot fts_open %s: %d\n", path, errno);
 		return (-1);
     }
-	while ((cur = fts_read(ftsp)) != NULL) {
+	while (NULL != (cur = fts_read(ftsp))) {
 		switch (cur->fts_info) {
             case FTS_DP:
                 continue;       // we only visit in preorder

@@ -54,7 +54,7 @@ struct variable *sys_load(struct context *context)
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = (struct variable*)array_get(value->list, 1);
     struct byte_array *file_bytes = read_file(path->str);
-    if (file_bytes == NULL)
+    if (NULL == file_bytes)
         return NULL;
     struct variable *v = variable_deserialize(context, file_bytes);
     byte_array_del(file_bytes);
@@ -79,7 +79,7 @@ struct variable *sys_read(struct context *context)
     struct variable *path = (struct variable*)array_get(value->list, 1);
     struct byte_array *bytes = read_file(path->str);
     struct variable *result = NULL;
-    if (bytes != NULL)
+    if (NULL != bytes)
         result = variable_new_str(context, bytes);
     else {
         bytes = byte_array_from_string("could not load file");
@@ -244,21 +244,6 @@ struct variable *sys_input(struct context *context)
     void *input = hal_input(uictx, x, y, &w, &h, hint, false);
     return ui_result(context, input, w, h);
 }
-
-/*
-const char *variable_keyed_string(struct context *context, struct variable *v, const char *key)
-{
-    if ((v == NULL) || (v->map == NULL))
-        return NULL;
-    struct byte_array *b = byte_array_from_string(key);
-    struct variable *b2 = variable_new_str(context, b);
-    struct variable *u = variable_map_get(context, v, b2);
-    byte_array_del(b);
-    if ((u == NULL) || (u->type != VAR_STR))
-        return NULL;
-    return byte_array_to_string(u->str);
-}
-*/
 
 struct variable *sys_button(struct context *context)
 {
@@ -841,7 +826,7 @@ struct variable *builtin_method(struct context *context,
 
     else if (!strcmp(idxstr, FNC_VALS)) {
         assert_message(it == VAR_LST, "values are only for list");
-        if (indexable->map == NULL)
+        if (NULL == indexable->map)
             result = variable_new_list(context, NULL);
         else {
             struct array *values = map_vals(indexable->map);
