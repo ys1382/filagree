@@ -211,9 +211,13 @@ tester.test('for each',
         for n in x where n > 3
             sum = sum - n
         end
+        y = ['a':7,'b':8]
+        for k in y.keys
+            sum = sum + y[k]
+        end
         return sum
     end,
-    2)
+    17)
 
 
 tester.test('comprehension',

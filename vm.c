@@ -1255,12 +1255,16 @@ static bool iterate(struct context *context,
     struct variable *result = comprehending ? variable_new_list(context, NULL) : NULL;
 
     struct variable *what = variable_pop(context);
-    uint32_t len = variable_length(context, what);
+    assert_message(what->type == VAR_LST, "iterating over non-list");
+    struct array *list = what->list;
+    if (!list->length && what->map)
+        list = map_keys(what->map);
+    uint32_t len = list->length;
+
     for (int i=0; i<len; i++) {
 
         INDENT;
-        assert_message(what->type == VAR_LST, "iterating over non-list");
-        struct variable *that = (struct variable*)array_get(what->list, i);
+        struct variable *that = (struct variable*)array_get(list, i);
         set_named_variable(context, state, who, that);
 
         byte_array_reset(where);

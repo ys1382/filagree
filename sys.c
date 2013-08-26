@@ -116,6 +116,16 @@ struct variable *sys_rm(struct context *context)
     return NULL;
 }
 
+struct variable *sys_mkdir(struct context *context)
+{
+    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *path = (struct variable*)array_get(value->list, 1);
+    char *str = byte_array_to_string(path->str);
+    mkdir(str, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    free(str);
+    return NULL;
+}
+
 struct variable *sys_args(struct context *context)
 {
     stack_pop(context->operand_stack); // self
@@ -400,6 +410,7 @@ struct string_func builtin_funcs[] = {
     {"save",        &sys_save},
     {"load",        &sys_load},
     {"remove",      &sys_rm},
+    {"mkdir",       &sys_mkdir},
     {"bytes",       &sys_bytes},
     {"sin",         &sys_sin},
     {"run",         &sys_run},

@@ -1,4 +1,4 @@
-port = 9994
+port = 9995
 
 server_dir = 'synctest/server'
 client_dir = 'synctest/client'
@@ -21,7 +21,7 @@ Sync = [
     'local_snapshot' : function(self)
 
         list = sys.file_list(self.watched) - self.watched
-        normalized = [(f-self.watched):list[f] for f in list.keys where not self.ignore(f)]
+        normalized = [(f-self.watched):list[f] for f in list where not self.ignore(f)]
         return normalized
 
     end,
@@ -61,7 +61,7 @@ Sync = [
 
     'handle_content_request' : function(self, id, msg5)
 
-        for path in msg5.paths.keys
+        for path in msg5.paths
 
             fullpath = self.watched + path
             content = sys.read(fullpath)
@@ -76,7 +76,7 @@ Sync = [
         latest = self.local_snapshot()
         updated = latest - self.files
         deleted = self.files - latest
-        for f in self.files.keys
+        for f in self.files
             g = self.files[f]
             mod = g.modified
             h = latest[f]
@@ -94,14 +94,25 @@ Sync = [
 
     'handle_change' : function(self, changez)
 
-        self.snapshot = self.snapshot + changez.updated - changez.deleted
-        if changez.updated.keys.length then
-            msg3 = ['event' : 'content-request', 'paths' : changez.updated]
-            sys.send(self.peer, msg3)
+        cu = changez.updated
+        cd = changez.deleted
+
+        # create new directories
+        for path in cu where cu[path].dir
+            sys.mkdir(self.watched + path)
         end
 
-        for f in changez.deleted.keys
-            sys.remove(self.watched + f)
+        # delete removed directories and files
+        for path in cd
+            sys.remove(self.watched + path)
+        end
+
+        # request update file bodies
+        self.snapshot = self.snapshot + cu - cd
+        paths = [path for path in cu where not cu[path].dir]
+        if paths.length then
+            msg3 = ['event' : 'content-request', 'paths' : paths]
+            sys.send(self.peer, msg3)
         end
 
     end    
