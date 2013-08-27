@@ -39,13 +39,15 @@
 		880BFE9915B7192400A90585 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		880BFE9B15B7192A00A90585 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		880BFE9D15B7194400A90585 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
-		880C5BF616ED1BFC00B66505 /* node.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = node.fg; sourceTree = "<group>"; };
 		881AC0FD14B09B2B00EAAE3F /* sys.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sys.c; sourceTree = "<group>"; };
 		881AC0FE14B09B2B00EAAE3F /* sys.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sys.h; sourceTree = "<group>"; };
-		881B388416BCC26F00084F96 /* im.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = im.fg; sourceTree = "<group>"; };
-		882A967515BE7CEB00A413CC /* ui.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ui.fg; sourceTree = "<group>"; };
-		882AEE9C1751FEAC0074FC41 /* sync.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync.fg; sourceTree = "<group>"; };
 		882E4C3516F045AE00AE6B61 /* node.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = node.c; sourceTree = "<group>"; };
+		88700ABE17CC4C5500AC6CAF /* im.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = im.fg; path = ../test/im.fg; sourceTree = "<group>"; };
+		88700ABF17CC4C5500AC6CAF /* node.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = node.fg; path = ../test/node.fg; sourceTree = "<group>"; };
+		88700AC017CC4C5500AC6CAF /* sync.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = sync.fg; path = ../test/sync.fg; sourceTree = "<group>"; };
+		88700AC117CC4C5500AC6CAF /* test.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = test.fg; path = ../test/test.fg; sourceTree = "<group>"; };
+		88700AC217CC4C5500AC6CAF /* try.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = try.fg; path = ../test/try.fg; sourceTree = "<group>"; };
+		88700AC317CC4C5500AC6CAF /* ui.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = ui.fg; path = ../test/ui.fg; sourceTree = "<group>"; };
 		88A65D95147757400055DACF /* compile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compile.h; sourceTree = "<group>"; };
 		88A65D96147757400055DACF /* serial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = serial.h; sourceTree = "<group>"; };
 		88A65D97147757400055DACF /* struct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = struct.h; sourceTree = "<group>"; };
@@ -56,15 +58,12 @@
 		88A65D9C147757400055DACF /* struct.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = struct.c; sourceTree = "<group>"; };
 		88A65D9E147757400055DACF /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = util.c; sourceTree = "<group>"; };
 		88A65D9F147757400055DACF /* vm.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = vm.c; sourceTree = "<group>"; };
-		88A65DA81477574E0055DACF /* test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test.fg; sourceTree = "<group>"; };
-		88A65DA91477574E0055DACF /* unit_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = unit_test.fg; sourceTree = "<group>"; };
 		88C760B015428A5100A4F8E7 /* interpret.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = interpret.h; sourceTree = "<group>"; };
 		88C760B215428A5F00A4F8E7 /* interpret.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = interpret.c; sourceTree = "<group>"; };
 		88CB4F9117A9D325006D3717 /* javagree.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = javagree.c; sourceTree = "<group>"; };
 		88CB4F9217A9D325006D3717 /* javagree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = javagree.h; sourceTree = "<group>"; };
 		88D5124016F15D5A00A0D28D /* node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = node.h; sourceTree = "<group>"; };
 		88DFCF3C17BC71FA00EF63EC /* javagree.java */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.java; path = javagree.java; sourceTree = "<group>"; };
-		88E1FA6515CC5263001E6488 /* try.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = try.fg; sourceTree = "<group>"; };
 		88E65DE41510F46F00E6207D /* variable.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = variable.c; sourceTree = "<group>"; };
 		88E65DE51510F46F00E6207D /* variable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = variable.h; sourceTree = "<group>"; };
 		88E7CCAB173D9A0500A70119 /* file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file.c; sourceTree = "<group>"; };
@@ -144,13 +143,12 @@
 		C6A0FF2B0290797F04C91782 /* test */ = {
 			isa = PBXGroup;
 			children = (
-				881B388416BCC26F00084F96 /* im.fg */,
-				880C5BF616ED1BFC00B66505 /* node.fg */,
-				882AEE9C1751FEAC0074FC41 /* sync.fg */,
-				88A65DA81477574E0055DACF /* test.fg */,
-				88E1FA6515CC5263001E6488 /* try.fg */,
-				882A967515BE7CEB00A413CC /* ui.fg */,
-				88A65DA91477574E0055DACF /* unit_test.fg */,
+				88700ABE17CC4C5500AC6CAF /* im.fg */,
+				88700ABF17CC4C5500AC6CAF /* node.fg */,
+				88700AC017CC4C5500AC6CAF /* sync.fg */,
+				88700AC117CC4C5500AC6CAF /* test.fg */,
+				88700AC217CC4C5500AC6CAF /* try.fg */,
+				88700AC317CC4C5500AC6CAF /* ui.fg */,
 			);
 			name = test;
 			sourceTree = "<group>";

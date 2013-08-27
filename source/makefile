@@ -25,4 +25,4 @@ javagree: $(OBJECTS) Javagree.class
 	libtool -dynamic -lSystem $(OBJECTS) libjavagree.o -o libjavagree.dylib -macosx_version_min 10.8
 
 clean:
-	rm -f $(OBJECTS) $(CLASSES) filagree javagree
+	rm -f *.o *.class *.dylib filagree javagree
