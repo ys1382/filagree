@@ -1,7 +1,8 @@
-port = 9995
+port = 9992
 
-server_dir = 'synctest/server'
-client_dir = 'synctest/client'
+test_dir   = 'synctest/'
+server_dir = test_dir+'server'
+client_dir = test_dir+'client'
 
 ####### sync
 
@@ -141,6 +142,14 @@ sys.print('client==='+client)
 
 ####### main
 
+empty = function(dir)
+    sys.remove(dir)
+    sys.mkdir(dir)
+end
+
+sys.mkdir(test_dir)
+empty(server_dir)                           # make empty server directory
+empty(client_dir)                           # make empty client directory
 sys.listen(port, server)                    # server listens for incoming socket connections
 sys.connect('127.0.0.1', port, client.sync) # client connects to server
 sys.file_listen(server_dir, server)         # server listens for file changes

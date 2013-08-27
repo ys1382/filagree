@@ -110,9 +110,11 @@ struct variable *sys_rm(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = (struct variable*)array_get(value->list, 1);
-    char *str = byte_array_to_string(path->str);
-    remove(str);
-    free(str);
+    char *path2 = byte_array_to_string(path->str);
+    char rmcmd[100];
+    sprintf(rmcmd, "rm -rf %s", path2);
+    system(rmcmd);
+    free(path2);
     return NULL;
 }
 
@@ -120,9 +122,11 @@ struct variable *sys_mkdir(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = (struct variable*)array_get(value->list, 1);
-    char *str = byte_array_to_string(path->str);
-    mkdir(str, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    free(str);
+    char *path2 = byte_array_to_string(path->str);
+    char mkcmd[100];
+    sprintf(mkcmd, "mkdir -p %s", path2);
+    system(mkcmd);
+    free(path2);
     return NULL;
 }
 

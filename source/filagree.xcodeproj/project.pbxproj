@@ -90,11 +90,9 @@
 		08FB7794FE84155DC02AAC07 /* filagree */ = {
 			isa = PBXGroup;
 			children = (
-				880BFE9D15B7194400A90585 /* Cocoa.framework */,
-				880BFE9B15B7192A00A90585 /* OpenAL.framework */,
-				880BFE9915B7192400A90585 /* OpenGL.framework */,
 				08FB7795FE84155DC02AAC07 /* source */,
 				C6A0FF2B0290797F04C91782 /* test */,
+				88BFC76B17CC507B008A24EF /* Frameworks */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 			);
 			name = filagree;
@@ -138,6 +136,16 @@
 				8DD76FB20486AB0100D96B5E /* filagree */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		88BFC76B17CC507B008A24EF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				880BFE9D15B7194400A90585 /* Cocoa.framework */,
+				880BFE9B15B7192A00A90585 /* OpenAL.framework */,
+				880BFE9915B7192400A90585 /* OpenGL.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		C6A0FF2B0290797F04C91782 /* test */ = {
