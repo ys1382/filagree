@@ -66,3 +66,18 @@ const char *num_to_string(const struct number_string *ns, int num_items, int num
     exit_message("num not found");
     return NULL;
 }
+
+static struct number_string hal_events[] = {
+    {FILED,         "filed"},
+    {CONNECTED,     "connected"},
+    {DISCONNECTED,  "disconnected"},
+    {MESSAGED,      "messaged"},
+    {SENT,          "sent"},
+    {ERROR,         "error"},
+};
+
+struct byte_array *event_string(enum HAL_Event event)
+{
+    const char *str = NUM_TO_STRING(hal_events, event);
+    return byte_array_from_string(str);
+}

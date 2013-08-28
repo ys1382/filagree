@@ -750,8 +750,6 @@ void hal_print(const char *str) {
     NSLog(@"%s", str);
 }
 
-#define FILE_EVENT "filed"
-
 struct file_thread {
     struct context *context;
     struct variable *listener;
@@ -764,6 +762,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
                             const FSEventStreamEventFlags eventFlags[],
                             const FSEventStreamEventId eventIds[])
 {
+    DEBUGPRINT("file_listener_callback\n");
     int i;
     char **paths = eventPaths;
     struct file_thread *thread = (struct file_thread*)clientCallBackInfo;
@@ -785,7 +784,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
         struct byte_array *path2 = byte_array_from_string(path);
         struct variable *path3 = variable_new_str(thread->context, path2);
 
-        struct byte_array *method = byte_array_from_string(FILE_EVENT);
+        struct byte_array *method = event_string(FILED);
         struct variable *method2 = variable_new_str(thread->context, method);
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
 

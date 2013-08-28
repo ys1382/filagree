@@ -15,31 +15,16 @@
 #include "vm.h"
 #include "serial.h"
 #include "sys.h"
+#include "hal.h"
 
 #define MAXLINE 1024
-
-enum Event {
-    CONNECTED,
-    DISCONNECTED,
-    MESSAGED,
-    SENT,
-    ERROR,
-};
-
-struct number_string node_events[] = {
-    {CONNECTED,     "connected"},
-    {DISCONNECTED,  "disconnected"},
-    {MESSAGED,      "messaged"},
-    {SENT,          "sent"},
-    {ERROR,         "error"},
-};
 
 struct node_thread {
     struct context *context;
     struct variable *listener;
 	struct sockaddr_in servaddr;
     struct byte_array *buf;
-    enum Event event;
+    enum HAL_Event event;
     struct variable *message;
     void *(*start_routine)(void *);
     int fd;
@@ -67,10 +52,9 @@ void *node_callback(void *arg)
         return NULL;
     gil_lock(ta->context, "node_callback");
     
-    const char *key = NUM_TO_STRING(node_events, ta->event);
-    struct byte_array *key2 = byte_array_from_string(key);
-    struct variable *key3 = variable_new_str(ta->context, key2);
-    struct variable *callback = variable_map_get(ta->context, ta->listener, key3);
+    struct byte_array *key = event_string(ta->event);
+    struct variable *key2 = variable_new_str(ta->context, key);
+    struct variable *callback = variable_map_get(ta->context, ta->listener, key2);
     struct variable *id = variable_new_int(ta->context, ta->fd);
     if (NULL != callback)
         vm_call(ta->context, callback, ta->listener, id, ta->message, NULL);

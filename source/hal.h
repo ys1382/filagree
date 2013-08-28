@@ -8,6 +8,17 @@
 #include "struct.h"
 #include "vm.h"
 
+enum HAL_Event {
+    CONNECTED,
+    DISCONNECTED,
+    MESSAGED,
+    SENT,
+    FILED,
+    ERROR,
+};
+
+struct byte_array *event_string(enum HAL_Event event);
+
 void hal_print(const char *str);
 void hal_loop();
 void hal_save(struct context *context, const struct byte_array *key, const struct variable *value);
