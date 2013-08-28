@@ -21,10 +21,10 @@ osx: $(OBJECTS) hal_osx.o
 Javagree.class: Javagree.java
 	javac Javagree.java
 
-javagree: $(OBJECTS) Javagree.class
+javagree: $(OBJECTS) Javagree.class hal_stub.o
 	javah -jni Javagree
 	cc -c -fPIC -DDEBUG -I/System/Library/Frameworks/JavaVM.framework/Headers javagree.c -o libjavagree.o
-	libtool -dynamic -lSystem $(OBJECTS) libjavagree.o -o libjavagree.dylib -macosx_version_min 10.8
+	libtool -dynamic -lSystem $(OBJECTS) hal_stub.o libjavagree.o -o libjavagree.dylib -macosx_version_min 10.8
 
 clean:
 	rm -f *.o *.class *.dylib filagree javagree
