@@ -8,8 +8,6 @@ SOURCES=vm.c struct.c serial.c compile.c util.c sys.c variable.c interpret.c nod
 OBJECTS=$(SOURCES:.c=.o)
 FRAMEWORKS=-framework Cocoa -framework OpenGL -framework OpenAL
 
-all: filagree javagree
-
 osx: $(OBJECTS) hal_osx.o
 	$(CC) $(OBJECTS) hal_osx.o $(FRAMEWORKS) -o filagree $(LDFLAGS)
 	strip filagree

@@ -43,7 +43,7 @@ void hal_loop(struct context *context) {
 	};
 	NSOpenGLPixelFormat *nsglFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attr];
 	
-    if (self = [super initWithFrame:frameRect pixelFormat:nsglFormat]) {}
+    self = [super initWithFrame:frameRect pixelFormat:nsglFormat];
 	return self;
 }
 
