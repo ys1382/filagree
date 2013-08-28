@@ -308,16 +308,16 @@ struct variable *invoke(struct context *context,
     // get MethodID invoke
     const char *param_list = "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;";
     jmethodID invoke = (*env)->GetMethodID(env, m_cls, "invoke", param_list);
+    invoke = (*env)->FromReflectedMethod (env, method);
     assert_message(invoke, "cannot GetMethodID Method.invoke");
 
-    DEBUGPRINT("CallObjectMethodA %p %p\n", this, args[0].l);
+    //DEBUGPRINT("CallObjectMethodA %p %p\n", this, args[0].l);
     
-    invoke = (*env)->FromReflectedMethod (env, method);
     // invoke invoke
     jobject result = (*env)->CallObjectMethodA(env, this, invoke, args);
     assert_message(result, "cannot call Method.invoke. Oh, the irony!");
 
-    DEBUGPRINT("invoked\n");
+    //DEBUGPRINT("invoked\n");
 
     // translate result from Java to filagree
     return variable_new_j2f(context, env, result);
@@ -365,9 +365,6 @@ struct variable *cgree(struct context *context)
         jargs2[i].l = (*env)->GetObjectArrayElement (env, jargs, i);
     }
     
-    //jargs2.l = jargs;
-    DEBUGPRINT("args = %p\n", jargs2[0].l);
-
     // call method
     return invoke(context, env, this, method, jargs2);
 }
