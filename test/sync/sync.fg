@@ -1,10 +1,8 @@
-port = 9992
+####### sync.fg
 
+port = 9995
 test_dir   = 'synctest/'
-server_dir = test_dir+'server'
-client_dir = test_dir+'client'
 
-####### sync
 
 Sync = [
 
@@ -119,37 +117,9 @@ Sync = [
     end    
 ]
 
-server = Sync.init(nil, server_dir)
-
-client = ['select' : function(ctx)
-              sys.print('select ' + sys.args()[1])
-          end]
-
-import 'ui'
-
-client.ui = sys.ui( client,
-
-                    ['vertical',
-
-                        ['table', 'name':'files', 'list':[], 'logic':client.select],
-
-                        'w':240, 'h':320
-                    ] )
-
-client.sync = Sync.init(client, client_dir)
-
-sys.print('client==='+client)
-
-####### main
+sys.mkdir(test_dir)
 
 empty = function(dir)
     sys.remove(dir)
     sys.mkdir(dir)
 end
-
-sys.mkdir(test_dir)
-empty(server_dir)                           # make empty server directory
-empty(client_dir)                           # make empty client directory
-sys.listen(port, server)                    # server listens for incoming socket connections
-sys.connect('127.0.0.1', port, client.sync) # client connects to server
-sys.file_listen(server_dir, server)         # server listens for file changes

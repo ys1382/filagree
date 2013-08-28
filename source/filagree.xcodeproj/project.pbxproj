@@ -42,9 +42,11 @@
 		881AC0FD14B09B2B00EAAE3F /* sys.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sys.c; sourceTree = "<group>"; };
 		881AC0FE14B09B2B00EAAE3F /* sys.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sys.h; sourceTree = "<group>"; };
 		882E4C3516F045AE00AE6B61 /* node.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = node.c; sourceTree = "<group>"; };
+		884D969417CD3677003A257E /* sync.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = sync.fg; sourceTree = "<group>"; };
+		884D969517CD3677003A257E /* sync_client.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = sync_client.fg; sourceTree = "<group>"; };
+		884D969617CD3677003A257E /* sync_server.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = sync_server.fg; sourceTree = "<group>"; };
 		88700ABE17CC4C5500AC6CAF /* im.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = im.fg; path = ../test/im.fg; sourceTree = "<group>"; };
 		88700ABF17CC4C5500AC6CAF /* node.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = node.fg; path = ../test/node.fg; sourceTree = "<group>"; };
-		88700AC017CC4C5500AC6CAF /* sync.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = sync.fg; path = ../test/sync.fg; sourceTree = "<group>"; };
 		88700AC117CC4C5500AC6CAF /* test.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = test.fg; path = ../test/test.fg; sourceTree = "<group>"; };
 		88700AC217CC4C5500AC6CAF /* try.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = try.fg; path = ../test/try.fg; sourceTree = "<group>"; };
 		88700AC317CC4C5500AC6CAF /* ui.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = ui.fg; path = ../test/ui.fg; sourceTree = "<group>"; };
@@ -138,6 +140,17 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		884D969117CD3677003A257E /* sync */ = {
+			isa = PBXGroup;
+			children = (
+				884D969417CD3677003A257E /* sync.fg */,
+				884D969517CD3677003A257E /* sync_client.fg */,
+				884D969617CD3677003A257E /* sync_server.fg */,
+			);
+			name = sync;
+			path = ../test/sync;
+			sourceTree = "<group>";
+		};
 		88BFC76B17CC507B008A24EF /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -153,7 +166,7 @@
 			children = (
 				88700ABE17CC4C5500AC6CAF /* im.fg */,
 				88700ABF17CC4C5500AC6CAF /* node.fg */,
-				88700AC017CC4C5500AC6CAF /* sync.fg */,
+				884D969117CD3677003A257E /* sync */,
 				88700AC117CC4C5500AC6CAF /* test.fg */,
 				88700AC217CC4C5500AC6CAF /* try.fg */,
 				88700AC317CC4C5500AC6CAF /* ui.fg */,

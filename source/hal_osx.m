@@ -798,6 +798,8 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
 
 void hal_file_listen(struct context *context, const char *path, struct variable *listener)
 {
+    DEBUGPRINT("hal_file_listen %s\n", path);
+
     struct file_thread *ft = (struct file_thread*)malloc((sizeof(struct file_thread)));
     ft->context = context;
     ft->listener = listener;
@@ -808,8 +810,6 @@ void hal_file_listen(struct context *context, const char *path, struct variable 
     FSEventStreamContext fsc = {0, ft, NULL, NULL, NULL};
     FSEventStreamRef stream;
     CFAbsoluteTime latency = 1.0; // seconds
-
-    DEBUGPRINT("hal_file_listen %s\n", path);
 
     stream = FSEventStreamCreate(NULL,
                                  &file_listener_callback,

@@ -1,0 +1,24 @@
+####### sync_client.fg
+
+import 'sync'
+import '../ui'
+
+client_dir = test_dir+'client'
+
+# init client
+client = ['select' : function(ctx)
+              sys.print('select ' + sys.args()[1])
+          end]
+
+# client UI
+client.ui = sys.ui( client,
+                    ['vertical',
+                        ['table', 'name':'files', 'list':[], 'logic':client.select],
+                        'w':240, 'h':320
+                    ])
+
+client.sync = Sync.init(client, client_dir) # client sync logic
+empty(client_dir)                           # make empty client directory
+sys.connect('127.0.0.1', port, client.sync) # client connects to server
+# sys.file_listen(client_dir, clienbt)      # client listens for file changes
+sys.loop()

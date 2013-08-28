@@ -1,0 +1,9 @@
+####### sync_server.fg
+
+import 'sync'                               # shared sync logic
+
+server_dir = test_dir+'server'              # server files root directory
+empty(server_dir)                           # make empty server directory
+server = Sync.init(nil, server_dir)         # initialize server
+sys.listen(port, server)                    # server listens for incoming socket connections
+sys.file_listen(server_dir, server)         # server listens for file changes
