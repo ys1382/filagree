@@ -32,7 +32,7 @@ public class Javagree {
      */
     static class Test {
 
-        public int x = 7;
+        public int x = 6;
 
         public Integer y(Object list, Object map) {
 

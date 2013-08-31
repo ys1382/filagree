@@ -1,14 +1,14 @@
 ####### sync.fg
 
-port = 9990
+port = 9999
 test_dir   = 'synctest/'
 
 
 Sync = [
 
-    'init' : function(self, ctx, watched)
+    'init' : function(self, ctx, watched, id)
 
-        self = ['ctx' : ctx, 'watched' : watched] + self
+        self = ['ctx':ctx, 'watched':watched, 'id':id, 'peers':[]] + self
         self.files = self.local_snapshot()
         if ctx and ctx.ui then
             sys.ui_set(ctx.ui.files, self.files.keys)     # update ui
@@ -27,53 +27,67 @@ Sync = [
 
     'ignore' : function(self, path)
 
-        i = path.find('/', -1) # get last path component
-        return (i >= 0) and (path[i+1] == '.') # ignore .*
+        i = path.find('/', -1)                  # get last path component
+        return (i >= 0) and (path[i+1] == '.')  # ignore files that match ".*"
 
     end,
 
-    'connected' : function(self, id)
+    'connected' : function(self, socket)
 
-        self.peer = id
-
-        msg1 = ['event' : 'login', 'files' : self.files]
-        sys.send(self.peer, msg1)
-
+        msg1 = ['event' : 'greet', 'id' : self.id, 'files' : self.files]
+        if socket then
+            sys.send(socket, msg1)
+        else
+            self.broadcast(msg1)
+        end
     end,
 
-    'messaged' : function(self, id, msg4)
+    'messaged' : function(self, socket, msg4)
 
-        sys.print('message from ' + id + ': ' + msg4)
+        sys.print('message from ' + socket + ': ' + msg4)
+
         if msg4.event == 'content-request' then
-            self.handle_content_request(id, msg4)
-        else if msg4.event == 'login' then
+            self.handle_content_request(socket, msg4)
+
+        else if msg4.event == 'greet' then
+            self.peers[msg4.id] = socket
             self.snapshot = msg4.files
+
         else if msg4.event == 'change' then
-            self.handle_change(msg4.changes)
+            self.handle_change(socket,msg4.changes)
+
         else if msg4.event == 'content' then
+            self.writing = msg4.path
             sys.write(self.watched + msg4.path, msg4.content)   # save file
+            self.writing = nil
             files = self.local_snapshot().keys
             if self.ctx.ui then
-                sys.ui_set(self.ctx.ui.files, files)                # update ui
+                sys.ui_set(self.ctx.ui.files, files)            # update ui
             end
+
+        else if msg4.event = 'test' then
+            self.handle_test(msg4.test)
         end
 
     end,
 
-    'handle_content_request' : function(self, id, msg5)
+    'handle_content_request' : function(self, socket, msg5)
 
         for path in msg5.paths
 
             fullpath = self.watched + path
             content = sys.read(fullpath)
             response = ['event' : 'content', 'path' : path, 'content' : content]
-            sys.send(id, response)
+            sys.send(socket, response)
 
         end
     end,
 
     'filed' : function(self, path)
 
+        if path == self.writing # because we're writing to it
+            return
+        end
         latest = self.local_snapshot()
         updated = latest - self.files
         deleted = self.files - latest
@@ -85,15 +99,16 @@ Sync = [
                 updated = updated + f:g
             end
         end
+
         changes = ['updated' : updated, 'deleted' : deleted]
+
         msg2 = ['event' : 'change', 'changes' : changes]
-        filedd = self.peer
-        sys.send(self.peer, msg2)
+        self.broadcast(msg2)
         self.files = latest
 
     end,
 
-    'handle_change' : function(self, changez)
+    'handle_change' : function(self, socket, changez)
 
         cu = changez.updated
         cd = changez.deleted
@@ -113,10 +128,56 @@ Sync = [
         paths = [path for path in cu where not cu[path].dir]
         if paths.length then
             msg3 = ['event' : 'content-request', 'paths' : paths]
-            sys.send(self.peer, msg3)
+            sys.send(socket, msg3)
         end
 
-    end    
+    end,
+
+    'broadcast' : function(self, msg6)
+        if self.offline then
+            return
+        end
+        for socket in self.peers.vals
+            sys.send(socket, msg6)
+        end
+    end,
+
+    ####### test
+
+    'handle_test' : function(self, msg7)
+        if msg7.id then
+            sys.print('send test to ' + msg7.id)
+            msg7.id = nil
+            sys.send(socket, msg7)
+        else
+            sys.print('test directive: ' + msg7.directive)
+            sys.run(msg7.directive)
+        end
+    end,
+
+    'test_set_offline' : function(self, off)
+        self.offline = of
+        if not off then
+            self.connected()
+        end
+    end,
+
+    'test_file_update' : function(self, path, content)
+        sys.write(self.dir + path, content)
+    end,
+
+    'test_file_move' : function(self, from, to)
+        sys.rename(from, to)
+    end,
+
+    'test_file_read' : function(self, path)
+        return sys.read(self.dir + path)
+    end,
+
+    'test_file_delete' : function(self, path)
+        sys.remove(self.dir + path)
+    end,
+
 ]
 
 sys.mkdir(test_dir)

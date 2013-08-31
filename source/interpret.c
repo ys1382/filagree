@@ -57,34 +57,24 @@ void interpret_string(struct context *context, const char *str)
     byte_array_del(program);
 }
 
-void interpret_file(const char* str)
+void interpret_file(struct byte_array *path,
+                    struct byte_array *args)
 {
-    // find file
-    struct byte_array *filename = byte_array_from_string(str);
-    struct byte_array *dotfgbc = byte_array_from_string(EXTENSION_BC);
-    struct byte_array *dotfg = byte_array_from_string(EXTENSION_SRC);
-    int fgbc = byte_array_find(filename, dotfgbc, 0);
+    struct byte_array *program;
 
-    if (fgbc > 0) // already compiled, just run bytecode
+    if (NULL != args)
     {
-        struct byte_array *program = read_file(filename);
-        execute(program);
-        return;
-    }
-    int fg = byte_array_find(filename, dotfg, 0);
-
-    if (fg > 0) // compile and run fg file
-    {
-        struct byte_array *program = build_file(filename);
-        execute(program);
-        byte_array_del(program);
+        struct byte_array *source = read_file(path);
+        byte_array_append(args, source);
+        program = build_string(args);
     }
     else
-        fprintf(stderr, "invalid file name\n");
+    {
+        program = build_file(path);
+    }
 
-    byte_array_del(filename);
-    byte_array_del(dotfg);
-    byte_array_del(dotfgbc);
+    execute(program);
+    byte_array_del(program);
 }
 
 #ifndef FG_LIB
@@ -97,6 +87,13 @@ void sig_handler(const int sig)
     exit(1);
 }
 
+struct byte_array *arg2ba(int argc, char **argv)
+{
+    if (argc < 3)
+        return NULL;
+    return byte_array_from_string(argv[2]);
+}
+
 int main (int argc, char** argv)
 {
 	struct sigaction act, oact; // for handling ctrl-c
@@ -105,13 +102,19 @@ int main (int argc, char** argv)
 	act.sa_flags = 0;
 	sigaction(SIGINT, &act, &oact);
 
-    switch (argc) {
-        case 1:     repl();                     break;
-        case 2:     interpret_file(argv[1]);    break;
-        case 3:     compile_file(argv[1]);      break;
-        default:    exit_message(ERROR_USAGE);  break;
-    }
+    if (1 == argc)
+        repl();
+    else
+    {
+        struct byte_array *args = arg2ba(argc, argv);
+        struct byte_array *path = byte_array_from_string(argv[1]);
 
+        interpret_file(path, args);
+
+        if (NULL != args)
+            byte_array_del(args);
+        byte_array_del(path);
+    }
 }
 
 #endif // FG_LIB

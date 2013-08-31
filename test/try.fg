@@ -1,3 +1,1 @@
-x = ['a':7, 'b':8]
-y = [p for p in x]
-sys.print(y)
+sys.print(x or 7)

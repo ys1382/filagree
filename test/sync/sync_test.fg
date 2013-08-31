@@ -1,0 +1,19 @@
+import 'sync'
+
+test_director = [
+
+    'connected' : function(self, id)
+
+        self.peer = id
+
+        msg1 = ['event' : 'test', 'test' : [7,8,9]]
+        sys.send(self.peer, msg1)
+
+    end
+
+]
+
+sys.print('port = ' + port)
+
+
+sys.connect('127.0.0.1', port, test_director) # client connects to server

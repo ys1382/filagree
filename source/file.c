@@ -84,7 +84,7 @@ int write_file(const struct byte_array* filename, struct byte_array* bytes)
     free(fname);
 
     int r = fwrite(bytes->data, 1, bytes->length, file);
-    DEBUGPRINT("\twrote %d bytes\n", r);
+    DEBUGPRINT("\twrote %d bytes to %s\n", r, fname);
     int s = fclose(file);
     return (r<0) || s;
 }

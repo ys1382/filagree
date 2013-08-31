@@ -695,14 +695,16 @@ struct variable *find_var(struct context *context, struct variable *key)
     struct map *var_map = state->named_variables;
     struct variable *v = (struct variable*)map_get(var_map, key);
 
-    if ((v == NULL) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS))) {
+    if ((NULL == v) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS))) {
 #ifdef DEBUG
-        sprintf(context->pcbuf, "%ssys ", context->pcbuf);
+//        sprintf(context->pcbuf, "%ssys ", context->pcbuf);
 #endif
         v = context->sys;
     }
-    if ((v == NULL) && context->singleton->callback)
+    if ((NULL == v) && context->singleton->callback)
         v = variable_map_get(context, context->singleton->callback, key);
+    if (NULL == v)
+        v = variable_new_nil(context);
     return v;
 }
 
@@ -710,18 +712,18 @@ static void push_var(struct context *context, struct byte_array *program)
 {
     struct byte_array* name = serial_decode_string(program);
 #ifdef DEBUG
-    if (!context->runtime) {
+//    if (!context->runtime) {
         char *str = byte_array_to_string(name);
-        sprintf(context->pcbuf, "%sVAR %s\n", context->pcbuf, str);
+        sprintf(context->pcbuf, "%sVAR %s", context->pcbuf, str);
         free(str);
+//    } else {
+//        sprintf(context->pcbuf, "%sVAR ", context->pcbuf);
+//    }
+    if (!context->runtime)
         return;
-    } else {
-        sprintf(context->pcbuf, "%sVAR ", context->pcbuf);
-    }
 #endif // DEBUG
     struct variable *key = variable_new_str(context, name);
     struct variable *v = find_var(context, key);
-    vm_assert(context, v, "variable not found\n");
     variable_push(context, v);
     byte_array_del(name);
     sprintf(context->pcbuf, "%s\n", context->pcbuf);
@@ -1351,7 +1353,7 @@ static inline bool tro(struct context *context)
 bool run(struct context *context,
          struct byte_array *program,
          struct map *env,
-         bool in_context)
+         bool in_state)
 {
     bool local_state = false;
     null_check(context);
@@ -1361,21 +1363,25 @@ bool run(struct context *context,
     struct program_state *state = NULL;
     enum Opcode inst = VM_NIL;
 
-    if (context->runtime) {
-        if (in_context) {
+    if (context->runtime)
+    {
+        if (in_state)
+        {
             if (state == NULL)
                 state = (struct program_state*)stack_peek(context->program_stack, 0);
             env = state->named_variables; // use the caller's variable set in the new state
         }
-        else {
+        else // new state on program stack
+        {
             local_state = true;
             state = program_state_new(context, env);
         }
     }
 
-    while (program->current < program->data + program->length) {
-
-        if (context->singleton->tick++ > GIL_SWITCH) {
+    while (program->current < program->data + program->length)
+    {
+        if (context->singleton->tick++ > GIL_SWITCH)
+        {
             context->singleton->tick = 0;
             gil_unlock(context, "run");
             gil_lock(context, "run");
@@ -1452,7 +1458,7 @@ bool run(struct context *context,
     if (!context->runtime)
         return false;
 done:
-    if (!in_context)
+    if (!in_state)
         stack_pop(context->program_stack);
     if (local_state)
         program_state_del(context, state);
