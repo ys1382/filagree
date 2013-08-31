@@ -1,1 +1,5 @@
-sys.print(x or 7)
+p = ['xyz':5]
+s = ['a':'b', 'p':p]
+d = 'xyz'
+m = ['p':'q', 'i':d]
+n = s.p[m.i]

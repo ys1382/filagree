@@ -66,7 +66,7 @@ Sync = [
             end
 
         else if msg4.event = 'test' then
-            self.handle_test(msg4.test)
+            self.handle_test(msg4)
         end
 
     end,
@@ -146,12 +146,14 @@ Sync = [
 
     'handle_test' : function(self, msg7)
         if msg7.id then
-            sys.print('send test to ' + msg7.id)
+            sys.print('self.peers = ' + self.peers)
+            socket = self.peers[msg7.id]
+            sys.print('send test to ' + msg7.id + ' - ' + socket)
             msg7.id = nil
             sys.send(socket, msg7)
         else
             sys.print('test directive: ' + msg7.directive)
-            sys.run(msg7.directive)
+            sys.interpret(msg7.directive)
         end
     end,
 
@@ -163,7 +165,7 @@ Sync = [
     end,
 
     'test_file_update' : function(self, path, content)
-        sys.write(self.dir + path, content)
+        sys.write(self.watched + path, content)
     end,
 
     'test_file_move' : function(self, from, to)
@@ -171,11 +173,11 @@ Sync = [
     end,
 
     'test_file_read' : function(self, path)
-        return sys.read(self.dir + path)
+        return sys.read(self.watched + path)
     end,
 
     'test_file_delete' : function(self, path)
-        sys.remove(self.dir + path)
+        sys.remove(self.watched + path)
     end,
 
 ]

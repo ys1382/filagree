@@ -1468,7 +1468,7 @@ done:
     return inst == VM_RET;
 }
 
-void execute_with(struct context *context, struct byte_array *program)
+void execute_with(struct context *context, struct byte_array *program, bool in_state)
 {
     DEBUGPRINT("execute:\n");
     
@@ -1480,7 +1480,7 @@ void execute_with(struct context *context, struct byte_array *program)
     context->indent = 1;
 #endif
     if (!setjmp(trying))
-        run(context, program, NULL, false);
+        run(context, program, NULL, in_state);
 
     if (context->error)
         DEBUGPRINT("error: %s\n", context->error->str->data);
@@ -1493,6 +1493,6 @@ void execute_with(struct context *context, struct byte_array *program)
 void execute(struct byte_array *program)
 {
     struct context *context = context_new(NULL, true, true);
-    execute_with(context, program);
+    execute_with(context, program, false);
     context_del(context);
 }

@@ -2,18 +2,14 @@ import 'sync'
 
 test_director = [
 
-    'connected' : function(self, id)
+    'connected' : function(self, peer)
 
-        self.peer = id
-
-        msg1 = ['event' : 'test', 'test' : [7,8,9]]
-        sys.send(self.peer, msg1)
-
+        msg1 = ['event' : 'test',
+                'id' : 'xyz',
+                'directive' : 'self.test_file_update(\'x.txt\', \'y\')']
+        sys.send(peer, msg1)
     end
-
 ]
 
-sys.print('port = ' + port)
-
-
 sys.connect('127.0.0.1', port, test_director) # client connects to server
+sys.loop()

@@ -8,6 +8,6 @@
 
 #include "vm.h"
 
-void interpret_string(struct context *context, const char *str);
+void interpret_string(struct context *context, struct byte_array *script);
 
 #endif // INTERPRET_H

@@ -1,5 +1,7 @@
 ####### sync_client.fg
 
+# to run, type ./filagree sync_client.fg "id='<client-id>'"
+
 import 'sync'
 import '../ui'
 
@@ -8,7 +10,7 @@ if not id then
     sys.exit(1)
 end
 
-client_dir = test_dir + 'client' + id
+client_dir = test_dir + 'client' + id + '/'
 
 # init client
 client = ['select' : function(ctx)

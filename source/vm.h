@@ -116,6 +116,7 @@ void gil_unlock(struct context *context, const char *who);
 
 void execute(struct byte_array *program);
 void execute_with(struct context *context,
-                  struct byte_array *program);
+                  struct byte_array *program,
+                  bool in_state);
 
 #endif // VM_H

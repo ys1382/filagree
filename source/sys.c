@@ -93,16 +93,15 @@ struct variable *sys_run(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *script = (struct variable*)array_get(value->list, 1);
-    execute_with(context, script->str);
+    execute_with(context, script->str, true);
     return NULL;
 }
 
 struct variable *sys_interpret(struct context *context)
 {
-    stack_pop(context->operand_stack); // self
-    struct variable *script = (struct variable*)stack_pop(context->operand_stack);
-    char *str = byte_array_to_string(script->str);
-    interpret_string(context, str);
+    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *script = (struct variable*)array_get(value->list, 1);
+    interpret_string(context, script->str);
     return NULL;
 }
 

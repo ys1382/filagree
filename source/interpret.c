@@ -46,14 +46,10 @@ void repl()
     context_del(context);
 }
 
-void interpret_string(struct context *context, const char *str)
+void interpret_string(struct context *context, struct byte_array *script)
 {
-    struct byte_array *input = byte_array_from_string(str);
-    struct byte_array *program = build_string(input);
-
-    execute_with(context, program);
-
-    byte_array_del(input);
+    struct byte_array *program = build_string(script);
+    execute_with(context, program, true);
     byte_array_del(program);
 }
 
