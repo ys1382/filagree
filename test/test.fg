@@ -162,7 +162,7 @@ tester.test('file',
          x = [2,'3':4,'5']
          sys.save(x, 'test_file')
          y = sys.load('test_file')
-         sys.remove('test_file')
+         sys.rm('test_file')
          return x == y
      end,
      true)
@@ -180,7 +180,6 @@ tester.test('many returns',
         end
     end,
     2)
-
 
 tester.test('sort',
     function()
@@ -328,5 +327,36 @@ tester.test('map args',
         return f('p':7, 'q':8)
     end,
     15)
+    
+tester.test('remove from list',
+    function()
+        a = [3,1,4,1,5,9,6,2]
+        b = a.remove()
+        one = (a == [1,4,1,5,9,6,2]) and (b == [3])
+        c = a.remove(2,3)
+        two = (a == [1,4,6,2]) and (c == [1,5,9])
+        return one and two
+    end,
+    true)
+
+tester.test('remove from string',
+    function()
+        a = '31415962'
+        b = a.remove()
+        one = (a == '1415962') and (b == '3')
+        c = a.remove(2,3)
+        two = (a == '1462') and (c == '159')
+        return one and two
+    end,
+    true)
+
+tester.test('sparse array',
+    function()
+        a = []
+        a[3] = 9
+        return ''+a
+    end,
+    '[,,,9]')
+
 
 tester.done()

@@ -88,7 +88,7 @@ void vm_assert(struct context *context, bool assertion, const char *format, ...)
 }
 
 void vm_null_check(struct context *context, const void* p) {
-    vm_assert(context, p, "null pointer");
+    vm_assert(context, p, ERROR_NULL);
 }
 
 // state ///////////////////////////////////////////////////////////////////
@@ -696,15 +696,11 @@ struct variable *find_var(struct context *context, struct variable *key)
     struct variable *v = (struct variable*)map_get(var_map, key);
 
     if ((NULL == v) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS))) {
-#ifdef DEBUG
-//        sprintf(context->pcbuf, "%ssys ", context->pcbuf);
-#endif
         v = context->sys;
     }
     if ((NULL == v) && context->singleton->callback)
         v = variable_map_get(context, context->singleton->callback, key);
-    if (NULL == v)
-        v = variable_new_nil(context);
+    assert_message(NULL != v, "could not find variable");
     return v;
 }
 

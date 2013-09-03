@@ -228,7 +228,9 @@ struct variable *sys_socket_listen(struct context *context)
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port        = htons(serverport);
 
-	if (bind(ta->fd, (struct sockaddr*) &servaddr, sizeof(servaddr))) {
+    int reuse = 1;
+    setsockopt(ta->fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
+	if (bind(ta->fd, (struct sockaddr*)&servaddr, sizeof(servaddr))) {
         perror("bind");
         return NULL;
     }
@@ -247,6 +249,8 @@ void *sys_connect2(void *arg)
     struct node_thread *ta = (struct node_thread *)arg;
 
     // Blocking connect to socket file descriptor
+    //int reuse = 1;
+    //setsockopt(ta->fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
 	if (connect(ta->fd, (struct sockaddr *)&ta->servaddr, sizeof(ta->servaddr)))
     {
         perror("connect");

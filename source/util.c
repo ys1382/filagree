@@ -55,7 +55,7 @@ void *exit_message(const char *format, ...)
 
 void null_check(const void *pointer) {
     if (NULL == pointer)
-        exit_message("null pointer");
+        exit_message(ERROR_NULL);
 }
 
 const char *num_to_string(const struct number_string *ns, int num_items, int num)

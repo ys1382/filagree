@@ -8,8 +8,6 @@
 #include "util.h"
 #include "variable.h"
 
-#define ERROR_NULL  "null pointer"
-#define ERROR_INDEX "index out of bounds"
 
 // shared among all contexts
 struct context_shared

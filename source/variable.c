@@ -240,10 +240,10 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
             vm_null_check(context, list);
             for (int i=0; i<list->length; i++) {
                 struct variable* element = (struct variable*)array_get(list, i);
-                vm_null_check(context, element);
                 const char *c = i ? "," : "";
                 sprintf(str, "%s%s", str, c);
-                variable_value_strcat(context, str, element, false);
+                if (NULL != element)
+                    variable_value_strcat(context, str, element, false);
             }
         } break;
         case VAR_STR: {
@@ -304,8 +304,11 @@ static void variable_mark2(struct variable *v, uint32_t *marker)
 
     if (VAR_LST == v->type)
     {
-        for (int i=0; i<v->list->length; i++)
-            variable_mark2((struct variable*)array_get(v->list, i), marker);
+        for (int i=0; i<v->list->length; i++) {
+            struct variable *v2 = (struct variable*)array_get(v->list, i);
+            if (v2)
+                variable_mark2(v2, marker);
+        }
     }
     else if (VAR_KVP == v->type)
     {
@@ -336,7 +339,8 @@ void variable_unmark(struct variable *v)
     if (v->type == VAR_LST) {
         for (int i=0; i<v->list->length; i++) {
             struct variable* element = (struct variable*)array_get(v->list, i);
-            variable_unmark(element);
+            if (NULL != element)
+                variable_unmark(element);
         }
     }
 

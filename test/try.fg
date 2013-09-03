@@ -1,5 +1,3 @@
-p = ['xyz':5]
-s = ['a':'b', 'p':p]
-d = 'xyz'
-m = ['p':'q', 'i':d]
-n = s.p[m.i]
+a = []
+a[3] = 9
+sys.print(a)

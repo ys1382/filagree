@@ -1,7 +1,7 @@
 ####### sync.fg
 
 port = 9999
-test_dir   = 'synctest/'
+test_dir = 'synctest/'
 
 
 Sync = [
@@ -33,13 +33,8 @@ Sync = [
     end,
 
     'connected' : function(self, socket)
-
-        msg1 = ['event' : 'greet', 'id' : self.id, 'files' : self.files]
-        if socket then
-            sys.send(socket, msg1)
-        else
-            self.broadcast(msg1)
-        end
+        msg1 = ['event' : 'greet', 'from' : self.id, 'files' : self.files]
+        sys.send(socket, msg1)
     end,
 
     'messaged' : function(self, socket, msg4)
@@ -50,7 +45,7 @@ Sync = [
             self.handle_content_request(socket, msg4)
 
         else if msg4.event == 'greet' then
-            self.peers[msg4.id] = socket
+            self.peers[msg4.from] = socket
             self.snapshot = msg4.files
 
         else if msg4.event == 'change' then
@@ -120,7 +115,7 @@ Sync = [
 
         # delete removed directories and files
         for path in cd
-            sys.remove(self.watched + path)
+            sys.rm(self.watched + path)
         end
 
         # request update file bodies
@@ -133,10 +128,18 @@ Sync = [
 
     end,
 
+    'send_to' : function(self, to, msg)
+        msg.from = self.id
+        to = self.peers[to] # id -> socket
+        sys.send(to, msg)
+    end,
+
     'broadcast' : function(self, msg6)
         if self.offline then
             return
         end
+        self.prep(msg6)
+        msg6.from = self.id
         for socket in self.peers.vals
             sys.send(socket, msg6)
         end
@@ -145,39 +148,48 @@ Sync = [
     ####### test
 
     'handle_test' : function(self, msg7)
-        if msg7.id then
-            sys.print('self.peers = ' + self.peers)
-            socket = self.peers[msg7.id]
-            sys.print('send test to ' + msg7.id + ' - ' + socket)
-            msg7.id = nil
-            sys.send(socket, msg7)
-        else
+
+        if msg7.to == self.id # por moi
+
             sys.print('test directive: ' + msg7.directive)
-            sys.interpret(msg7.directive)
+
+            action = msg7.action
+            path = self.watched + msg7.path
+            status = 'done'
+
+            if action == 'update' then
+                sys.write(path, msg7.content)
+
+            else if action == 'move' then
+                    sys.rename(from, to)
+
+            else if action == 'delete' then
+                sys.rm(path)
+
+            else if action == 'offline' then
+                    self.offline = msg7.offline
+                    if not msg7.offline then
+                        self.connected()
+                    end
+
+            else if action == 'verify' then
+                if sys.read(path) == msg7.content then
+                    status = 'pass'
+                else
+                    status 'fail'
+                end
+            end
+
+
+            msg8 = ['event' : 'test', 'status' : status, 'seq' : msg7.seq, 'to' : msg7.from]
+            self.send_to('server', msg8)
+
+        else # forward to recipient
+
+            to = self.peers[msg7.to] # id -> socket
+            sys.send(to, msg7)
+
         end
-    end,
-
-    'test_set_offline' : function(self, off)
-        self.offline = of
-        if not off then
-            self.connected()
-        end
-    end,
-
-    'test_file_update' : function(self, path, content)
-        sys.write(self.watched + path, content)
-    end,
-
-    'test_file_move' : function(self, from, to)
-        sys.rename(from, to)
-    end,
-
-    'test_file_read' : function(self, path)
-        return sys.read(self.watched + path)
-    end,
-
-    'test_file_delete' : function(self, path)
-        sys.remove(self.watched + path)
     end,
 
 ]
@@ -185,6 +197,6 @@ Sync = [
 sys.mkdir(test_dir)
 
 empty = function(dir)
-    sys.remove(dir)
+    sys.rm(dir)
     sys.mkdir(dir)
 end

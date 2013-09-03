@@ -412,7 +412,7 @@ struct string_func builtin_funcs[] = {
     {"write",       &sys_write},
     {"save",        &sys_save},
     {"load",        &sys_load},
-    {"remove",      &sys_rm},
+    {"rm",          &sys_rm},
     {"mkdir",       &sys_mkdir},
     {"bytes",       &sys_bytes},
     {"sin",         &sys_sin},
@@ -593,14 +593,18 @@ struct variable *cfnc_sort(struct context *context)
 
 struct variable *cfnc_chop(struct context *context, bool part)
 {
+    int32_t beginning, foraslongas;
+
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *self = (struct variable*)array_get(args->list, 0);
-    struct variable *start = (struct variable*)array_get(args->list, 1);
 
-    assert_message(start->type == VAR_INT, "non-integer index");
-    int32_t beginning = start->integer;
+    if (args->list->length > 1) {
+        struct variable *start = (struct variable*)array_get(args->list, 1);
+        assert_message(start->type == VAR_INT, "non-integer index");
+        beginning = start->integer;
+    }
+    else beginning = 0;
 
-    int32_t foraslongas;
     if (args->list->length > 2) {
         struct variable *length = (struct variable*)array_get(args->list, 2);
         assert_message(length->type == VAR_INT, "non-integer length");
@@ -608,11 +612,8 @@ struct variable *cfnc_chop(struct context *context, bool part)
     } else
         foraslongas = part ? self->str->length - beginning : 1;
 
-    struct variable *result = variable_copy(context, self);
-    if (part)
-        result = variable_part(context, result, beginning, foraslongas);
-    else
-        variable_remove(result, beginning, foraslongas);
+    struct variable *result = variable_part(context, self, beginning, foraslongas);
+    variable_remove(self, beginning, foraslongas);
     return result;
 }
 

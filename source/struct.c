@@ -29,7 +29,8 @@ struct array *array_new() {
 struct array *array_new_size(uint32_t size) {
     struct array *a = (struct array*)malloc(sizeof(struct array));
     a->data = a->current = (void**)malloc(size * sizeof(void**));
-    a->length = a->size = 0;
+    a->length = 0;
+    a->size = size;
     return a;
 }
 
@@ -56,6 +57,11 @@ void array_resize(struct array *a, uint32_t size)
     uint32_t delta = a->current - a->data;
     a->data = (void**)realloc(a->data, size * sizeof(void*));
     null_check(a->data);
+
+    //DEBUGPRINT("array_resize %p->%p -- %d to %d\n", a, a->data, a->size, size);
+    if (size > a->size)
+        memset(&a->data[a->size], 0, (size - a->size) * sizeof(void*));
+
     a->size = size;
     a->current = a->data + delta;
     return;
@@ -157,7 +163,6 @@ void byte_array_del(struct byte_array* ba) {
     if (NULL != ba->data)
         free(ba->data);
     free(ba);
-    //DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
 }
 
 struct byte_array *byte_array_new_size(uint32_t size) {
