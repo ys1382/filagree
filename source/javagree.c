@@ -502,7 +502,7 @@ JNIEXPORT jlong JNICALL Java_Javagree_eval(JNIEnv  *env,
     struct byte_array *program3 = build_string(program2);
 
     // run
-    execute_with(context, program3);
+    execute_with(context, program3, false);
 
     // return context for later use
     return (jlong)context;
