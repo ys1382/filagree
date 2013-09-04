@@ -1,3 +1,5 @@
-a = []
-a[3] = 9
-sys.print(a)
+if sys.read('x') == 'y' then
+    a = 3
+else
+    a = 4
+end

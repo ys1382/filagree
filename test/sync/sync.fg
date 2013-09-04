@@ -131,6 +131,9 @@ Sync = [
     'send_to' : function(self, to, msg)
         msg.from = self.id
         to = self.peers[to] # id -> socket
+        if not to then
+            to = self.peers['server']
+        end
         sys.send(to, msg)
     end,
 
@@ -158,7 +161,9 @@ Sync = [
             status = 'done'
 
             if action == 'update' then
+                self.writing = msg7.path
                 sys.write(path, msg7.content)
+                self.writing = nil
 
             else if action == 'move' then
                     sys.rename(from, to)
@@ -176,13 +181,12 @@ Sync = [
                 if sys.read(path) == msg7.content then
                     status = 'pass'
                 else
-                    status 'fail'
+                    status = 'fail'
                 end
             end
 
-
             msg8 = ['event' : 'test', 'status' : status, 'seq' : msg7.seq, 'to' : msg7.from]
-            self.send_to('server', msg8)
+            self.send_to(msg7.from, msg8)
 
         else # forward to recipient
 

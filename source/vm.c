@@ -52,12 +52,14 @@ static void vm_exit() {
 
 void set_error(struct context *context, const char *format, va_list list)
 {
-    if (context == NULL) {
+    if (context == NULL)
+    {
         DEBUGPRINT("can't set error because context is null");
         return;
     }
     null_check(format);
     const char *message = make_message(format, list);
+    DEBUGPRINT("vm_error: %s\n", message);
     context->error = variable_new_err(context, message);
 }
 

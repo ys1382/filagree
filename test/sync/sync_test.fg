@@ -20,7 +20,9 @@ test_director = [
 
         if (msg4.event == 'test') then
             sys.print('test ' + msg4.seq + ': ' + msg4.status)
-            self.active[msg4.seq] = nil
+            self.active[''+msg4.seq] = nil
+            if self.active.keys.length then sys.exit(2) end
+            self.dequeue()
             return
         end
 
@@ -33,39 +35,38 @@ test_director = [
 
     'run_tests' : function(self)
 
-#       self.send_to('xyz',   'self.test_file_update(\'x.txt\', \'y\')')
         self.direct('xyz',    'update', 'a.txt', '123')
         self.direct('xyz',    'verify', 'a.txt', '123')
         self.direct('server', 'verify', 'a.txt', '123')
 
     end,
 
-    'direct' : function(self, whom, action)
-    
-        self.seq = self.seq + 1
-
-        args = sys.args()
+    'direct' : function(self, whom, action, path, content)
 
         msg5 = ['event'     : 'test',
                 'action'    : action,
                 'from'      : self.moi,
+                'to'        : whom,
                 'seq'       : self.seq,
-                'path'      : args.path,
-                'content'   : args.content]
+                'path'      : path,
+                'content'   : content]
 
         self.queue = self.queue + [msg5]
         self.dequeue()
+        self.seq = self.seq + 1
 
     end,
 
     'dequeue' : function(self)
 
-        if (not self.queue.length) or (self.active.length) then
+        sys.print('dq ' + self.queue.length +' '+ self.active.keys.length)
+        if (not self.queue.length) or (self.active.keys.length) then
             return
         end
 
-        msg4 = self.queue.remove()
-        self.active[msg4.seq] = msg4
+        msg4 = self.queue.remove()[0]
+        self.active[''+msg4.seq] = msg4
+        if self.active.keys.length != 1 then sys.exit(2) end
         sys.send(self.server, msg4)
 
     end,

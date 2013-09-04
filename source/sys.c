@@ -55,7 +55,7 @@ struct variable *sys_load(struct context *context)
     struct variable *path = (struct variable*)array_get(value->list, 1);
     struct byte_array *file_bytes = read_file(path->str);
     if (NULL == file_bytes)
-        return NULL;
+        return variable_new_nil(context);
     struct variable *v = variable_deserialize(context, file_bytes);
     byte_array_del(file_bytes);
     return v;

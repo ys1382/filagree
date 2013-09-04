@@ -39,7 +39,7 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
 
     if (!(file = fopen(filename_str, "rb"))) {
         free(filename_str);
-        DEBUGPRINT("\nCould not read file %s", filename_str);
+        DEBUGPRINT("\nCould not read file %s\n", filename_str);
         return NULL;
     }
     free(filename_str);
