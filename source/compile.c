@@ -1122,7 +1122,7 @@ struct symbol *parse(struct array *list, uint32_t index)
 
     struct symbol *p = statements();
 #ifdef DEBUG
-    display_symbol(p, 1);
+//    display_symbol(p, 1);
 #endif
     return p;
 }

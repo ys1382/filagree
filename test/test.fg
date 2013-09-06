@@ -131,7 +131,6 @@ tester.test('map',
             a.list   +
             a.keys   +
             a.vals
-        sys.print(a)
         return result
     end,
     '[2,3,4,\'x\':7,\'y\':8,\'z\':[9:10]]list3[2,3,4][\'x\',\'y\',\'z\'][7,8,[9:10]]')

@@ -33,6 +33,8 @@ struct context
     struct context_shared *singleton;   // shared state
 #ifdef DEBUG
     char pcbuf[10000]; // todo: check boundary
+#else
+    char *pcbuf;
 #endif
 };
 

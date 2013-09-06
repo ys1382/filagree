@@ -56,3 +56,10 @@ void hal_file_listen(struct context *context,
 struct variable *hal_ui_get(struct context *context,
                             void *field)                { stub("hal_ui_get"); return NULL; }
 void hal_ui_set(void *field, struct variable *value)    { stub("hal_ui_set"); }
+
+void hal_sleep(int32_t miliseconds)                     { stub("hal_sleep"); }
+void hal_timer(struct context *context,
+               int32_t milliseconds,
+               struct variable *logic,
+               bool repeats)                            { stub("hal_timer"); }
+

@@ -24,6 +24,12 @@ void hal_loop();
 void hal_save(struct context *context, const struct byte_array *key, const struct variable *value);
 struct variable *hal_load(struct context *context, const struct byte_array *key);
 
+void hal_sleep(int32_t miliseconds);
+void hal_timer(struct context *context,
+               int32_t milliseconds,
+               struct variable *logic,
+               bool repeats);
+
 #ifndef NO_UI
 
 void hal_image();

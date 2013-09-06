@@ -208,7 +208,7 @@ void exit_al() {
 	alcCloseDevice(dev);
 }
 
-void hal_sleep(uint32_t miliseconds)
+void hal_sleep(int32_t miliseconds)
 {
     struct timespec req={0};
     time_t sec = (int)(miliseconds/1000);
@@ -450,10 +450,13 @@ void *hal_label(int32_t x, int32_t y,
     struct variable *uictx;
     struct variable *param;
     struct variable *data;
+    NSTimer *timer;
 }
 
 -(void)setData:(struct variable*)value;
+-(void)setTimer:(double)interval repeats:(bool)repeats;
 -(IBAction)pressed:(id)sender;
+-(void)timerCallback:(NSTimer*)timer;
 
 @end
 
@@ -470,7 +473,24 @@ void *hal_label(int32_t x, int32_t y,
     bp->uictx = u;
     bp->data = d;
     bp->param = NULL;
+    bp->timer = NULL;
     return bp;
+}
+
+-(void)setTimer:(double)interval repeats:(bool)repeats
+{
+    if (interval >= 1000)
+        interval /= 1000;
+    else
+        interval *= -1;
+    
+    self->timer = [NSTimer scheduledTimerWithTimeInterval:interval
+                                                   target:self
+                                                 selector:@selector(timerCallback:)
+                                                 userInfo:nil
+                                                  repeats:repeats];
+
+    [[NSRunLoop mainRunLoop] addTimer:self->timer forMode:NSDefaultRunLoopMode];
 }
 
 -(void)setData:(struct variable*)value {
@@ -508,7 +528,15 @@ objectValueForTableColumn:(NSTableColumn *) aTableColumn
     [self pressed:notification];
 }
 
--(IBAction)pressed:(id)sender
+-(IBAction)pressed:(id)sender {
+    [self callback];
+}
+
+-(void)timerCallback:(NSTimer*)timer {
+    [self callback];
+}
+
+-(void)callback
 {
     if (self->logic && self->logic->type != VAR_NIL)
     {
@@ -654,9 +682,9 @@ void *hal_window(struct context *context,
 {
     if (window) { // clear contents
         NSView *content = [window contentView];
-        [[NSArray arrayWithArray: [content subviews]] makeObjectsPerformSelector:
-         @selector(removeFromSuperviewWithoutNeedingDisplay)];
-        [content setNeedsDisplay: YES];
+        NSArray *subviews = [NSArray arrayWithArray:[content subviews]];
+        [subviews makeObjectsPerformSelector:@selector(removeFromSuperviewWithoutNeedingDisplay)];
+        [content setNeedsDisplay:YES];
 
         //[inputs removeAllObjects];
         NSSize size = [content frame].size;
@@ -822,4 +850,19 @@ void hal_file_listen(struct context *context, const char *path, struct variable 
     FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 	FSEventStreamStart(stream);
 	CFRunLoopRun();
+}
+
+/////// timer
+
+void hal_timer(struct context *context,
+               int32_t milliseconds,
+               struct variable *logic,
+               bool repeats)
+{
+    Actionifier *actionifier = [Actionifier fContext:context
+                                           uiContext:NULL
+                                            callback:logic
+                                            userData:NULL];
+
+    [actionifier setTimer:milliseconds repeats:repeats];
 }

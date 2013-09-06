@@ -1,5 +1,11 @@
-if sys.read('x') == 'y' then
-    a = 3
-else
-    a = 4
+f = function()
+    sys.print('boo')
 end
+
+sys.print('wait 2 seconds')
+sys.sleep(2000)
+sys.print('wait 1 second')
+sys.timer(1000, f)
+sys.sleep(2000)
+sys.sleep(2000)
+sys.loop()

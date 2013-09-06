@@ -1,7 +1,7 @@
 UNAME := $(shell uname -s)
 
 CC=gcc
-CFLAGS=-Wall -Os -std=gnu99 -I -fPIC -fnested-functions -fms-extensions -DDEBUG
+CFLAGS=-Wall -Os -std=gnu99 -I -fPIC -fnested-functions -fms-extensions
 LDFLAGS=-lm -lpthread
 LD_LIBRARY_PATH=.
 SOURCES=vm.c struct.c serial.c compile.c util.c sys.c variable.c interpret.c node.c file.c

@@ -8,6 +8,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "TAG", __VA_ARGS__);
+#endif
+
 #ifdef __LP64__
 #define VOID_INT int64_t
 #define VOID_FLT long double
@@ -26,9 +31,11 @@ void *exit_message(const char *format, ...);
 void null_check(const void* p);
 
 #ifdef DEBUG
-#define DEBUGPRINT(...) printf( __VA_ARGS__ );
+#define DEBUGPRINT(...)  printf ( __VA_ARGS__ );
+#define DEBUGSPRINT(...) sprintf( __VA_ARGS__ );
 #else
-#define DEBUGPRINT(...) {};
+#define DEBUGPRINT(...)  {};
+#define DEBUGSPRINT(...) {};
 #endif // #ifdef DEBUG
 
 struct number_string {

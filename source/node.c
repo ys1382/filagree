@@ -70,8 +70,10 @@ void *incoming(void *arg)
 
     gil_lock(ta->context, "incoming");
     ta->message = variable_deserialize(ta->context, ta->buf);
+#ifdef DEBUG
     char buf[1000];
     DEBUGPRINT("received %s\n", variable_value_str(ta->context, ta->message, buf));
+#endif
     gil_unlock(ta->context, "incoming");
 
     node_callback(ta);

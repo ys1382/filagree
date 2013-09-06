@@ -161,9 +161,7 @@ Sync = [
             status = 'done'
 
             if action == 'update' then
-                self.writing = msg7.path
                 sys.write(path, msg7.content)
-                self.writing = nil
 
             else if action == 'move' then
                     sys.rename(from, to)
@@ -178,10 +176,11 @@ Sync = [
                     end
 
             else if action == 'verify' then
-                if sys.read(path) == msg7.content then
+                content = sys.read(path)
+                if content == msg7.content then
                     status = 'pass'
                 else
-                    status = 'fail'
+                    status = 'fail: ' + content +' != '+ msg7.content
                 end
             end
 

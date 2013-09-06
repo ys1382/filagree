@@ -67,9 +67,7 @@ struct variable *sys_write(struct context *context)
     struct variable *path = (struct variable*)array_get(value->list, 1);
     struct variable *v = (struct variable*)array_get(value->list, 2);
 
-    struct byte_array *bytes = byte_array_new();
-    variable_serialize(context, bytes, v);
-    int w = write_file(path->str, bytes);
+    int w = write_file(path->str, v->str);
     return variable_new_int(context, w);
 }
 
@@ -474,7 +472,8 @@ struct variable *sys_new(struct context *context)
 #define FNC_REMOVE      "remove"
 #define FNC_INSERT      "insert"
 #define FNC_EXIT        "exit"
-
+#define FNC_SLEEP       "sleep"
+#define FNC_TIMER       "timer"
 
 int compar(struct context *context, const void *a, const void *b, struct variable *comparator)
 {
@@ -718,6 +717,30 @@ struct variable *cfnc_exit(struct context *context)
     return NULL;
 }
 
+struct variable *cfnc_sleep(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    int32_t milliseconds = param_int(args, 1);
+    hal_sleep(milliseconds);
+    return NULL;
+}
+
+struct variable *cfnc_timer(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    int32_t milliseconds = param_int(args, 1);
+    struct variable *logic = param_var(context, args, 2);
+    bool repeats = false;
+    if (args->list->length > 3)
+    {
+        struct variable *arg3 = array_get(args->list, 3);
+        repeats = arg3->integer;
+    }
+
+    hal_timer(context, milliseconds, logic, repeats);
+    return NULL;
+}
+
 //    a                b        c
 // <sought> <replacement> [<start>]
 // <start> <length> <replacement>
@@ -885,6 +908,12 @@ struct variable *builtin_method(struct context *context,
     else if (!strcmp(idxstr, FNC_EXIT))
         result = variable_new_cfnc(context, &cfnc_exit);
     
+    else if (!strcmp(idxstr, FNC_SLEEP))
+        result = variable_new_cfnc(context, &cfnc_sleep);
+
+    else if (!strcmp(idxstr, FNC_TIMER))
+        result = variable_new_cfnc(context, &cfnc_timer);
+
     free(idxstr);
     return result;
 }

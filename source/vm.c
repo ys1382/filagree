@@ -319,7 +319,7 @@ const char* indentation(struct context *context)
 static void display_program_counter(struct context *context, const struct byte_array *program)
 {
     null_check(context);
-    sprintf(context->pcbuf, "%s>%" PRIu16 " - %2ld:%3d ",
+    DEBUGSPRINT(context->pcbuf, "%s>%" PRIu16 " - %2ld:%3d ",
             indentation(context),
             current_thread_id(),
             program->current-program->data,
@@ -386,7 +386,7 @@ void gil_unlock(struct context *context, const char *who)
 struct variable *src(struct context *context, enum Opcode op, struct byte_array *program)
 {
     int32_t size = serial_decode_int(program);
-    sprintf(context->pcbuf, "%s%s %d\n", context->pcbuf, NUM_TO_STRING(opcodes, op), size);
+    DEBUGSPRINT(context->pcbuf, "%s%s %d\n", context->pcbuf, NUM_TO_STRING(opcodes, op), size);
     if (!context->runtime)
         return NULL;
     struct variable *v = variable_new_src(context, size);
@@ -500,7 +500,7 @@ static void method(struct context *context, struct byte_array *program)
 static void push_list(struct context *context, struct byte_array *program)
 {
     int32_t num_items = serial_decode_int(program);
-    sprintf(context->pcbuf, "%sLST %d%s", context->pcbuf, num_items, !context->runtime ? "\n":"");
+    DEBUGSPRINT(context->pcbuf, "%sLST %d%s", context->pcbuf, num_items, !context->runtime ? "\n":"");
     if (!context->runtime)
         return;
 
@@ -515,14 +515,14 @@ static void push_list(struct context *context, struct byte_array *program)
     }
 #ifdef DEBUG
     char buf[VV_SIZE];
-    sprintf(context->pcbuf, "%s: %s\n", context->pcbuf, variable_value_str(context, list, buf));
+    DEBUGSPRINT(context->pcbuf, "%s: %s\n", context->pcbuf, variable_value_str(context, list, buf));
 #endif
     variable_push(context, list);
 }
 
 static void push_kvp(struct context *context, struct byte_array *program)
 {
-    sprintf(context->pcbuf, "%sKVP %s", context->pcbuf, !context->runtime?"\n":"");
+    DEBUGSPRINT(context->pcbuf, "%sKVP %s", context->pcbuf, !context->runtime?"\n":"");
     if (!context->runtime)
         return;
     struct variable* val = variable_pop(context);
@@ -530,7 +530,7 @@ static void push_kvp(struct context *context, struct byte_array *program)
     struct variable *v = variable_new_kvp(context, key, val);
 #ifdef DEBUG
     char buf[VV_SIZE];
-    sprintf(context->pcbuf, "%s: %s\n", context->pcbuf, variable_value_str(context, v, buf));
+    DEBUGSPRINT(context->pcbuf, "%s: %s\n", context->pcbuf, variable_value_str(context, v, buf));
 #endif
     variable_push(context, v);
 }
@@ -548,7 +548,7 @@ bool custom_method(struct context *context,
     struct variable *key = variable_new_str(context, name);
     byte_array_del(name);
     if (indexable->map && (custom = (struct variable*)map_get(indexable->map, key))) {
-        sprintf(context->pcbuf, "%s(custom %s)\n", context->pcbuf, method);
+        DEBUGSPRINT(context->pcbuf, "%s(custom %s)\n", context->pcbuf, method);
         vm_call(context, custom, indexable, index, value, NULL);
         return true;
     }
@@ -560,7 +560,7 @@ struct variable *lookup(struct context *context, struct variable *indexable, str
 {
 #ifdef DEBUG
     char buf[VV_SIZE];
-    sprintf(context->pcbuf, "%s%s ", context->pcbuf, variable_value_str(context, index, buf));
+    DEBUGSPRINT(context->pcbuf, "%s%s ", context->pcbuf, variable_value_str(context, index, buf));
 #endif
 
     struct variable *item = NULL;
@@ -598,7 +598,7 @@ struct variable *lookup(struct context *context, struct variable *indexable, str
 
 static void list_get(struct context *context)
 {
-    sprintf(context->pcbuf, "%sGET %s", context->pcbuf, !context->runtime?"\n":"");
+    DEBUGSPRINT(context->pcbuf, "%sGET %s", context->pcbuf, !context->runtime?"\n":"");
     if (!context->runtime)
         return;
     struct variable *indexable, *index;
@@ -606,7 +606,7 @@ static void list_get(struct context *context)
     index = variable_pop(context);
     struct variable *value = lookup(context, indexable, index);
     variable_push(context, value);
-    sprintf(context->pcbuf, "%s\n", context->pcbuf);
+    DEBUGSPRINT(context->pcbuf, "%s\n", context->pcbuf);
 }
 
 static int32_t jump(struct context *context, struct byte_array *program)
@@ -614,7 +614,7 @@ static int32_t jump(struct context *context, struct byte_array *program)
     null_check(program);
     uint8_t *start = program->current;
     int32_t offset = serial_decode_int(program);
-    sprintf(context->pcbuf, "%sJMP %d\n", context->pcbuf, offset);
+    DEBUGSPRINT(context->pcbuf, "%sJMP %d\n", context->pcbuf, offset);
     if (!context->runtime)
         return 0;
 
@@ -641,7 +641,7 @@ static int32_t iff(struct context *context, struct byte_array *program)
 {
     null_check(program);
     int32_t offset = serial_decode_int(program);
-    sprintf(context->pcbuf, "%sIF %d\n", context->pcbuf, offset);
+    DEBUGSPRINT(context->pcbuf, "%sIF %d\n", context->pcbuf, offset);
     if (!context->runtime)
         return 0;
     return test_operand(context) ? 0 : (VOID_INT)offset;
@@ -650,7 +650,7 @@ static int32_t iff(struct context *context, struct byte_array *program)
 static void push_nil(struct context *context)
 {
     struct variable* var = variable_new_nil(context);
-    sprintf(context->pcbuf, "%sNIL\n", context->pcbuf);
+    DEBUGSPRINT(context->pcbuf, "%sNIL\n", context->pcbuf);
     if (!context->runtime)
         return;
     variable_push(context, var);
@@ -660,7 +660,7 @@ static void push_int(struct context *context, struct byte_array *program)
 {
     null_check(program);
     int32_t num = serial_decode_int(program);
-    sprintf(context->pcbuf, "%sINT %d\n", context->pcbuf, num);
+    DEBUGSPRINT(context->pcbuf, "%sINT %d\n", context->pcbuf, num);
     if (!context->runtime)
         return;
     struct variable* var = variable_new_int(context, num);
@@ -671,7 +671,7 @@ static void push_bool(struct context *context, struct byte_array *program)
 {
     null_check(program);
     int32_t num = serial_decode_int(program);
-    sprintf(context->pcbuf, "%sBOOL %d\n", context->pcbuf, num);
+    DEBUGSPRINT(context->pcbuf, "%sBOOL %d\n", context->pcbuf, num);
     if (!context->runtime)
         return;
     struct variable* var = variable_new_bool(context, num);
@@ -682,7 +682,7 @@ static void push_float(struct context *context, struct byte_array *program)
 {
     null_check(program);
     float num = serial_decode_float(program);
-    sprintf(context->pcbuf, "%sFLT %f\n", context->pcbuf, num);
+    DEBUGSPRINT(context->pcbuf, "%sFLT %f\n", context->pcbuf, num);
     if (!context->runtime)
         return;
     struct variable* var = variable_new_float(context, num);
@@ -712,10 +712,10 @@ static void push_var(struct context *context, struct byte_array *program)
 #ifdef DEBUG
 //    if (!context->runtime) {
         char *str = byte_array_to_string(name);
-        sprintf(context->pcbuf, "%sVAR %s", context->pcbuf, str);
+        DEBUGSPRINT(context->pcbuf, "%sVAR %s", context->pcbuf, str);
         free(str);
 //    } else {
-//        sprintf(context->pcbuf, "%sVAR ", context->pcbuf);
+//        DEBUGSPRINT(context->pcbuf, "%sVAR ", context->pcbuf);
 //    }
     if (!context->runtime)
         return;
@@ -724,7 +724,7 @@ static void push_var(struct context *context, struct byte_array *program)
     struct variable *v = find_var(context, key);
     variable_push(context, v);
     byte_array_del(name);
-    sprintf(context->pcbuf, "%s\n", context->pcbuf);
+    DEBUGSPRINT(context->pcbuf, "%s\n", context->pcbuf);
 }
 
 static void push_str(struct context *context, struct byte_array *program)
@@ -732,7 +732,7 @@ static void push_str(struct context *context, struct byte_array *program)
     struct byte_array* str = serial_decode_string(program);
 #ifdef DEBUG
     char *str2 = byte_array_to_string(str);
-    sprintf(context->pcbuf, "%sSTR %s\n", context->pcbuf, str2);
+    DEBUGSPRINT(context->pcbuf, "%sSTR %s\n", context->pcbuf, str2);
     free(str2);
     if (!context->runtime)
         return;
@@ -762,7 +762,7 @@ static void push_fnc(struct context *context, struct byte_array *program)
 
     struct byte_array *body = serial_decode_string(program);
 
-    sprintf(context->pcbuf, "%sFNC %u,%u\n", context->pcbuf, num_closures, body->length);
+    DEBUGSPRINT(context->pcbuf, "%sFNC %u,%u\n", context->pcbuf, num_closures, body->length);
     //display_code(context, body);
 
     if (context->runtime) {
@@ -822,7 +822,7 @@ static void set(struct context *context,
         //        VM_DEBUGPRINT("%s %s\n", op==VM_SET?"SET":"STX", byte_array_to_string(name));
 #ifdef DEBUG
         char *str = byte_array_to_string(name);
-        sprintf(context->pcbuf, "%s%s %s\n", context->pcbuf, op==VM_SET?"SET":"STX", str);
+        DEBUGSPRINT(context->pcbuf, "%s%s %s\n", context->pcbuf, op==VM_SET?"SET":"STX", str);
         free(str);
         if (!context->runtime)
             return;
@@ -834,7 +834,7 @@ static void set(struct context *context,
 #ifdef DEBUG
     char *str = byte_array_to_string(name);
     char buf[VV_SIZE];
-    sprintf(context->pcbuf, "%s%s %s to %s\n",
+    DEBUGSPRINT(context->pcbuf, "%s%s %s to %s\n",
             context->pcbuf,
             op==VM_SET ? "SET" : "STX",
             str,
@@ -850,11 +850,11 @@ static void set(struct context *context,
 
 static void dst(struct context *context) // drop unused assignment right-hand-side values
 {
-    sprintf(context->pcbuf, "%sDST%s", context->pcbuf, !context->runtime ? " (not runtime)":"");
+    DEBUGSPRINT(context->pcbuf, "%sDST%s", context->pcbuf, !context->runtime ? " (not runtime)":"");
     if (!context->runtime)
         return;
     if (stack_empty(context->operand_stack)) {
-        sprintf(context->pcbuf, "%s %p mt\n", context->pcbuf, context->operand_stack);
+        DEBUGSPRINT(context->pcbuf, "%s %p mt\n", context->pcbuf, context->operand_stack);
         return;
     }
 
@@ -862,21 +862,21 @@ static void dst(struct context *context) // drop unused assignment right-hand-si
     if (v->type == VAR_SRC) // unused result
         stack_pop(context->operand_stack);
     else
-        sprintf(context->pcbuf, "%s (%s)", context->pcbuf, var_type_str(v->type));
-    sprintf(context->pcbuf, "%s\n", context->pcbuf);
+        DEBUGSPRINT(context->pcbuf, "%s (%s)", context->pcbuf, var_type_str(v->type));
+    DEBUGSPRINT(context->pcbuf, "%s\n", context->pcbuf);
 
     garbage_collect(context);
 }
 
 static void list_put(struct context *context, enum Opcode op)
 {
-    sprintf(context->pcbuf, "%sPUT %s", context->pcbuf, !context->runtime?"\n":"");
+    DEBUGSPRINT(context->pcbuf, "%sPUT %s", context->pcbuf, !context->runtime?"\n":"");
     if (!context->runtime)
         return;
     struct variable* recipient = variable_pop(context);
     struct variable* key = variable_pop(context);
     struct variable *value = get_value(context, op);
-    sprintf(context->pcbuf, "%s\n", context->pcbuf);
+    DEBUGSPRINT(context->pcbuf, "%s\n", context->pcbuf);
 
     switch (key->type) {
         case VAR_INT:
@@ -1093,7 +1093,7 @@ static int32_t boolean_op(struct context *context, struct byte_array *program, e
     null_check(program);
     int32_t short_circuit = serial_decode_int(program);
 
-    sprintf(context->pcbuf, "%s%s %d\n", context->pcbuf, NUM_TO_STRING(opcodes, op), short_circuit);
+    DEBUGSPRINT(context->pcbuf, "%s%s %d\n", context->pcbuf, NUM_TO_STRING(opcodes, op), short_circuit);
     if (!context->runtime)
         return 0;
     struct variable *v = variable_pop(context);
@@ -1116,7 +1116,7 @@ static int32_t boolean_op(struct context *context, struct byte_array *program, e
 static void binary_op(struct context *context, enum Opcode op)
 {
     if (!context->runtime) {
-        sprintf(context->pcbuf, "%s%s\n", context->pcbuf, NUM_TO_STRING(opcodes, op));
+        DEBUGSPRINT(context->pcbuf, "%s%s\n", context->pcbuf, NUM_TO_STRING(opcodes, op));
         return;
     }
 
@@ -1151,7 +1151,7 @@ static void binary_op(struct context *context, enum Opcode op)
     variable_push(context, w);
 #ifdef DEBUG
     char bufu[VV_SIZE], bufv[VV_SIZE], bufw[VV_SIZE];
-    sprintf(context->pcbuf, "%s%s(%s,%s) = %s\n",
+    DEBUGSPRINT(context->pcbuf, "%s%s(%s,%s) = %s\n",
             context->pcbuf,
                NUM_TO_STRING(opcodes, op),
                variable_value_str(context, u, bufu),
@@ -1163,7 +1163,7 @@ static void binary_op(struct context *context, enum Opcode op)
 static void unary_op(struct context *context, enum Opcode op)
 {
     if (!context->runtime) {
-        sprintf(context->pcbuf, "%s%s\n", context->pcbuf, NUM_TO_STRING(opcodes, op));
+        DEBUGSPRINT(context->pcbuf, "%s%s\n", context->pcbuf, NUM_TO_STRING(opcodes, op));
         return;
     }
 
@@ -1213,7 +1213,7 @@ static void unary_op(struct context *context, enum Opcode op)
     variable_push(context, result);
 #ifdef DEBUG
     char buf1[VV_SIZE], buf2[VV_SIZE];
-    sprintf(context->pcbuf, "%s%s(%s) = %s\n",
+    DEBUGSPRINT(context->pcbuf, "%s%s(%s) = %s\n",
             context->pcbuf,
             NUM_TO_STRING(opcodes, op),
             variable_value_str(context, v, buf1),
@@ -1235,17 +1235,17 @@ static bool iterate(struct context *context,
 
 #ifdef DEBUG
     char *str = byte_array_to_string(who);
-    sprintf(context->pcbuf, "%s%s %s\n",
+    DEBUGSPRINT(context->pcbuf, "%s%s %s\n",
             context->pcbuf,
             NUM_TO_STRING(opcodes, op),
             str);
     free(str);
     if (!context->runtime) {
         if (where && where->length) {
-            sprintf(context->pcbuf, "%s%s\tWHERE %d\n", context->pcbuf, indentation(context), where->length);
+            DEBUGSPRINT(context->pcbuf, "%s%s\tWHERE %d\n", context->pcbuf, indentation(context), where->length);
             //display_code(context, where);
         }
-        sprintf(context->pcbuf, "%s%s\tDO %d\n", context->pcbuf, indentation(context), how->length);
+        DEBUGSPRINT(context->pcbuf, "%s%s\tDO %d\n", context->pcbuf, indentation(context), how->length);
         //display_code(context, how);
         goto done;
     }
@@ -1307,13 +1307,13 @@ static inline bool vm_trycatch(struct context *context, struct byte_array *progr
 {
     bool returned = false;
     struct byte_array *trial = serial_decode_string(program);
-    sprintf(context->pcbuf, "%sTRY %d\n", context->pcbuf, trial->length);
+    DEBUGSPRINT(context->pcbuf, "%sTRY %d\n", context->pcbuf, trial->length);
     //display_code(context, trial);
     struct byte_array *name = serial_decode_string(program);
     struct byte_array *catcher = serial_decode_string(program);
 #ifdef DEBUG
     char *str = byte_array_to_string(name);
-    sprintf(context->pcbuf, "%s%sCATCH %s %d\n", context->pcbuf, indentation(context), str, catcher->length);
+    DEBUGSPRINT(context->pcbuf, "%s%sCATCH %s %d\n", context->pcbuf, indentation(context), str, catcher->length);
     free(str);
 #endif
     //display_code(context, catcher);
@@ -1341,7 +1341,7 @@ static inline bool ret(struct context *context, struct byte_array *program)
 
 static inline bool tro(struct context *context)
 {
-    sprintf(context->pcbuf, "%sTHROW\n", context->pcbuf);
+    DEBUGSPRINT(context->pcbuf, "%sTHROW\n", context->pcbuf);
     if (!context->runtime)
         return false;
     context->error = (struct variable*)stack_pop(context->operand_stack);

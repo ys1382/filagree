@@ -123,7 +123,11 @@ int file_list(const char *path, int (*fn)(const char*, bool, long, void*), void 
                 goto done;
 		}
         bool dir = S_ISDIR(cur->fts_statp->st_mode);
+#ifdef __ANDROID__
+        long mod = cur->fts_statp->st_atime;
+#else
         long mod = cur->fts_statp->st_mtimespec.tv_sec;
+#endif
         struct file_list_context *flc2 = (struct file_list_context *)flc;
 		error = fn(cur->fts_path, dir, mod, flc2);
 		if (error != 0) {

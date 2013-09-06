@@ -52,7 +52,11 @@ struct variable *vj2f_int(struct context *context, JNIEnv *env, jobject ji)
     assert_message(intValueMethod, "no method Integer.intValue");
 
     // get value
+#ifdef __ANDROID__
+    jint intValue = (jint)((*env)->CallIntMethod(env, ji, intValueMethod));
+#else
     jint intValue = (jint)((*env)->CallObjectMethod(env, ji, intValueMethod));
+#endif
 
     // return new variable
     return variable_new_int(context, intValue);
@@ -484,11 +488,19 @@ struct variable *variable_new_java_find(struct context *context,
     return find;
 }
 
+#ifdef __ANDROID__
+JNIEXPORT jlong JNICALL Java_com_java_javagree_Javagree_eval(JNIEnv  *env,
+                                           jobject caller,
+                                           jobject callback,
+                                           jstring name,
+                                           jstring program)
+#else
 JNIEXPORT jlong JNICALL Java_Javagree_eval(JNIEnv  *env,
                                            jobject caller,
                                            jobject callback,
                                            jstring name,
                                            jstring program)
+#endif
 {
     // create filagree context
     struct context *context = context_new(NULL, true, true);

@@ -20,8 +20,14 @@ test_director = [
 
         if (msg4.event == 'test') then
             sys.print('test ' + msg4.seq + ': ' + msg4.status)
-            self.active[''+msg4.seq] = nil
-            if self.active.keys.length then sys.exit(2) end
+            seq = ''+msg4.seq
+            original_request = self.active[seq]
+            self.active[seq] = nil
+            if (msg4.status != 'pass') and (msg4.retry < 3) then
+                msg4.retry = msg4.retry + 1
+                sys.sleep(msg4.retry * 1000)
+                self.queue = [msg4] + self.queue
+            end
             self.dequeue()
             return
         end
