@@ -9,7 +9,6 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <dirent.h>
-#include <ftw.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <fts.h>
@@ -31,7 +30,6 @@ long fsize(FILE* file) {
 struct byte_array *read_file(const struct byte_array *filename_ba)
 {
     FILE * file;
-    size_t read;
     char *str;
     long size;
     
@@ -53,7 +51,7 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
     if (!(str = (char*)malloc((size_t)size + 1)))
         exit_message("could not malloc");
 
-    read = fread(str, 1, (size_t)size, file);
+    fread(str, 1, (size_t)size, file);
     if (feof(file) || ferror(file))
         exit_message("could not read file");
     if (fclose(file))

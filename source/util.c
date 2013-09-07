@@ -10,7 +10,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <fts.h>
-#include <ftw.h>
 #include <limits.h>
 
 #ifdef ANDROID

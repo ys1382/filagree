@@ -16,6 +16,7 @@
 bool run(struct context *context, struct byte_array *program, struct map *env, bool in_context);
 void display_code(struct context *context, struct byte_array *code);
 const char* indentation(struct context *context);
+uint16_t current_thread_id();
 
 #ifdef DEBUG
 
@@ -40,10 +41,6 @@ const char* indentation(struct context *context);
 // assertions //////////////////////////////////////////////////////////////
 
 jmp_buf trying;
-
-static uint16_t current_thread_id() {
-    return ((unsigned int)(VOID_INT)pthread_self() >> 12) & 0xFFF;
-}
 
 static void vm_exit() {
     DEBUGPRINT("exiting thread %" PRIu16 "\n", current_thread_id());
@@ -305,6 +302,10 @@ const struct number_string opcodes[] = {
     {VM_TRY,    "TRY"},
 };
 
+uint16_t current_thread_id() {
+    return ((unsigned int)(VOID_INT)pthread_self() >> 12) & 0xFFF;
+}
+
 const char* indentation(struct context *context)
 {
     null_check(context);
@@ -319,7 +320,11 @@ const char* indentation(struct context *context)
 static void display_program_counter(struct context *context, const struct byte_array *program)
 {
     null_check(context);
+#ifdef __ANDROID__
+    DEBUGSPRINT(context->pcbuf, "%s>%" PRIu16 " - %2d:%3d ",
+#else
     DEBUGSPRINT(context->pcbuf, "%s>%" PRIu16 " - %2ld:%3d ",
+#endif
             indentation(context),
             current_thread_id(),
             program->current-program->data,
@@ -1125,7 +1130,7 @@ static void binary_op(struct context *context, enum Opcode op)
 
     enum VarType ut = (enum VarType)u->type;
     enum VarType vt = (enum VarType)v->type;
-    struct variable *w;
+    struct variable *w = NULL;
 
     if ((op == VM_EQU) || (op == VM_NEQ)) {
         bool same = variable_compare(context, u, v) ^ (op == VM_NEQ);

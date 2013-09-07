@@ -10,9 +10,9 @@ extern "C" {
 /*
  * Class:     Javagree
  * Method:    eval
- * Signature: (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)J
+ * Signature: (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)I
  */
-JNIEXPORT jlong JNICALL Java_Javagree_eval
+JNIEXPORT jint JNICALL Java_Javagree_eval
   (JNIEnv *, jobject, jobject, jstring, jstring);
 
 #ifdef __cplusplus

@@ -21,7 +21,7 @@ public class Javagree {
      * @param program program
      *
      */
-    public native long eval(Object callback, String name, String program);
+    public native int eval(Object callback, String name, String program);
 
     /**
      *

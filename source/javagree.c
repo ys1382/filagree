@@ -303,7 +303,7 @@ struct variable *invoke(struct context *context,
                         JNIEnv *env,
                         jobject this,
                         jobject method,
-                        const jvalue *args)
+                        jvalue *args)
 {
     // get method class
     jclass m_cls = (*env)->GetObjectClass(env, method);
@@ -489,13 +489,13 @@ struct variable *variable_new_java_find(struct context *context,
 }
 
 #ifdef __ANDROID__
-JNIEXPORT jlong JNICALL Java_com_java_javagree_Javagree_eval(JNIEnv  *env,
+JNIEXPORT jint JNICALL Java_com_java_javagree_Javagree_eval(JNIEnv  *env,
                                            jobject caller,
                                            jobject callback,
                                            jstring name,
                                            jstring program)
 #else
-JNIEXPORT jlong JNICALL Java_Javagree_eval(JNIEnv  *env,
+JNIEXPORT jint JNICALL Java_Javagree_eval(JNIEnv  *env,
                                            jobject caller,
                                            jobject callback,
                                            jstring name,
@@ -517,5 +517,5 @@ JNIEXPORT jlong JNICALL Java_Javagree_eval(JNIEnv  *env,
     execute_with(context, program3, false);
 
     // return context for later use
-    return (jlong)context;
+    return (jint)context;
 }

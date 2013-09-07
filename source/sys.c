@@ -245,13 +245,10 @@ struct variable *sys_input(struct context *context)
     int32_t w=0, h=0;
 
     struct variable *values = (struct variable*)array_get(arguments->list, 4);
-    struct variable *name, *hint;
-    if (values->type == VAR_LST) {
-        name = (struct variable *)array_get(values->list, 0);
+    struct variable *hint = NULL;
+    if (values->type == VAR_LST)
         hint = (struct variable *)array_get(values->list, 1);
-    } else {
-        name = values;
-    }
+
     void *input = hal_input(uictx, x, y, &w, &h, hint, false);
     return ui_result(context, input, w, h);
 }
@@ -657,7 +654,7 @@ struct variable *cfnc_insert(struct context *context) // todo: test
     null_check(insertion);
     assert_message(!start || start->type == VAR_INT, "non-integer index");
 
-    int32_t position;
+    int32_t position = 0;
     switch (self->type) {
         case VAR_LST: {
             struct array *list = array_new_size(1);

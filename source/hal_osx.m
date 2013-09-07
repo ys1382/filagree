@@ -457,6 +457,7 @@ void *hal_label(int32_t x, int32_t y,
 -(void)setTimer:(double)interval repeats:(bool)repeats;
 -(IBAction)pressed:(id)sender;
 -(void)timerCallback:(NSTimer*)timer;
+-(void)callback;
 
 @end
 
