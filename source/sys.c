@@ -39,12 +39,12 @@ struct variable *sys_print(struct context *context)
 
 struct variable *sys_save(struct context *context)
 {
-    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *v = (struct variable*)array_get(value->list, 1);
-    struct variable *path = (struct variable*)array_get(value->list, 2);
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *v = param_var(context, args, 1);
+    struct variable *path = param_var(context, args, 2);
     struct byte_array *bytes = byte_array_new();
     variable_serialize(context, bytes, v);
-    int w = write_file(path->str, bytes);
+    int w = write_file(path->str, bytes, -1);
     byte_array_del(bytes);
     return variable_new_int(context, w);
 }
@@ -63,30 +63,45 @@ struct variable *sys_load(struct context *context)
 
 struct variable *sys_write(struct context *context)
 {
-    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *path = (struct variable*)array_get(value->list, 1);
-    struct variable *v = (struct variable*)array_get(value->list, 2);
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *path = param_var(context, args, 1);
+    struct variable *v = param_var(context, args, 2);
 
-    int w = write_file(path->str, v->str);
+    int w = write_file(path->str, v->str, -1);
     return variable_new_int(context, w);
 }
 
+// returns contents and modification time of file
 struct variable *sys_read(struct context *context)
 {
-    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *path = (struct variable*)array_get(value->list, 1);
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *path = param_var(context, args, 1);
+
+    struct variable *content = NULL;
+
     struct byte_array *bytes = read_file(path->str);
-    struct variable *result = NULL;
     if (NULL != bytes)
-        result = variable_new_str(context, bytes);
-    else {
+    {
+        content = variable_new_str(context, bytes);
+    }
+    else
+    {
         bytes = byte_array_from_string("could not load file");
         context->error = variable_new_str(context, bytes);
+        content = variable_new_nil(context);
     }
     byte_array_del(bytes);
+    variable_push(context, content);
+
+    long mod = file_modified(byte_array_to_string(path->str));
+    struct variable *mod2 = variable_new_int(context, mod);
+    variable_push(context, mod2);
+    struct variable *result = variable_new_src(context, 2);
+    
     return result;
 }
 
+// runs bytecode
 struct variable *sys_run(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
@@ -95,6 +110,7 @@ struct variable *sys_run(struct context *context)
     return NULL;
 }
 
+// compiles and runs bytecode
 struct variable *sys_interpret(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
@@ -103,6 +119,7 @@ struct variable *sys_interpret(struct context *context)
     return NULL;
 }
 
+// deletes file or folder
 struct variable *sys_rm(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
@@ -115,6 +132,7 @@ struct variable *sys_rm(struct context *context)
     return NULL;
 }
 
+// creates directory
 struct variable *sys_mkdir(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
@@ -127,6 +145,7 @@ struct variable *sys_mkdir(struct context *context)
     return NULL;
 }
 
+// arguments most recently passed into a function
 struct variable *sys_args(struct context *context)
 {
     stack_pop(context->operand_stack); // self
@@ -136,19 +155,7 @@ struct variable *sys_args(struct context *context)
     return result;
 }
 
-struct variable *sys_bytes(struct context *context)
-{
-    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *arg;
-    int32_t n = 0;
-    if (value->list->length > 1) {
-        arg = (struct variable*)array_get(value->list, 1);
-        assert_message(arg->type == VAR_INT, "bad bytes size type");
-        n = arg->integer;
-    }
-    return variable_new_bytes(context, NULL, n);
-}
-
+// ascii to integer
 struct variable *sys_atoi(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
@@ -171,6 +178,7 @@ struct variable *sys_atoi(struct context *context)
     return variable_new_src(context, 2);
 }
 
+// sine
 struct variable *sys_sin(struct context *context) // radians
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
@@ -366,9 +374,10 @@ struct variable *sys_file_listen(struct context *context)
     return NULL;
 }
 
+// this is the fn parameter passed into file_list()
 int file_list_callback(const char *path, bool dir, long mod, void *fl_context)
 {
-    printf("ftw %s\n", path);//, isDir ? "/" : "");
+    printf("file_list_callback %s\n", path);//, isDir ? "/" : "");
 
     struct file_list_context *flc = (struct file_list_context*)fl_context;
     struct byte_array *path2 = byte_array_from_string(path);
@@ -409,7 +418,6 @@ struct string_func builtin_funcs[] = {
     {"load",        &sys_load},
     {"rm",          &sys_rm},
     {"mkdir",       &sys_mkdir},
-    {"bytes",       &sys_bytes},
     {"sin",         &sys_sin},
     {"run",         &sys_run},
     {"interpret",   &sys_interpret},

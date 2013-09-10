@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <fts.h>
 #include <limits.h>
+#include <utime.h>
 
 
 #define INPUT_MAX_LEN    100000
@@ -70,21 +71,40 @@ int write_byte_array(struct byte_array* ba, FILE* file) {
     return len - n;
 }
 
-int write_file(const struct byte_array* filename, struct byte_array* bytes)
+int write_file(const struct byte_array* path, struct byte_array* bytes, int32_t timestamp)
 {
-    char *fname = byte_array_to_string(filename);
-    FILE* file = fopen(fname, "w");
+    // open file
+    char *path2 = byte_array_to_string(path);
+    int result = -1;
+    FILE* file = fopen(path2, "w");
     if (NULL == file) {
-        DEBUGPRINT("could not write file %s\n", fname);
-        free(fname);
-        return -1;
+        DEBUGPRINT("could not open file %s\n", path2);
+        goto done;
     }
-    free(fname);
 
-    int r = fwrite(bytes->data, 1, bytes->length, file);
-    DEBUGPRINT("\twrote %d bytes to %s\n", r, fname);
-    int s = fclose(file);
-    return (r<0) || s;
+    // write bytes
+    if (NULL != bytes)
+    {
+        int r = fwrite(bytes->data, 1, bytes->length, file);
+        DEBUGPRINT("\twrote %d bytes to %s\n", r, path2);
+        int s = fclose(file);
+        result = (r<0) || s;
+    }
+
+    // set timestamp
+    if (timestamp >= 0)
+    {
+        struct utimbuf timestamp2;
+        timestamp2.modtime = timestamp;
+        if (utime(path2, &timestamp2))
+            DEBUGPRINT("could not set timestamp for file %s\n", path2);
+        goto done;
+        result = 0;
+    }
+
+done:
+    free(path2);
+    return result;
 }
 
 char* build_path(const char* dir, const char* name)
@@ -138,4 +158,13 @@ done:
 	(void) fts_close(ftsp);
 	errno = sverrno;
 	return (error);
+}
+
+long file_modified(const char *path)
+{
+    struct stat fst;
+    bzero(&fst,sizeof(fst));
+    if (stat(path, &fst))
+        return -1;
+    return fst.st_mtime;
 }

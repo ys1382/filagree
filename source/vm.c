@@ -16,7 +16,6 @@
 bool run(struct context *context, struct byte_array *program, struct map *env, bool in_context);
 void display_code(struct context *context, struct byte_array *code);
 const char* indentation(struct context *context);
-uint16_t current_thread_id();
 
 #ifdef DEBUG
 
@@ -41,6 +40,10 @@ uint16_t current_thread_id();
 // assertions //////////////////////////////////////////////////////////////
 
 jmp_buf trying;
+
+uint16_t current_thread_id() {
+    return ((unsigned int)(VOID_INT)pthread_self() >> 12) & 0xFFF;
+}
 
 static void vm_exit() {
     DEBUGPRINT("exiting thread %" PRIu16 "\n", current_thread_id());
@@ -229,7 +232,7 @@ void garbage_collect(struct context *context)
         return;
 
     struct variable *v;
-    DEBUGPRINT("\n>%" PRIu16 " - garbage collect\n", current_thread_id());
+    printf("\n>%" PRIu16 " - garbage collect\n", current_thread_id());
 
     unmark_all(context);
 
@@ -301,10 +304,6 @@ const struct number_string opcodes[] = {
     {VM_COM,    "COM"},
     {VM_TRY,    "TRY"},
 };
-
-uint16_t current_thread_id() {
-    return ((unsigned int)(VOID_INT)pthread_self() >> 12) & 0xFFF;
-}
 
 const char* indentation(struct context *context)
 {
@@ -1085,9 +1084,9 @@ static struct variable *binary_op_nil(struct context *context,
         case VM_SUB:    return variable_copy(context, v);
         case VM_MUL:    return variable_new_nil(context);
         case VM_LTN:
+        case VM_LEQ:    return variable_new_bool(context, true);
         case VM_GTN:
-        case VM_LEQ:
-        case VM_GRQ: return variable_new_bool(context, false);
+        case VM_GRQ:    return variable_new_bool(context, false);
         default:
             return vm_exit_message(context, "unknown binary nil op");
     }

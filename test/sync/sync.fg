@@ -6,6 +6,8 @@ test_dir = 'synctest/'
 
 Sync = [
 
+    'writing' : [],
+
     'init' : function(self, ctx, watched, id)
 
         self = ['ctx':ctx, 'watched':watched, 'id':id, 'peers':[]] + self
@@ -34,7 +36,7 @@ Sync = [
 
     'connected' : function(self, socket)
         msg1 = ['event' : 'greet', 'from' : self.id, 'files' : self.files]
-        sys.send(socket, msg1)
+        self.send(socket, msg1)
     end,
 
     'messaged' : function(self, socket, msg4)
@@ -52,9 +54,9 @@ Sync = [
             self.handle_change(socket,msg4.changes)
 
         else if msg4.event == 'content' then
-            self.writing = msg4.path
-            sys.write(self.watched + msg4.path, msg4.content)   # save file
-            self.writing = nil
+            sys.print('set writing[ ' + msg4.path + ' ] to ' + msg4.modified)
+            self.writing[msg4.path] = msg4.modified
+            sys.write(self.watched + msg4.path, msg4.content, msg4.modified)   # save file
             files = self.local_snapshot().keys
             if self.ctx.ui then
                 sys.ui_set(self.ctx.ui.files, files)            # update ui
@@ -71,18 +73,23 @@ Sync = [
         for path in msg5.paths
 
             fullpath = self.watched + path
-            content = sys.read(fullpath)
-            response = ['event' : 'content', 'path' : path, 'content' : content]
-            sys.send(socket, response)
+            content, modified = sys.read(fullpath)
+            response = ['event' : 'content', 'path' : path, 'content' : content, 'modified' : modified]
+            self.send(socket, response)
 
         end
     end,
 
-    'filed' : function(self, path)
+    'filed' : function(self, path, modified)
 
-        if path == self.writing # because we're writing to it
+        sys.print('compare time ' + modified + ' with ' + self.writing[path])
+        if self.writing[path] == modified # because we're writing to it
+            sys.print('...same')
+            self.writing[path] = nil
             return
         end
+            sys.print('...different')
+
         latest = self.local_snapshot()
         updated = latest - self.files
         deleted = self.files - latest
@@ -123,7 +130,7 @@ Sync = [
         paths = [path for path in cu where not cu[path].dir]
         if paths.length then
             msg3 = ['event' : 'content-request', 'paths' : paths]
-            sys.send(socket, msg3)
+            self.send(socket, msg3)
         end
 
     end,
@@ -134,6 +141,11 @@ Sync = [
         if not to then
             to = self.peers['server']
         end
+        self.send(to, msg)
+    end,
+
+    'send' : function(self, to, msg)
+        sys.print('send to ' + to + ': ' + msg)
         sys.send(to, msg)
     end,
 
@@ -144,7 +156,7 @@ Sync = [
         self.prep(msg6)
         msg6.from = self.id
         for socket in self.peers.vals
-            sys.send(socket, msg6)
+            self.send(socket, msg6)
         end
     end,
 
@@ -190,7 +202,7 @@ Sync = [
         else # forward to recipient
 
             to = self.peers[msg7.to] # id -> socket
-            sys.send(to, msg7)
+            self.send(to, msg7)
 
         end
     end,

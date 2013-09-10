@@ -13,6 +13,9 @@
 #include "variable.h"
 #include "file.h"
 
+#define EXTENSION_SRC    ".fg"
+#define EXTENSION_BC     ".fgbc"
+
 #define TAG              "compile"
 #define ERROR_LEX        "Lexigraphical error"
 #define ERROR_PARSE      "Parsological error"
@@ -1585,6 +1588,7 @@ struct byte_array *build_file(const struct byte_array* filename)
     return result;
 }
 
+// reads source from .fg file, builds bytecode, writes output to .fgbc file
 void compile_file(const char* str)
 {
     struct byte_array *filename = byte_array_from_string(str);
@@ -1594,7 +1598,7 @@ void compile_file(const char* str)
     int offset = byte_array_find(filename, dotfg, 0);
     assert_message(offset > 0, "invalid source file name");
     byte_array_replace(filename, dotfgbc, offset, dotfg->length);
-    write_file(filename, program);
+    write_file(filename, program, -1);
 
     byte_array_del(filename);
     byte_array_del(program);

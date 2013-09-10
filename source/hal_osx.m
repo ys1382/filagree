@@ -17,6 +17,7 @@
 #include "vm.h"
 #include "hal.h"
 #include "struct.h"
+#include "file.h"
 
 static NSWindow *window = NULL;
 
@@ -817,8 +818,10 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
         struct variable *method2 = variable_new_str(thread->context, method);
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
 
+        long mod = file_modified(path);
+        struct variable *mod2 = variable_new_int(thread->context, mod); // goes pop in 2038
         if ((NULL != method3) && (method3->type != VAR_NIL))
-            vm_call(thread->context, method3, thread->listener, path3);
+            vm_call(thread->context, method3, thread->listener, path3, mod2);
     }
 
     gil_unlock(thread->context, "file_listener_callback");

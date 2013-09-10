@@ -16,18 +16,29 @@ test_director = [
 
     'messaged' : function(self, socket, msg4)
 
-        sys.print('messaged ' + msg4)
+    if msg4.event != 'change' then
+            sys.print('messaged ' + msg4)
+    end
 
         if (msg4.event == 'test') then
-            sys.print('test ' + msg4.seq + ': ' + msg4.status)
+
+            sys.print('test result: ' + msg4)
+            #sys.print('test result: ' + msg4.seq + ': ' + msg4.status)
+
             seq = ''+msg4.seq
             original_request = self.active[seq]
             self.active[seq] = nil
-            if (msg4.status != 'pass') and (msg4.retry < 3) then
-                msg4.retry = msg4.retry + 1
-                sys.sleep(msg4.retry * 1000)
-                self.queue = [msg4] + self.queue
+
+            ok = (msg4.status == 'done') or (msg4.status == 'pass')
+
+            if (not ok) and (original_request.retry < 3) then
+
+                original_request.retry = original_request.retry + 1
+                sys.sleep(original_request.retry * 1000)
+                self.queue = [original_request] + self.queue
+
             end
+
             self.dequeue()
             return
         end
@@ -65,7 +76,6 @@ test_director = [
 
     'dequeue' : function(self)
 
-        sys.print('dq ' + self.queue.length +' '+ self.active.keys.length)
         if (not self.queue.length) or (self.active.keys.length) then
             return
         end
@@ -73,6 +83,9 @@ test_director = [
         msg4 = self.queue.remove()[0]
         self.active[''+msg4.seq] = msg4
         if self.active.keys.length != 1 then sys.exit(2) end
+
+        sys.print('send ' + msg4)
+
         sys.send(self.server, msg4)
 
     end,

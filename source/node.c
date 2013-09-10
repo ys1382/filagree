@@ -71,8 +71,8 @@ void *incoming(void *arg)
     gil_lock(ta->context, "incoming");
     ta->message = variable_deserialize(ta->context, ta->buf);
 #ifdef DEBUG
-    char buf[1000];
-    DEBUGPRINT("received %s\n", variable_value_str(ta->context, ta->message, buf));
+    //char buf[1000];
+    //DEBUGPRINT("received %s\n", variable_value_str(ta->context, ta->message, buf));
 #endif
     gil_unlock(ta->context, "incoming");
 
@@ -198,7 +198,7 @@ void *sys_socket_listen2(void *arg)
                     ta->buf->length = n;
                     memcpy((void*)ta->buf->data, buf, n);
                     ta->event = MESSAGED;
-                    DEBUGPRINT("incoming1 %d\n", sockfd);
+                    //DEBUGPRINT("incoming1 %d\n", sockfd);
                     add_thread(ta, 0);
                 }
 				
@@ -274,7 +274,7 @@ void *sys_connect2(void *arg)
             ta->buf->length = n;
             memcpy((void*)ta->buf->data, buf, n);
             ta->event = MESSAGED;
-            DEBUGPRINT("incoming2 %d\n", ta->fd);
+            //DEBUGPRINT("incoming2 %d\n", ta->fd);
             ta->start_routine = incoming;
             add_thread(ta, 0);
         }

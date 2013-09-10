@@ -77,7 +77,6 @@ struct byte_array* serial_decode_string(struct byte_array* buf)
 	null_check(ba->data);
     memcpy(ba->data, buf->current, len);
     buf->current += len;
-    //DEBUGPRINT("serial_decode_string %p\n", ba->data);
     ba->length = len;
     return ba;
 }
@@ -109,12 +108,9 @@ void serial_decode(struct byte_array* buf, serial_element se, const void* extra)
                 DEBUGPRINT("serial_decode ?\n");
                 break;
         }
-        if (se(&pair, buf, extra)) {
-//            DEBUGPRINT("serial_decode: break\n");
+        if (se(&pair, buf, extra))
             break;
-        }
     }
-//    DEBUGPRINT("serial_decode done\n");
 }
 
 // assume little endian
