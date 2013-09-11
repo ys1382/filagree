@@ -10,10 +10,18 @@ extern "C" {
 /*
  * Class:     Javagree
  * Method:    eval
- * Signature: (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)I
+ * Signature: (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)I
  */
 JNIEXPORT jint JNICALL Java_Javagree_eval
-  (JNIEnv *, jobject, jobject, jstring, jstring);
+  (JNIEnv *, jobject, jobject, jstring, jstring, jobject);
+
+/*
+ * Class:     Javagree
+ * Method:    return_multiple
+ * Signature: ([Ljava/lang/Object;)V
+ */
+JNIEXPORT void JNICALL Java_Javagree_return_1multiple
+  (JNIEnv *, jclass, jobjectArray);
 
 #ifdef __cplusplus
 }

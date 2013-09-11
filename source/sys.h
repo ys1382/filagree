@@ -5,6 +5,9 @@
 #include "vm.h"
 
 
+#define RESERVED_SYS  "sys"
+
+
 struct variable *sys_new(struct context *context);
 
 struct variable *sys_func(struct context *context, struct byte_array *name);

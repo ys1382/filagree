@@ -75,8 +75,8 @@ static struct number_string hal_events[] = {
     {ERROR,         "error"},
 };
 
-struct byte_array *event_string(enum HAL_Event event)
+struct variable *event_string(struct context *context, enum HAL_Event event)
 {
     const char *str = NUM_TO_STRING(hal_events, event);
-    return byte_array_from_string(str);
+    return variable_new_str_chars(context, str);
 }

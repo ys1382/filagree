@@ -31,9 +31,6 @@ const char* indentation(struct context *context);
 
 #endif // not DEBUG
 
-#define RESERVED_SET    "set"
-#define RESERVED_SYS    "sys"
-
 #define VAR_MAX         9999
 #define GIL_SWITCH      100
 
@@ -541,24 +538,6 @@ static void push_kvp(struct context *context, struct byte_array *program)
 
 // run /////////////////////////////////////////////////////////////////////
 
-bool custom_method(struct context *context,
-                   const char *method,
-                   struct variable *indexable,
-                   struct variable *index,
-                   struct variable *value)
-{
-    struct variable *custom;
-    struct byte_array *name = byte_array_from_string(method);
-    struct variable *key = variable_new_str(context, name);
-    byte_array_del(name);
-    if (indexable->map && (custom = (struct variable*)map_get(indexable->map, key))) {
-        DEBUGSPRINT(context->pcbuf, "%s(custom %s)\n", context->pcbuf, method);
-        vm_call(context, custom, indexable, index, value, NULL);
-        return true;
-    }
-    return false;
-}
-
 // get the indexed item and push on operand stack
 struct variable *lookup(struct context *context, struct variable *indexable, struct variable *index)
 {
@@ -576,11 +555,8 @@ struct variable *lookup(struct context *context, struct variable *indexable, str
             case VAR_BYT: {
                 char *str = (char*)malloc(2);
                 sprintf(str, "%c", indexable->str->data[index->integer]);
-                struct byte_array *str2 = byte_array_from_string(str);
-                struct variable *str3 = variable_new_str(context, str2);
-                free(str);
-                byte_array_del(str2);
-                return str3;
+                struct variable *str2 = variable_new_str_chars(context, str);
+                return str2;
             } break;
             case VAR_LST:
                 if (index->integer < indexable->list->length)
@@ -698,15 +674,18 @@ struct variable *find_var(struct context *context, struct variable *key)
     null_check(key);
 
     const struct program_state *state = (const struct program_state*)stack_peek(context->program_stack, 0);
+    if (NULL == state)
+        return NULL;
     struct map *var_map = state->named_variables;
     struct variable *v = (struct variable*)map_get(var_map, key);
 
     if ((NULL == v) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS))) {
         v = context->sys;
     }
+
     if ((NULL == v) && context->singleton->callback)
         v = variable_map_get(context, context->singleton->callback, key);
-    assert_message(NULL != v, "could not find variable");
+
     return v;
 }
 

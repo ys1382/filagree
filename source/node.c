@@ -52,9 +52,8 @@ void *node_callback(void *arg)
         return NULL;
     gil_lock(ta->context, "node_callback");
     
-    struct byte_array *key = event_string(ta->event);
-    struct variable *key2 = variable_new_str(ta->context, key);
-    struct variable *callback = variable_map_get(ta->context, ta->listener, key2);
+    struct variable *key = event_string(ta->context, ta->event);
+    struct variable *callback = variable_map_get(ta->context, ta->listener, key);
     struct variable *id = variable_new_int(ta->context, ta->fd);
     if (NULL != callback)
         vm_call(ta->context, callback, ta->listener, id, ta->message, NULL);

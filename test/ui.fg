@@ -31,7 +31,11 @@ end
 sys.ui = function(self, uictx, item, parent, x, y)
 
     if not parent then
-        w,h = sys.window(item.w, item.h)
+        if (not w) or (not h) and sys.screen then
+            sys.screen()
+        else
+            w,h = sys.window(item.w, item.h)
+        end
         parent = ['w':item.w, 'h':item.h]
         return sys.ui(uictx, item, parent, 0, 0)
     end

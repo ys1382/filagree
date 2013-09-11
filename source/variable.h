@@ -72,6 +72,7 @@ struct variable *variable_new_nil(struct context *context);
 struct variable *variable_new_kvp(struct context *context, struct variable *key, struct variable *val);
 struct variable *variable_new_float(struct context *context, float f);
 struct variable *variable_new_str(struct context *context, struct byte_array *str);
+struct variable *variable_new_str_chars(struct context *context, const char *str);
 struct variable *variable_new_fnc(struct context *context, struct byte_array *body, struct variable *closures);
 struct variable *variable_new_list(struct context *context, struct array *list);
 struct variable *variable_new_src(struct context *context, uint32_t size);

@@ -616,8 +616,7 @@ struct variable *hal_ui_get(struct context *context, void *widget)
         NSTextField *widget3 = (NSTextField*)widget;
         NSString *value = [widget3 stringValue];
         const char *value2 = [value UTF8String];
-        struct byte_array *value3 = byte_array_from_string(value2);
-        return variable_new_str(context, value3);
+        return variable_new_str_chars(context, value2);
     }
     return variable_new_nil(context);
 }
@@ -682,6 +681,7 @@ void *hal_window(struct context *context,
                 int32_t *w, int32_t *h,
                 struct variable *logic)
 {
+    printf("hal_window\n");
     if (window) { // clear contents
         NSView *content = [window contentView];
         NSArray *subviews = [NSArray arrayWithArray:[content subviews]];
@@ -811,11 +811,9 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
         char *path = (char*)paths[i];
         int len = strlen(path) - 1;
         if (path[len] == '/') path[len] = 0; // pesky trailing slash
-        struct byte_array *path2 = byte_array_from_string(path);
-        struct variable *path3 = variable_new_str(thread->context, path2);
+        struct variable *path3 = variable_new_str_chars(thread->context, path);
 
-        struct byte_array *method = event_string(FILED);
-        struct variable *method2 = variable_new_str(thread->context, method);
+        struct variable *method2 = variable_new_str_chars(thread->context, FILED);
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
 
         long mod = file_modified(path);

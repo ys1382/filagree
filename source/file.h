@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+#define RESERVED_DIR      "dir"
+#define RESERVED_MODIFIED "modified"
+
 struct byte_array *read_file(const struct byte_array *filename);
 int write_file(const struct byte_array* filename, struct byte_array* bytes, int32_t timestamp);
 long fsize(FILE* file);

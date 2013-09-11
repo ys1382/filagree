@@ -113,6 +113,7 @@ void vm_assert(struct context *context, bool assertion, const char *format, ...)
 struct variable *lookup(struct context *context, struct variable *indexable, struct variable *index);
 void gil_lock(struct context *context, const char *who);
 void gil_unlock(struct context *context, const char *who);
+struct variable *find_var(struct context *context, struct variable *key);
 
 void execute(struct byte_array *program);
 void execute_with(struct context *context,

@@ -17,7 +17,7 @@ enum HAL_Event {
     ERROR,
 };
 
-struct byte_array *event_string(enum HAL_Event event);
+struct variable *event_string(struct context *context, enum HAL_Event event);
 
 void hal_print(const char *str);
 void hal_loop();

@@ -150,6 +150,12 @@ struct variable *variable_new_str(struct context *context, struct byte_array *st
     return v;
 }
 
+struct variable *variable_new_str_chars(struct context *context, const char *str)
+{
+    struct byte_array *str2 = byte_array_from_string(str);
+    return variable_new_str(context, str2);
+}
+
 struct variable *variable_new_fnc(struct context *context, struct byte_array *body, struct variable *closures)
 {
     struct variable *v = variable_new(context, VAR_FNC);
@@ -358,7 +364,8 @@ char *variable_value_str(struct context *context, struct variable* v, char *buf)
     return buf;
 }
 
-struct byte_array *variable_value(struct context *c, struct variable *v) {
+struct byte_array *variable_value(struct context *c, struct variable *v)
+{
     char buf[VV_SIZE];
     const char *str = variable_value_str(c, v, buf);
     return byte_array_from_string(str);

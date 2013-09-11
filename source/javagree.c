@@ -2,7 +2,7 @@
 #include <string.h>
 #include "javagree.h"
 #include "compile.h"
-
+#include "sys.h"
 
 struct variable *variable_new_j2f(struct context *context, JNIEnv *env, jobject jo);
 struct variable *variable_new_j2f_ex(struct context *context, JNIEnv *env, jobject jo, jobject parent);
@@ -36,8 +36,7 @@ const char *jni_class_name(JNIEnv *env, jobject jo)
 struct variable *vj2f_str(struct context *context, JNIEnv *jenv, jstring js)
 {
     const char *str = (*jenv)->GetStringUTFChars(jenv, js, NULL);
-    struct byte_array *str2 = byte_array_from_string(str);
-    return variable_new_str(context, str2);
+    return variable_new_str_chars(context, str);
 }
 
 // Integer -> variable
@@ -145,13 +144,17 @@ struct variable *vj2f_map(struct context *context, JNIEnv *env, jobject hashmap)
 }
 
 // jobjectArray -> variable
-struct variable *variable_new_j2f_array(struct context *context, JNIEnv *env, jobjectArray joa, const char *name)
+struct variable *variable_new_j2f_array(struct context *context,
+                                        JNIEnv *env,
+                                        jobjectArray joa,
+                                        const char *name)
 {
     jint length = (*env)->GetArrayLength(env, joa);
     struct array *list = array_new(length);
 
     for (jint i=0; i<length; i++)
     {
+        DEBUGPRINT("v2jf_array %d\n", i);
         // get object from JNI array
         jobject jo = (*env)->GetObjectArrayElement(env, joa, i);
 
@@ -287,6 +290,7 @@ jobject vf2j(JNIEnv *env, struct variable *f)
 {
     switch (f->type)
     {
+        case VAR_NIL:   return NULL;
         case VAR_INT:   return vf2j_int(env, f);
         case VAR_STR:   return vf2j_str(env, f);
         case VAR_SRC:   
@@ -321,10 +325,10 @@ struct variable *invoke(struct context *context,
     jobject result = (*env)->CallObjectMethodA(env, this, invoke, args);
     assert_message(result, "cannot call Method.invoke. Oh, the irony!");
 
-    //DEBUGPRINT("invoked\n");
-
     // translate result from Java to filagree
-    return variable_new_j2f(context, env, result);
+    struct variable *ret = variable_new_j2f(context, env, result);
+    ret->type = VAR_SRC;
+    return ret;
 }
 
 struct method_closure {
@@ -400,7 +404,8 @@ struct variable *jobject_name(struct context *context, JNIEnv *env, jobject jo)
 
 struct variable *vj2f_fnc(struct context *context, JNIEnv *env, jobject method, jobject this)
 {
-    DEBUGPRINT("method %p . %p\n", this, method);
+    //DEBUGPRINT("method %p . %p\n", this, method);
+
     // get Method name
     struct variable *key = jobject_name(context, env, method);
 
@@ -445,7 +450,7 @@ struct variable *variable_new_j2f_ex(struct context *context, JNIEnv *env, jobje
 {
     const char *name = jni_class_name(env, jo);
     assert_message(name, "cannot get class name");
-    //DEBUGPRINT("variable_new_j2f: %s\n", name);
+    DEBUGPRINT("variable_new_j2f: %s\n", name);
 
     if (name[0] == '[')
         return variable_new_j2f_array(context, env, (jobjectArray)jo, &name[1]);
@@ -464,15 +469,15 @@ struct variable *variable_new_j2f_ex(struct context *context, JNIEnv *env, jobje
     return vj2f_bespoke(context, env, jo);
 }
 
-struct variable *variable_new_j2f(struct context *context, JNIEnv *env, jobject jo)
-{
+struct variable *variable_new_j2f(struct context *context, JNIEnv *env, jobject jo) {
     return variable_new_j2f_ex(context, env, jo, NULL);
 }
 
 struct variable *variable_new_java_find(struct context *context,
                                         JNIEnv  *env,
                                         jobject callback,
-                                        jstring name)
+                                        jstring name,
+                                        jobject sys)
 {
     // java callback object name
     struct byte_array *name2 = byte_array_from_jstring(env, name);
@@ -481,32 +486,65 @@ struct variable *variable_new_java_find(struct context *context,
     // java callback object, translated to filagree object
     struct variable *callback2 = variable_new_j2f(context, env, callback);
 
+    // sys object
+    if (NULL != sys)
+    {
+        struct variable *sysfg = variable_new_j2f(context, env, sys);
+        context->sys = sysfg;
+
+        struct array *keys = map_keys(sysfg->map);
+        for (int i=0; i<keys->length; i++)
+        {
+            struct variable *key = array_get(keys, i);
+            struct variable *val = variable_map_get(context, context->sys, key);
+            if (val->type != VAR_NIL)
+                variable_map_insert(context, context->sys, key, val);
+        }
+    }
+
     // filagree callback object
     struct variable *find = variable_new_list(context, NULL);
     variable_map_insert(context, find, name3, callback2);
-
     return find;
 }
 
 #ifdef __ANDROID__
-JNIEXPORT jint JNICALL Java_com_java_javagree_Javagree_eval(JNIEnv  *env,
-                                           jobject caller,
-                                           jobject callback,
-                                           jstring name,
-                                           jstring program)
+JNIEXPORT void JNICALL Java_com_java_javagree_Javagree_return_1multiple(JNIEnv *env, jclass cls, jobjectArray joa)
 #else
-JNIEXPORT jint JNICALL Java_Javagree_eval(JNIEnv  *env,
-                                           jobject caller,
-                                           jobject callback,
-                                           jstring name,
-                                           jstring program)
+JNIEXPORT void JNICALL Java_Javagree_return_1multiple(JNIEnv *env, jclass cls, jobjectArray joa)
+#endif
+{
+    jint length = (*env)->GetArrayLength(env, joa);
+    DEBUGPRINT("%d args\n", length);
+    for (jint i=0; i<length; i++)
+    {
+        jobject jo = (*env)->GetObjectArrayElement(env, joa, i);
+//        struct variable *v = variable_new_j2f(context, env, jo);
+    }
+    printf("rm done\n");
+}
+
+#ifdef __ANDROID__
+JNIEXPORT jint JNICALL Java_com_java_javagree_Javagree_eval(JNIEnv *env,
+                                                            jobject caller,
+                                                            jobject callback,
+                                                            jstring name,
+                                                            jstring program,
+                                                            jobject sys)
+#else
+JNIEXPORT jint JNICALL Java_Javagree_eval(JNIEnv *env,
+                                          jobject caller,
+                                          jobject callback,
+                                          jstring name,
+                                          jstring program,
+                                          jobject sys)
 #endif
 {
     // create filagree context
     struct context *context = context_new(NULL, true, true);
 
     // generate callback object
-    struct variable *find = variable_new_java_find(context, env, callback, name);
+    struct variable *find = variable_new_java_find(context, env, callback, name, sys);
     context->singleton->callback = find;
 
     // compile source to bytecode

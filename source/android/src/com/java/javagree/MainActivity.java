@@ -1,8 +1,5 @@
 package com.java.javagree;
 
-import com.java.javagree.Javagree.Test;
-
-
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
@@ -22,7 +19,7 @@ public class MainActivity extends Activity implements OnClickListener {
     @Override
     public void onClick(View v) {
     	if(v.getId()==R.id.button1) {
-     	       Javagree.doTesting();
+     	       FilagreeBridge.doTesting();
     	}
     }
 

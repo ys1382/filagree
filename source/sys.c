@@ -14,8 +14,6 @@
 #include "node.h"
 #include "file.h"
 
-#define RESERVED_SYS  "sys"
-
 struct string_func
 {
     const char* name;
@@ -86,8 +84,7 @@ struct variable *sys_read(struct context *context)
     }
     else
     {
-        bytes = byte_array_from_string("could not load file");
-        context->error = variable_new_str(context, bytes);
+        context->error = variable_new_str_chars(context, "could not load file");
         content = variable_new_nil(context);
     }
     byte_array_del(bytes);
@@ -336,6 +333,7 @@ struct variable *sys_sound(struct context *context)
 
 struct variable *sys_window(struct context *context)
 {
+    DEBUGPRINT("sys_window\n");
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     int w=0, h=0;
     if (value->list->length > 2) {
@@ -380,17 +378,14 @@ int file_list_callback(const char *path, bool dir, long mod, void *fl_context)
     printf("file_list_callback %s\n", path);//, isDir ? "/" : "");
 
     struct file_list_context *flc = (struct file_list_context*)fl_context;
-    struct byte_array *path2 = byte_array_from_string(path);
-    struct variable *path3 = variable_new_str(flc->context, path2);
+    struct variable *path3 = variable_new_str_chars(flc->context, path);
 
-    struct byte_array *key = byte_array_from_string("dir");
-    struct variable *key2 = variable_new_str(flc->context, key);
+    struct variable *key2 = variable_new_str_chars(flc->context, RESERVED_DIR);
     struct variable *value = variable_new_bool(flc->context, dir);
     struct variable *metadata = variable_new_list(flc->context, NULL);
     variable_map_insert(flc->context, metadata, key2, value);
 
-    key = byte_array_from_string("modified");
-    key2 = variable_new_str(flc->context, key);
+    key2 = variable_new_str_chars(flc->context, RESERVED_MODIFIED);
     value = variable_new_int(flc->context, mod);
     variable_map_insert(flc->context, metadata, key2, value);
     variable_map_insert(flc->context, flc->result, path3, metadata);
@@ -446,13 +441,13 @@ struct variable *sys_new(struct context *context)
 {
     struct variable *sys = variable_new_list(context, NULL);
 
-    for (int i=0; i<ARRAY_LEN(builtin_funcs); i++) {
-        struct byte_array *name = byte_array_from_string(builtin_funcs[i].name);
-        struct variable *key = variable_new_str(context, name);
-        byte_array_del(name);
+    for (int i=0; i<ARRAY_LEN(builtin_funcs); i++)
+    {
+        struct variable *key = variable_new_str_chars(context, builtin_funcs[i].name);
         struct variable *value = variable_new_cfnc(context, builtin_funcs[i].func);
         variable_map_insert(context, sys, key, value);
     }
+
     return sys;
 }
 
@@ -816,9 +811,7 @@ struct variable *builtin_method(struct context *context,
     }
     else if (!strcmp(idxstr, FNC_TYPE)) {
         const char *typestr = var_type_str(it);
-        struct byte_array *bats = byte_array_from_string(typestr);
-        result = variable_new_str(context, bats);
-        byte_array_del(bats);
+        result = variable_new_str_chars(context, typestr);
     }
 
     else if (!strcmp(idxstr, FNC_STRING)) {
