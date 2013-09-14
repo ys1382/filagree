@@ -76,7 +76,7 @@ sys.ui = function(self, uictx, item, parent, x, y)
         o,w,h = sys.input(uictx, x, y, details[0])
 
     else if type == 'label' then
-        o,w,h = sys.label(x, y, details[0])
+        o,w,h = sys.label(x, y, item.text)
 
     else if type == 'button' then
         o,w,h = sys.button(uictx, x, y, 0, 0, item.logic, item.text, item.image)
