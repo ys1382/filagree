@@ -3,18 +3,25 @@
 port = 9999
 test_dir = 'synctest/'
 
-
 Sync = [
 
     'writing' : [],
 
-    'init' : function(self, ctx, watched, id)
+    'init' : function(self, ctx, id)
+
+        watched = test_dir + id + '/'
+
+        # for test
+        sys.rm(watched)
+        sys.mkdir(watched)
 
         self = ['ctx':ctx, 'watched':watched, 'id':id, 'peers':[]] + self
         self.files = self.local_snapshot()
+
         if ctx and ctx.ui then
             sys.ui_set(ctx.ui.files, self.files.keys)     # update ui
         end
+
         return self
 
     end,
@@ -55,7 +62,7 @@ Sync = [
 
         else if msg4.event == 'content' then
             sys.print('set writing[ ' + msg4.path + ' ] to ' + msg4.modified)
-            self.writing[msg4.path] = msg4.modified
+            self.writing[msg4.path] = msg4
             sys.write(self.watched + msg4.path, msg4.content, msg4.modified)   # save file
             files = self.local_snapshot().keys
             if self.ctx.ui then
@@ -82,9 +89,12 @@ Sync = [
 
     'filed' : function(self, path, modified)
 
-        sys.print('compare time ' + modified + ' with ' + self.writing[path])
-        if self.writing[path] == modified # because we're writing to it
+        skip = self.writing[path].modified
+        sys.print('compare time ' + modified + ' with ' + skip)
+        if skip == modified # because we're writing to it
             sys.print('...same')
+            except = self.writing[path].from
+            self.broadcast(original_message, except)
             self.writing[path] = nil
             return
         end
@@ -137,11 +147,15 @@ Sync = [
 
     'send_to' : function(self, to, msg)
         msg.from = self.id
-        to = self.peers[to] # id -> socket
-        if not to then
-            to = self.peers['server']
+        to2 = self.peers[to] # id -> socket
+        if not to2 then
+            if self.id != 'server' then
+                to2 = self.peers['server']
+            else
+                sys.print('no peer ' + to)
+            end
         end
-        self.send(to, msg)
+        self.send(to2, msg)
     end,
 
     'send' : function(self, to, msg)
@@ -149,13 +163,13 @@ Sync = [
         sys.send(to, msg)
     end,
 
-    'broadcast' : function(self, msg6)
+    'broadcast' : function(self, msg6, except)
         if self.offline then
             return
         end
         self.prep(msg6)
         msg6.from = self.id
-        for socket in self.peers.vals
+        for socket in self.peers.vals where (socket != except)
             self.send(socket, msg6)
         end
     end,
@@ -208,10 +222,3 @@ Sync = [
     end,
 
 ]
-
-sys.mkdir(test_dir)
-
-empty = function(dir)
-    sys.rm(dir)
-    sys.mkdir(dir)
-end

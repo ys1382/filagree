@@ -375,10 +375,7 @@ struct variable *variable_pop(struct context *context)
 {
     struct variable *v = (struct variable*)stack_pop(context->operand_stack);
     null_check(v);
-//    DEBUGPRINT("\nvariable_pop %s\n", variable_value_str(context, v));
-//    print_operand_stack(context);
     if (v->type == VAR_SRC) {
-//        DEBUGPRINT("\tsrc %d ", v->list->length);
         if (v->list->length)
             v = (struct variable*)array_get(v->list, 0);
         else

@@ -3,7 +3,8 @@
 
 #define VV_SIZE 10000
 
-enum VarType {
+enum VarType
+{
     VAR_NIL,
     VAR_INT,
     VAR_FLT,
@@ -15,12 +16,13 @@ enum VarType {
     VAR_ERR,
     VAR_BYT,
     VAR_BOOL,
-    VAR_VOID    ,
+    VAR_VOID,
     VAR_CFNC,
     VAR_LAST,
 };    
 
-enum Visited {
+enum Visited
+{
     VISITED_NOT,
     VISITED_ONCE,
     VISITED_MORE,

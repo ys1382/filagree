@@ -30,10 +30,10 @@ long fsize(FILE* file) {
 
 struct byte_array *read_file(const struct byte_array *filename_ba)
 {
+
     FILE * file;
     char *str;
     long size;
-    
     char* filename_str = byte_array_to_string(filename_ba);
 
     if (!(file = fopen(filename_str, "rb"))) {

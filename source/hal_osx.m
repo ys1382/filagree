@@ -813,7 +813,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
         if (path[len] == '/') path[len] = 0; // pesky trailing slash
         struct variable *path3 = variable_new_str_chars(thread->context, path);
 
-        struct variable *method2 = variable_new_str_chars(thread->context, FILED);
+        struct variable *method2 = event_string(thread->context, FILED);
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
 
         long mod = file_modified(path);

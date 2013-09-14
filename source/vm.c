@@ -1433,6 +1433,8 @@ bool run(struct context *context,
         
     } // while
 
+    DEBUGPRINT("run done\n");
+
     byte_array_del(program);
     program = NULL;
 

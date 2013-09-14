@@ -15,14 +15,6 @@ extern "C" {
 JNIEXPORT jint JNICALL Java_Javagree_eval
   (JNIEnv *, jobject, jobject, jstring, jstring, jobject);
 
-/*
- * Class:     Javagree
- * Method:    return_multiple
- * Signature: ([Ljava/lang/Object;)V
- */
-JNIEXPORT void JNICALL Java_Javagree_return_1multiple
-  (JNIEnv *, jclass, jobjectArray);
-
 #ifdef __cplusplus
 }
 #endif

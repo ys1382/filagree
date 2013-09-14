@@ -17,7 +17,7 @@ LOCAL_PATH := $(call my-dir)/../..
 
 include $(CLEAR_VARS)
 
-LOCAL_LDLIBS    := -llog
+LOCAL_LDLIBS    := -llog -landroid
 LOCAL_CFLAGS    := -Wall -Os -std=gnu99 -I -fPIC -DDEBUG -D__ANDROID__
 LOCAL_MODULE    := javagree
 LOCAL_SRC_FILES := vm.c struct.c serial.c compile.c util.c sys.c variable.c interpret.c node.c file.c hal_stub.c javagree.c

@@ -11,7 +11,7 @@ jobject vf2j(JNIEnv *env, struct variable *f);
 // gets jni class name
 const char *jni_class_name(JNIEnv *env, jobject jo)
 {
-    assert_message(jo, "jni_class_name null object");
+    assert_message(NULL != jo, "jni_class_name: null object");
 
     // get object class
     jclass jocls = (*env)->GetObjectClass(env, jo);
@@ -154,7 +154,6 @@ struct variable *variable_new_j2f_array(struct context *context,
 
     for (jint i=0; i<length; i++)
     {
-        DEBUGPRINT("v2jf_array %d\n", i);
         // get object from JNI array
         jobject jo = (*env)->GetObjectArrayElement(env, joa, i);
 
@@ -327,7 +326,8 @@ struct variable *invoke(struct context *context,
 
     // translate result from Java to filagree
     struct variable *ret = variable_new_j2f(context, env, result);
-    ret->type = VAR_SRC;
+    if (ret->type == VAR_LST)
+        ret->type = VAR_SRC;
     return ret;
 }
 
@@ -448,9 +448,12 @@ struct variable *vj2f_fld(struct context *context, JNIEnv *env, jobject fld, job
 // jobject -> variable
 struct variable *variable_new_j2f_ex(struct context *context, JNIEnv *env, jobject jo, jobject parent)
 {
+    if (NULL == jo)
+        return variable_new_nil(context);
+
     const char *name = jni_class_name(env, jo);
     assert_message(name, "cannot get class name");
-    DEBUGPRINT("variable_new_j2f: %s\n", name);
+    //DEBUGPRINT("variable_new_j2f: %s\n", name);
 
     if (name[0] == '[')
         return variable_new_j2f_array(context, env, (jobjectArray)jo, &name[1]);
@@ -465,7 +468,7 @@ struct variable *variable_new_j2f_ex(struct context *context, JNIEnv *env, jobje
     if (!strcmp(name, "java.lang.reflect.Field"))
         return vj2f_fld(context, env, jo, parent);
 
-    DEBUGPRINT("vj2f_bespoke %s\n", name);
+    //DEBUGPRINT("vj2f_bespoke %s\n", name);
     return vj2f_bespoke(context, env, jo);
 }
 
@@ -509,22 +512,6 @@ struct variable *variable_new_java_find(struct context *context,
 }
 
 #ifdef __ANDROID__
-JNIEXPORT void JNICALL Java_com_java_javagree_Javagree_return_1multiple(JNIEnv *env, jclass cls, jobjectArray joa)
-#else
-JNIEXPORT void JNICALL Java_Javagree_return_1multiple(JNIEnv *env, jclass cls, jobjectArray joa)
-#endif
-{
-    jint length = (*env)->GetArrayLength(env, joa);
-    DEBUGPRINT("%d args\n", length);
-    for (jint i=0; i<length; i++)
-    {
-        jobject jo = (*env)->GetObjectArrayElement(env, joa, i);
-//        struct variable *v = variable_new_j2f(context, env, jo);
-    }
-    printf("rm done\n");
-}
-
-#ifdef __ANDROID__
 JNIEXPORT jint JNICALL Java_com_java_javagree_Javagree_eval(JNIEnv *env,
                                                             jobject caller,
                                                             jobject callback,
@@ -551,9 +538,12 @@ JNIEXPORT jint JNICALL Java_Javagree_eval(JNIEnv *env,
     struct byte_array *program2 = byte_array_from_jstring(env, program);
     struct byte_array *program3 = build_string(program2);
 
+    DEBUGPRINT("execute\n");
+
     // run
     execute_with(context, program3, false);
 
+    DEBUGPRINT("eval done\n");
     // return context for later use
     return (jint)context;
 }
