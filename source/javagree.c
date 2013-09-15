@@ -322,7 +322,8 @@ struct variable *invoke(struct context *context,
     
     // invoke invoke
     jobject result = (*env)->CallObjectMethodA(env, this, invoke, args);
-    assert_message(result, "cannot call Method.invoke. Oh, the irony!");
+    if (!result)
+        printf("cannot call Method.invoke. Oh, the irony!");
 
     // translate result from Java to filagree
     struct variable *ret = variable_new_j2f(context, env, result);
