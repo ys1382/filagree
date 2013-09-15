@@ -73,13 +73,13 @@ sys.ui = function(self, uictx, item, parent, x, y)
         item.name = item.name + n
 
     else if type == 'input' then
-        o,w,h = sys.input(uictx, x, y, details[0])
+        o,w,h = sys.input(uictx, x, y)
 
     else if type == 'label' then
         o,w,h = sys.label(x, y, item.text)
 
     else if type == 'button' then
-        o,w,h = sys.button(uictx, x, y, 0, 0, item.logic, item.text, item.image)
+        o,w,h = sys.button(uictx, x, y, item.logic, item.text, item.image)
 
     else if type == 'table' then
         o,w,h = sys.table(uictx, x, y, parent.w-x, parent.h-y, item.list, item.logic)

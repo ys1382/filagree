@@ -264,14 +264,12 @@ struct variable *sys_button(struct context *context)
     struct variable *uictx = (struct variable*)array_get(value->list, 1);
     int32_t x = param_int(value, 2);
     int32_t y = param_int(value, 3);
-    int32_t w = param_int(value, 4);
-    int32_t h = param_int(value, 5);
-    struct variable *logic = param_var(context, value, 6);
-    char *text = param_str(value, 7);
-    char *image = param_str(value, 8);
+    struct variable *logic = param_var(context, value, 4);
+    char *text = param_str(value, 5);
+    char *image = param_str(value, 6);
 
+    int32_t w,h;
     void *button = hal_button(context, uictx, x, y, &w, &h, logic, text, image);
-
     return ui_result(context, button, w, h);
 }
 
