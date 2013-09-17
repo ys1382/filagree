@@ -587,22 +587,22 @@ void *hal_button(struct context *context,
 void *hal_input(struct variable *uictx,
                 int32_t x, int32_t y,
                 int32_t *w, int32_t *h,
-                struct variable *hint,
+                const char *hint,
                 bool multiline)
 {
     NSView *content = [window contentView];
     *w = [content frame].size.width / 2;
     *h = 20;
     NSRect rect = whereAmI(x,y,*w,*h);
-    char *hint2 = byte_array_to_string(hint->str);
-    NSString *string = [NSString stringWithUTF8String:hint2];
+    NSString *string = hint ? [NSString stringWithUTF8String:hint] : NULL;
 
     NSView *textField;
     if (multiline)
         textField = [[NSTextView alloc] initWithFrame:rect];
     else
         textField = [[NSTextField alloc] initWithFrame:rect];
-    [textField insertText:string];
+    if (NULL != string)
+        [textField insertText:string];
 
     [content addSubview:textField];
     return textField;

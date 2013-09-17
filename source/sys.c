@@ -247,12 +247,8 @@ struct variable *sys_input(struct context *context)
     struct variable *uictx = (struct variable*)array_get(arguments->list, 1);
     int32_t x = param_int(arguments, 2);
     int32_t y = param_int(arguments, 3);
+    const char *hint = param_str(arguments, 4);
     int32_t w=0, h=0;
-
-    struct variable *values = (struct variable*)array_get(arguments->list, 4);
-    struct variable *hint = NULL;
-    if (values->type == VAR_LST)
-        hint = (struct variable *)array_get(values->list, 1);
 
     void *input = hal_input(uictx, x, y, &w, &h, hint, false);
     return ui_result(context, input, w, h);

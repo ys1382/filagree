@@ -48,7 +48,7 @@ void *hal_label (int32_t x, int32_t y,
 void *hal_input (struct variable *uictx,
                  int32_t x, int32_t y,
                  int32_t *w, int32_t *h,
-                 struct variable *hint,
+                 const char *hint,
                  bool multiline);
 void *hal_button(struct context *context,
                  struct variable *uictx,

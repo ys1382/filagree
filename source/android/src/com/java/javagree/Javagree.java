@@ -49,7 +49,6 @@ class Javagree {
 
 	public String read(String name) {
 		try {
-
 			Activity activity = App.getCurrentActivity();
 			InputStream input = activity.getAssets().open(name);
 			int size = input.available();
@@ -57,7 +56,6 @@ class Javagree {
 			input.read(buffer);
 			input.close();
 			return new String(buffer);
-
 		} catch (IOException e) {
 			e.printStackTrace();
 			return "";
@@ -80,11 +78,16 @@ class Javagree {
 		return this.putView(lv, (Integer)x, (Integer)y, (Integer)w, (Integer)h);
 	}
 
-	public Object[] input(Object uictx, Object x, Object y, Object w) {
-		Activity activity = App.getCurrentActivity();
+	public Object[] input(Object uictx, Object x, Object y) {
+		MainActivity activity = App.getCurrentActivity();
 		EditText et = new EditText(activity);
-		int h = et.getMeasuredHeight();
-		return this.putView(et, (Integer)x, (Integer)y, (Integer)w, h);
+		float hpx = et.getTextSize(); // in px, so convert to sp
+		float scaledDensity = activity.getResources().getDisplayMetrics().scaledDensity;
+		int frameWidth = this.window(0, 0)[0];
+		int hsp = (int)(hpx / scaledDensity);
+		int w = frameWidth - (Integer)x - hsp;
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		return this.putView(et, (Integer)x, (Integer)y, w, hsp, params);
 	}
 
 	public Object[] button(Object uictx, Object x, Object y, String logic, String text, String image) {
@@ -116,6 +119,10 @@ class Javagree {
 	private Object[] putView(View v, int x, int y, int width, int height) {
 		v.setId(this.id++);
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width, height);
+		return this.putView(v, x, y, width, height, params);
+	}
+	
+	private Object[] putView(View v, int x, int y, int width, int height, RelativeLayout.LayoutParams params) {
 		params.leftMargin = (Integer)x;
 		params.topMargin = (Integer)y;
 		MainActivity activity = App.getCurrentActivity();
