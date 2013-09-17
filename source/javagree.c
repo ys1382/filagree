@@ -373,7 +373,7 @@ struct variable *cgree(struct context *context)
     {
         jargs2[i].l = (*env)->GetObjectArrayElement (env, jargs, i);
     }
-    
+
     // call method
     return invoke(context, env, this, method, jargs2);
 }
@@ -449,6 +449,7 @@ struct variable *vj2f_fld(struct context *context, JNIEnv *env, jobject fld, job
 // jobject -> variable
 struct variable *variable_new_j2f_ex(struct context *context, JNIEnv *env, jobject jo, jobject parent)
 {
+    //DEBUGPRINT("variable_new_j2f_ex\n");
     if (NULL == jo)
         return variable_new_nil(context);
 
@@ -483,6 +484,7 @@ struct variable *variable_new_java_find(struct context *context,
                                         jstring name,
                                         jobject sys)
 {
+    DEBUGPRINT("variable_new_java_find\n");
     // java callback object name
     struct byte_array *name2 = byte_array_from_jstring(env, name);
     struct variable *name3 = variable_new_str(context, name2);

@@ -268,7 +268,7 @@ struct variable *sys_button(struct context *context)
     char *text = param_str(value, 5);
     char *image = param_str(value, 6);
 
-    int32_t w,h;
+    int32_t w=0,h=0;
     void *button = hal_button(context, uictx, x, y, &w, &h, logic, text, image);
     return ui_result(context, button, w, h);
 }

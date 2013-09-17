@@ -1,3 +1,11 @@
-x, y = sys.read('try.fg')
-sys.print(x)
-sys.print(y)
+import 'ui'
+
+x = sys.ui( nil,
+
+    ['vertical',
+
+        ['label', 'text':'do not'],
+        ['button', 'text':'click'],
+        'w':240, 'h':320
+    ] )
+sys.loop()

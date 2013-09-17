@@ -1,78 +1,126 @@
 package com.java.javagree;
 
-import java.util.HashMap;
-import java.util.Iterator;
+import java.io.IOException;
+import java.io.InputStream;
+
+import android.app.Activity;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.text.TextPaint;
+import android.util.Log;
+import android.view.Display;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 /**
  *
- * Java - filagree bridge
+ * Javagree
  *
+ * filagree -> OS bridge. Should be extended to implement Android-specific HAL functions.
+ * 
  */
-public class Javagree {
+class Javagree {
 
-    static {
-    	System.loadLibrary("javagree"); 
-    }
+	private final static int FUDGE = 30;
+	private int id = 1001;
 
-    /**
-    *
-    * Evaluates string in filagree
-    *
-    * @param callback object
-    * @param name of callback object
-    * @param program program
-    * @param sys implements HAL platform API
-    *
-    */
-   public native int eval(Object callback, String name, String program, Object sys);
+	/**
+	 *
+	 * Evaluates string in filagree
+	 *
+	 * @param callback object
+	 * @param name of callback object
+	 * @param program program
+	 * @param sys implements HAL platform API
+	 *
+	 */
+	public native int eval(Object callback, String name, String program, Object sys);
+
+	/////// private members
+
+	static {
+		System.loadLibrary("javagree"); 
+	}
 
 
-   /**
-     *
-     * Test
-     *
-     * to test javagree functionality
-     *
-     */
-   static class Test {
+	public String read(String name) {
+		try {
 
-       public int x = 6;
+			Activity activity = App.getCurrentActivity();
+			InputStream input = activity.getAssets().open(name);
+			int size = input.available();
+			byte[] buffer = new byte[size];
+			input.read(buffer);
+			input.close();
+			return new String(buffer);
 
-       final public static String test_ui = " \n ui = sys.ui( nil, ['label', 'text':'clickez ici'] )";
+		} catch (IOException e) {
+			e.printStackTrace();
+			return "";
+		}
+	}
 
-       public Integer y(Object a, Object b) {
-           System.out.println("y: " + a +","+ b);
-           return 99;
-       }
+	public Integer[] window(int w, int h) {
+		Activity activity = App.getCurrentActivity();
+		Display display = activity.getWindowManager().getDefaultDisplay();
+		Point size = new Point();
+		display.getSize(size);
+		int width = size.x;
+		int height = size.y;
+		return new Integer[]{width, height};
+	}
 
-       public Integer z(Object list, Object map) {
+	public Object[] table(Object uictx, Object x, Object y, Object w, Object h, String logic) {
+		Activity activity = App.getCurrentActivity();
+		ListView lv = new ListView(activity);
+		return this.putView(lv, (Integer)x, (Integer)y, (Integer)w, (Integer)h);
+	}
 
-           System.out.println("list:");
-           Object[] list2 = (Object[])list;
-           for (int i=0; i<list2.length; i++)
-               System.out.println("\t" + list2[i]);
+	public Object[] input(Object uictx, Object x, Object y, Object w) {
+		Activity activity = App.getCurrentActivity();
+		EditText et = new EditText(activity);
+		int h = et.getMeasuredHeight();
+		return this.putView(et, (Integer)x, (Integer)y, (Integer)w, h);
+	}
 
-           System.out.println("map:");
-           HashMap<?,?> map2 = (HashMap<?,?>)map;
-           Iterator<?> iterator = map2.keySet().iterator();
-           while (iterator.hasNext()) {
-               Object key = iterator.next();
-               Object value = map2.get(key);
-               System.out.println("\t" + key + " " + value);
-           }
+	public Object[] button(Object uictx, Object x, Object y, String logic, String text, String image) {
+		Log.d("Javagree", "button: " + uictx + " "+ x +","+ y +", logic=" + logic + ", text=" + text + ", image=" + image);
+		Activity activity = App.getCurrentActivity();
+		Button b = new Button(activity);
+		return this.putTextView(b, (Integer)x, (Integer)y, text);
+	}
 
-           return list2.length;
-       }
-   }
-   
-   public static void doTesting(MainActivity activity) 
-   {
-	   Sys sys = new Sys(activity);
-       Javagree a = new Javagree();
-       Test test = new Test();
-       a.eval(test, "tc", "sys.print('fg gets ' + tc.x + tc.z([7,8,9], ['p':99]))", null);
+	public Object[] label(Object x, Object y, String text) {		
+		Activity activity = App.getCurrentActivity();
+		TextView tv = new TextView(activity);
+		return this.putTextView(tv, (Integer)x, (Integer)y, text);
+	}
 
-       String imports = sys.read("ui.fg");
-       a.eval(test, "tc", imports + Test.test_ui, sys);
+	private Object[] putTextView(TextView tv, int x, int y, String text) {
+
+		tv.setText(text);
+
+		Rect bounds = new Rect();
+		TextPaint paint = tv.getPaint();
+		paint.getTextBounds(text, 0, text.length(), bounds);
+		int width = bounds.width() + tv.getPaddingLeft() + tv.getPaddingRight() + FUDGE;
+		int height = bounds.height() + tv.getPaddingBottom() + tv.getPaddingTop() + FUDGE;
+
+		return this.putView(tv, x, y, width, height);
+	}
+
+	private Object[] putView(View v, int x, int y, int width, int height) {
+		v.setId(this.id++);
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width, height);
+		params.leftMargin = (Integer)x;
+		params.topMargin = (Integer)y;
+		MainActivity activity = App.getCurrentActivity();
+		RelativeLayout layout = activity.getLayout();
+		layout.addView(v, params);
+		return new Object[]{v.getId(), width, height};
 	}
 }
