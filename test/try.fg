@@ -7,6 +7,7 @@ x = sys.ui( nil,
         ['label', 'text':'do not'],
         ['button', 'text':'click'],
         ['input'],
+        ['table', 'list':[7,8,9]],
         'w':240, 'h':320
     ] )
 sys.loop()

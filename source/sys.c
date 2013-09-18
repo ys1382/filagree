@@ -342,8 +342,10 @@ struct variable *sys_window(struct context *context)
     context->singleton->num_threads++;
     //pthread_mutex_unlock(&context->singleton->lock);
 
-    void *window = hal_window(context, uictx, &w, &h, logic);
-    return ui_result(context, window, w, h);
+    hal_window(context, uictx, &w, &h, logic);
+    variable_push(context, variable_new_int(context, w));
+    variable_push(context, variable_new_int(context, h));
+    return variable_new_src(context, 2);
 }
 
 struct variable *sys_loop(struct context *context)

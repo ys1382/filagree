@@ -2,6 +2,8 @@ package com.java.javagree;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import android.app.Activity;
 import android.graphics.Point;
@@ -10,6 +12,7 @@ import android.text.TextPaint;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -72,22 +75,23 @@ class Javagree {
 		return new Integer[]{width, height};
 	}
 
-	public Object[] table(Object uictx, Object x, Object y, Object w, Object h, String logic) {
+	public Object[] table(Object uictx, Object x, Object y, Object w, Object h,  Object[] values, String logic) {
 		Activity activity = App.getCurrentActivity();
 		ListView lv = new ListView(activity);
+		String[] values2 = Arrays.copyOf(values, values.length, String[].class);
+		ArrayAdapter<String> adapter = new ArrayAdapter<String>(activity, android.R.layout.simple_list_item_1, values2);		 
+	    lv.setAdapter(adapter);
 		return this.putView(lv, (Integer)x, (Integer)y, (Integer)w, (Integer)h);
 	}
 
 	public Object[] input(Object uictx, Object x, Object y) {
 		MainActivity activity = App.getCurrentActivity();
 		EditText et = new EditText(activity);
-		float hpx = et.getTextSize(); // in px, so convert to sp
-		float scaledDensity = activity.getResources().getDisplayMetrics().scaledDensity;
+		int h = (int)et.getTextSize();
 		int frameWidth = this.window(0, 0)[0];
-		int hsp = (int)(hpx / scaledDensity);
-		int w = frameWidth - (Integer)x - hsp;
+		int w = frameWidth - (Integer)x - h;
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-		return this.putView(et, (Integer)x, (Integer)y, w, hsp, params);
+		return this.putView(et, (Integer)x, (Integer)y, w, h + FUDGE, params);
 	}
 
 	public Object[] button(Object uictx, Object x, Object y, String logic, String text, String image) {
