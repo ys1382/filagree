@@ -34,11 +34,6 @@ There is one structure, a list, which may contain values indexed by number (arra
 
     5  3
 
-Actually, any variable may contain mapped values:
-
-    f> a = 7
-    f> a.too = 'buckle my shoe'
-
 Comments are either:
 
     x = 1 # single line, or
