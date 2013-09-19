@@ -64,7 +64,7 @@ sys.ui = function(self, uictx, item, parent, x, y)
         fields = []
         for name in details
             field = ['horizontal',
-                ['label', name],
+                ['label', 'text' : name],
                 ['input', name, 'name':name],
             ]
             fields.insert(field)
