@@ -685,6 +685,10 @@ struct variable *find_var(struct context *context, struct variable *key)
 
     if ((NULL == v) && context->singleton->callback)
         v = variable_map_get(context, context->singleton->callback, key);
+    if (NULL == v) {
+        printf("\ncould not find %s\n", byte_array_to_string(key->str));
+        exit(1);
+    }
 
     return v;
 }
@@ -1432,8 +1436,6 @@ bool run(struct context *context,
         DEBUGPRINT("%s", context->pcbuf);
         
     } // while
-
-    DEBUGPRINT("run done\n");
 
     byte_array_del(program);
     program = NULL;

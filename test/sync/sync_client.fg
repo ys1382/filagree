@@ -5,6 +5,7 @@
 import 'sync'
 import '../ui'
 
+id = 'client' + id
 client_dir = test_dir + 'id' + '/'  # server files root directory
 
 
@@ -21,8 +22,6 @@ client.ui = sys.ui( client,
                     ])
 
 client.sync = Sync.init(client, id)         # client sync logic
-empty(client_dir)                           # make empty client directory
 sys.connect('127.0.0.1', port, client.sync) # client connects to server
-sys.file_listen(client_dir, client.sync)    # client listens for file changes
 
 sys.loop()

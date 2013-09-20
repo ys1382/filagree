@@ -851,7 +851,7 @@ void hal_file_listen(struct context *context, const char *path, struct variable 
 
     FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 	FSEventStreamStart(stream);
-	CFRunLoopRun();
+	//CFRunLoopRun();
 }
 
 /////// timer

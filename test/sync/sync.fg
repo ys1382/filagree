@@ -1,7 +1,7 @@
 ####### sync.fg
 
 port = 9999
-test_dir = 'synctest/'
+test_dir = 'synctest/' + id + '/'
 
 Sync = [
 
@@ -9,7 +9,8 @@ Sync = [
 
     'init' : function(self, ctx, id)
 
-        watched = test_dir + id + '/'
+        self.id = id
+        watched = 'synctest/' + id + '/'
 
         # for test
         sys.rm(watched)
@@ -19,8 +20,10 @@ Sync = [
         self.files = self.local_snapshot()
 
         if ctx and ctx.ui then
-            sys.ui_set(ctx.ui.files, self.files.keys)     # update ui
+            sys.ui_set(ctx.ui.files, self.files.keys) # update ui
         end
+
+        sys.file_listen(watched, self)   # listen for file changes
 
         return self
 
@@ -90,7 +93,6 @@ Sync = [
     'filed' : function(self, path, modified)
 
         skip = self.writing[path].modified
-        sys.print('compare time ' + modified + ' with ' + skip)
         if skip == modified # because we're writing to it
             sys.print('...same')
             except = self.writing[path].from
@@ -98,7 +100,6 @@ Sync = [
             self.writing[path] = nil
             return
         end
-            sys.print('...different')
 
         latest = self.local_snapshot()
         updated = latest - self.files
