@@ -12,23 +12,9 @@ import android.widget.RelativeLayout;
 public class MainActivity extends Activity implements OnClickListener {
 
 	RelativeLayout layout;
+	private Javagree javagree;
 	RelativeLayout getLayout() {
 		return this.layout;
-	}
-
-
-	@Override
-	public void onClick(View v) {
-		/*    	if(v.getId()==R.id.button1) {
-     	       Javagree.doTesting(this);
-    	} */
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
-		return true;
 	}
 
 	protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +22,18 @@ public class MainActivity extends Activity implements OnClickListener {
 		App.setCurrentActivity(this);
 		setContentView(R.layout.activity_main);
 		this.layout = (RelativeLayout)findViewById(R.id.main_layout);
-		Test.doTesting();
+		Test test = new Test();
+		this.javagree = test.doTesting();
+	}
+
+	@Override
+	public void onClick(View v) {
+		this.javagree.onClick(v);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.main, menu);
+		return true;
 	}
 }

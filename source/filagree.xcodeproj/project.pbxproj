@@ -51,6 +51,7 @@
 		88700AC117CC4C5500AC6CAF /* test.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = test.fg; path = ../test/test.fg; sourceTree = "<group>"; };
 		88700AC217CC4C5500AC6CAF /* try.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = try.fg; path = ../test/try.fg; sourceTree = "<group>"; };
 		88700AC317CC4C5500AC6CAF /* ui.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = ui.fg; path = ../test/ui.fg; sourceTree = "<group>"; };
+		887A122D17F16BF4001CE285 /* Javagree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Javagree.h; sourceTree = "<group>"; };
 		88A65D95147757400055DACF /* compile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compile.h; sourceTree = "<group>"; };
 		88A65D96147757400055DACF /* serial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = serial.h; sourceTree = "<group>"; };
 		88A65D97147757400055DACF /* struct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = struct.h; sourceTree = "<group>"; };
@@ -64,7 +65,6 @@
 		88C760B015428A5100A4F8E7 /* interpret.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = interpret.h; sourceTree = "<group>"; };
 		88C760B215428A5F00A4F8E7 /* interpret.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = interpret.c; sourceTree = "<group>"; };
 		88CB4F9117A9D325006D3717 /* javagree.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = javagree.c; sourceTree = "<group>"; };
-		88CB4F9217A9D325006D3717 /* javagree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = javagree.h; sourceTree = "<group>"; };
 		88D5124016F15D5A00A0D28D /* node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = node.h; sourceTree = "<group>"; };
 		88DFCF3C17BC71FA00EF63EC /* javagree.java */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.java; path = javagree.java; sourceTree = "<group>"; };
 		88E65DE41510F46F00E6207D /* variable.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = variable.c; sourceTree = "<group>"; };
@@ -113,8 +113,8 @@
 				88C760B215428A5F00A4F8E7 /* interpret.c */,
 				88C760B015428A5100A4F8E7 /* interpret.h */,
 				88CB4F9117A9D325006D3717 /* javagree.c */,
+				887A122D17F16BF4001CE285 /* Javagree.h */,
 				88DFCF3C17BC71FA00EF63EC /* javagree.java */,
-				88CB4F9217A9D325006D3717 /* javagree.h */,
 				882E4C3516F045AE00AE6B61 /* node.c */,
 				88D5124016F15D5A00A0D28D /* node.h */,
 				88A65D9B147757400055DACF /* serial.c */,

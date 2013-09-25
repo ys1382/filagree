@@ -679,9 +679,8 @@ struct variable *find_var(struct context *context, struct variable *key)
     struct map *var_map = state->named_variables;
     struct variable *v = (struct variable*)map_get(var_map, key);
 
-    if ((NULL == v) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS))) {
+    if ((NULL == v) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS)))
         v = context->sys;
-    }
 
     if ((NULL == v) && context->singleton->callback)
         v = variable_map_get(context, context->singleton->callback, key);
@@ -804,6 +803,7 @@ static void set(struct context *context,
                 struct program_state *state,
                 struct byte_array *program)
 {
+    DEBUGPRINT("1\n");
     struct byte_array *name = serial_decode_string(program);    // destination variable name
     if (!context->runtime) {
         //        VM_DEBUGPRINT("%s %s\n", op==VM_SET?"SET":"STX", byte_array_to_string(name));
@@ -815,8 +815,10 @@ static void set(struct context *context,
             return;
 #endif // DEBUG
     }
+    DEBUGPRINT("2\n");
 
     struct variable *value = get_value(context, op);
+    DEBUGPRINT("3\n");
 
 #ifdef DEBUG
     char *str = byte_array_to_string(name);
@@ -827,10 +829,13 @@ static void set(struct context *context,
             str,
             variable_value_str(context, value, buf));
     free(str);
+    DEBUGPRINT("4\n");
     if (!context->runtime)
         return;
 #endif // DEBUG
 
+    DEBUGPRINT("5\n");
+    assert_message(state && name && value, "value2");
     set_named_variable(context, state, name, value); // set the variable to the value
     byte_array_del(name);
 }
@@ -1455,8 +1460,8 @@ done:
 
 void execute_with(struct context *context, struct byte_array *program, bool in_state)
 {
-    DEBUGPRINT("execute:\n");
-    
+    DEBUGPRINT("execute");
+
     null_check(program);
     program = byte_array_copy(program);
     byte_array_reset(program);

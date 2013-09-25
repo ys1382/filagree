@@ -572,11 +572,11 @@ void *hal_button(struct context *context,
         [my setImage:image];
     }
 
-    Actionifier *bp = [Actionifier fContext:context
-                                  uiContext:uictx
-                                   callback:logic
-                                   userData:NULL];
-    [my setTarget:bp];
+    Actionifier *act = [Actionifier fContext:context
+                                   uiContext:uictx
+                                    callback:logic
+                                    userData:NULL];
+    [my setTarget:act];
     [my setAction:@selector(pressed:)];
     [my setButtonType:NSMomentaryLightButton];
     [my setBezelStyle:NSTexturedSquareBezelStyle];

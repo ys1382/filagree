@@ -9,8 +9,10 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.text.TextPaint;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Display;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,10 +27,18 @@ import android.widget.TextView;
  * filagree -> OS bridge. Should be extended to implement Android-specific HAL functions.
  * 
  */
-class Javagree {
+class Javagree implements OnClickListener {
 
 	private final static int FUDGE = 30;
 	private int id = 1001;
+	Object callback;
+	String name;
+	private SparseArray<Object> actionifiers = new SparseArray<Object>();
+
+	Javagree(Object callback, String name) {
+		this.callback = callback;
+		this.name = name;
+	}
 
 	/**
 	 *
@@ -40,7 +50,16 @@ class Javagree {
 	 * @param sys implements HAL platform API
 	 *
 	 */
-	public native int eval(Object callback, String name, String program, Object sys);
+	private native int evalSource(Object callback, String name, String source, Object sys);
+	private native int evalBytes(Object callback, String name, byte[] bytes, Object sys);
+
+	int eval(String source) {
+		return this.evalSource(this.callback, this.name, source, this);
+	}
+
+	int eval(byte[] bytes) {
+		return this.evalBytes(this.callback, this.name, bytes, this);
+	}
 
 	/////// private members
 
@@ -74,13 +93,13 @@ class Javagree {
 		return new Integer[]{width, height};
 	}
 
-	public Object[] table(Object uictx, Object x, Object y, Object w, Object h,  Object[] values, String logic) {
+	public Object[] table(Object uictx, Object x, Object y, Object w, Object h,  Object[] values, byte[] logic) {
 		Activity activity = App.getCurrentActivity();
 		ListView lv = new ListView(activity);
 		String[] values2 = Arrays.copyOf(values, values.length, String[].class);
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(activity, android.R.layout.simple_list_item_1, values2);		 
 	    lv.setAdapter(adapter);
-		return this.putView(lv, (Integer)x, (Integer)y, (Integer)w, (Integer)h);
+		return this.putView(lv, (Integer)x, (Integer)y, (Integer)w, (Integer)h, logic);
 	}
 
 	public Object[] input(Object uictx, Object x, Object y) {
@@ -90,23 +109,24 @@ class Javagree {
 		int frameWidth = this.window(0, 0)[0];
 		int w = frameWidth - (Integer)x - h;
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-		return this.putView(et, (Integer)x, (Integer)y, w, h + FUDGE, params);
+		return this.putView(et, (Integer)x, (Integer)y, w, h + FUDGE, params, null);
 	}
 
-	public Object[] button(Object uictx, Object x, Object y, String logic, String text, String image) {
+	public Object[] button(Object uictx, Object x, Object y, byte[] logic, String text, String image) {
 		Log.d("Javagree", "button: " + uictx + " "+ x +","+ y +", logic=" + logic + ", text=" + text + ", image=" + image);
 		Activity activity = App.getCurrentActivity();
 		Button b = new Button(activity);
-		return this.putTextView(b, (Integer)x, (Integer)y, text);
+		b.setOnClickListener(this);
+		return this.putTextView(b, (Integer)x, (Integer)y, text, logic);
 	}
 
 	public Object[] label(Object x, Object y, String text) {		
 		Activity activity = App.getCurrentActivity();
 		TextView tv = new TextView(activity);
-		return this.putTextView(tv, (Integer)x, (Integer)y, text);
+		return this.putTextView(tv, (Integer)x, (Integer)y, text, null);
 	}
 
-	private Object[] putTextView(TextView tv, int x, int y, String text) {
+	private Object[] putTextView(TextView tv, int x, int y, String text, byte[] logic) {
 
 		tv.setText(text);
 
@@ -116,21 +136,47 @@ class Javagree {
 		int width = bounds.width() + tv.getPaddingLeft() + tv.getPaddingRight() + FUDGE;
 		int height = bounds.height() + tv.getPaddingBottom() + tv.getPaddingTop() + FUDGE;
 
-		return this.putView(tv, x, y, width, height);
+		return this.putView(tv, x, y, width, height, logic);
 	}
 
-	private Object[] putView(View v, int x, int y, int width, int height) {
+	private Object[] putView(View v, int x, int y, int width, int height, byte[] logic) {
 		v.setId(this.id++);
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width, height);
-		return this.putView(v, x, y, width, height, params);
+		return this.putView(v, x, y, width, height, params, logic);
 	}
 	
-	private Object[] putView(View v, int x, int y, int width, int height, RelativeLayout.LayoutParams params) {
+	private Object[] putView(View v, int x, int y, int width, int height, RelativeLayout.LayoutParams params, byte[] logic) {
+		v.setId(this.id++);
+
 		params.leftMargin = (Integer)x;
 		params.topMargin = (Integer)y;
 		MainActivity activity = App.getCurrentActivity();
 		RelativeLayout layout = activity.getLayout();
 		layout.addView(v, params);
+
+		if (logic != null) {
+			Actionifier a = new Actionifier(logic);
+			this.actionifiers.put(v.getId(), a); 
+		}
+
 		return new Object[]{v.getId(), width, height};
+	}
+
+	public void onClick(View v) {
+		Actionifier a = (Actionifier) this.actionifiers.get(v.getId());
+		byte[] logic = a.getLogic();
+		Log.d("Javagree", "logic len = " + logic.length);
+		this.eval(logic);
+	}
+
+	private class Actionifier {
+
+		private byte[] logic;
+
+		public Actionifier(byte[] logic) {
+			this.logic = logic;
+		}
+
+		byte[] getLogic()	{ return this.logic; }
 	}
 }

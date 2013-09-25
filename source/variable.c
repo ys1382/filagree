@@ -156,8 +156,13 @@ struct variable *variable_new_str_chars(struct context *context, const char *str
     return variable_new_str(context, str2);
 }
 
-struct variable *variable_new_fnc(struct context *context, struct byte_array *body, struct variable *closures)
+struct variable *variable_new_fnc(struct context *context,
+                                  struct byte_array *body, struct variable *closures)
 {
+    char buf[100000];
+    byte_array_print(buf, 100000, body);
+    DEBUGPRINT("variable_new_fnc %s\n", buf);
+
     struct variable *v = variable_new(context, VAR_FNC);
     v->str = byte_array_copy(body);
     v->map = closures ? map_copy(context, closures->map) : NULL;

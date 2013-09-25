@@ -1,2 +1,0 @@
-set solib-search-path /Users/yusuf/make/filagree/source/android/obj/local/armeabi
-directory /Applications/android/android-ndk/platforms/android-18/arch-arm/usr/include /Users/yusuf/make/filagree/source/android/jni/../.. /Applications/android/android-ndk/sources/cxx-stl/system

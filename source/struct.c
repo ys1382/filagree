@@ -158,14 +158,16 @@ struct byte_array *byte_array_new() {
     return byte_array_new_size(0);
 }
 
-void byte_array_del(struct byte_array* ba) {
+void byte_array_del(struct byte_array* ba)
+{
     //DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
     if (NULL != ba->data)
         free(ba->data);
     free(ba);
 }
 
-struct byte_array *byte_array_new_size(uint32_t size) {
+struct byte_array *byte_array_new_size(uint32_t size)
+{
     struct byte_array* ba = (struct byte_array*)malloc(sizeof(struct byte_array));
     ba->data = ba->current = (uint8_t*)malloc(size);
     ba->length = 0;
@@ -174,7 +176,16 @@ struct byte_array *byte_array_new_size(uint32_t size) {
     return ba;
 }
 
-void byte_array_resize(struct byte_array* ba, uint32_t size) {
+struct byte_array *byte_array_new_data(uint32_t size, uint8_t *data)
+{
+    struct byte_array *ba = byte_array_new();
+    ba->size = ba->length = size;
+    ba->data = ba->current = data;
+    return ba;
+}
+
+void byte_array_resize(struct byte_array* ba, uint32_t size)
+{
     if (!(size = list_resize(ba->size, size))) // didn't resize
         return;
     assert_message(ba->current >= ba->data, "byte_array corrupt");

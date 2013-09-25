@@ -10,20 +10,51 @@ import java.util.Iterator;
  */
 public class Javagree {
 
+	private Object callback;
+	private String name;
+
     static { System.loadLibrary("javagree"); }
 
-    /**
-     *
-     * Evaluates string in filagree
-     *
-     * @param callback object
-     * @param name of callback object
-     * @param program program
-     * @param sys implements HAL platform API
-     *
-     */
-    public native int eval(Object callback, String name, String program, Object sys);
+	Javagree(Object callback, String name) {
+		this.callback = callback;
+		this.name = name;
+	}
+    
+	/**
+	 *
+	 * Evaluates string in filagree
+	 *
+	 * @param callback object
+	 * @param name of callback object
+	 * @param program program
+	 * @param sys implements HAL platform API
+	 *
+	 */
+	private native int evalSource(Object callback, String name, String sourceCode, Object sys);
+	private native int evalBytes(Object callback, String name, byte[] byteCode, Object sys);
+    
+	int eval(String source) {
+		return this.evalSource(this.callback, this.name, source, this);
+	}
+    
+	int eval(byte[] bytes) {
+		return this.evalBytes(this.callback, this.name, bytes, this);
+	}
 
+    public Integer[] window(int w, int h) {
+        return new Integer[]{600,800};
+    }
+    
+    public Object[] button(Object uictx,
+                           Object x, Object y, Object w, Object h,
+                           String logic, String text, String image) {
+        Integer x2 = (Integer)x;
+        System.out.println("button " + x2 +","+ y +","+ w +","+ h
+                           +", logic="+ logic +", text="+ text +", image="+ image);
+        return new Object[]{null,22,33};
+    }
+    
+    
     /**
      *
      * Test
@@ -61,30 +92,7 @@ public class Javagree {
 
             return list2.length;
         }
-    }
-
-    /**
-     *
-     * Sys
-     *
-     * filagree -> OS bridge
-     *
-     */
-    static class Sys {
-
-        public Sys() {}
-        public Integer[] window(int w, int h) {
-            return new Integer[]{600,800};
-        }
-
-        public Object[] button(Object uictx,
-                                  Object x, Object y, Object w, Object h,
-                                  String logic, String text, String image) {
-            Integer x2 = (Integer)x;
-            System.out.println("button " + x2 +","+ y +","+ w +","+ h +", logic="+ logic +", text="+ text +", image="+ image);
-            return new Object[]{null,22,33};
-        }
-    }
+    } // Test
 
     /**
      *
@@ -94,10 +102,9 @@ public class Javagree {
      *
      */
     public static void main(String[] args) {
-        Sys sys = new Sys();
-        Javagree j = new Javagree();
         Test test = new Test();
-        Object result = j.eval(test, "tc", "sys.print('fg gets ' + tc.x + tc.z([7,8,9], ['p':99]))", null);
-        j.eval(test, "tc", test.test_ui, sys);
+        Javagree j = new Javagree(test, "tc");
+        Object result = j.eval("sys.print('fg gets ' + tc.x + tc.z([7,8,9], ['p':99]))");
+        j.eval(test.test_ui);
     }
 }

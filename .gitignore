@@ -1,2 +1,9 @@
 .DS_Store
 test/sync/synctest/
+*.o
+*.class
+filagree.xcodeproj/project.xcworkspace
+filagree.xcodeproj/xcuserdata
+android/bin
+android/obj
+android/libs

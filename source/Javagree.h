@@ -9,11 +9,19 @@ extern "C" {
 #endif
 /*
  * Class:     Javagree
- * Method:    eval
+ * Method:    evalSource
  * Signature: (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)I
  */
-JNIEXPORT jint JNICALL Java_Javagree_eval
+JNIEXPORT jint JNICALL Java_Javagree_evalSource
   (JNIEnv *, jobject, jobject, jstring, jstring, jobject);
+
+/*
+ * Class:     Javagree
+ * Method:    evalBytes
+ * Signature: (Ljava/lang/Object;Ljava/lang/String;[BLjava/lang/Object;)I
+ */
+JNIEXPORT jint JNICALL Java_Javagree_evalBytes
+  (JNIEnv *, jobject, jobject, jstring, jbyteArray, jobject);
 
 #ifdef __cplusplus
 }

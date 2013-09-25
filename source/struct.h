@@ -47,23 +47,26 @@ struct byte_array {
 
 struct byte_array *byte_array_new();
 struct byte_array *byte_array_new_size(uint32_t size);
-void byte_array_append(struct byte_array *a, const struct byte_array* b);
+struct byte_array *byte_array_new_data(uint32_t size, uint8_t *data);
 struct byte_array *byte_array_from_string(const char* str);
-char* byte_array_to_string(const struct byte_array* ba);
-void byte_array_del(struct byte_array* ba);
 struct byte_array *byte_array_copy(const struct byte_array* original);
 struct byte_array *byte_array_add_byte(struct byte_array *a, uint8_t b);
-void byte_array_reset(struct byte_array* ba);
-struct byte_array *byte_array_replace_all(struct byte_array *original, struct byte_array *a, struct byte_array *b);
-bool byte_array_equals(const struct byte_array *a, const struct byte_array* b);
 struct byte_array *byte_array_concatenate(int n, const struct byte_array* ba, ...);
-void byte_array_print(char* into, size_t size, const struct byte_array* ba);
-int32_t byte_array_find(struct byte_array *within, struct byte_array *sought, int32_t start);
 struct byte_array *byte_array_part(struct byte_array *within, uint32_t start, uint32_t length);
-void byte_array_remove(struct byte_array *within, uint32_t start, int32_t length);
-void byte_array_set(struct byte_array *within, uint32_t index, uint8_t byte);
+struct byte_array *byte_array_replace_all(struct byte_array *original,
+                                          struct byte_array *a, struct byte_array *b);
+struct byte_array *byte_array_replace(struct byte_array *within, struct byte_array *replacement,
+                                      uint32_t start, int32_t length);
+void    byte_array_append(struct byte_array *a, const struct byte_array* b);
+char*   byte_array_to_string(const struct byte_array* ba);
+void    byte_array_del(struct byte_array* ba);
+void    byte_array_reset(struct byte_array* ba);
+bool    byte_array_equals(const struct byte_array *a, const struct byte_array* b);
+void    byte_array_print(char* into, size_t size, const struct byte_array* ba);
+int32_t byte_array_find(struct byte_array *within, struct byte_array *sought, int32_t start);
+void    byte_array_remove(struct byte_array *within, uint32_t start, int32_t length);
+void    byte_array_set(struct byte_array *within, uint32_t index, uint8_t byte);
 uint8_t byte_array_get(const struct byte_array *within, uint32_t index);
-struct byte_array *byte_array_replace(struct byte_array *within, struct byte_array *replacement, uint32_t start, int32_t length);
 
 // stack ////////////////////////////////////////////////////////////////////
 
