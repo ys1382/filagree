@@ -19,7 +19,8 @@ void *hal_window(struct context *context,
                  struct variable *uictx,
                  int32_t *w, int32_t *h,
                  struct variable *logic)                { stub("hal_window"); return NULL; }
-void *hal_label (int32_t x, int32_t y,
+void *hal_label (struct variable *uictx,
+			     int32_t x, int32_t y,
                  int32_t *w, int32_t *h,
                  const char *str)                       { stub("hal_label"); return NULL; }
 void *hal_input (struct variable *uictx,

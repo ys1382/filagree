@@ -637,6 +637,8 @@ bool map_has(const struct map *m, const void *key)
 
 void *map_get(const struct map *m, const void *key)
 {
+    if (NULL == m)
+        return NULL;
     struct hash_node *node;
     size_t hash = m->hash_func(key, m->context) % m->size;
     node = m->nodes[hash];

@@ -41,7 +41,15 @@ struct variable
 
     union {
         struct byte_array* str;
-        struct array *list;
+        struct {
+            
+            struct byte_array* body;
+            struct map *closure;
+        } fnc;
+        struct {
+            struct array *ordered;
+            struct map *map;
+        } list;
         int32_t integer;
         float floater;
         bool boolean;
@@ -49,12 +57,10 @@ struct variable
         struct {
             struct variable *key, *val;
         } kvp;
-        struct variable*(*cfnc)(context_p);
-    };
-
-    union {
-        struct map *map;            // for lists
-        struct variable *closure;   // for c functions
+        struct {
+            struct variable*(*f)(context_p);
+            struct variable *data;
+        } cfnc;
     };
 };
 
@@ -75,7 +81,8 @@ struct variable *variable_new_kvp(struct context *context, struct variable *key,
 struct variable *variable_new_float(struct context *context, float f);
 struct variable *variable_new_str(struct context *context, struct byte_array *str);
 struct variable *variable_new_str_chars(struct context *context, const char *str);
-struct variable *variable_new_fnc(struct context *context, struct byte_array *body, struct variable *closures);
+struct variable *variable_new_fnc(struct context *context,
+                                  struct byte_array *body, struct variable *closures);
 struct variable *variable_new_list(struct context *context, struct array *list);
 struct variable *variable_new_src(struct context *context, uint32_t size);
 struct variable *variable_new_bytes(struct context *context, struct byte_array *bytes, uint32_t size);
@@ -87,8 +94,10 @@ uint32_t variable_length(struct context *context, const struct variable *v);
 void variable_push(struct context *context, struct variable *v);
 struct variable *variable_concatenate(struct context *context, int n, const struct variable* v, ...);
 void variable_remove(struct variable *self, uint32_t start, int32_t length);
-struct variable *variable_part(struct context *context, struct variable *self, uint32_t start, int32_t length);
-int variable_map_insert(struct context *context, struct variable* v, struct variable *key, struct variable *data);
+struct variable *variable_part(struct context *context, struct variable *self,
+                               uint32_t start, int32_t length);
+void variable_map_insert(struct context *context, struct variable* v,
+                         struct variable *key, struct variable *data);
 struct variable *variable_map_get(struct context *context, struct variable* v, struct variable *key);
 bool variable_compare(struct context *context, const struct variable *u, const struct variable *v);
 

@@ -144,10 +144,7 @@ struct variable *vj2f_map(struct context *context, JNIEnv *env, jobject hashmap)
 }
 
 // jobjectArray -> variable
-struct variable *variable_new_j2f_array(struct context *context,
-                                        JNIEnv *env,
-                                        jobjectArray joa,
-                                        const char *name)
+struct variable *variable_new_j2f_array(struct context *context, JNIEnv *env, jobjectArray joa)
 {
     jint length = (*env)->GetArrayLength(env, joa);
     struct array *list = array_new(length);
@@ -220,29 +217,29 @@ struct variable *vj2f_bespoke(struct context *context, JNIEnv *env, jobject jo)
 // filagree variable -> Java Object Array
 jobject vf2j_lst(JNIEnv *env, struct variable *f)
 {
-    uint32_t length = f->list->length;
+    uint32_t length = f->list.ordered->length;
     jclass ocls = (*env)->FindClass(env, "java/lang/Object");
     jobjectArray result = (jobjectArray)(*env)->NewObjectArray(env, length, ocls, NULL);
 
     for (int i=0; i<length; i++)
     {
-        struct variable *v = (struct variable*)array_get(f->list, i);
+        struct variable *v = (struct variable*)array_get(f->list.ordered, i);
         jobject jo = vf2j(env, v);
         (*env)->SetObjectArrayElement(env, result, i, jo);
-    }  
+    }
 
     return result;
 }
 
 // filagree variable -> Java HashMap
-jobject vf2j_map(JNIEnv *env, struct variable *f)
+jobject vf2j_map(JNIEnv *env, struct map *map)
 {
     jclass hmcls = (*env)->FindClass(env, "java/util/HashMap");
     assert_message(hmcls, "cannot get class HashMap");    
 
-    struct array *keys = map_keys(f->map);
+    struct array *keys = map_keys(map);
     uint32_t length = keys->length;
-    struct array *vals = map_vals(f->map);
+    struct array *vals = map_vals(map);
 
     jmethodID init = (*env)->GetMethodID(env, hmcls, "<init>", "(I)V");
     jobject result = (*env)->NewObject(env, hmcls, init, length);
@@ -301,7 +298,7 @@ jobject vf2j(JNIEnv *env, struct variable *f)
         case VAR_FNC:   return vf2j_fnc(env, f);
         case VAR_STR:   return vf2j_str(env, f);
         case VAR_SRC:
-        case VAR_LST:   return f->map ? vf2j_map(env, f) : vf2j_lst(env, f);
+        case VAR_LST:   return f->list.map ? vf2j_map(env, f->list.map) : vf2j_lst(env, f);
         default:
             DEBUGPRINT("type = %d\n", f->type);
             exit_message("vf2j type not implemented yet");
@@ -364,7 +361,7 @@ struct variable *cgree(struct context *context)
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
 
     // get method
-    struct variable *closure = (struct variable*)array_get(arguments->list, 1);
+    struct variable *closure = (struct variable*)array_get(arguments->list.ordered, 1);
     assert_message(closure->type == VAR_VOID, "wrong closure type");
     struct method_closure *mc = (struct method_closure *)closure->ptr;
     JNIEnv *env = mc->env;
@@ -372,10 +369,10 @@ struct variable *cgree(struct context *context)
     jobject method = mc->method;
 
     // build argument list
-    struct variable *v0 = (struct variable *)array_get(arguments->list, 0);
-    struct variable *v1 = (struct variable *)array_get(arguments->list, 1);
+    struct variable *v0 = (struct variable *)array_get(arguments->list.ordered, 0);
+    struct variable *v1 = (struct variable *)array_get(arguments->list.ordered, 1);
     printf("remove args %d, %d\n", v0->type, v1->type);
-    array_remove(arguments->list, 0, 2); // don't pass "this" or closure in args
+    array_remove(arguments->list.ordered, 0, 2); // don't pass "this" or closure in args
 
     jobjectArray jargs = vf2j(env, arguments);
     int length = (*env)->GetArrayLength (env, jargs);
@@ -424,9 +421,7 @@ struct variable *vj2f_fnc(struct context *context, JNIEnv *env, jobject method, 
     // get c callback, store Method in its closure
     struct variable *val = variable_new_cfnc(context, &cgree);
     struct method_closure *mc = method_closure_new(env, method, this);
-    val->closure = variable_new_void(context, mc);
-    //DEBUGPRINT("vj2f_fnc: val=%p clo=%p ptr=%p mc=%p mthod=%p\n",
-    //           val, val->closure, val->closure->ptr, mc, mc->method);
+    val->cfnc.data = variable_new_void(context, mc);
 
     // construct filagree key-value pair
     struct variable *kvp = variable_new_kvp(context, key, val);
@@ -469,7 +464,7 @@ struct variable *variable_new_j2f_ex(struct context *context, JNIEnv *env, jobje
     //DEBUGPRINT("variable_new_j2f: %s\n", name);
 
     if (name[0] == '[')
-        return variable_new_j2f_array(context, env, (jobjectArray)jo, &name[1]);
+        return variable_new_j2f_array(context, env, (jobjectArray)jo);
     if (!strcmp(name, "java.lang.Integer"))
         return vj2f_int(context, env, jo);
     if (!strcmp(name, "java.lang.String"))
@@ -506,7 +501,7 @@ struct variable *variable_new_java_find(struct context *context,
     if (NULL != sys)
     {
         struct variable *javaSys = variable_new_j2f(context, env, sys);
-        map_union(javaSys->map, context->sys->map);
+        map_union(javaSys->list.map, context->sys->list.map);
         context->sys = javaSys;
     }
 
@@ -516,79 +511,71 @@ struct variable *variable_new_java_find(struct context *context,
     return find;
 }
 
-#ifdef __ANDROID__
-JNIEXPORT jint JNICALL Java_com_java_javagree_Javagree_evalSource(
-          JNIEnv *env,
+jint eval(JNIEnv *env,
           jobject caller,
           jobject callback,
           jstring name,
-          jstring program,
-          jobject sys)
-#else
-JNIEXPORT jint JNICALL Java_Javagree_evalSource
-        (JNIEnv *env,
-         jobject caller,
-         jobject callback,
-         jstring name,
-         jstring program,
-         jobject sys)
-#endif
+          struct byte_array *program,
+          jobject sys,
+          jobjectArray jargs)
 {
+    DEBUGPRINT("eval\n");
+    
     // create filagree context
     struct context *context = context_new(NULL, true, true);
-
+    
     // generate callback object
     struct variable *find = variable_new_java_find(context, env, callback, name, sys);
     context->singleton->callback = find;
-
-    // compile source to bytecode
-    struct byte_array *program2 = byte_array_from_jstring(env, program);
-    struct byte_array *program3 = build_string(program2);
-
+    
+    struct variable *fargs = variable_new_j2f_array(context, env, jargs);
+    fargs->type = VAR_SRC;
+    variable_push(context, fargs);
+    
     // run
-    execute_with(context, program3, false);
-
-    DEBUGPRINT("eval done\n");
+    execute_with(context, program, false);
+    
     // return context for later use
     return (jint)context;
 }
 
 #ifdef __ANDROID__
+JNIEXPORT jint JNICALL Java_com_java_javagree_Javagree_evalSource(
+#else
+JNIEXPORT jint JNICALL Java_Javagree_evalSource(
+          JNIEnv *env,
+          jobject caller,
+          jobject callback,
+          jstring name,
+          jstring program,
+          jobject sys,
+          jobjectArray jargs)
+#endif
+{
+    // compile source to bytecode
+    struct byte_array *program2 = byte_array_from_jstring(env, program);
+    struct byte_array *program3 = build_string(program2);
+
+    return eval(env, caller, callback, name, program3, sys, jargs);
+}
+
+#ifdef __ANDROID__
 JNIEXPORT jint JNICALL Java_com_java_javagree_Javagree_evalBytes(
+#else
+JNIEXPORT jint JNICALL Java_Javagree_evalBytes(
+#endif
         JNIEnv *env,
         jobject caller,
         jobject callback,
         jstring name,
         jbyteArray program,
-        jobject sys)
-#else
-JNIEXPORT jint JNICALL Java_Javagree_evalBytes
-
-        (JNIEnv *env,
-        jobject caller,
-        jobject callback,
-        jstring name,
-        jbyteArray program,
-        jobject sys)
-#endif
+        jobject sys,
+        jobjectArray jargs)
 {
-    // create filagree context
-    struct context *context = context_new(NULL, true, true);
-    
-    // generate callback object
-    struct variable *find = variable_new_java_find(context, env, callback, name, sys);
-    context->singleton->callback = find;
-
+    // jbyteArray -> byte_array
     jsize size = (*env)->GetArrayLength(env, program);
     jbyte *program2 = (jbyte *)(*env)->GetByteArrayElements(env, program, NULL);
     struct byte_array *program3 = byte_array_new_data(size, (uint8_t*)program2);
 
-    DEBUGPRINT("evalBytes %d\n", size);
-    // run
-    execute_with(context, program3, false);
-    
-    DEBUGPRINT("eval done\n");
-
-    // return context for later use
-    return (jint)context;
+    return eval(env, caller, callback, name, program3, sys, jargs);
 }

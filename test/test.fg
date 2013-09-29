@@ -286,12 +286,13 @@ tester.test('no return',
 tester.test('closure',
     function()
         x = 7
-        f = function(a)(x)
-            return a+x
+        y = 8
+        f = function(a)(x,y)
+            return a+x+y
         end
         return f(3)
     end,
-    10)
+    18)
 
 tester.test('short circuit',
     function()

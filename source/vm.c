@@ -110,9 +110,9 @@ void program_state_del(struct context *context, struct program_state *state)
 
 static inline void cfnc_length(struct context *context) {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *indexable = (struct variable*)array_get(args->list, 0);
+    struct variable *indexable = (struct variable*)array_get(args->list.ordered, 0);
     assert_message(indexable->type==VAR_LST || indexable->type==VAR_STR, "no length for non-indexable");
-    struct variable *result = variable_new_int(context, indexable->list->length);
+    struct variable *result = variable_new_int(context, indexable->list.ordered->length);
     stack_push(context->operand_stack, result);
 }
 
@@ -199,7 +199,7 @@ void unmark_all(struct context *context)
 
 void mark_map(struct map *map, bool mark)
 {
-    if (map == NULL)
+    if (NULL == map)
         return;
 
     struct array *a = map_keys(map);
@@ -402,8 +402,8 @@ void vm_call_src(struct context *context, struct variable *func)
         state = program_state_new(context, NULL);
     struct variable *s = (struct variable*)stack_peek(context->operand_stack, 0);
 
-    if (func->closure)
-        array_insert(s->list, 1, func->closure); // first argument
+    if (func->type == VAR_CFNC && (NULL != func->cfnc.data))
+        array_insert(s->list.ordered, 1, func->cfnc.data); // first argument
 
     state->args = variable_copy(context, s);
 
@@ -412,10 +412,10 @@ void vm_call_src(struct context *context, struct variable *func)
     // call the function
     switch (func->type) {
         case VAR_FNC:
-            run(context, func->str, func->map, false);
+            run(context, func->fnc.body, func->fnc.closure, false);
             break;
         case VAR_CFNC: {
-            struct variable *v = func->cfnc(context);
+            struct variable *v = func->cfnc.f(context);
             if (v == NULL)
                 v = variable_new_src(context, 0);
             else if (v->type != VAR_SRC) { // convert to VAR_SRC variable
@@ -453,7 +453,7 @@ void vm_call(struct context *context, struct variable *func, struct variable *ar
             s = variable_new_src(context, 0);
 
         for (; arg; arg = va_arg(argp, struct variable*))
-            array_add(s->list, arg);
+            array_add(s->list.ordered, arg);
 
         va_end(argp);
         variable_push(context, s);
@@ -472,7 +472,7 @@ void func_call(struct context *context, enum Opcode op,
         return;
 
     if (indexable)
-        array_insert(s->list, 0, indexable); // self
+        array_insert(s->list.ordered, 0, indexable); // self
 
     vm_call_src(context, func);
 
@@ -481,7 +481,7 @@ void func_call(struct context *context, enum Opcode op,
 
     if (!resulted) { // need a result for an expression, so pretend it returned nil
         struct variable *v = variable_new_src(context, 0);
-        array_add(v->list, variable_new_nil(context));
+        array_add(v->list.ordered, variable_new_nil(context));
         stack_push(context->operand_stack, v);
     }
 }
@@ -512,7 +512,7 @@ static void push_list(struct context *context, struct byte_array *program)
         if (vt == VAR_KVP)
             variable_map_insert(context, list, v->kvp.key, v->kvp.val);
         else if (vt != VAR_NIL)
-            array_insert(list->list, 0, v);
+            array_insert(list->list.ordered, 0, v);
     }
 #ifdef DEBUG
     char buf[VV_SIZE];
@@ -551,7 +551,6 @@ struct variable *lookup(struct context *context, struct variable *indexable, str
     if (index->type == VAR_INT) {
         switch (indexable->type) {
             case VAR_STR:
-            case VAR_FNC:
             case VAR_BYT: {
                 char *str = (char*)malloc(2);
                 sprintf(str, "%c", indexable->str->data[index->integer]);
@@ -559,19 +558,23 @@ struct variable *lookup(struct context *context, struct variable *indexable, str
                 return str2;
             } break;
             case VAR_LST:
-                if (index->integer < indexable->list->length)
-                    item = (struct variable*)array_get(indexable->list, index->integer);
+                if (index->integer < indexable->list.ordered->length)
+                    item = (struct variable*)array_get(indexable->list.ordered, index->integer);
+                if ((NULL == item) && (NULL != indexable->list.map))
+                    item = map_get(indexable->list.map, index);
                 break;
             default:
                 exit_message("bad lookup type");
                 return NULL;
         }
     }
-    if ((NULL == item) && (NULL != indexable->map))
-        item = map_get(indexable->map, index);
     if ((NULL == item) && (index->type == VAR_STR))
         item = builtin_method(context, indexable, index);
-    if (NULL == item )
+    if (NULL == item && indexable->type == VAR_LST)
+        item = map_get(indexable->list.map, index);
+    if (NULL == item && indexable->type == VAR_FNC)
+        item = map_get(indexable->fnc.closure, index);
+    if (NULL == item)
         item = variable_new_nil(context);
     return item;
 }
@@ -778,17 +781,18 @@ static struct variable *get_value(struct context *context, enum Opcode op)
 {
     bool interim = op == VM_STX || op == VM_PTX;
     struct variable *value = stack_peek(context->operand_stack, 0);
-    null_check(value);
+    if (NULL == value)
+        return variable_new_nil(context);
 
     if (value->type == VAR_SRC) {
-        struct array *values = value->list;
-        struct map *kvps = value->map;
+        struct array *values = value->list.ordered;
+        struct map *kvps = value->list.map;
         bool listvar = values->length > values->current - values->data;
         if (listvar)
             value = (struct variable*)*values->current++;
         else if (NULL != kvps) {
             value = variable_new_list(context, NULL);
-            value->map = map_copy(context, kvps);
+            value->list.map = map_copy(context, kvps);
         } else
             value = variable_new_nil(context);
     }
@@ -803,7 +807,6 @@ static void set(struct context *context,
                 struct program_state *state,
                 struct byte_array *program)
 {
-    DEBUGPRINT("1\n");
     struct byte_array *name = serial_decode_string(program);    // destination variable name
     if (!context->runtime) {
         //        VM_DEBUGPRINT("%s %s\n", op==VM_SET?"SET":"STX", byte_array_to_string(name));
@@ -815,10 +818,8 @@ static void set(struct context *context,
             return;
 #endif // DEBUG
     }
-    DEBUGPRINT("2\n");
 
     struct variable *value = get_value(context, op);
-    DEBUGPRINT("3\n");
 
 #ifdef DEBUG
     char *str = byte_array_to_string(name);
@@ -829,12 +830,10 @@ static void set(struct context *context,
             str,
             variable_value_str(context, value, buf));
     free(str);
-    DEBUGPRINT("4\n");
     if (!context->runtime)
         return;
 #endif // DEBUG
 
-    DEBUGPRINT("5\n");
     assert_message(state && name && value, "value2");
     set_named_variable(context, state, name, value); // set the variable to the value
     byte_array_del(name);
@@ -874,7 +873,7 @@ static void list_put(struct context *context, enum Opcode op)
         case VAR_INT:
             switch (recipient->type) {
                 case VAR_LST:
-                    array_set(recipient->list, key->integer, value);
+                    array_set(recipient->list.ordered, key->integer, value);
                     break;
                 case VAR_STR:
                 case VAR_BYT:
@@ -1011,9 +1010,9 @@ static void variable_purge(struct context *context, struct variable *v, struct v
 {
     struct variable *position = variable_find(context, v, p, NULL);
     if (position->type != VAR_NIL)
-        array_remove(v->list, position->integer, 1);
-    else if (NULL != v->map)
-        map_remove(v->map, p);
+        array_remove(v->list.ordered, position->integer, 1);
+    else if (NULL != v->list.map)
+        map_remove(v->list.map, p);
 }
 
 static struct variable *binary_op_lst(struct context *context,
@@ -1029,25 +1028,25 @@ static struct variable *binary_op_lst(struct context *context,
     switch (op) {
         case VM_ADD:
             if (vt == VAR_LST) {
-                for (int i=0; i<v->list->length; i++)
-                    array_add(w->list, array_get(v->list, i));
+                for (int i=0; i<v->list.ordered->length; i++)
+                    array_add(w->list.ordered, array_get(v->list.ordered, i));
+                w->list.map = map_union(w->list.map, v->list.map);
             } else if (vt == VAR_KVP) {
                 variable_map_insert(context, w, v->kvp.key, v->kvp.val);
             } else if (vt != VAR_NIL) {
-                array_add(w->list, (void*)v);
+                array_add(w->list.ordered, (void*)v);
             }
-            w->map = map_union(w->map, v->map);
             break;
         case VM_SUB:
             if (vt == VAR_LST) {
-                for (int i=0; i<v->list->length; i++) {
-                    struct variable *item = (struct variable*)array_get(v->list, i);
+                for (int i=0; i<v->list.ordered->length; i++) {
+                    struct variable *item = (struct variable*)array_get(v->list.ordered, i);
                     variable_purge(context, w, item);
                 }
+                w->list.map = map_minus(w->list.map, v->list.map);
             } else {
                 variable_purge(context, w, v);
             }
-            w->map = map_minus(w->map, v->map);
             break;
         default:
             return (struct variable*)vm_exit_message(context, "unknown list operation");
@@ -1248,9 +1247,9 @@ static bool iterate(struct context *context,
 
     struct variable *what = variable_pop(context);
     assert_message(what->type == VAR_LST, "iterating over non-list");
-    struct array *list = what->list;
-    if (!list->length && what->map)
-        list = map_keys(what->map);
+    struct array *list = what->list.ordered;
+    if (!list->length && what->list.map)
+        list = map_keys(what->list.map);
     uint32_t len = list->length;
 
     for (int i=0; i<len; i++) {
@@ -1278,7 +1277,7 @@ static bool iterate(struct context *context,
                 if (item->type == VAR_KVP)
                     variable_map_insert(context, result, item->kvp.key, item->kvp.val);
                 else
-                    array_add(result->list, item);
+                    array_add(result->list.ordered, item);
             }
             UNDENT;
         }

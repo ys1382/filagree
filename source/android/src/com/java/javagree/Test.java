@@ -6,11 +6,11 @@ import java.util.Iterator;
 public class Test {
 
 	final public static String test_ui =
-//			"clicked = function(ctx) sys.ui_set(ctx.ui.btn, 'ouch') end "
-			"clicked = function() sys.print('ouch') end "
+			"clicked = function(ctx) sys.ui_set(ctx.ui.lbl, 'ouch') end "
+//			"clicked = function() sys.print('ouch') end "
 			+ "ui = sys.ui( nil, "
 			+ "['vertical', "
-			+ "	['label', 'text':'do not'], "
+			+ "	['label', 'name':'lbl', 'text':'do not'], "
 			+ "	['button', 'text':'click', 'name':'btn', 'logic':clicked], "
 			+ " ['input'],"
 			+ " ['table', 'list':['7','8','9']],"

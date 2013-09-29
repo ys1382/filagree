@@ -34,7 +34,6 @@ struct variable* variable_new(struct context *context, enum VarType type)
 {
     struct variable* v = (struct variable*)malloc(sizeof(struct variable));
     v->type = type;
-    v->map = NULL;
     v->mark = 0;
     v->ptr = NULL;
     v->visited = VISITED_NOT;
@@ -89,7 +88,9 @@ void variable_del(struct context *context, struct variable *v)
             break;
         case VAR_SRC:
         case VAR_LST:
-            array_del(v->list);
+            array_del(v->list.ordered);
+            if (NULL != v->list.map)
+                map_del(v->list.map);
             break;
         case VAR_STR:
         case VAR_FNC:
@@ -101,8 +102,6 @@ void variable_del(struct context *context, struct variable *v)
             vm_exit_message(context, "bad var type");
             break;
     }
-    if (NULL != v->map)
-        map_del(v->map);
 
     free(v);
 }
@@ -110,21 +109,21 @@ void variable_del(struct context *context, struct variable *v)
 struct variable *variable_new_src(struct context *context, uint32_t size)
 {
     struct variable *v = variable_new(context, VAR_SRC);
-    v->list = array_new();
+    v->list.ordered = array_new();
+    v->list.map = NULL;
 
     while (size--) {
         struct variable *o = (struct variable*)stack_pop(context->operand_stack);
         if (o->type == VAR_SRC) {
-            o->map = map_union(o->map, v->map);
-            array_append(o->list, v->list);
+            o->list.map = map_union(o->list.map, v->list.map);
+            array_append(o->list.ordered, v->list.ordered);
             v = o;
         } else if (o->type == VAR_KVP)
             variable_map_insert(context, v, o->kvp.key, o->kvp.val);
         else
-            array_insert(v->list, 0, o);
+            array_insert(v->list.ordered, 0, o);
     }
-//  DEBUGPRINT("src = %s\n", variable_value_str(context, v));
-    v->list->current = v->list->data;
+    v->list.ordered->current = v->list.ordered->data;
     return v;
 }
 
@@ -156,31 +155,29 @@ struct variable *variable_new_str_chars(struct context *context, const char *str
     return variable_new_str(context, str2);
 }
 
-struct variable *variable_new_fnc(struct context *context,
-                                  struct byte_array *body, struct variable *closures)
+struct variable *variable_new_fnc(struct context *context, struct byte_array *body, struct variable *closure)
 {
-    char buf[100000];
-    byte_array_print(buf, 100000, body);
-    DEBUGPRINT("variable_new_fnc %s\n", buf);
+    //DEBUGPRINT("variable_new_fnc %s\n", buf);
 
     struct variable *v = variable_new(context, VAR_FNC);
-    v->str = byte_array_copy(body);
-    v->map = closures ? map_copy(context, closures->map) : NULL;
+    v->fnc.body = byte_array_copy(body);
+    v->fnc.closure = (NULL != closure) ? map_copy(context, closure->list.map) : NULL;
     return v;
 }
 
 struct variable *variable_new_list(struct context *context, struct array *list)
 {
     struct variable *v = variable_new(context, VAR_LST);
-    v->list = array_new();
+    v->list.ordered = array_new();
     //DEBUGPRINT("variable_new_list %p->%p\n", v, v->list);
     for (uint32_t i=0; list && (i<list->length); i++) {
         struct variable *u = (struct variable*)array_get(list, i);
         if (u->type == VAR_KVP) {
-            v->map = map_union(v->map, u->map);
+            v->list.map = map_union(v->list.map, u->list.map);
         } else
-            array_set(v->list, v->list->length, u);
+            array_set(v->list.ordered, v->list.ordered->length, u);
     }
+    v->list.map = NULL;
     return v;
 }
 
@@ -194,7 +191,8 @@ struct variable *variable_new_kvp(struct context *context, struct variable *key,
 
 struct variable *variable_new_cfnc(struct context *context, callback2func *cfnc) {
     struct variable *v = variable_new(context, VAR_CFNC);
-    v->cfnc = cfnc;
+    v->cfnc.f = cfnc;
+    v->cfnc.data = NULL;
     return v;
 }
 
@@ -216,9 +214,9 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
 {
     assert_message(v && (v->visited < VISITED_LAST), "corrupt variable");
     null_check(v);
-    
+    struct map *map = NULL;
+
     enum VarType vt = (enum VarType)v->type;
-    struct array* list = v->list;
 
     if (v->visited ==VISITED_MORE) { // first visit of reused variable
         sprintf(str, "&%d", v->mark);
@@ -234,7 +232,10 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
         case VAR_INT:    sprintf(str, "%s%d", str, v->integer);                     break;
         case VAR_BOOL:   sprintf(str, "%s%s", str, v->boolean ? "true" : "false");  break;
         case VAR_FLT:    sprintf(str, "%s%f", str, v->floater);                     break;
-        case VAR_FNC:    sprintf(str, "%sf(%dB)", str, v->str->length);             break;
+        case VAR_FNC:
+            sprintf(str, "%sf(%dB)", str, v->fnc.body->length);
+            map = v->fnc.closure;
+            break;
         case VAR_CFNC:   sprintf(str, "%sc-fnc", str);                              break;
         case VAR_VOID:   sprintf(str, "%s%p", str, v->ptr);                         break;
         case VAR_BYT:
@@ -247,6 +248,7 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
             break;
         case VAR_SRC:
         case VAR_LST: {
+            struct array* list = v->list.ordered;
             strcat(str, "[");
             vm_null_check(context, list);
             for (int i=0; i<list->length; i++) {
@@ -256,6 +258,7 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
                 if (NULL != element)
                     variable_value_strcat(context, str, element, false);
             }
+            map = v->list.map;
         } break;
         case VAR_STR: {
             char *str2 =  byte_array_to_string(v->str);
@@ -272,14 +275,14 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
             break;
     }
 
-    if (v->map)
+    if (NULL != map)
     {
-        struct array *keys = map_keys(v->map);
-        struct array *vals = map_vals(v->map);
+        struct array *keys = map_keys(map);
+        struct array *vals = map_vals(map);
 
         for (int i=0; i<keys->length; i++)
         {
-            if (v->list->length + i)
+            if (v->list.ordered->length + i)
                 strcat(str, ",");
 
             struct variable *key = (struct variable *)array_get(keys, i);
@@ -295,7 +298,6 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
         array_del(vals);
 
     } // map
-
     else if (vt == VAR_LST || vt == VAR_SRC)
         strcat(str, "]");
 }
@@ -315,22 +317,22 @@ static void variable_mark2(struct variable *v, uint32_t *marker)
 
     if (VAR_LST == v->type)
     {
-        for (int i=0; i<v->list->length; i++) {
-            struct variable *v2 = (struct variable*)array_get(v->list, i);
+        for (int i=0; i<v->list.ordered->length; i++) {
+            struct variable *v2 = (struct variable*)array_get(v->list.ordered, i);
             if (v2)
                 variable_mark2(v2, marker);
         }
+        mark_map(v->list.map, true);
     }
     else if (VAR_KVP == v->type)
     {
         variable_mark2((struct variable*)v->kvp.key, marker);
         variable_mark2((struct variable*)v->kvp.val, marker);
     }
+    else if (VAR_FNC == v->type)
+        mark_map(v->fnc.closure, true);
 
     //DEBUGPRINT("variable_mark2 %p->%p\n", v, v->map);
-
-    if (VAR_LST == v->type)
-        mark_map(v->map, true);
 }
 
 void variable_mark(struct variable *v)
@@ -344,18 +346,22 @@ void variable_unmark(struct variable *v)
     assert_message(v->type < VAR_LAST, "corrupt variable");
     if (VISITED_NOT == v->visited)
         return;
+
     v->mark = 0;
     v->visited = VISITED_NOT;
 
-    if (v->type == VAR_LST) {
-        for (int i=0; i<v->list->length; i++) {
-            struct variable* element = (struct variable*)array_get(v->list, i);
+    if (VAR_LST == v->type)
+    {
+        for (int i=0; i<v->list.ordered->length; i++)
+        {
+            struct variable* element = (struct variable*)array_get(v->list.ordered, i);
             if (NULL != element)
                 variable_unmark(element);
         }
+        mark_map(v->list.map, false);
     }
-
-    mark_map(v->map, false);
+    else if (VAR_FNC == v->type)
+        mark_map(v->fnc.closure, false);
 }
 
 
@@ -381,8 +387,8 @@ struct variable *variable_pop(struct context *context)
     struct variable *v = (struct variable*)stack_pop(context->operand_stack);
     null_check(v);
     if (v->type == VAR_SRC) {
-        if (v->list->length)
-            v = (struct variable*)array_get(v->list, 0);
+        if (v->list.ordered->length)
+            v = (struct variable*)array_get(v->list.ordered, 0);
         else
             v = variable_new_nil(context);
     }
@@ -391,6 +397,27 @@ struct variable *variable_pop(struct context *context)
 
 void inline variable_push(struct context *context, struct variable *v) {
     stack_push(context->operand_stack, v);
+}
+
+void map_serialize(struct context *context, struct byte_array *bits, struct map *map)
+{
+    if (NULL == map)
+    {
+        serial_encode_int(bits, 0);
+        return;
+    }
+
+    struct array *keys = map_keys(map);
+    struct array *values = map_vals(map);
+    serial_encode_int(bits, keys->length);
+    for (int i=0; i<keys->length; i++) {
+        const struct variable *key = (const struct variable*)array_get(keys, i);
+        const struct variable *value = (const struct variable*)array_get(values, i);
+        variable_serialize(context, bits, key);
+        variable_serialize(context, bits, value);
+    }
+    array_del(keys);
+    array_del(values);
 }
 
 struct byte_array *variable_serialize(struct context *context,
@@ -406,15 +433,20 @@ struct byte_array *variable_serialize(struct context *context,
         case VAR_INT:   serial_encode_int(bits, in->integer);   break;
         case VAR_FLT:   serial_encode_float(bits, in->floater); break;
         case VAR_BOOL:  serial_encode_int(bits, in->boolean);   break;
-        case VAR_STR:
-        case VAR_FNC:   serial_encode_string(bits, in->str);    break;
+        case VAR_STR:   serial_encode_string(bits, in->str);    break;
+        case VAR_FNC:
+            serial_encode_string(bits, in->fnc.body);
+            map_serialize(context, bits, in->fnc.closure);
+            break;
         case VAR_LST: {
-            uint32_t len = in->list->length;
+            uint32_t len = in->list.ordered->length;
             serial_encode_int(bits, len);
-            for (int i=0; i<len; i++) {
-                const struct variable *item = (const struct variable*)array_get(in->list, i);
+            for (int i=0; i<len; i++)
+            {
+                const struct variable *item = (const struct variable*)array_get(in->list.ordered, i);
                 variable_serialize(context, bits, item);
             }
+            map_serialize(context, bits, in->list.map);
         } break;
         case VAR_KVP:
             variable_serialize(context, bits, in->kvp.key);
@@ -427,22 +459,23 @@ struct byte_array *variable_serialize(struct context *context,
             break;
     }
 
-    if (NULL != in->map) {
-        struct array *keys = map_keys(in->map);
-        struct array *values = map_vals(in->map);
-        serial_encode_int(bits, keys->length);
-        for (int i=0; i<keys->length; i++) {
-            const struct variable *key = (const struct variable*)array_get(keys, i);
-            const struct variable *value = (const struct variable*)array_get(values, i);
-            variable_serialize(context, bits, key);
-            variable_serialize(context, bits, value);
-        }
-        array_del(keys);
-        array_del(values);
-    } else
-        serial_encode_int(bits, 0);
-
     return bits;
+}
+
+struct map *map_deserialize(struct context *context, struct byte_array *bits)
+{
+    uint32_t map_length = serial_decode_int(bits);
+    if (!map_length)
+        return NULL;
+
+    struct map *map = map_new(context);
+    for (int i=0; i<map_length; i++)
+    {
+        struct variable *key = variable_deserialize(context, bits);
+        struct variable *val = variable_deserialize(context, bits);
+        map_insert(map, key, val);
+    }
+    return map;
 }
 
 struct variable *variable_deserialize(struct context *context, struct byte_array *bits)
@@ -469,6 +502,7 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
         case VAR_FNC:
             str = serial_decode_string(bits);
             result = variable_new_fnc(context, str, NULL);
+            result->fnc.closure = map_deserialize(context, bits);
             break;
         case VAR_STR:
             str = serial_decode_string(bits);
@@ -485,6 +519,7 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
                 array_add(list, variable_deserialize(context, bits));
             result = variable_new_list(context, list);
             array_del(list);
+            result->list.map = map_deserialize(context, bits);
             break;
         case VAR_KVP: {
             struct variable *key = variable_deserialize(context, bits);
@@ -496,16 +531,6 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
             vm_exit_message(context, "bad var type");
     }
 
-    uint32_t map_length = serial_decode_int(bits);
-    if (map_length) {
-        result->map = map_new(context);
-        for (int i=0; i<map_length; i++) {
-            struct variable *key = variable_deserialize(context, bits);
-            struct variable *val = variable_deserialize(context, bits);
-            map_insert(result->map, key, val);
-        }
-    }
-
     if (NULL != str)
         byte_array_del(str);
     return result;
@@ -514,7 +539,7 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
 uint32_t variable_length(struct context *context, const struct variable *v)
 {
     switch (v->type) {
-        case VAR_LST: return v->list->length;
+        case VAR_LST: return v->list.ordered->length;
         case VAR_STR: return v->str->length;
         case VAR_INT: return v->integer;
         case VAR_NIL: return 0;
@@ -529,7 +554,7 @@ struct variable *variable_part(struct context *context, struct variable *self, u
     null_check(self);
 
     if (length < 0) // count back from end of list/string
-        length = self->list->length + length + 1 - start;
+        length = self->list.ordered->length + length + 1 - start;
     if (length < 0) // end < start
         length = 0;
 
@@ -542,7 +567,7 @@ struct variable *variable_part(struct context *context, struct variable *self, u
             break;
         }
         case VAR_LST: {
-            struct array *list = array_part(self->list, start, length);
+            struct array *list = array_part(self->list.ordered, start, length);
             result = variable_new_list(context, list);
             array_del(list);
             break;
@@ -562,7 +587,7 @@ void variable_remove(struct variable *self, uint32_t start, int32_t length)
             byte_array_remove(self->str, start, length);
             break;
         case VAR_LST:
-            array_remove(self->list, start, length);
+            array_remove(self->list.ordered, start, length);
             break;
         default:
             exit_message("bad remove type");
@@ -580,7 +605,7 @@ struct variable *variable_concatenate(struct context *context, int n, const stru
             continue;
         else switch (result->type) {
             case VAR_STR: byte_array_append(result->str, parameter->str); break;
-            case VAR_LST: array_append(result->list, parameter->list);    break;
+            case VAR_LST: array_append(result->list.ordered, parameter->list.ordered);    break;
             default: return (struct variable*)exit_message("bad concat type");
         }
     }
@@ -589,21 +614,28 @@ struct variable *variable_concatenate(struct context *context, int n, const stru
     return result;
 }
 
-int variable_map_insert(struct context *context, struct variable* v, struct variable *key, struct variable *datum)
+struct map *variable_map_insert2(struct context *context, struct map* map,
+                                 struct variable *key, struct variable *datum)
 {
-    //DEBUGPRINT("variable_map_insert into %p\n", v);
-    assert_message(v->type != VAR_NIL, "can't insert into nil");
-    if (NULL == v->map)
-        v->map = map_new(context);
-#ifdef DEBUG
-    //char buf[VV_SIZE];
-    //DEBUGPRINT("variable_map_insert %p %s into %p\n", datum, variable_value_str(context, datum, buf), v );
-#endif
-
+    if (NULL == map)
+        map = map_new(context);
+    
     // setting a value to nil means removing the key
     if (datum->type == VAR_NIL)
-        return map_remove(v->map, key);
-    return map_insert(v->map, key, datum);
+        map_remove(map, key);
+    else
+        map_insert(map, key, datum);
+    return map;
+}
+
+void variable_map_insert(struct context *context, struct variable* v,
+                         struct variable *key, struct variable *datum)
+{
+    if (v->type == VAR_LST || v->type == VAR_SRC)
+        v->list.map = variable_map_insert2(context, v->list.map, key, datum);
+    else if (v->type == VAR_FNC)
+        v->fnc.closure = variable_map_insert2(context, v->list.map, key, datum);
+    else exit_message("variable type does not have map");
 }
 
 struct variable *variable_map_get(struct context *context, struct variable *v, struct variable *key)
@@ -611,7 +643,7 @@ struct variable *variable_map_get(struct context *context, struct variable *v, s
     assert_message(v->type == VAR_LST, "only lists may have maps");
     struct variable *result = lookup(context, v, key);
     if (result->type == VAR_SRC)
-        result = array_get(result->list, 0);
+        result = array_get(result->list.ordered, 0);
     return result;
 }
 
@@ -650,15 +682,15 @@ bool variable_compare(struct context *context, const struct variable *u, const s
 
     switch (ut) {
         case VAR_LST:
-            if (u->list->length != v->list->length)
+            if (u->list.ordered->length != v->list.ordered->length)
                 return false;
-            for (int i=0; i<u->list->length; i++) {
-                struct variable *ui = (struct variable*)array_get(u->list, i);
-                struct variable *vi = (struct variable*)array_get(v->list, i);
+            for (int i=0; i<u->list.ordered->length; i++) {
+                struct variable *ui = (struct variable*)array_get(u->list.ordered, i);
+                struct variable *vi = (struct variable*)array_get(v->list.ordered, i);
                 if (!variable_compare(context, ui, vi))
                     return false;
             }
-            return variable_compare_maps(context, u->map, v->map);
+            return variable_compare_maps(context, u->list.map, v->list.map);
 
         case VAR_BOOL:  return (u->boolean == v->boolean);
         case VAR_INT:   return (u->integer == v->integer);
@@ -675,23 +707,28 @@ struct variable* variable_set(struct context *context, struct variable *dst, con
     vm_null_check(context, dst);
     vm_null_check(context, src);
     switch (src->type) {
-        case VAR_NIL:                                           break;
-        case VAR_INT:   dst->integer = src->integer;            break;
-        case VAR_FLT:   dst->floater = src->floater;            break;
+        case VAR_NIL:                                                       break;
+        case VAR_INT:   dst->integer = src->integer;                        break;
+        case VAR_FLT:   dst->floater = src->floater;                        break;
         case VAR_FNC:
+            dst->fnc.body = byte_array_copy(src->fnc.body);
+            dst->fnc.closure = map_copy(context, src->fnc.closure);
+            break;
         case VAR_BYT:
-        case VAR_STR:   dst->str = byte_array_copy(src->str);   break;
+        case VAR_STR:   dst->str = byte_array_copy(src->str);               break;
         case VAR_SRC:
-        case VAR_LST:   dst->list = array_copy(src->list);      break;
-        case VAR_KVP:   dst->kvp = src->kvp;                    break;
-        case VAR_CFNC:  dst->cfnc = src->cfnc;                  break;
-        case VAR_BOOL:  dst->boolean = src->boolean;            break;
-        case VAR_VOID:  dst->ptr = src->ptr;                    break;
+        case VAR_LST:
+            dst->list.ordered = array_copy(src->list.ordered);
+            dst->list.map = map_copy(context, src->list.map);
+            break;
+        case VAR_KVP:   dst->kvp = src->kvp;                                break;
+        case VAR_CFNC:  dst->cfnc = src->cfnc;                              break;
+        case VAR_BOOL:  dst->boolean = src->boolean;                        break;
+        case VAR_VOID:  dst->ptr = src->ptr;                                break;
         default:
             vm_exit_message(context, "bad var type");
             break;
     }
-    dst->map = map_copy(context, src->map);
     dst->type = src->type;
     return dst;
 }
@@ -724,8 +761,8 @@ struct variable *variable_find(struct context *context,
     }
     
     if (self->type == VAR_LST) {
-        for (int i=0; !result && i<self->list->length; i++) {
-            struct variable *v = (struct variable*)array_get(self->list, i);
+        for (int i=0; !result && i<self->list.ordered->length; i++) {
+            struct variable *v = (struct variable*)array_get(self->list.ordered, i);
             if ((sought->type == VAR_INT && v->type == VAR_INT && v->integer == sought->integer) ||
                 (sought->type == VAR_STR && v->type == VAR_STR && byte_array_equals(sought->str, v->str)))
                 return variable_new_int(context, i);

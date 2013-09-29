@@ -26,9 +26,9 @@ struct variable *sys_print(struct context *context)
 {
     null_check(context);
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    assert_message(args && args->type==VAR_SRC && args->list, "bad print arg");
-    for (int i=1; i<args->list->length; i++) {
-        struct variable *arg = (struct variable*)array_get(args->list, i);
+    assert_message(args && args->type==VAR_SRC && args->list.ordered, "bad print arg");
+    for (int i=1; i<args->list.ordered->length; i++) {
+        struct variable *arg = (struct variable*)array_get(args->list.ordered, i);
         char buf[VV_SIZE];
         printf("%s\n", variable_value_str(context, arg, buf));
     }
@@ -50,7 +50,7 @@ struct variable *sys_save(struct context *context)
 struct variable *sys_load(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *path = (struct variable*)array_get(value->list, 1);
+    struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
     struct byte_array *file_bytes = read_file(path->str);
     if (NULL == file_bytes)
         return variable_new_nil(context);
@@ -102,7 +102,7 @@ struct variable *sys_read(struct context *context)
 struct variable *sys_run(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *script = (struct variable*)array_get(value->list, 1);
+    struct variable *script = (struct variable*)array_get(value->list.ordered, 1);
     execute_with(context, script->str, true);
     return NULL;
 }
@@ -111,7 +111,7 @@ struct variable *sys_run(struct context *context)
 struct variable *sys_interpret(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *script = (struct variable*)array_get(value->list, 1);
+    struct variable *script = (struct variable*)array_get(value->list.ordered, 1);
     interpret_string(context, script->str);
     return NULL;
 }
@@ -120,7 +120,7 @@ struct variable *sys_interpret(struct context *context)
 struct variable *sys_rm(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *path = (struct variable*)array_get(value->list, 1);
+    struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
     char *path2 = byte_array_to_string(path->str);
     char rmcmd[100];
     sprintf(rmcmd, "rm -rf %s", path2);
@@ -133,7 +133,7 @@ struct variable *sys_rm(struct context *context)
 struct variable *sys_mkdir(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *path = (struct variable*)array_get(value->list, 1);
+    struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
     char *path2 = byte_array_to_string(path->str);
     char mkcmd[100];
     sprintf(mkcmd, "mkdir -p %s", path2);
@@ -156,8 +156,9 @@ struct variable *sys_args(struct context *context)
 struct variable *sys_atoi(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    char *str = (char*)((struct variable*)array_get(value->list, 1))->str->data;
-    uint32_t offset = value->list->length > 2 ? ((struct variable*)array_get(value->list, 2))->integer : 0;
+    char *str = (char*)((struct variable*)array_get(value->list.ordered, 1))->str->data;
+    uint32_t offset = value->list.ordered->length > 2 ?
+        ((struct variable*)array_get(value->list.ordered, 2))->integer : 0;
 
     int n=0, i=0;
     bool negative = false;
@@ -179,16 +180,16 @@ struct variable *sys_atoi(struct context *context)
 struct variable *sys_sin(struct context *context) // radians
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    const int32_t n = ((struct variable*)array_get(arguments->list, 1))->integer;
+    const int32_t n = ((struct variable*)array_get(arguments->list.ordered, 1))->integer;
     double s = sin(n);
     return variable_new_float(context, s);
 }
 
 char *param_str(const struct variable *value, uint32_t index)
 {
-    if (index >= value->list->length)
+    if (index >= value->list.ordered->length)
         return NULL;
-    const struct variable *strv = (struct variable*)array_get(value->list, index);
+    const struct variable *strv = (struct variable*)array_get(value->list.ordered, index);
     char *str = NULL;
     switch (strv->type) {
         case VAR_NIL:                                           break;
@@ -200,22 +201,19 @@ char *param_str(const struct variable *value, uint32_t index)
 
 // todo: handle nil return
 int32_t param_int(const struct variable *value, uint32_t index) {
-    if (index >= value->list->length)
+    if (index >= value->list.ordered->length)
         return 0;
-    struct variable *result = (struct variable*)array_get(value->list, index);
+    struct variable *result = (struct variable*)array_get(value->list.ordered, index);
     assert_message(result->type == VAR_INT, "not an int");
     return result->integer;
 }
 
 struct variable *param_var(struct context *context, const struct variable *value, uint32_t index) {
-    if (index >= value->list->length)
+    if (index >= value->list.ordered->length)
         return NULL;
-    struct variable *v = (struct variable*)array_get(value->list, index);
+    struct variable *v = (struct variable*)array_get(value->list.ordered, index);
 
-    //char buf[1000];
-    //DEBUGPRINT("param_var %p->%p : %s\n", v, v->map, variable_value_str(context, v, buf));
-
-    return v; //variable_copy(context, v);
+    return v;
 }
 
 #ifndef NO_UI
@@ -231,20 +229,21 @@ struct variable *ui_result(struct context *context, void *widget, int32_t w, int
 
 struct variable *sys_label(struct context *context)
 {
-    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    int32_t x = param_int(value, 1);
-    int32_t y = param_int(value, 2);
-    const char *str = param_str(value, 3);
+    struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *uictx = (struct variable*)array_get(arguments->list.ordered, 1);
+    int32_t x = param_int(arguments, 2);
+    int32_t y = param_int(arguments, 3);
+    const char *str = param_str(arguments, 4);
 
     int32_t w=0,h=0;
-    void *label = hal_label(x, y, &w, &h, str);
+    void *label = hal_label(uictx, x, y, &w, &h, str);
     return ui_result(context, label, w, h);
 }
 
 struct variable *sys_input(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *uictx = (struct variable*)array_get(arguments->list, 1);
+    struct variable *uictx = (struct variable*)array_get(arguments->list.ordered, 1);
     int32_t x = param_int(arguments, 2);
     int32_t y = param_int(arguments, 3);
     const char *hint = param_str(arguments, 4);
@@ -257,7 +256,7 @@ struct variable *sys_input(struct context *context)
 struct variable *sys_button(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *uictx = (struct variable*)array_get(value->list, 1);
+    struct variable *uictx = (struct variable*)array_get(value->list.ordered, 1);
     int32_t x = param_int(value, 2);
     int32_t y = param_int(value, 3);
     struct variable *logic = param_var(context, value, 4);
@@ -272,7 +271,7 @@ struct variable *sys_button(struct context *context)
 struct variable *sys_table(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *uictx = (struct variable*)array_get(value->list, 1);
+    struct variable *uictx = (struct variable*)array_get(value->list.ordered, 1);
     int32_t x = param_int(value, 2);
     int32_t y = param_int(value, 3);
     int32_t w = param_int(value, 4);
@@ -288,8 +287,8 @@ struct variable *sys_table(struct context *context)
 struct variable *sys_ui_set(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *widget    = (struct variable*)array_get(arguments->list, 1);
-    struct variable *value     = (struct variable*)array_get(arguments->list, 2);
+    struct variable *widget    = (struct variable*)array_get(arguments->list.ordered, 1);
+    struct variable *value     = (struct variable*)array_get(arguments->list.ordered, 2);
     hal_ui_set(widget->ptr, value);
     return NULL;
 }
@@ -297,14 +296,14 @@ struct variable *sys_ui_set(struct context *context)
 struct variable *sys_ui_get(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *widget    = (struct variable*)array_get(arguments->list, 1);
+    struct variable *widget    = (struct variable*)array_get(arguments->list.ordered, 1);
     return hal_ui_get(context, widget->ptr);
 }
 
 struct variable *sys_graphics(struct context *context)
 {
     const struct variable *value = (const struct variable*)stack_pop(context->operand_stack);
-    const struct variable *shape = (const struct variable*)array_get(value->list, 1);
+    const struct variable *shape = (const struct variable*)array_get(value->list.ordered, 1);
     hal_graphics(shape);
     return NULL;
 }
@@ -312,7 +311,7 @@ struct variable *sys_graphics(struct context *context)
 struct variable *sys_synth(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    const struct byte_array *bytes = ((struct variable*)array_get(arguments->list, 1))->str;
+    const struct byte_array *bytes = ((struct variable*)array_get(arguments->list.ordered, 1))->str;
     hal_synth(bytes->data, bytes->length);
     return NULL;
 }
@@ -320,7 +319,7 @@ struct variable *sys_synth(struct context *context)
 struct variable *sys_sound(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    const struct byte_array *url = ((struct variable*)array_get(arguments->list, 1))->str;
+    const struct byte_array *url = ((struct variable*)array_get(arguments->list.ordered, 1))->str;
     hal_sound((const char*)url->data);
     return NULL;
 }
@@ -330,7 +329,7 @@ struct variable *sys_window(struct context *context)
     DEBUGPRINT("sys_window\n");
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     int w=0, h=0;
-    if (value->list->length > 2) {
+    if (value->list.ordered->length > 2) {
         w = param_int(value, 1);
         h = param_int(value, 2);
     }
@@ -483,7 +482,7 @@ int compar(struct context *context, const void *a, const void *b, struct variabl
 
         struct variable *result = (struct variable*)stack_pop(context->operand_stack);
         if (result->type == VAR_SRC)
-            result = array_get(result->list, 0);
+            result = array_get(result->list.ordered, 0);
         assert_message(result->type == VAR_INT, "non-integer comparison result");
         return result->integer;
 
@@ -560,8 +559,8 @@ int heapsortfg(struct context *context, void *base, size_t nel, size_t width, st
 struct variable *cfnc_char(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *from = (struct variable*)array_get(args->list, 0);
-    struct variable *index = (struct variable*)array_get(args->list, 1);
+    struct variable *from = (struct variable*)array_get(args->list.ordered, 0);
+    struct variable *index = (struct variable*)array_get(args->list.ordered, 1);
 
     assert_message(from->type == VAR_STR, "char from a non-str");
     assert_message(index->type == VAR_INT, "non-int index");
@@ -572,16 +571,16 @@ struct variable *cfnc_char(struct context *context)
 struct variable *cfnc_sort(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *self = (struct variable*)array_get(args->list, 0);
+    struct variable *self = (struct variable*)array_get(args->list.ordered, 0);
 
     assert_message(self->type == VAR_LST, "sorting a non-list");
-    struct variable *comparator = (args->list->length > 1) ?
-        (struct variable*)array_get(args->list, 1) :
+    struct variable *comparator = (args->list.ordered->length > 1) ?
+        (struct variable*)array_get(args->list.ordered, 1) :
         NULL;
 
-    int num_items = self->list->length;
+    int num_items = self->list.ordered->length;
 
-    int success = heapsortfg(context, self->list->data, num_items, sizeof(struct variable*), comparator);
+    int success = heapsortfg(context, self->list.ordered->data, num_items, sizeof(struct variable*), comparator);
     assert_message(!success, "error sorting");
     return NULL;
 }
@@ -591,17 +590,17 @@ struct variable *cfnc_chop(struct context *context, bool part)
     int32_t beginning, foraslongas;
 
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *self = (struct variable*)array_get(args->list, 0);
+    struct variable *self = (struct variable*)array_get(args->list.ordered, 0);
 
-    if (args->list->length > 1) {
-        struct variable *start = (struct variable*)array_get(args->list, 1);
+    if (args->list.ordered->length > 1) {
+        struct variable *start = (struct variable*)array_get(args->list.ordered, 1);
         assert_message(start->type == VAR_INT, "non-integer index");
         beginning = start->integer;
     }
     else beginning = 0;
 
-    if (args->list->length > 2) {
-        struct variable *length = (struct variable*)array_get(args->list, 2);
+    if (args->list.ordered->length > 2) {
+        struct variable *length = (struct variable*)array_get(args->list.ordered, 2);
         assert_message(length->type == VAR_INT, "non-integer length");
         foraslongas = length->integer;
     } else
@@ -623,9 +622,10 @@ static inline struct variable *cfnc_remove(struct context *context) {
 struct variable *cfnc_find2(struct context *context, bool has)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *self = (struct variable*)array_get(args->list, 0);
-    struct variable *sought = (struct variable*)array_get(args->list, 1);
-    struct variable *start = args->list->length > 2 ? (struct variable*)array_get(args->list, 2) : NULL;
+    struct variable *self = (struct variable*)array_get(args->list.ordered, 0);
+    struct variable *sought = (struct variable*)array_get(args->list.ordered, 1);
+    struct variable *start = args->list.ordered->length > 2 ?
+        (struct variable*)array_get(args->list.ordered, 2) : NULL;
     null_check(self);
     null_check(sought);
 
@@ -646,9 +646,10 @@ struct variable *cfnc_has(struct context *context) {
 struct variable *cfnc_insert(struct context *context) // todo: test
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *self = (struct variable*)array_get(args->list, 0);
-    struct variable *insertion = (struct variable*)array_get(args->list, 1);
-    struct variable *start = args->list->length > 2 ? (struct variable*)array_get(args->list, 2) : NULL;
+    struct variable *self = (struct variable*)array_get(args->list.ordered, 0);
+    struct variable *insertion = (struct variable*)array_get(args->list.ordered, 1);
+    struct variable *start = args->list.ordered->length > 2 ?
+        (struct variable*)array_get(args->list.ordered, 2) : NULL;
     null_check(self);
     null_check(insertion);
     assert_message(!start || start->type == VAR_INT, "non-integer index");
@@ -659,7 +660,7 @@ struct variable *cfnc_insert(struct context *context) // todo: test
             struct array *list = array_new_size(1);
             array_set(list, 0, insertion);
             insertion = variable_new_list(context, list);
-            position = self->list->length;
+            position = self->list.ordered->length;
             array_del(list);
         } break;
         case VAR_STR:
@@ -677,8 +678,8 @@ struct variable *cfnc_insert(struct context *context) // todo: test
     struct variable *joined = variable_concatenate(context, 3, first, insertion, second);
 
     if (self->type == VAR_LST) {
-        array_del(self->list);
-        self->list = array_copy(joined->list);
+        array_del(self->list.ordered);
+        self->list.ordered = array_copy(joined->list.ordered);
     } else {
         byte_array_del(self->str);
         self->str = byte_array_copy(joined->str);
@@ -688,7 +689,7 @@ struct variable *cfnc_insert(struct context *context) // todo: test
 struct variable *cfnc_serialize(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *indexable = (struct variable*)array_get(args->list, 0);
+    struct variable *indexable = (struct variable*)array_get(args->list.ordered, 0);
 
     struct byte_array *bits = variable_serialize(context, NULL, indexable);
     struct variable *result = variable_new_str(context, bits);
@@ -699,7 +700,7 @@ struct variable *cfnc_serialize(struct context *context)
 struct variable *cfnc_deserialize(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *indexable = (struct variable*)array_get(args->list, 0);
+    struct variable *indexable = (struct variable*)array_get(args->list.ordered, 0);
     struct byte_array *bits = indexable->str;
     byte_array_reset(bits);
     return variable_deserialize(context, bits);
@@ -727,9 +728,9 @@ struct variable *cfnc_timer(struct context *context)
     int32_t milliseconds = param_int(args, 1);
     struct variable *logic = param_var(context, args, 2);
     bool repeats = false;
-    if (args->list->length > 3)
+    if (args->list.ordered->length > 3)
     {
-        struct variable *arg3 = array_get(args->list, 3);
+        struct variable *arg3 = array_get(args->list.ordered, 3);
         repeats = arg3->integer;
     }
 
@@ -743,10 +744,11 @@ struct variable *cfnc_timer(struct context *context)
 struct variable *cfnc_replace(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *self = (struct variable*)array_get(args->list, 0);
-    struct variable *a = (struct variable*)array_get(args->list, 1);
-    struct variable *b = (struct variable*)array_get(args->list, 2);
-    struct variable *c = args->list->length > 3 ? (struct variable*)array_get(args->list, 3) : NULL;
+    struct variable *self = (struct variable*)array_get(args->list.ordered, 0);
+    struct variable *a = (struct variable*)array_get(args->list.ordered, 1);
+    struct variable *b = (struct variable*)array_get(args->list.ordered, 2);
+    struct variable *c = args->list.ordered->length > 3 ?
+        (struct variable*)array_get(args->list.ordered, 3) : NULL;
 
     null_check(self);
     null_check(b);
@@ -785,6 +787,23 @@ struct variable *cfnc_replace(struct context *context)
     return result;
 }
 
+struct variable *variable_map_list(struct context *context,
+                                   struct variable *indexable,
+                                   struct array* (*map_list)(const struct map*))
+{
+    assert_message(indexable->type == VAR_LST, "values are only for list");
+    struct variable *result = variable_new_list(context, NULL);
+    if (NULL != indexable->list.map) {
+        struct array *a = map_list(indexable->list.map);
+        for (int i=0; i<a->length; i++) {
+            struct variable *u = variable_copy(context, (struct variable*)array_get(a, i));
+            array_add(result->list.ordered, u);
+        }
+        array_del(a);
+    }
+    return result;
+}
+
 struct variable *builtin_method(struct context *context,
                                 struct variable *indexable,
                                 const struct variable *index)
@@ -796,7 +815,7 @@ struct variable *builtin_method(struct context *context,
     if (!strcmp(idxstr, FNC_LENGTH)) {
         int n;
         switch (indexable->type) {
-            case VAR_LST: n = indexable->list->length;  break;
+            case VAR_LST: n = indexable->list.ordered->length;  break;
             case VAR_STR: n = indexable->str->length;   break;
             default:
                 free(idxstr);
@@ -827,7 +846,7 @@ struct variable *builtin_method(struct context *context,
     }
 
     else if (!strcmp(idxstr, FNC_LIST))
-        result = variable_new_list(context, indexable->list);
+        result = variable_new_list(context, indexable->list.ordered);
 
     else if (!strcmp(idxstr, FNC_KEY)) {
         if (indexable->type == VAR_KVP)
@@ -843,29 +862,11 @@ struct variable *builtin_method(struct context *context,
             result = variable_new_nil(context);
     }
 
-    else if (!strcmp(idxstr, FNC_KEYS)) {
-        struct variable *v = variable_new_list(context, NULL);
-        if (indexable->map) {
-            struct array *a = map_keys(indexable->map);
-            for (int i=0; i<a->length; i++) {
-                struct variable *u = variable_copy(context, (struct variable*)array_get(a, i));
-                array_add(v->list, u);
-            }
-            array_del(a);
-        }
-        result = v;
-    }
+    else if (!strcmp(idxstr, FNC_KEYS))
+        result = variable_map_list(context, indexable, &map_keys);
 
-    else if (!strcmp(idxstr, FNC_VALS)) {
-        assert_message(it == VAR_LST, "values are only for list");
-        if (NULL == indexable->map)
-            result = variable_new_list(context, NULL);
-        else {
-            struct array *values = map_vals(indexable->map);
-            result = variable_new_list(context, (struct array*)values);
-            array_del(values);
-        }
-    }
+    else if (!strcmp(idxstr, FNC_VALS))
+        result = variable_map_list(context, indexable, &map_vals);
 
     else if (!strcmp(idxstr, FNC_SERIALIZE))
         result = variable_new_cfnc(context, &cfnc_serialize);

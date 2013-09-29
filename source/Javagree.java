@@ -30,15 +30,16 @@ public class Javagree {
 	 * @param sys implements HAL platform API
 	 *
 	 */
-	private native int evalSource(Object callback, String name, String sourceCode, Object sys);
-	private native int evalBytes(Object callback, String name, byte[] byteCode, Object sys);
+	private native int evalSource(Object callback, String name, String source, Object sys, Object... args);
+	private native int evalBytes(Object callback, String name, byte[] bytes, Object sys, Object... args);
     
-	int eval(String source) {
-		return this.evalSource(this.callback, this.name, source, this);
+	int eval(String source, Object... args) {
+        System.out.println("eval0");
+		return this.evalSource(this.callback, this.name, source, this, args);
 	}
     
-	int eval(byte[] bytes) {
-		return this.evalBytes(this.callback, this.name, bytes, this);
+	int eval(byte[] bytes, Object... args) {
+		return this.evalBytes(this.callback, this.name, bytes, this, args);
 	}
 
     public Integer[] window(int w, int h) {
@@ -46,10 +47,10 @@ public class Javagree {
     }
     
     public Object[] button(Object uictx,
-                           Object x, Object y, Object w, Object h,
+                           Object x, Object y,
                            String logic, String text, String image) {
         Integer x2 = (Integer)x;
-        System.out.println("button " + x2 +","+ y +","+ w +","+ h
+        System.out.println("button " + x2 +","+ y
                            +", logic="+ logic +", text="+ text +", image="+ image);
         return new Object[]{null,22,33};
     }

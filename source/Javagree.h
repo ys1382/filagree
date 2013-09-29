@@ -10,18 +10,18 @@ extern "C" {
 /*
  * Class:     Javagree
  * Method:    evalSource
- * Signature: (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)I
+ * Signature: (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/Object;)I
  */
 JNIEXPORT jint JNICALL Java_Javagree_evalSource
-  (JNIEnv *, jobject, jobject, jstring, jstring, jobject);
+  (JNIEnv *, jobject, jobject, jstring, jstring, jobject, jobjectArray);
 
 /*
  * Class:     Javagree
  * Method:    evalBytes
- * Signature: (Ljava/lang/Object;Ljava/lang/String;[BLjava/lang/Object;)I
+ * Signature: (Ljava/lang/Object;Ljava/lang/String;[BLjava/lang/Object;[Ljava/lang/Object;)I
  */
 JNIEXPORT jint JNICALL Java_Javagree_evalBytes
-  (JNIEnv *, jobject, jobject, jstring, jbyteArray, jobject);
+  (JNIEnv *, jobject, jobject, jstring, jbyteArray, jobject, jobjectArray);
 
 #ifdef __cplusplus
 }

@@ -68,7 +68,7 @@ void hal_loop(struct context *context) {
 
 - (float)get_float:(const struct variable *)point at:(uint32_t)i
 {
-    const struct variable *f = (const struct variable*)array_get(point->list, i);
+    const struct variable *f = (const struct variable*)array_get(point->list.ordered, i);
     return f->floater;
 }
 
@@ -86,8 +86,8 @@ void hal_loop(struct context *context) {
             glVertex3f( -0.2, -0.3, 0.0);
             glVertex3f(  0.2, -0.3 ,0.0);
         } else {
-            for (uint32_t i=0; i<self->shape->list->length; i++) {
-                const struct variable *point = (const struct variable*)array_get(self->shape->list, i);
+            for (uint32_t i=0; i<self->shape->list.ordered->length; i++) {
+                const struct variable *point = (const struct variable*)array_get(self->shape->list.ordered, i);
                 assert_message(point->type == VAR_LST, "point not list");
                 float x = [self get_float:point at:0];
                 float y = [self get_float:point at:1];
@@ -425,7 +425,8 @@ void resize(NSControl *control,
     [control setFrame:rect];
 }
 
-void *hal_label(int32_t x, int32_t y,
+void *hal_label(struct variable *uictx,
+                int32_t x, int32_t y,
                 int32_t *w, int32_t *h,
                 const char *str)
 {
@@ -510,14 +511,14 @@ void *hal_label(int32_t x, int32_t y,
 - (id)          tableView:(NSTableView *) aTableView
 objectValueForTableColumn:(NSTableColumn *) aTableColumn
                       row:(long) rowIndex {
-    struct variable *item = array_get(self->data->list, rowIndex);
+    struct variable *item = array_get(self->data->list.ordered, rowIndex);
     char name[VV_SIZE];
     variable_value_str(self->context, item, name);
     return [NSString stringWithUTF8String:name];
 }
 
 - (long)numberOfRowsInTableView:(NSTableView *)aTableView {
-    return self->data->list->length;
+    return self->data->list.ordered->length;
 }
 
 - (void) tableViewSelectionDidChange:(NSNotification *)notification

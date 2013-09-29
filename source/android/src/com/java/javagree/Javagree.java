@@ -50,15 +50,15 @@ class Javagree implements OnClickListener {
 	 * @param sys implements HAL platform API
 	 *
 	 */
-	private native int evalSource(Object callback, String name, String source, Object sys);
-	private native int evalBytes(Object callback, String name, byte[] bytes, Object sys);
+	private native int evalSource(Object callback, String name, String source, Object sys, Object... args);
+	private native int evalBytes(Object callback, String name, byte[] bytes, Object sys, Object... args);
 
-	int eval(String source) {
-		return this.evalSource(this.callback, this.name, source, this);
+	int eval(String source, Object... args) {
+		return this.evalSource(this.callback, this.name, source, this, args);
 	}
 
-	int eval(byte[] bytes) {
-		return this.evalBytes(this.callback, this.name, bytes, this);
+	int eval(byte[] bytes, Object... args) {
+		return this.evalBytes(this.callback, this.name, bytes, this, args);
 	}
 
 	/////// private members
@@ -99,7 +99,7 @@ class Javagree implements OnClickListener {
 		String[] values2 = Arrays.copyOf(values, values.length, String[].class);
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(activity, android.R.layout.simple_list_item_1, values2);		 
 	    lv.setAdapter(adapter);
-		return this.putView(lv, (Integer)x, (Integer)y, (Integer)w, (Integer)h, logic);
+		return this.putView(lv, uictx, (Integer)x, (Integer)y, (Integer)w, (Integer)h, logic);
 	}
 
 	public Object[] input(Object uictx, Object x, Object y) {
@@ -109,7 +109,7 @@ class Javagree implements OnClickListener {
 		int frameWidth = this.window(0, 0)[0];
 		int w = frameWidth - (Integer)x - h;
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-		return this.putView(et, (Integer)x, (Integer)y, w, h + FUDGE, params, null);
+		return this.putView(et, uictx, (Integer)x, (Integer)y, w, h + FUDGE, params, null);
 	}
 
 	public Object[] button(Object uictx, Object x, Object y, byte[] logic, String text, String image) {
@@ -117,16 +117,24 @@ class Javagree implements OnClickListener {
 		Activity activity = App.getCurrentActivity();
 		Button b = new Button(activity);
 		b.setOnClickListener(this);
-		return this.putTextView(b, (Integer)x, (Integer)y, text, logic);
+		return this.putTextView(b, uictx, (Integer)x, (Integer)y, text, logic);
 	}
 
-	public Object[] label(Object x, Object y, String text) {		
+	public Object[] label(Object uictx, Object x, Object y, String text) {		
 		Activity activity = App.getCurrentActivity();
 		TextView tv = new TextView(activity);
-		return this.putTextView(tv, (Integer)x, (Integer)y, text, null);
+		return this.putTextView(tv, uictx, (Integer)x, (Integer)y, text, null);
 	}
 
-	private Object[] putTextView(TextView tv, int x, int y, String text, byte[] logic) {
+	public Object[] ui_set(Object id, Object value) {
+		MainActivity activity = App.getCurrentActivity();
+		View v = activity.findViewById((Integer)id);
+		if (v instanceof TextView)
+			((TextView)v).setText((String)value);
+		return new Object[]{};
+	}
+	
+	private Object[] putTextView(TextView tv, Object uictx, int x, int y, String text, byte[] logic) {
 
 		tv.setText(text);
 
@@ -136,16 +144,16 @@ class Javagree implements OnClickListener {
 		int width = bounds.width() + tv.getPaddingLeft() + tv.getPaddingRight() + FUDGE;
 		int height = bounds.height() + tv.getPaddingBottom() + tv.getPaddingTop() + FUDGE;
 
-		return this.putView(tv, x, y, width, height, logic);
+		return this.putView(tv, uictx, x, y, width, height, logic);
 	}
 
-	private Object[] putView(View v, int x, int y, int width, int height, byte[] logic) {
+	private Object[] putView(View v, Object uictx, int x, int y, int width, int height, byte[] logic) {
 		v.setId(this.id++);
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width, height);
-		return this.putView(v, x, y, width, height, params, logic);
+		return this.putView(v, uictx, x, y, width, height, params, logic);
 	}
 	
-	private Object[] putView(View v, int x, int y, int width, int height, RelativeLayout.LayoutParams params, byte[] logic) {
+	private Object[] putView(View v, Object uictx, int x, int y, int width, int height, RelativeLayout.LayoutParams params, byte[] logic) {
 		v.setId(this.id++);
 
 		params.leftMargin = (Integer)x;
@@ -155,7 +163,7 @@ class Javagree implements OnClickListener {
 		layout.addView(v, params);
 
 		if (logic != null) {
-			Actionifier a = new Actionifier(logic);
+			Actionifier a = new Actionifier(uictx, logic);
 			this.actionifiers.put(v.getId(), a); 
 		}
 
@@ -172,11 +180,14 @@ class Javagree implements OnClickListener {
 	private class Actionifier {
 
 		private byte[] logic;
+		private Object uictx;
 
-		public Actionifier(byte[] logic) {
+		public Actionifier(Object uictx, byte[] logic) {
+			this.uictx = uictx;
 			this.logic = logic;
 		}
 
+		Object getUictx()	{ return this.uictx; }
 		byte[] getLogic()	{ return this.logic; }
 	}
 }
