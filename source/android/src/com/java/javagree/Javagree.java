@@ -164,6 +164,7 @@ class Javagree implements OnClickListener {
 
 		if (logic != null) {
 			Actionifier a = new Actionifier(uictx, logic);
+			Log.d("Javagree", "put actionifiers[ " + v.getId() + " ]");
 			this.actionifiers.put(v.getId(), a); 
 		}
 
@@ -173,8 +174,8 @@ class Javagree implements OnClickListener {
 	public void onClick(View v) {
 		Actionifier a = (Actionifier) this.actionifiers.get(v.getId());
 		byte[] logic = a.getLogic();
-		Log.d("Javagree", "logic len = " + logic.length);
-		this.eval(logic);
+		if (logic != null)
+			this.eval(logic, a.getUictx());
 	}
 
 	private class Actionifier {

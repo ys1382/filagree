@@ -114,7 +114,7 @@ struct variable *vj2f_map(struct context *context, JNIEnv *env, jobject hashmap)
         // get entry's Class
         jclass jclass_of_entry = (*env)->GetObjectClass(env, entry);
         assert_message(jclass_of_entry, "no entry class");
-        DEBUGPRINT("entry class is %s\n", jni_class_name(env, entry));
+        //DEBUGPRINT("entry class is %s\n", jni_class_name(env, entry));
 
         // get method getKey
         jmethodID get_key = (*env)->GetMethodID(env, jclass_of_entry, "getKey", "()Ljava/lang/Object;");
@@ -129,17 +129,22 @@ struct variable *vj2f_map(struct context *context, JNIEnv *env, jobject hashmap)
         assert_message(key, "no key");
 
         // get value
-        jstring val = (jstring)((*env)->CallObjectMethod(env, entry, get_value));
+        jobject val = ((*env)->CallObjectMethod(env, entry, get_value));
         assert_message(val, "no val");
+
+        DEBUGPRINT("vj2f_map 1 %s\n", jni_class_name(env, val));
 
         // translate Java -> filagree
         struct variable *key2 = variable_new_j2f(context, env, key);
+        DEBUGPRINT("vj2f_map 2\n");
         struct variable *val2 = variable_new_j2f(context, env, val);
 
+        DEBUGPRINT("vj2f_map 3\n");
         // put in result
         variable_map_insert(context, v, key2, val2);
     }
 
+    DEBUGPRINT("vj2f_map done\n");
     return v;
 }
 
@@ -281,6 +286,13 @@ jobject vf2j_str(JNIEnv *env, struct variable *f)
     return (*env)->NewStringUTF(env, str2);
 }
 
+struct byte_array *j2fbytes(JNIEnv *env, jbyteArray jb)
+{
+    jsize size = (*env)->GetArrayLength(env, jb);
+    jbyte *jb2 = (jbyte *)(*env)->GetByteArrayElements(env, jb, NULL);
+    return byte_array_new_data(size, (uint8_t*)jb2);
+}
+
 jbyteArray vf2j_fnc(JNIEnv *env, struct variable *f)
 {
     jbyteArray result = (*env)->NewByteArray(env, f->str->size);
@@ -369,9 +381,6 @@ struct variable *cgree(struct context *context)
     jobject method = mc->method;
 
     // build argument list
-    struct variable *v0 = (struct variable *)array_get(arguments->list.ordered, 0);
-    struct variable *v1 = (struct variable *)array_get(arguments->list.ordered, 1);
-    printf("remove args %d, %d\n", v0->type, v1->type);
     array_remove(arguments->list.ordered, 0, 2); // don't pass "this" or closure in args
 
     jobjectArray jargs = vf2j(env, arguments);
@@ -452,6 +461,13 @@ struct variable *vj2f_fld(struct context *context, JNIEnv *env, jobject fld, job
     return variable_new_kvp(context, key, val);
 }
 
+struct variable *vj2f_bytes(struct context *context, JNIEnv *env, jbyteArray bytes, jobject parent)
+{
+    DEBUGPRINT("vj2f_bytes\n");
+    struct byte_array *bytes2 = j2fbytes(env, bytes);
+    return variable_new_fnc(context, bytes2, NULL);
+}
+
 // jobject -> variable
 struct variable *variable_new_j2f_ex(struct context *context, JNIEnv *env, jobject jo, jobject parent)
 {
@@ -463,6 +479,8 @@ struct variable *variable_new_j2f_ex(struct context *context, JNIEnv *env, jobje
     assert_message(name, "cannot get class name");
     //DEBUGPRINT("variable_new_j2f: %s\n", name);
 
+    if (!strcmp(name, "[B"))
+        return vj2f_bytes(context, env, jo, parent);
     if (name[0] == '[')
         return variable_new_j2f_array(context, env, (jobjectArray)jo);
     if (!strcmp(name, "java.lang.Integer"))
@@ -543,6 +561,7 @@ jint eval(JNIEnv *env,
 JNIEXPORT jint JNICALL Java_com_java_javagree_Javagree_evalSource(
 #else
 JNIEXPORT jint JNICALL Java_Javagree_evalSource(
+#endif
           JNIEnv *env,
           jobject caller,
           jobject callback,
@@ -550,7 +569,6 @@ JNIEXPORT jint JNICALL Java_Javagree_evalSource(
           jstring program,
           jobject sys,
           jobjectArray jargs)
-#endif
 {
     // compile source to bytecode
     struct byte_array *program2 = byte_array_from_jstring(env, program);
@@ -573,9 +591,6 @@ JNIEXPORT jint JNICALL Java_Javagree_evalBytes(
         jobjectArray jargs)
 {
     // jbyteArray -> byte_array
-    jsize size = (*env)->GetArrayLength(env, program);
-    jbyte *program2 = (jbyte *)(*env)->GetByteArrayElements(env, program, NULL);
-    struct byte_array *program3 = byte_array_new_data(size, (uint8_t*)program2);
-
-    return eval(env, caller, callback, name, program3, sys, jargs);
+    struct byte_array *program2 = j2fbytes(env, program);
+    return eval(env, caller, callback, name, program2, sys, jargs);
 }

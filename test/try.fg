@@ -1,2 +1,5 @@
-item = ['form','username','password']
-named = item.name != nil
+b = ['button', 'text':'click', 'name':'bttn', 'logic':'x']
+x = ['y', 'text':'click', 'name':'bttn', 'logic':'x']
+
+
+c = ['a', b, x]

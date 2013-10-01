@@ -126,15 +126,15 @@ end
 
 sys.ui(ctx, ['vertical',
 
-                ['form', 'username', 'password'],
+                 ['form', 'username', 'password'],
 
-                ['horizontal',
-                    ['button', 'text':'signin', 'logic':ctx.main],
-                    ['button', 'text':'signup', 'logic':ctx.signup],
-                ],
+                 ['horizontal',
+                     ['button', 'text':'signin', 'logic':ctx.main],
+                     ['button', 'text':'signup', 'logic':ctx.signup],
+                 ],
 
-                ctx.w, ctx.h
-            ])
+                 ctx.w, ctx.h
+             ])
 
 ####### main
 

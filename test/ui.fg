@@ -85,11 +85,14 @@ sys.ui = function(self, uictx, item, parent, x, y)
         o,w,h = sys.table(uictx, x, y, parent.w-x, parent.h-y, item.list, item.logic)
     end
 
-    if (o and named) then item.name = [item.name[0] : o] end
+    if (o and named) then
+        item.name = [item.name[0] : o]
+    end
+    uictx.ui = item.name
     return item.name, w, h
 end
 
-
+/*
 testui = function()
 
     tester = [ 'select' : function(ctx)
@@ -120,3 +123,4 @@ testui = function()
 end
 
 testui()
+*/

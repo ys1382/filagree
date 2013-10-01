@@ -699,13 +699,9 @@ static void push_var(struct context *context, struct byte_array *program)
 {
     struct byte_array* name = serial_decode_string(program);
 #ifdef DEBUG
-//    if (!context->runtime) {
         char *str = byte_array_to_string(name);
         DEBUGSPRINT(context->pcbuf, "%sVAR %s", context->pcbuf, str);
         free(str);
-//    } else {
-//        DEBUGSPRINT(context->pcbuf, "%sVAR ", context->pcbuf);
-//    }
     if (!context->runtime)
         return;
 #endif // DEBUG
@@ -1089,15 +1085,15 @@ static int32_t boolean_op(struct context *context, struct byte_array *program, e
         return 0;
     struct variable *v = variable_pop(context);
     null_check(v);
-    bool indeed_quite_so;
+    bool tistrue;
     switch (v->type) {
-        case VAR_BOOL:  indeed_quite_so = v->boolean;   break;
-        case VAR_FLT:   indeed_quite_so = v->floater;   break;
-        case VAR_INT:   indeed_quite_so = v->integer;   break;
-        case VAR_NIL:   indeed_quite_so = false;        break;
-        default:        indeed_quite_so = true;         break;
+        case VAR_BOOL:  tistrue = v->boolean;   break;
+        case VAR_FLT:   tistrue = v->floater;   break;
+        case VAR_INT:   tistrue = v->integer;   break;
+        case VAR_NIL:   tistrue = false;        break;
+        default:        tistrue = true;         break;
     }
-    if (indeed_quite_so ^ (op == VM_AND)) {
+    if (tistrue ^ (op == VM_AND)) {
         stack_push(context->operand_stack, v);
         return short_circuit;
     }

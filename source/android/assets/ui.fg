@@ -76,7 +76,7 @@ sys.ui = function(self, uictx, item, parent, x, y)
         o,w,h = sys.input(uictx, x, y)
 
     else if type == 'label' then
-        o,w,h = sys.label(x, y, item.text)
+        o,w,h = sys.label(uictx, x, y, item.text)
 
     else if type == 'button' then
         o,w,h = sys.button(uictx, x, y, item.logic, item.text, item.image)
@@ -85,8 +85,10 @@ sys.ui = function(self, uictx, item, parent, x, y)
         o,w,h = sys.table(uictx, x, y, parent.w-x, parent.h-y, item.list, item.logic)
     end
 
-    sys.print('i.n = ' + item.name)
-    if (o and named) then item.name = [item.name[0] : o] end
+    if (o and named) then
+        item.name = [item.name[0] : o]
+    end
+    uictx.ui = item.name
     return item.name, w, h
 end
 

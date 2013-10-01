@@ -106,6 +106,6 @@ public class Javagree {
         Test test = new Test();
         Javagree j = new Javagree(test, "tc");
         Object result = j.eval("sys.print('fg gets ' + tc.x + tc.z([7,8,9], ['p':99]))");
-        j.eval(test.test_ui);
+        //j.eval(test.test_ui);
     }
 }
