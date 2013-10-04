@@ -1,0 +1,161 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXFileReference section */
+		88D11F4A17FBA641000C8C63 /* .DS_Store */ = {isa = PBXFileReference; lastKnownFileType = file; path = .DS_Store; sourceTree = "<group>"; };
+		88D11F4B17FBA641000C8C63 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		88D11F4C17FBA641000C8C63 /* ChangeLog */ = {isa = PBXFileReference; lastKnownFileType = text; path = ChangeLog; sourceTree = "<group>"; };
+		88D11F4D17FBA641000C8C63 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		88D11F4E17FBA641000C8C63 /* DartConfiguration.tcl */ = {isa = PBXFileReference; lastKnownFileType = text; path = DartConfiguration.tcl; sourceTree = "<group>"; };
+		88D11F4F17FBA641000C8C63 /* doxygen */ = {isa = PBXFileReference; lastKnownFileType = folder; path = doxygen; sourceTree = "<group>"; };
+		88D11F5017FBA641000C8C63 /* include */ = {isa = PBXFileReference; lastKnownFileType = folder; path = include; sourceTree = "<group>"; };
+		88D11F5117FBA641000C8C63 /* library */ = {isa = PBXFileReference; lastKnownFileType = folder; path = library; sourceTree = "<group>"; };
+		88D11F5217FBA641000C8C63 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		88D11F5317FBA641000C8C63 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		88D11F5417FBA641000C8C63 /* programs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = programs; sourceTree = "<group>"; };
+		88D11F5517FBA641000C8C63 /* README.rst */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.rst; sourceTree = "<group>"; };
+		88D11F5617FBA641000C8C63 /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = scripts; sourceTree = "<group>"; };
+		88D11F5717FBA641000C8C63 /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = tests; sourceTree = "<group>"; };
+		88D11F5817FBA641000C8C63 /* visualc */ = {isa = PBXFileReference; lastKnownFileType = folder; path = visualc; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		88D11F4417FBA641000C8C63 = {
+			isa = PBXGroup;
+			children = (
+				88D11F4A17FBA641000C8C63 /* .DS_Store */,
+				88D11F4B17FBA641000C8C63 /* .gitignore */,
+				88D11F4C17FBA641000C8C63 /* ChangeLog */,
+				88D11F4D17FBA641000C8C63 /* CMakeLists.txt */,
+				88D11F4E17FBA641000C8C63 /* DartConfiguration.tcl */,
+				88D11F4F17FBA641000C8C63 /* doxygen */,
+				88D11F5017FBA641000C8C63 /* include */,
+				88D11F5117FBA641000C8C63 /* library */,
+				88D11F5217FBA641000C8C63 /* LICENSE */,
+				88D11F5317FBA641000C8C63 /* Makefile */,
+				88D11F5417FBA641000C8C63 /* programs */,
+				88D11F5517FBA641000C8C63 /* README.rst */,
+				88D11F5617FBA641000C8C63 /* scripts */,
+				88D11F5717FBA641000C8C63 /* tests */,
+				88D11F5817FBA641000C8C63 /* visualc */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		88D11F4917FBA641000C8C63 /* polarssl */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 88D11F5917FBA641000C8C63 /* Build configuration list for PBXLegacyTarget "polarssl" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = /Users/yusuf/make/filagree/source/polarssl;
+			dependencies = (
+			);
+			name = polarssl;
+			passBuildSettingsInEnvironment = 1;
+			productName = polarssl;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		88D11F4517FBA641000C8C63 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0500;
+			};
+			buildConfigurationList = 88D11F4817FBA641000C8C63 /* Build configuration list for PBXProject "polarssl" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 88D11F4417FBA641000C8C63;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				88D11F4917FBA641000C8C63 /* polarssl */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		88D11F4617FBA641000C8C63 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		88D11F4717FBA641000C8C63 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		88D11F5A17FBA641000C8C63 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = polarssl;
+			};
+			name = Debug;
+		};
+		88D11F5B17FBA641000C8C63 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = polarssl;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		88D11F4817FBA641000C8C63 /* Build configuration list for PBXProject "polarssl" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				88D11F4617FBA641000C8C63 /* Debug */,
+				88D11F4717FBA641000C8C63 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		88D11F5917FBA641000C8C63 /* Build configuration list for PBXLegacyTarget "polarssl" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				88D11F5A17FBA641000C8C63 /* Debug */,
+				88D11F5B17FBA641000C8C63 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 88D11F4517FBA641000C8C63 /* Project object */;
+}

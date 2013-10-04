@@ -23,6 +23,16 @@
 		88E7CCAC173D9A0500A70119 /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 88E7CCAB173D9A0500A70119 /* file.c */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		88D11F6017FBA752000C8C63 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 88D11F5C17FBA642000C8C63 /* polarssl.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 88D11F4917FBA641000C8C63;
+			remoteInfo = polarssl;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		8DD76FAF0486AB0100D96B5E /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -65,6 +75,7 @@
 		88C760B015428A5100A4F8E7 /* interpret.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = interpret.h; sourceTree = "<group>"; };
 		88C760B215428A5F00A4F8E7 /* interpret.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = interpret.c; sourceTree = "<group>"; };
 		88CB4F9117A9D325006D3717 /* javagree.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = javagree.c; sourceTree = "<group>"; };
+		88D11F5C17FBA642000C8C63 /* polarssl.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = polarssl.xcodeproj; path = polarssl/polarssl.xcodeproj; sourceTree = "<group>"; };
 		88D5124016F15D5A00A0D28D /* node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = node.h; sourceTree = "<group>"; };
 		88DFCF3C17BC71FA00EF63EC /* javagree.java */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.java; path = javagree.java; sourceTree = "<group>"; };
 		88E65DE41510F46F00E6207D /* variable.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = variable.c; sourceTree = "<group>"; };
@@ -129,6 +140,7 @@
 				88E65DE41510F46F00E6207D /* variable.c */,
 				88A65D9F147757400055DACF /* vm.c */,
 				88A65D99147757400055DACF /* vm.h */,
+				88D11F5C17FBA642000C8C63 /* polarssl.xcodeproj */,
 			);
 			name = source;
 			sourceTree = "<group>";
@@ -163,6 +175,13 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		88D11F5D17FBA642000C8C63 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		C6A0FF2B0290797F04C91782 /* test */ = {
 			isa = PBXGroup;
 			children = (
@@ -190,6 +209,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				88D11F6117FBA752000C8C63 /* PBXTargetDependency */,
 			);
 			name = filagree;
 			productInstallPath = "$(HOME)/bin";
@@ -218,6 +238,12 @@
 			);
 			mainGroup = 08FB7794FE84155DC02AAC07 /* filagree */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 88D11F5D17FBA642000C8C63 /* Products */;
+					ProjectRef = 88D11F5C17FBA642000C8C63 /* polarssl.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				8DD76FA90486AB0100D96B5E /* filagree */,
@@ -245,6 +271,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		88D11F6117FBA752000C8C63 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = polarssl;
+			targetProxy = 88D11F6017FBA752000C8C63 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		1DEB928608733DD80010E9CD /* Debug */ = {

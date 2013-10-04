@@ -38,31 +38,33 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
 
     if (!(file = fopen(filename_str, "rb"))) {
         free(filename_str);
-        DEBUGPRINT("\nCould not read file %s\n", filename_str);
-        return NULL;
+        goto no_file;
     }
     free(filename_str);
 
     if ((size = fsize(file)) < 0)
-        exit_message("could not get file size");
+        goto no_file;
     if (size == 0)
         return byte_array_new();
     if (size > INPUT_MAX_LEN)
-        exit_message("input file is too big");
+        goto no_file;
     if (!(str = (char*)malloc((size_t)size + 1)))
-        exit_message("could not malloc");
+        goto no_file;
 
     fread(str, 1, (size_t)size, file);
     if (feof(file) || ferror(file))
-        exit_message("could not read file");
+        goto no_file;
     if (fclose(file))
-        exit_message("could not close file");
+        goto no_file;
 
     struct byte_array* ba = byte_array_new_size(size);
     ba->length = size;
     memcpy(ba->data, str, size);
     free(str);
     return ba;
+no_file:
+    DEBUGPRINT("\nCould not read file %s\n", filename_str);
+    return NULL;
 }
 
 int write_byte_array(struct byte_array* ba, FILE* file) {

@@ -4,6 +4,6 @@ test/sync/synctest
 *.class
 source/filagree.xcodeproj/xcuserdata
 source/filagree.xcodeproj/project.xcworkspace
-android/bin
-android/obj
-android/libs
+source/android/bin
+source/android/obj
+source/android/libs

@@ -16,14 +16,28 @@ public class Test {
 			+ " ['table', 'list':['7','8','9']],"
 			+ "])";
 
-	
-	Javagree doTesting() {
-		Javagree sys = new Javagree(this, "tc");
-		//a.eval(test, "tc", "sys.print('fg gets ' + tc.x + tc.z([7,8,9], ['p':99]))", null);
+	void test1(Javagree sys) {
+		sys.eval("sys.print('fg gets ' + tc.x + tc.z([7,8,9], ['p':99]))");
+	}
 
+	void test2(Javagree jg, HalAndroid sys) {
 		String imports = sys.read("ui.fg");
-		sys.eval(imports + Test.test_ui);
-		return sys;
+		jg.eval(imports + Test.test_ui);
+	}
+
+	void test3(Javagree jg, HalAndroid sys) {
+		String source = sys.read("ui.fg") + sys.read("sync/sync.fg") + sys.read("sync/sync_client.fg");
+		jg.eval(source);
+	}
+
+	void doTesting() {
+		HalAndroid sys = new HalAndroid();
+		Javagree jg = new Javagree(this, "tc", sys);
+		sys.setJavagree(jg);
+
+		//test1(jg);
+		//test2(jg,sys);
+		test3(jg, sys);
 	}
 
 	public int x = 6;

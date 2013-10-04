@@ -9,7 +9,8 @@ OBJECTS=$(SOURCES:.c=.o)
 FRAMEWORKS=-framework Cocoa -framework OpenGL -framework OpenAL
 
 osx: $(OBJECTS) hal_osx.o
-	$(CC) $(OBJECTS) hal_osx.o $(FRAMEWORKS) -o filagree $(LDFLAGS)
+	cd polarssl/library && $(MAKE) all && cd ../..
+	$(CC) $(OBJECTS) hal_osx.o polarssl/library/libpolarssl.a $(FRAMEWORKS) -o filagree $(LDFLAGS)
 	strip filagree
 
 .c.o:

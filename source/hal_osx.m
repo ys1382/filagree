@@ -22,7 +22,8 @@
 static NSWindow *window = NULL;
 
 void hal_loop(struct context *context) {
-    [NSApp run];
+//    [NSApp run];
+CFRunLoopRun();
 }
 
 @interface GLView : NSOpenGLView {

@@ -302,11 +302,15 @@ int import(const char* input, int i)
 
     uint32_t line2 = line;
     struct variable *path2 = variable_new_str(context, path);
-    if (!map_has(imports, path2)) {
+    if (!map_has(imports, path2))
+    {
         map_insert(imports, path2, NULL);
         struct byte_array *imported = read_file(path);
-        lex(imported);
-        byte_array_del(imported);
+        if (NULL != imported)
+        {
+            lex(imported);
+            byte_array_del(imported);
+        }
     }
     byte_array_del(path);
     line = line2;

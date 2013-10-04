@@ -5,14 +5,11 @@ import com.java.javagree.R;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.RelativeLayout;
 
-public class MainActivity extends Activity implements OnClickListener {
+public class MainActivity extends Activity {
 
 	RelativeLayout layout;
-	private Javagree javagree;
 	RelativeLayout getLayout() {
 		return this.layout;
 	}
@@ -23,12 +20,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		setContentView(R.layout.activity_main);
 		this.layout = (RelativeLayout)findViewById(R.id.main_layout);
 		Test test = new Test();
-		this.javagree = test.doTesting();
-	}
-
-	@Override
-	public void onClick(View v) {
-		this.javagree.onClick(v);
+		test.doTesting();
 	}
 
 	@Override

@@ -32,6 +32,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>assets</name>
+			<type>2</type>
+			<locationURI>PARENT-2-PROJECT_LOC/test</locationURI>
+		</link>
+		<link>
 			<name>jni/compile.c</name>
 			<type>1</type>
 			<location>/Users/nqminh/GIT/Filagree/source/compile.c</location>
