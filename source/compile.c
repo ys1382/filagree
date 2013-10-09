@@ -1587,6 +1587,7 @@ struct byte_array *build_string(const struct byte_array *input) {
 struct byte_array *build_file(const struct byte_array* filename)
 {
     struct byte_array *input = read_file(filename);
+    assert_message(NULL != input, "could not read file %s", byte_array_to_string(filename));
     struct byte_array *result = build_string(input);
     byte_array_del(input);
     return result;

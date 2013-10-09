@@ -4,6 +4,6 @@ id = 'server'
 
 import 'sync'                       # shared sync logic
 
-server = Sync.init(nil,id)             # initialize server
+server = Sync.init(nil,id)          # initialize server
 sys.listen(port, server)            # server listens for incoming socket connections
 sys.loop()

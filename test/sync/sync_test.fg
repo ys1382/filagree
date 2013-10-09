@@ -1,97 +1,33 @@
+id = 'test_director'
+
 import 'sync'
+import '../test_director'
 
-test_director = [
-
-    'seq'   : 1,
-    'moi'   : 'test_director',
-    'queue' : [],
-    'active': [],
+director = [
 
     'connected' : function(self, peer)
 
-        msg1 = ['event' : 'greet', 'from' : self.moi, 'files' : self.files]
+        msg1 = ['event' : 'greet', 'from' : self.id, 'files' : self.files]
         sys.send(peer, msg1)
-
-    end,
-
-    'messaged' : function(self, socket, msg4)
-
-    if msg4.event != 'change' then
-            sys.print('messaged ' + msg4)
-    end
-
-        if (msg4.event == 'test') then
-
-            sys.print('test result: ' + msg4)
-            #sys.print('test result: ' + msg4.seq + ': ' + msg4.status)
-
-            seq = ''+msg4.seq
-            original_request = self.active[seq]
-            self.active[seq] = nil
-
-            ok = (msg4.status == 'done') or (msg4.status == 'pass')
-
-            if (not ok) and (original_request.retry < 3) then
-
-                original_request.retry = original_request.retry + 1
-                sys.sleep(original_request.retry * 1000)
-                self.queue = [original_request] + self.queue
-
-            end
-
-            self.dequeue()
-            return
-        end
-
-        if msg4.event == 'greet' then
-            self.server = socket
-            self.run_tests()
-        end
 
     end,
 
     'run_tests' : function(self)
 
-        self.direct('ABC',      'update', 'a.txt', '123')
-        self.direct('ABC',      'verify', 'a.txt', '123')
-        self.direct('server',   'verify', 'a.txt', '123')
-        #self.direct('XYZ',     'verify', 'a.txt', '123')
+        self.sync_direct('A',      'update', 'a.txt', '123')
+        self.sync_direct('A',      'verify', 'a.txt', '123')
+        self.sync_direct('server', 'verify', 'a.txt', '123')
+        self.sync_direct('B',      'verify', 'a.txt', '123')
 
     end,
 
-    'direct' : function(self, whom, action, path, content)
+    'sync_direct' : function(self, whom, action, path, content)
 
-        msg5 = ['event'     : 'test',
-                'action'    : action,
-                'from'      : self.moi,
-                'to'        : whom,
-                'seq'       : self.seq,
-                'path'      : path,
-                'content'   : content]
-
-        self.queue = self.queue + [msg5]
-        self.dequeue()
-        self.seq = self.seq + 1
+        self.direct(whom, action, 'path':path, 'content':content)
 
     end,
 
-    'dequeue' : function(self)
+] + test_director
 
-        if (not self.queue.length) or (self.active.keys.length) then
-            return
-        end
-
-        msg4 = self.queue.remove()[0]
-        self.active[''+msg4.seq] = msg4
-        if self.active.keys.length != 1 then sys.exit(2) end
-
-        sys.print('send ' + msg4)
-
-        sys.send(self.server, msg4)
-
-    end,
-
-]
-
-sys.connect('127.0.0.1', port, test_director) # client connects to server
+sys.connect('127.0.0.1', port, director) # client connects to server
 sys.loop()

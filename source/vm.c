@@ -16,6 +16,8 @@
 bool run(struct context *context, struct byte_array *program, struct map *env, bool in_context);
 void display_code(struct context *context, struct byte_array *code);
 const char* indentation(struct context *context);
+static void dst(struct context *context);
+
 
 #ifdef DEBUG
 
@@ -169,6 +171,7 @@ void context_del(struct context *context)
                 struct variable *v = (struct variable *)array_get(vars, i);
                 variable_del(context, v);
             }
+            DEBUGPRINT("del all_variables %p\n", vars);
             array_del(vars);
         }
     }
@@ -397,6 +400,8 @@ struct variable *src(struct context *context, enum Opcode op, struct byte_array 
 
 void vm_call_src(struct context *context, struct variable *func)
 {
+    struct variable *v;
+
     struct program_state *state = (struct program_state*)stack_peek(context->program_stack, 0);
     if (state == NULL)
         state = program_state_new(context, NULL);
@@ -415,7 +420,7 @@ void vm_call_src(struct context *context, struct variable *func)
             run(context, func->fnc.body, func->fnc.closure, false);
             break;
         case VAR_CFNC: {
-            struct variable *v = func->cfnc.f(context);
+            v = func->cfnc.f(context);
             if (v == NULL)
                 v = variable_new_src(context, 0);
             else if (v->type != VAR_SRC) { // convert to VAR_SRC variable
@@ -426,6 +431,7 @@ void vm_call_src(struct context *context, struct variable *func)
             stack_push(context->operand_stack, v); // push the result
         } break;
         case VAR_NIL:
+            dst(context); // drop the params
             DEBUGPRINT("nil func\n");
             break;
         default:

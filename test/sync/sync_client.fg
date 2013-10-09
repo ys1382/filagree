@@ -5,9 +5,6 @@
 import 'sync'
 import '../ui'
 
-id = 'client' + id
-client_dir = test_dir + 'id' + '/'  # server files root directory
-
 
 # init client
 client = ['select' : function(ctx)

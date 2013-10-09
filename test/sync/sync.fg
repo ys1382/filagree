@@ -1,7 +1,8 @@
 ####### sync.fg
 
-port = 9999
-test_dir = 'synctest/' + id + '/'
+import '../mesh'
+
+test_dir = id + '/'
 
 Sync = [
 
@@ -10,9 +11,9 @@ Sync = [
     'init' : function(self, ctx, id)
 
         self.id = id
-        watched = 'synctest/' + id + '/'
+        watched = id + '/'
 
-        # for test
+        # clear directory for testing
         sys.rm(watched)
         sys.mkdir(watched)
 
@@ -27,6 +28,10 @@ Sync = [
 
         return self
 
+    end,
+
+    'greet' : function(self)
+        return ['files' : self.files]
     end,
 
     'local_snapshot' : function(self)
@@ -49,7 +54,7 @@ Sync = [
         self.send(socket, msg1)
     end,
 
-    'messaged' : function(self, socket, msg4)
+    'handle_message' : function(self, socket, msg4)
 
         sys.print('message from ' + socket + ': ' + msg4)
 
@@ -57,7 +62,6 @@ Sync = [
             self.handle_content_request(socket, msg4)
 
         else if msg4.event == 'greet' then
-            self.peers[msg4.from] = socket
             self.snapshot = msg4.files
 
         else if msg4.event == 'change' then
@@ -113,10 +117,12 @@ Sync = [
             end
         end
 
-        changes = ['updated' : updated, 'deleted' : deleted]
+        if updated.keys.length or deleted.keys.length then
+            changes = ['updated' : updated, 'deleted' : deleted]
+            msg2 = ['event' : 'change', 'changes' : changes]
+            self.broadcast(msg2)
+        end
 
-        msg2 = ['event' : 'change', 'changes' : changes]
-        self.broadcast(msg2)
         self.files = latest
 
     end,
@@ -146,80 +152,43 @@ Sync = [
 
     end,
 
-    'send_to' : function(self, to, msg)
-        msg.from = self.id
-        to2 = self.peers[to] # id -> socket
-        if not to2 then
-            if self.id != 'server' then
-                to2 = self.peers['server']
-            else
-                sys.print('no peer ' + to)
-            end
-        end
-        self.send(to2, msg)
-    end,
-
-    'send' : function(self, to, msg)
-        sys.print('send to ' + to + ': ' + msg)
-        sys.send(to, msg)
-    end,
-
-    'broadcast' : function(self, msg6, except)
-        if self.offline then
-            return
-        end
-        self.prep(msg6)
-        msg6.from = self.id
-        for socket in self.peers.vals where (socket != except)
-            self.send(socket, msg6)
-        end
-    end,
-
     ####### test
 
     'handle_test' : function(self, msg7)
 
-        if msg7.to == self.id # por moi
+        sys.print('test directive: ' + msg7)
 
-            sys.print('test directive: ' + msg7.directive)
+        action = msg7.action
+        path = self.watched + msg7.path
+        status = 'done'
 
-            action = msg7.action
-            path = self.watched + msg7.path
-            status = 'done'
+        if action == 'update' then
+            sys.write(path, msg7.content)
 
-            if action == 'update' then
-                sys.write(path, msg7.content)
+        else if action == 'move' then
+                sys.rename(from, to)
 
-            else if action == 'move' then
-                    sys.rename(from, to)
+        else if action == 'delete' then
+            sys.rm(path)
 
-            else if action == 'delete' then
-                sys.rm(path)
-
-            else if action == 'offline' then
-                    self.offline = msg7.offline
-                    if not msg7.offline then
-                        self.connected()
-                    end
-
-            else if action == 'verify' then
-                content = sys.read(path)
-                if content == msg7.content then
-                    status = 'pass'
-                else
-                    status = 'fail: ' + content +' != '+ msg7.content
+        else if action == 'offline' then
+                self.offline = msg7.offline
+                if not msg7.offline then
+                    self.connected()
                 end
+
+        else if action == 'verify' then
+            content = sys.read(path)
+            if content == msg7.content then
+                status = 'pass'
+            else
+                status = 'fail: ' + content +' != '+ msg7.content
             end
-
-            msg8 = ['event' : 'test', 'status' : status, 'seq' : msg7.seq, 'to' : msg7.from]
-            self.send_to(msg7.from, msg8)
-
-        else # forward to recipient
-
-            to = self.peers[msg7.to] # id -> socket
-            self.send(to, msg7)
-
         end
+
+        msg8 = ['event' : 'test', 'status' : status, 'seq' : msg7.seq, 'to' : msg7.from]
+        self.send_to(msg7.from, msg8)
+
     end,
 
-]
+] + Mesh

@@ -1,0 +1,66 @@
+####### sync.fg
+
+port = 9999
+
+Mesh = [
+
+    'peers' : [],
+
+    'connected' : function(self, socket)
+        msg1 = ['event' : 'greet', 'from' : self.id] + self.greet()
+        self.send(socket, msg1)
+    end,
+
+    'messaged' : function(self, socket, msg4)
+
+        if (not msg4.to) or (msg4.to == self.id) # por moi
+
+            sys.print('message from ' + socket + ': ' + msg4)
+
+            if msg4.event == 'greet' then
+                self.peers[msg4.from] = socket
+            end
+
+            self.handle_message(socket, msg4)
+
+        else # forward to recipient
+
+            to = self.peers[msg4.to] # id -> socket
+            if not to then
+                sys.print('no peer ' + msg4.to)
+            else
+                self.send(to, msg4)
+            end
+        end
+
+    end,
+
+    'send_to' : function(self, to, msg)
+        msg.from = self.id
+        to2 = self.peers[to] # id -> socket
+        if not to2 then
+            if self.id != 'server' then
+                to2 = self.peers['server']
+            else
+                sys.print('no peer ' + to)
+            end
+        end
+        self.send(to2, msg)
+    end,
+
+    'send' : function(self, to, msg)
+        sys.print('send to ' + to + ': ' + msg)
+        sys.send(to, msg)
+    end,
+
+    'broadcast' : function(self, msg6, except)
+        if self.offline then
+            return
+        end
+        self.prep(msg6)
+        msg6.from = self.id
+        for socket in self.peers.vals where (socket != except)
+            self.send(socket, msg6)
+        end
+    end,
+]

@@ -1,0 +1,34 @@
+port = 9996
+
+####### net
+
+server = [
+
+    'users' : sys.load('users') or [],
+
+    'connected' : function(self, id)
+        sys.print('server: connected ' + id)
+    end,
+
+    'messaged' : function(self, id, msg)
+        sys.print('server: message from ' + id + ': ' + msg)
+        self[msg.action](id, msg.data)
+    end,
+
+    'signup' : function(self, id, data)
+        self.users = self.users + data
+        sys.save(self.users, 'users')
+    end,
+
+    'signin' : function(self, id, data)
+        if self.users(data.username) == data.password then
+            sys.send(id, 'ok')
+        else
+            sys.send(id, 'no')
+        end
+    end,
+]
+
+####### main
+
+sys.listen(port, server)

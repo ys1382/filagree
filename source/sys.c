@@ -81,13 +81,13 @@ struct variable *sys_read(struct context *context)
     if (NULL != bytes)
     {
         content = variable_new_str(context, bytes);
+        byte_array_del(bytes);
     }
     else
     {
         context->error = variable_new_str_chars(context, "could not load file");
         content = variable_new_nil(context);
     }
-    byte_array_del(bytes);
     variable_push(context, content);
 
     long mod = file_modified(byte_array_to_string(path->str));

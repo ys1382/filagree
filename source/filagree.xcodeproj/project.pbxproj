@@ -56,9 +56,8 @@
 		884D969517CD3677003A257E /* sync_client.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = sync_client.fg; sourceTree = "<group>"; };
 		884D969617CD3677003A257E /* sync_server.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = sync_server.fg; sourceTree = "<group>"; };
 		884D969717CEC49D003A257E /* sync_test.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = sync_test.fg; sourceTree = "<group>"; };
-		88700ABE17CC4C5500AC6CAF /* im.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = im.fg; path = ../test/im.fg; sourceTree = "<group>"; };
 		88700ABF17CC4C5500AC6CAF /* node.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = node.fg; path = ../test/node.fg; sourceTree = "<group>"; };
-		88700AC117CC4C5500AC6CAF /* test.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = test.fg; path = ../test/test.fg; sourceTree = "<group>"; };
+		88700AC117CC4C5500AC6CAF /* test_syntax.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = test_syntax.fg; path = ../test/test_syntax.fg; sourceTree = "<group>"; };
 		88700AC217CC4C5500AC6CAF /* try.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = try.fg; path = ../test/try.fg; sourceTree = "<group>"; };
 		88700AC317CC4C5500AC6CAF /* ui.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = ui.fg; path = ../test/ui.fg; sourceTree = "<group>"; };
 		887A122D17F16BF4001CE285 /* Javagree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Javagree.h; sourceTree = "<group>"; };
@@ -77,11 +76,16 @@
 		88CB4F9117A9D325006D3717 /* javagree.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = javagree.c; sourceTree = "<group>"; };
 		88D11F5C17FBA642000C8C63 /* polarssl.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = polarssl.xcodeproj; path = polarssl/polarssl.xcodeproj; sourceTree = "<group>"; };
 		88D5124016F15D5A00A0D28D /* node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = node.h; sourceTree = "<group>"; };
+		88D8A0EA1800030100354970 /* mesh.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = mesh.fg; path = ../test/mesh.fg; sourceTree = "<group>"; };
 		88DFCF3C17BC71FA00EF63EC /* javagree.java */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.java; path = javagree.java; sourceTree = "<group>"; };
 		88E65DE41510F46F00E6207D /* variable.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = variable.c; sourceTree = "<group>"; };
 		88E65DE51510F46F00E6207D /* variable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = variable.h; sourceTree = "<group>"; };
 		88E7CCAB173D9A0500A70119 /* file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file.c; sourceTree = "<group>"; };
 		88E7CCAD173D9C0400A70119 /* file.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = file.h; sourceTree = "<group>"; };
+		88F867AA18028280003F8721 /* im_client.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = im_client.fg; sourceTree = "<group>"; };
+		88F867AB18028280003F8721 /* im_server.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = im_server.fg; sourceTree = "<group>"; };
+		88F867AC1802829A003F8721 /* im_test.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = im_test.fg; sourceTree = "<group>"; };
+		88F867AD18028518003F8721 /* test_director.fg */ = {isa = PBXFileReference; lastKnownFileType = text; name = test_director.fg; path = ../test/test_director.fg; sourceTree = "<group>"; };
 		88FAF8A015B9ED5700A9B6D9 /* hal_osx.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = hal_osx.m; sourceTree = "<group>"; };
 		88FAF8A115B9ED5700A9B6D9 /* hal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hal.h; sourceTree = "<group>"; };
 		8DD76FB20486AB0100D96B5E /* filagree */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = filagree; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -182,13 +186,26 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		88F867A818028280003F8721 /* im */ = {
+			isa = PBXGroup;
+			children = (
+				88F867AA18028280003F8721 /* im_client.fg */,
+				88F867AB18028280003F8721 /* im_server.fg */,
+				88F867AC1802829A003F8721 /* im_test.fg */,
+			);
+			name = im;
+			path = ../test/im;
+			sourceTree = "<group>";
+		};
 		C6A0FF2B0290797F04C91782 /* test */ = {
 			isa = PBXGroup;
 			children = (
-				88700ABE17CC4C5500AC6CAF /* im.fg */,
+				88F867A818028280003F8721 /* im */,
+				88D8A0EA1800030100354970 /* mesh.fg */,
 				88700ABF17CC4C5500AC6CAF /* node.fg */,
 				884D969117CD3677003A257E /* sync */,
-				88700AC117CC4C5500AC6CAF /* test.fg */,
+				88F867AD18028518003F8721 /* test_director.fg */,
+				88700AC117CC4C5500AC6CAF /* test_syntax.fg */,
 				88700AC217CC4C5500AC6CAF /* try.fg */,
 				88700AC317CC4C5500AC6CAF /* ui.fg */,
 			);

@@ -1,5 +1,2 @@
-b = ['button', 'text':'click', 'name':'bttn', 'logic':'x']
-x = ['y', 'text':'click', 'name':'bttn', 'logic':'x']
-
-
-c = ['a', b, x]
+x = true + true
+y = nil + false

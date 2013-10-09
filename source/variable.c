@@ -38,7 +38,14 @@ struct variable* variable_new(struct context *context, enum VarType type)
     v->ptr = NULL;
     v->visited = VISITED_NOT;
 
+    struct array *oldarray = context->singleton->all_variables;
+    
     array_add(context->singleton->all_variables, v);
+
+    struct array *newarray = context->singleton->all_variables;
+    if (oldarray != newarray)
+        DEBUGPRINT("all_variables %p -> %p\n", oldarray, newarray);
+    
     //DEBUGPRINT("variable_new %s %p\n", var_type_str(type), v);
     return v;
 }
