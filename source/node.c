@@ -75,6 +75,8 @@ void *incoming(void *arg)
 #endif
     gil_unlock(ta->context, "incoming");
 
+    // todo: make a context copy
+
     node_callback(ta);
 	return NULL;
 }

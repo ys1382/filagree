@@ -101,11 +101,13 @@ struct program_state *program_state_new(struct context *context, struct map *env
     state->named_variables = env ? map_copy(context, env) : map_new(context);
     state->args = variable_new_list(context, NULL); // todo: prevent GC
     stack_push(context->program_stack, state);
+    DEBUGPRINT("push state %p onto %p\n", state, context->program_stack);
     return state;
 }
 
 void program_state_del(struct context *context, struct program_state *state)
 {
+    DEBUGPRINT("program_state_del %p from %p\n", state, context->program_stack);
     map_del(state->named_variables);
     free(state);
 }
@@ -181,6 +183,7 @@ void context_del(struct context *context)
     while (!stack_empty(context->program_stack))
     {
         struct program_state *s = (struct program_state *)stack_pop(context->program_stack);
+        DEBUGPRINT("del state %p from %p\n", s, context->program_stack);
         program_state_del(context, s);
     }
 
@@ -403,7 +406,7 @@ void vm_call_src(struct context *context, struct variable *func)
     struct variable *v;
 
     struct program_state *state = (struct program_state*)stack_peek(context->program_stack, 0);
-    if (state == NULL)
+    if (NULL == state)
         state = program_state_new(context, NULL);
     struct variable *s = (struct variable*)stack_peek(context->operand_stack, 0);
 
@@ -769,7 +772,7 @@ void set_named_variable(struct context *context,
                         struct variable *value)
 {
     //DEBUGPRINT(" set_named_variable: %p\n", state);
-    if (state == NULL)
+    if (NULL == state)
         state = (struct program_state*)stack_peek(context->program_stack, 0);
     struct map *var_map = state->named_variables;
     struct variable *name2 = variable_new_str(context, name);
@@ -1346,7 +1349,6 @@ bool run(struct context *context,
          struct map *env,
          bool in_state)
 {
-    bool local_state = false;
     null_check(context);
     null_check(program);
     program = byte_array_copy(program);
@@ -1363,10 +1365,7 @@ bool run(struct context *context,
             env = state->named_variables; // use the caller's variable set in the new state
         }
         else // new state on program stack
-        {
-            local_state = true;
             state = program_state_new(context, env);
-        }
     }
 
     while (program->current < program->data + program->length)
@@ -1449,10 +1448,12 @@ bool run(struct context *context,
     if (!context->runtime)
         return false;
 done:
-    if (!in_state)
-        stack_pop(context->program_stack);
-    if (local_state)
+    if (!in_state) {
+        DEBUGPRINT("pop state from %p\n", context->program_stack);
+        struct program_state *s = stack_pop(context->program_stack);
+        assert_message(s == state, "not same");
         program_state_del(context, state);
+    }
     if (NULL != program)
         byte_array_del(program);
     garbage_collect(context);

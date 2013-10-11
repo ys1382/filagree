@@ -26,7 +26,7 @@ public class Test {
 	}
 
 	void test3(Javagree jg, HalAndroid sys) {
-		String source = sys.read("ui.fg") + sys.read("sync/sync.fg") + sys.read("sync/sync_client.fg");
+		String source = sys.read("mesh.fg") + sys.read("ui.fg") + sys.read("sync/sync.fg") + sys.read("sync/sync_client.fg");
 		jg.eval(source);
 	}
 

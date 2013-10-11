@@ -19,6 +19,21 @@ director = [
         self.sync_direct('server', 'verify', 'a.txt', '123')
         self.sync_direct('B',      'verify', 'a.txt', '123')
 
+        self.sync_direct('A',      'update', 'a.txt', '456')
+        self.sync_direct('A',      'verify', 'a.txt', '456')
+        self.sync_direct('server', 'verify', 'a.txt', '456')
+        self.sync_direct('B',      'verify', 'a.txt', '456')
+
+        self.sync_direct('A',      'rename', 'a.txt', 'b.txt')
+        self.sync_direct('A',      'verify', 'b.txt', '123')
+        self.sync_direct('server', 'verify', 'b.txt', '123')
+        self.sync_direct('B',      'verify', 'b.txt', '123')
+
+        self.sync_direct('A',      'delete', 'a.txt')
+        self.sync_direct('A',      'verify', 'a.txt')
+        self.sync_direct('server', 'verify', 'a.txt')
+        self.sync_direct('B',      'verify', 'a.txt')
+
     end,
 
     'sync_direct' : function(self, whom, action, path, content)
