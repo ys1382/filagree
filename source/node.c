@@ -30,6 +30,10 @@ struct node_thread {
     int fd;
 };
 
+uint16_t current_thread_id() {
+    return ((unsigned int)(VOID_INT)pthread_self() >> 12) & 0xFFF;
+}
+
 struct node_thread *thread_new(struct context *context,
                                struct variable *listener,
                                void *(*start_routine)(void *),
@@ -113,6 +117,17 @@ void add_thread(struct node_thread *ta, int sockfd)
     }
 }
 
+void messaged(struct node_thread *ta0, struct variable *listener, int sockfd, uint8_t *buf, ssize_t n)
+{
+    struct node_thread *ta = thread_new(ta0->context, listener, incoming, sockfd);
+    ta->buf = byte_array_new_size(n);
+    ta->buf->length = n;
+    memcpy((void*)ta->buf->data, buf, n);
+    ta->event = MESSAGED;
+    printf("\n>%" PRIu16 " - incoming %p\n", current_thread_id(), ta->context);
+    add_thread(ta, 0);
+}
+
 // listens for inbound connections
 void *sys_socket_listen2(void *arg)
 {
@@ -122,7 +137,7 @@ void *sys_socket_listen2(void *arg)
 	int					i, maxi, maxfd, connfd, sockfd;
 	int					nready, client[FD_SETSIZE];
 	fd_set				rset, allset;
-	char				buf[MAXLINE];
+	uint8_t				buf[MAXLINE];
 	socklen_t			clilen;
 	struct sockaddr_in	cliaddr;
 
@@ -194,13 +209,16 @@ void *sys_socket_listen2(void *arg)
 
 				} else {
 
+                    messaged(ta0, listener, sockfd, buf, n);
+                    /*
                     struct node_thread *ta = thread_new(ta0->context, listener, incoming, sockfd);
                     ta->buf = byte_array_new_size(n);
                     ta->buf->length = n;
                     memcpy((void*)ta->buf->data, buf, n);
                     ta->event = MESSAGED;
-                    //DEBUGPRINT("incoming1 %d\n", sockfd);
+                    printf("\n>%" PRIu16 " - incoming %p\n", current_thread_id(), ta->context);
                     add_thread(ta, 0);
+                    */
                 }
 				
                 if (--nready <= 0) // no more readable descriptors
@@ -266,11 +284,12 @@ void *sys_connect2(void *arg)
 
         for (;;)
         {
-            char buf[MAXLINE];
+            uint8_t buf[MAXLINE];
             ssize_t n = read(ta->fd, buf, sizeof(buf)); // read from the socket
             if (n <= 0)
                     return NULL;
-
+            messaged(ta, ta->listener, ta->fd, buf, n);
+            /*
             ta->buf = byte_array_new_size(n);
             ta->buf->length = n;
             memcpy((void*)ta->buf->data, buf, n);
@@ -278,6 +297,7 @@ void *sys_connect2(void *arg)
             //DEBUGPRINT("incoming2 %d\n", ta->fd);
             ta->start_routine = incoming;
             add_thread(ta, 0);
+            */
         }
     }
 

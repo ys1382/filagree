@@ -40,10 +40,6 @@ static void dst(struct context *context);
 
 jmp_buf trying;
 
-uint16_t current_thread_id() {
-    return ((unsigned int)(VOID_INT)pthread_self() >> 12) & 0xFFF;
-}
-
 static void vm_exit() {
     DEBUGPRINT("exiting thread %" PRIu16 "\n", current_thread_id());
     longjmp(trying, 1);
@@ -101,13 +97,18 @@ struct program_state *program_state_new(struct context *context, struct map *env
     state->named_variables = env ? map_copy(context, env) : map_new(context);
     state->args = variable_new_list(context, NULL); // todo: prevent GC
     stack_push(context->program_stack, state);
-    DEBUGPRINT("push state %p onto %p\n", state, context->program_stack);
+    //DEBUGPRINT("push state %p onto %p\n", state, context->program_stack);
+    printf("\n>%" PRIu16 " - push state %p onto %p->%p\n", current_thread_id(),
+           state, context, context->program_stack);
+
     return state;
 }
 
+
+
 void program_state_del(struct context *context, struct program_state *state)
 {
-    DEBUGPRINT("program_state_del %p from %p\n", state, context->program_stack);
+    printf("\n>%" PRIu16 " - program_state_del %p from %p\n", current_thread_id(), state, context->program_stack);
     map_del(state->named_variables);
     free(state);
 }
@@ -147,6 +148,8 @@ struct context *context_new(struct context *parent, // parent context
     context->indent = 0;
     context->error = NULL;
     context->sys = sys_funcs ? sys_new(context) : NULL;
+
+    printf("\n>%" PRIu16 " - context_new %p - %p\n", current_thread_id(), context, context->program_stack);
 
     return context;
 }
@@ -697,7 +700,8 @@ struct variable *find_var(struct context *context, struct variable *key)
     if ((NULL == v) && context->singleton->callback)
         v = variable_map_get(context, context->singleton->callback, key);
     if (NULL == v) {
-        printf("\ncould not find %s\n", byte_array_to_string(key->str));
+        printf("\n>%" PRIu16 " - could not find %s in %p from %p\n",
+               current_thread_id(), byte_array_to_string(key->str), state, context->program_stack);
         exit(1);
     }
 
@@ -1449,8 +1453,8 @@ bool run(struct context *context,
         return false;
 done:
     if (!in_state) {
-        DEBUGPRINT("pop state from %p\n", context->program_stack);
         struct program_state *s = stack_pop(context->program_stack);
+        printf("\n>%" PRIu16 " - pop state %p from %p\n", current_thread_id(), s, context->program_stack);
         assert_message(s == state, "not same");
         program_state_del(context, state);
     }
