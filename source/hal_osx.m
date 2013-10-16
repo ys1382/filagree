@@ -22,8 +22,8 @@
 static NSWindow *window = NULL;
 
 void hal_loop(struct context *context) {
-//    [NSApp run];
-CFRunLoopRun();
+    [NSApp run];
+//    CFRunLoopRun();
 }
 
 @interface GLView : NSOpenGLView {
@@ -515,7 +515,8 @@ objectValueForTableColumn:(NSTableColumn *) aTableColumn
     struct variable *item = array_get(self->data->list.ordered, rowIndex);
     char name[VV_SIZE];
     variable_value_str(self->context, item, name);
-    return [NSString stringWithUTF8String:name];
+    NSString *name2 = [NSString stringWithUTF8String:name];
+    return [name2 stringByReplacingOccurrencesOfString:@"'" withString:@""];
 }
 
 - (long)numberOfRowsInTableView:(NSTableView *)aTableView {
@@ -669,6 +670,7 @@ void *hal_table(struct context *context,
                                  uiContext:uictx
                                   callback:logic
                                   userData:list];
+
     [tableView setDelegate:a];
     [tableView setDataSource:(id<NSTableViewDataSource>)a];
 

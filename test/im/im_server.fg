@@ -1,34 +1,38 @@
 port = 9996
 
-####### net
+import '../mesh'   # shared mesh logic
 
 server = [
 
-    'users' : sys.load('users') or [],
+    'id' : 'server',
+    'clients' : [],
 
-    'connected' : function(self, id)
-        sys.print('server: connected ' + id)
-    end,
+    'handle_message' : function(self, socket, ms1)
 
-    'messaged' : function(self, id, msg)
-        sys.print('server: message from ' + id + ': ' + msg)
-        self[msg.action](id, msg.data)
-    end,
-
-    'signup' : function(self, id, data)
-        self.users = self.users + data
-        sys.save(self.users, 'users')
-    end,
-
-    'signin' : function(self, id, data)
-        if self.users(data.username) == data.password then
-            sys.send(id, 'ok')
-        else
-            sys.send(id, 'no')
+        if ms1.event == 'signup' then
+            return self.handle_signup(ms1)
+        else if ms1.event == 'signin' then
+            return self.handle_signin(ms1)
         end
     end,
-]
+
+    'handle_signup' : function(self, ms2)
+        if (not self.clients[ms2.from]) then
+            self.clients[ms2.from] = ms2.password
+            return ['event' : 'signup', 'result' : true]
+        else
+            return ['event' : 'signup', 'result' : false]
+        end
+    end,
+
+    'handle_signin' : function(self, ms3)
+        result = (self.clients[ms3.from] == ms3.password)
+        return ['event' : 'signin', 'result' : result]
+    end,
+
+] + Mesh
 
 ####### main
 
-sys.listen(port, server)
+sys.listen(port, server)    # server listens for incoming socket connections
+sys.loop()

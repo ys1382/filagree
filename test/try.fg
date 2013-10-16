@@ -1,2 +1,3 @@
-x = true + true
-y = nil + false
+a = nil
+b = a or 'c'
+sys.print(b)

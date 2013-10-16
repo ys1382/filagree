@@ -449,7 +449,7 @@ struct variable *sys_new(struct context *context)
 // built-in member functions
 
 #define FNC_STRING      "string"
-#define FNC_LIST        "list"
+#define FNC_LIST        "ordered"
 #define FNC_TYPE        "type"
 #define FNC_LENGTH      "length"
 #define FNC_CHAR        "char"

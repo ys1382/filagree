@@ -125,11 +125,11 @@ tester.test('map',
         x='y'
         a = [2,3,4,'x':7,x:8]
         a['z'] = 9:10
-        result = a.string +
-            a.type   +
-            a.length +
-            a.list   +
-            a.keys   +
+        result = a.string   +
+            a.type          +
+            a.length        +
+            a.ordered       +
+            a.keys          +
             a.vals
         return result
     end,

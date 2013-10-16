@@ -5,6 +5,7 @@ port = 9999
 Mesh = [
 
     'peers' : [],
+    'seq' : 0,
 
     'connected' : function(self, socket)
         msg1 = ['event' : 'greet', 'from' : self.id] + self.greet()
@@ -21,7 +22,12 @@ Mesh = [
                 self.peers[msg4.from] = socket
             end
 
-            self.handle_message(socket, msg4)
+            if (response = self.handle_message(socket, msg4))
+
+                mm2 = ['from' : self.id, 'seq' : msg4.seq] + response
+                self.send_to(msg4.from, mm2)
+
+            end
 
         else # forward to recipient
 
@@ -35,8 +41,15 @@ Mesh = [
 
     end,
 
+    'request' : function(self, to, msg)
+        msg.seq = self.seq
+        self.requests[self.seq] = msg
+        self.send_to(to, msg)
+    end,
+
     'send_to' : function(self, to, msg)
         msg.from = self.id
+        msg.to = to
         to2 = self.peers[to] # id -> socket
         if not to2 then
             if self.id != 'server' then

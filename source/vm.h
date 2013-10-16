@@ -18,12 +18,12 @@ struct context_shared
     pthread_cond_t thread_cond;         // condition for thread death
     uint32_t num_threads;               // number of active threads
     struct variable *callback;          // for calling back into C
+    struct variable *sys;               // sys calls (print, save, etc.)
 };
 
 // thread context
 struct context
 {
-    struct variable *sys;               // sys calls (print, save, etc.)
     struct variable* error;             // for reporting exception
     struct stack *program_stack;        // call stack
     struct stack *operand_stack;        // operand stack

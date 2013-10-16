@@ -1,28 +1,43 @@
 port = 9996
 
+import '../mesh'
+import '../ui'
+
 ####### net
 
 client = [
 
-    'connected' : function(self, id)
-        self.server_id = id
-        sys.print('client: connected ' + id)
-        sys.send(id, 'hi', self)
+    'id' : id,
+    'port' : port,
+    'w':('w':240), 'h':('h':320),
+    'friends' : (sys.load('friends') or []),
+
+    'connect' : function(self)
+        sys.connect('127.0.0.1', self.port, self)
     end,
 
-    'messaged' : function(self, id, msg)
-        sys.print('client: message from ' + id + ': ' + msg)
+    'handle_message' : function(self, socket, mc1)
+        if (mc1.event == 'greet') then
+            sys.print('sys=' + sys)
+            creds = sys.form_get(self.ui)
+            return ['event' : self.entrance] + creds
+        else if (mc1.event == 'signup') or (mc1.event == 'signin') then
+            self.handle_signin(socket, mc1)
+        end
     end,
 
-    'sent' : function(self, id)
-        sys.print('client: sent to ' + id)
+    'handle_signin' : function(self, socket, mc3)
+        if mc3.result then
+            self.main()
+        else
+            sys.ui_set(self.ctx.ui, error = mc2.error)
+        end
     end
-]
+
+] + Mesh
 
 
 ####### ui
-
-import 'ui'
 
 ctx = ['w':('w':240), 'h':('h':320),
        'client' : client,
@@ -53,18 +68,18 @@ ctx.settings = function(ctx)
     sys.form_set(f)
 end
 
-ctx.main = function(ctx)
+client.main = function(self)
 
-    sys.ui(ctx, ['vertical',
+    sys.ui(self, ['vertical',
 
                     ['horizontal',
-                        ['button', 'text':'add',      'logic':ctx.add],
-                        ['button', 'text':'settings', 'logic':ctx.settings],
+                        ['button', 'text':'add',      'logic':self.add],
+                        ['button', 'text':'settings', 'logic':self.settings],
                     ],
 
-                    ['table', 'list':ctx.friends, 'logic':ctx.select],
+                    ['table', 'list':self.friends, 'logic':self.select],
 
-                    ctx.w, ctx.h
+                    self.w, self.h
                 ])
 end
 
@@ -91,24 +106,29 @@ ctx.added = function(ctx)
     ctx.main()
 end
 
-ctx.signup = function(ctx)
-    msg = ['action' : 'signup', 'data' : sys.form_get(ctx.ui)]
-    sys.send(ctx.client.server_id, msg)
-    ctx.main()
+ctx.signin = function(self, entrance)
+    self.net.entrance = entrance or 'signin'
+    self.net.connect()
 end
 
-sys.ui(ctx, ['vertical',
+ctx.signup = function(self)
+    self.signin('signup')
+end
 
-                 ['form', 'username', 'password'],
+client.ui = sys.ui(ctx, ['vertical',
 
-                 ['horizontal',
-                     ['button', 'text':'signin', 'logic':ctx.main],
-                     ['button', 'text':'signup', 'logic':ctx.signup],
-                 ],
+                         ['form', 'username', 'password'],
 
-                 ctx.w, ctx.h
+                         ['horizontal',
+                             ['button', 'text':'signin', 'logic':ctx.signin],
+                             ['button', 'text':'signup', 'logic':ctx.signup],
+                         ],
+
+                         ctx.w, ctx.h
              ])
+
+ctx.net = client
 
 ####### main
 
-sys.connect('127.0.0.1', port, client)
+sys.loop()

@@ -98,8 +98,8 @@ struct program_state *program_state_new(struct context *context, struct map *env
     state->args = variable_new_list(context, NULL); // todo: prevent GC
     stack_push(context->program_stack, state);
     //DEBUGPRINT("push state %p onto %p\n", state, context->program_stack);
-    printf("\n>%" PRIu16 " - push state %p onto %p->%p\n", current_thread_id(),
-           state, context, context->program_stack);
+    //printf("\n>%" PRIu16 " - push state %p onto %p->%p\n", current_thread_id(),
+    //       state, context, context->program_stack);
 
     return state;
 }
@@ -108,7 +108,7 @@ struct program_state *program_state_new(struct context *context, struct map *env
 
 void program_state_del(struct context *context, struct program_state *state)
 {
-    printf("\n>%" PRIu16 " - program_state_del %p from %p\n", current_thread_id(), state, context->program_stack);
+    //printf("\n>%" PRIu16 " - program_state_del %p from %p\n", current_thread_id(), state, context->program_stack);
     map_del(state->named_variables);
     free(state);
 }
@@ -138,6 +138,7 @@ struct context *context_new(struct context *parent, // parent context
         singleton->tick = 0;
         singleton->num_threads = 0;
         context->singleton = singleton;
+        context->singleton->sys = sys_funcs ? sys_new(context) : NULL;
     } else {
         context->singleton = parent->singleton;
     }
@@ -147,9 +148,8 @@ struct context *context_new(struct context *parent, // parent context
     context->runtime = runtime;
     context->indent = 0;
     context->error = NULL;
-    context->sys = sys_funcs ? sys_new(context) : NULL;
 
-    printf("\n>%" PRIu16 " - context_new %p - %p\n", current_thread_id(), context, context->program_stack);
+    //printf("\n>%" PRIu16 " - context_new %p - %p\n", current_thread_id(), context, context->program_stack);
 
     return context;
 }
@@ -253,7 +253,7 @@ void garbage_collect(struct context *context)
         variable_mark(v);
     }
 
-    variable_mark(context->sys);
+    variable_mark(context->singleton->sys);
 
     // sweep
     struct array *vars = context->singleton->all_variables;
@@ -695,7 +695,7 @@ struct variable *find_var(struct context *context, struct variable *key)
     struct variable *v = (struct variable*)map_get(var_map, key);
 
     if ((NULL == v) && !strncmp(RESERVED_SYS, (const char*)key->str->data, strlen(RESERVED_SYS)))
-        v = context->sys;
+        v = context->singleton->sys;
 
     if ((NULL == v) && context->singleton->callback)
         v = variable_map_get(context, context->singleton->callback, key);
@@ -1454,7 +1454,7 @@ bool run(struct context *context,
 done:
     if (!in_state) {
         struct program_state *s = stack_pop(context->program_stack);
-        printf("\n>%" PRIu16 " - pop state %p from %p\n", current_thread_id(), s, context->program_stack);
+        //printf("\n>%" PRIu16 " - pop state %p from %p\n", current_thread_id(), s, context->program_stack);
         assert_message(s == state, "not same");
         program_state_del(context, state);
     }
