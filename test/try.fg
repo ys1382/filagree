@@ -1,3 +1,4 @@
-a = nil
-b = a or 'c'
-sys.print(b)
+a = ['x':[]]
+b = ['y':4]
+a .x= b.z or a.x
+sys.print(a)

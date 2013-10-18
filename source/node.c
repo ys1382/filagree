@@ -207,20 +207,9 @@ void *sys_socket_listen2(void *arg)
                     ta->event = DISCONNECTED;
                     add_thread(ta, 0);
 
-				} else {
-
+				} else
                     messaged(ta0, listener, sockfd, buf, n);
-                    /*
-                    struct node_thread *ta = thread_new(ta0->context, listener, incoming, sockfd);
-                    ta->buf = byte_array_new_size(n);
-                    ta->buf->length = n;
-                    memcpy((void*)ta->buf->data, buf, n);
-                    ta->event = MESSAGED;
-                    printf("\n>%" PRIu16 " - incoming %p\n", current_thread_id(), ta->context);
-                    add_thread(ta, 0);
-                    */
-                }
-				
+
                 if (--nready <= 0) // no more readable descriptors
 					break;
 			}
@@ -289,15 +278,6 @@ void *sys_connect2(void *arg)
             if (n <= 0)
                     return NULL;
             messaged(ta, ta->listener, ta->fd, buf, n);
-            /*
-            ta->buf = byte_array_new_size(n);
-            ta->buf->length = n;
-            memcpy((void*)ta->buf->data, buf, n);
-            ta->event = MESSAGED;
-            //DEBUGPRINT("incoming2 %d\n", ta->fd);
-            ta->start_routine = incoming;
-            add_thread(ta, 0);
-            */
         }
     }
 

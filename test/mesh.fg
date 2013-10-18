@@ -4,12 +4,20 @@ port = 9999
 
 Mesh = [
 
-    'peers' : [],
+    'peers' : [], # maps id : socket
+    'sreep' : [], # maps socket: id
     'seq' : 0,
 
     'connected' : function(self, socket)
         msg1 = ['event' : 'greet', 'from' : self.id] + self.greet()
         self.send(socket, msg1)
+    end,
+
+    'disconnected' : function(self, socket)
+        id = self.sreep[socket]
+        self.handle_disconnect(id)
+        sys.print(id + ' disconnected')
+        self.peers[id] = nil
     end,
 
     'messaged' : function(self, socket, msg4)
@@ -20,6 +28,8 @@ Mesh = [
 
             if msg4.event == 'greet' then
                 self.peers[msg4.from] = socket
+                self.sreep[socket] = msg4.from
+                sys.print('sreepz ' + self.sreep)
             end
 
             if (response = self.handle_message(socket, msg4))
@@ -70,8 +80,7 @@ Mesh = [
         if self.offline then
             return
         end
-        self.prep(msg6)
-        msg6.from = self.id
+        msg6.from = msg6.from or self.id
         for socket in self.peers.vals where (socket != except)
             self.send(socket, msg6)
         end

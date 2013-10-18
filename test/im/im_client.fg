@@ -7,12 +7,13 @@ import '../ui'
 
 client = [
 
-    'id' : id,
     'port' : port,
     'w':('w':240), 'h':('h':320),
-    'friends' : (sys.load('friends') or []),
+    'friends' : [],
+    'roster' : [],
 
     'connect' : function(self)
+        self.id = sys.form_get(self.ui).username
         sys.connect('127.0.0.1', self.port, self)
     end,
 
@@ -23,14 +24,23 @@ client = [
             return ['event' : self.entrance] + creds
         else if (mc1.event == 'signup') or (mc1.event == 'signin') then
             self.handle_signin(socket, mc1)
+        else if (mc1.event = 'online') then
+            self.handle_online(mc1.online)
         end
+    end,
+
+    'handle_online' : function(self, online)
+        self.roster = online or self.roster
+        #sys.ui_set(self.ui.roster, online)
+        self.main()
     end,
 
     'handle_signin' : function(self, socket, mc3)
         if mc3.result then
+            self.roster = mc3.online or self.roster
             self.main()
         else
-            sys.ui_set(self.ctx.ui, error = mc2.error)
+            sys.ui_set(self.ui.error, error = mc2.error)
         end
     end
 
@@ -77,33 +87,34 @@ client.main = function(self)
                         ['button', 'text':'settings', 'logic':self.settings],
                     ],
 
-                    ['table', 'list':self.friends, 'logic':self.select],
+                    ['table', 'name':'roster', 'list':self.roster, 'logic':self.select],
 
                     self.w, self.h
                 ])
 end
 
-ctx.add = function(ctx)
+client.add = function(self)
 
-    ctx.ui = sys.ui(ctx, ['vertical',
+    self.ui = sys.ui(self, ['vertical',
 
                         ['form', 'username'],
 
                         ['horizontal',
-                            ['button', 'text':'add',       'logic':ctx.added],
-                            ['button', 'text':'nevermind', 'logic':ctx.main],
+                            ['button', 'text':'add',       'logic':self.added],
+                            ['button', 'text':'nevermind', 'logic':self.main],
                         ],
 
-                        ctx.w, ctx.h
+                        self.w, self.h
                     ])
 end
 
-ctx.added = function(ctx)
-    friend = sys.form_get(ctx.ui).username
-    ctx.friends = ctx.friends + friend
-    sys.print('fz ' + friend + ' -- ' + ctx.friends)
-    sys.save(ctx.friends, 'friends')
-    ctx.main()
+client.added = function(self)
+    friend = sys.form_get(self.ui).username
+    self.friends = self.friends + friend
+    sys.print('fz ' + friend + ' -- ' + self.friends)
+    #sys.save(self.friends, 'friends')
+    mc4 = ['event' : 'friends', 'friends' : self.friends]
+    self.send_to('server', mc4)
 end
 
 ctx.signin = function(self, entrance)

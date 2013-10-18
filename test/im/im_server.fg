@@ -6,6 +6,12 @@ server = [
 
     'id' : 'server',
     'clients' : [],
+    'friends' : [],
+
+    'handle_disconnect' : function(self, socket, id)
+        mc3 = ['event' : 'offline', 'from' : id]
+        self.broadcast(mc3)
+    end,
 
     'handle_message' : function(self, socket, ms1)
 
@@ -13,7 +19,19 @@ server = [
             return self.handle_signup(ms1)
         else if ms1.event == 'signin' then
             return self.handle_signin(ms1)
+        else if ms1.event == 'friends' then
+            return self.handle_friends(ms1)
         end
+    end,
+
+    'handle_friends' : function(self, msf)
+        self.friends[msf.from] = msf.friends
+        return self.online(msf.from)
+    end,
+
+    'online' : function(self, to)
+        online = [p for p in self.friends[to] where self.peers[p]]
+        self.send_to(to, ['online' : online])
     end,
 
     'handle_signup' : function(self, ms2)
@@ -27,7 +45,12 @@ server = [
 
     'handle_signin' : function(self, ms3)
         result = (self.clients[ms3.from] == ms3.password)
-        return ['event' : 'signin', 'result' : result]
+        if result then
+            online = self.online(ms3.from)
+        else
+            online = []
+        end
+        return ['event' : 'signin', 'result' : result] + online
     end,
 
 ] + Mesh

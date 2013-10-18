@@ -699,11 +699,9 @@ struct variable *find_var(struct context *context, struct variable *key)
 
     if ((NULL == v) && context->singleton->callback)
         v = variable_map_get(context, context->singleton->callback, key);
-    if (NULL == v) {
-        printf("\n>%" PRIu16 " - could not find %s in %p from %p\n",
-               current_thread_id(), byte_array_to_string(key->str), state, context->program_stack);
-        exit(1);
-    }
+
+    assert_message(v, "\n>%" PRIu16 " - could not find %s in %p from %p\n",
+                   current_thread_id(), byte_array_to_string(key->str), state, context->program_stack);
 
     return v;
 }
@@ -1265,6 +1263,8 @@ static bool iterate(struct context *context,
 
         INDENT;
         struct variable *that = (struct variable*)array_get(list, i);
+        if (NULL == that) // in sparse array
+            continue;
         set_named_variable(context, state, who, that);
 
         byte_array_reset(where);
@@ -1275,7 +1275,7 @@ static bool iterate(struct context *context,
 
             DEBUGPRINT("\n");
             INDENT;
-            if (run(context, how, NULL, true)) { // true if run hit VM_RET
+            if (run(context, how, NULL, true)) { // returns true if run hits VM_RET
                 returned = true;
                 UNDENT; UNDENT;
                 goto done;

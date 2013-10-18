@@ -289,7 +289,8 @@ struct variable *sys_ui_set(struct context *context)
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     struct variable *widget    = (struct variable*)array_get(arguments->list.ordered, 1);
     struct variable *value     = (struct variable*)array_get(arguments->list.ordered, 2);
-    hal_ui_set(widget->ptr, value);
+    if (widget->type != VAR_NIL)
+        hal_ui_set(widget->ptr, value);
     return NULL;
 }
 
