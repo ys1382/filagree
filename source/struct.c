@@ -390,6 +390,17 @@ struct byte_array *byte_array_replace(struct byte_array *within, struct byte_arr
     return replaced;
 }
 
+// adds formatted string to end of byte_array, so sprintf + strcat
+void byte_array_format(struct byte_array *ba, bool append, const char *format, va_list ap)
+{
+    bool resize;
+    do {
+        size_t capacity = append ? ba->size - ba->length : ba->size;
+        int written = vsnprintf((char*)ba->current, capacity, format, ap);
+        if ((resize = (written > capacity) && (ba->size < VV_SIZE)))
+            byte_array_resize(ba, ba->size + written - capacity);
+    } while (resize);
+}
 
 // stack ////////////////////////////////////////////////////////////////////
 

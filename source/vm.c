@@ -542,8 +542,8 @@ static void push_kvp(struct context *context, struct byte_array *program)
     struct variable* key = variable_pop(context);
     struct variable *v = variable_new_kvp(context, key, val);
 #ifdef DEBUG
-    char buf[VV_SIZE];
-    DEBUGSPRINT(context->pcbuf, "%s: %s\n", context->pcbuf, variable_value_str(context, v, buf));
+    struct byte_array *buf = variable_value(context, v);
+    DEBUGSPRINT(context->pcbuf, "%s: %s\n", context->pcbuf, byte_array_to_string(buf));//  variable_value_str(context, v, buf));
 #endif
     variable_push(context, v);
 }
@@ -825,17 +825,19 @@ static void set(struct context *context,
             return;
 #endif // DEBUG
     }
-
     struct variable *value = get_value(context, op);
 
 #ifdef DEBUG
     char *str = byte_array_to_string(name);
+    printf("\nstr=%p\n", str);
     char buf[VV_SIZE];
-    DEBUGSPRINT(context->pcbuf, "%s%s %s to %s\n",
+    variable_value_str(context, value, buf);
+
+/*    DEBUGSPRINT(context->pcbuf, "%s%s %s to %s\n",
             context->pcbuf,
             op==VM_SET ? "SET" : "STX",
             str,
-            variable_value_str(context, value, buf));
+            variable_value_str(context, value, buf));*/
     free(str);
     if (!context->runtime)
         return;

@@ -413,7 +413,6 @@ NSRect whereAmI(int x, int y, int w, int h)
 }
 
 void resize(NSControl *control,
-            int32_t x, int32_t y,
             int32_t *w, int32_t *h)
 {
     if (*w && *h)
@@ -422,16 +421,22 @@ void resize(NSControl *control,
     NSSize size = control.frame.size;
     *w = size.width;
     *h = size.height;
-    NSRect rect = whereAmI(x,y,*w,*h);
+    NSRect rect = whereAmI(0,0, *w,*h);
+    [control setFrame:rect];
+}
+
+void hal_ui_put(void *widget, int32_t x, int32_t y, int32_t w, int32_t h)
+{
+    NSControl *control = (NSControl*)widget;
+    NSRect rect = whereAmI(x, y, w, h);
     [control setFrame:rect];
 }
 
 void *hal_label(struct variable *uictx,
-                int32_t x, int32_t y,
                 int32_t *w, int32_t *h,
                 const char *str)
 {
-    NSRect rect = whereAmI(x,y,*w,*h);
+    NSRect rect = whereAmI(0,0, *w,*h);
     NSTextField *textField = [[NSTextField alloc] initWithFrame:rect];
     NSString *string = [NSString stringWithUTF8String:str];
     [textField setStringValue:string];
@@ -442,7 +447,7 @@ void *hal_label(struct variable *uictx,
     NSView *content = [window contentView];
     [content addSubview:textField];
 
-    resize(textField, x, y, w, h);
+    resize(textField, w, h);
     return textField;
 }
 
@@ -555,13 +560,12 @@ objectValueForTableColumn:(NSTableColumn *) aTableColumn
 
 void *hal_button(struct context *context,
                  struct variable *uictx,
-                 int32_t x, int32_t y,
                  int32_t *w, int32_t *h,
                  struct variable *logic,
                  const char *str, const char *img)
 {
     NSView *content = [window contentView];
-    NSRect rect = whereAmI(x,y,*w,*h);
+    NSRect rect = whereAmI(0,0, *w,*h);
 
     NSButton *my = [[NSButton alloc] initWithFrame:rect];
     [content addSubview: my];
@@ -583,27 +587,30 @@ void *hal_button(struct context *context,
     [my setAction:@selector(pressed:)];
     [my setButtonType:NSMomentaryLightButton];
     [my setBezelStyle:NSTexturedSquareBezelStyle];
-    resize(my, x, y, w, h);
+    resize(my, w, h);
     return my;
 }
 
 void *hal_input(struct variable *uictx,
-                int32_t x, int32_t y,
                 int32_t *w, int32_t *h,
                 const char *hint,
-                bool multiline)
+                bool multiline,
+                bool readonly)
 {
     NSView *content = [window contentView];
     *w = [content frame].size.width / 2;
     *h = 20;
-    NSRect rect = whereAmI(x,y,*w,*h);
+    NSRect rect = whereAmI(0,0, *w,*h);
     NSString *string = hint ? [NSString stringWithUTF8String:hint] : NULL;
 
     NSView *textField;
-    if (multiline)
+    if (multiline) {
         textField = [[NSTextView alloc] initWithFrame:rect];
-    else
+        [(NSTextView*)textField setEditable:!readonly];
+    } else {
         textField = [[NSTextField alloc] initWithFrame:rect];
+        [(NSTextField*)textField setEditable:!readonly];
+    }
     if (NULL != string)
         [textField insertText:string];
 
@@ -649,18 +656,18 @@ void hal_ui_set(void *widget, struct variable *value)
 
 void *hal_table(struct context *context,
                 struct variable *uictx,
-                int x, int y, int w, int h,
                 struct variable *list,
                 struct variable *logic)
 {
-    assert_message(list->type == VAR_LST, "not a list");
+    assert_message(list && list->type == VAR_LST, "not a list");
 
     NSView *content = [window contentView];
-    NSRect rect = whereAmI(x,y,w,h);
-    NSScrollView * tableContainer = [[NSScrollView alloc] initWithFrame:rect];
-    w -= 16;
-    rect = NSMakeRect(x, y, w, h);
-    NSTableView *tableView = [[NSTableView alloc] initWithFrame:rect];
+    //NSRect rect = whereAmI(0,0,w,h);
+    //NSScrollView * tableContainer = [[NSScrollView alloc] initWithFrame:rect];
+    //w -= 16;
+    //rect = NSMakeRect(0,0, w,h);
+    NSScrollView * tableContainer = [[NSScrollView alloc] init];
+    NSTableView *tableView = [[NSTableView alloc] init];
     NSTableColumn * column1 = [[NSTableColumn alloc] initWithIdentifier:@"Col1"];
     [tableView setHeaderView:nil];
 
@@ -685,7 +692,6 @@ void *hal_window(struct context *context,
                 int32_t *w, int32_t *h,
                 struct variable *logic)
 {
-    printf("hal_window\n");
     if (window) { // clear contents
         NSView *content = [window contentView];
         NSArray *subviews = [NSArray arrayWithArray:[content subviews]];

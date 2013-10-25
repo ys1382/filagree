@@ -1,4 +1,15 @@
-a = ['x':[]]
-b = ['y':4]
-a .x= b.z or a.x
-sys.print(a)
+import 'ui'
+
+chat = []
+
+sys.ui(chat,
+        ['vertical',
+            ['label', 'text':'abi'],
+            ['input', 'name':'record', 'fill':true, 'readonly':true],
+            ['input', 'name':'send'],
+            'w':240, 'h':320
+        ] )
+
+sys.print(chat.ui)
+
+sys.loop()

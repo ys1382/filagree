@@ -199,14 +199,35 @@ char *param_str(const struct variable *value, uint32_t index)
     return str;
 }
 
-// todo: handle nil return
 int32_t param_int(const struct variable *value, uint32_t index) {
     if (index >= value->list.ordered->length)
         return 0;
     struct variable *result = (struct variable*)array_get(value->list.ordered, index);
+    if (result->type == VAR_NIL)
+        return 0;
     assert_message(result->type == VAR_INT, "not an int");
     return result->integer;
 }
+
+bool param_bool(const struct variable *value, uint32_t index) {
+    if (index >= value->list.ordered->length)
+        return false;
+    struct variable *result = (struct variable*)array_get(value->list.ordered, index);
+    enum VarType type = result->type;
+    switch (type) {
+        case VAR_BOOL:  return result->boolean;
+        case VAR_INT:   return result->integer;
+        case VAR_NIL:   return false;
+        case VAR_VOID:  return NULL != result->ptr;
+            default:
+            return true;
+    }
+    if ((type == VAR_NIL) || ((type == VAR_INT) && !result->integer))
+        return false;
+    assert_message(type == VAR_BOOL, "not a bool");
+    return result->boolean;
+}
+
 
 struct variable *param_var(struct context *context, const struct variable *value, uint32_t index) {
     if (index >= value->list.ordered->length)
@@ -231,12 +252,10 @@ struct variable *sys_label(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     struct variable *uictx = (struct variable*)array_get(arguments->list.ordered, 1);
-    int32_t x = param_int(arguments, 2);
-    int32_t y = param_int(arguments, 3);
-    const char *str = param_str(arguments, 4);
+    const char *str = param_str(arguments, 2);
 
     int32_t w=0,h=0;
-    void *label = hal_label(uictx, x, y, &w, &h, str);
+    void *label = hal_label(uictx, &w, &h, str);
     return ui_result(context, label, w, h);
 }
 
@@ -244,12 +263,12 @@ struct variable *sys_input(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     struct variable *uictx = (struct variable*)array_get(arguments->list.ordered, 1);
-    int32_t x = param_int(arguments, 2);
-    int32_t y = param_int(arguments, 3);
-    const char *hint = param_str(arguments, 4);
-    int32_t w=0, h=0;
+    const char *hint = param_str(arguments, 2);
+    bool multiline = param_bool(arguments, 3);
+    bool readonly = param_bool(arguments, 4);
 
-    void *input = hal_input(uictx, x, y, &w, &h, hint, false);
+    int32_t w=0, h=0;
+    void *input = hal_input(uictx, &w, &h, hint, multiline, readonly);
     return ui_result(context, input, w, h);
 }
 
@@ -257,14 +276,12 @@ struct variable *sys_button(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *uictx = (struct variable*)array_get(value->list.ordered, 1);
-    int32_t x = param_int(value, 2);
-    int32_t y = param_int(value, 3);
-    struct variable *logic = param_var(context, value, 4);
-    char *text = param_str(value, 5);
-    char *image = param_str(value, 6);
+    struct variable *logic = param_var(context, value, 2);
+    char *text = param_str(value, 3);
+    char *image = param_str(value, 4);
 
     int32_t w=0,h=0;
-    void *button = hal_button(context, uictx, x, y, &w, &h, logic, text, image);
+    void *button = hal_button(context, uictx, &w, &h, logic, text, image);
     return ui_result(context, button, w, h);
 }
 
@@ -272,18 +289,15 @@ struct variable *sys_table(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *uictx = (struct variable*)array_get(value->list.ordered, 1);
-    int32_t x = param_int(value, 2);
-    int32_t y = param_int(value, 3);
-    int32_t w = param_int(value, 4);
-    int32_t h = param_int(value, 5);
-    struct variable *list = param_var(context, value, 6);
-    struct variable *logic = param_var(context, value, 7);
+    struct variable *list = param_var(context, value, 2);
+    struct variable *logic = param_var(context, value, 3);
 
-    void *table = hal_table(context, uictx, x, y, w, h, list, logic);
+    void *table = hal_table(context, uictx, list, logic);
 
-    return ui_result(context, table, w, h);
+    return ui_result(context, table, 0,0);
 }
 
+// set the text in the UI control
 struct variable *sys_ui_set(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
@@ -291,6 +305,19 @@ struct variable *sys_ui_set(struct context *context)
     struct variable *value     = (struct variable*)array_get(arguments->list.ordered, 2);
     if (widget->type != VAR_NIL)
         hal_ui_set(widget->ptr, value);
+    return NULL;
+}
+
+// put the control on screen at x,y
+struct variable *sys_ui_put(struct context *context)
+{
+    struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *widget    = (struct variable*)array_get(arguments->list.ordered, 1);
+    int32_t x = param_int(arguments, 2);
+    int32_t y = param_int(arguments, 3);
+    int32_t w = param_int(arguments, 4);
+    int32_t h = param_int(arguments, 5);
+    hal_ui_put(widget->ptr, x, y, w, h);
     return NULL;
 }
 
@@ -327,7 +354,6 @@ struct variable *sys_sound(struct context *context)
 
 struct variable *sys_window(struct context *context)
 {
-    DEBUGPRINT("sys_window\n");
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     int w=0, h=0;
     if (value->list.ordered->length > 2) {
@@ -430,6 +456,7 @@ struct string_func builtin_funcs[] = {
     {"graphics",    &sys_graphics},
     {"ui_get",      &sys_ui_get},
     {"ui_set",      &sys_ui_set},
+    {"ui_put",      &sys_ui_put},
 #endif // NO_UI
 };
 
@@ -586,7 +613,7 @@ struct variable *cfnc_sort(struct context *context)
     return NULL;
 }
 
-struct variable *cfnc_chop(struct context *context, bool part)
+struct variable *cfnc_chop(struct context *context, bool snip)
 {
     int32_t beginning, foraslongas;
 
@@ -605,19 +632,20 @@ struct variable *cfnc_chop(struct context *context, bool part)
         assert_message(length->type == VAR_INT, "non-integer length");
         foraslongas = length->integer;
     } else
-        foraslongas = part ? self->str->length - beginning : 1;
+        foraslongas = snip ? 1 : self->str->length - beginning;
 
     struct variable *result = variable_part(context, self, beginning, foraslongas);
-    variable_remove(self, beginning, foraslongas);
+    if (snip)
+        variable_remove(self, beginning, foraslongas);
     return result;
 }
 
 static inline struct variable *cfnc_part(struct context *context) {
-    return cfnc_chop(context, true);
+    return cfnc_chop(context, false);
 }
 
 static inline struct variable *cfnc_remove(struct context *context) {
-    return cfnc_chop(context, false);
+    return cfnc_chop(context, true);
 }
 
 struct variable *cfnc_find2(struct context *context, bool has)
@@ -672,7 +700,6 @@ struct variable *cfnc_insert(struct context *context) // todo: test
             exit_message("bad insertion destination");
             break;
     }
-    //position = start ? start->integer : 0;
 
     struct variable *first = variable_part(context, variable_copy(context, self), 0, position);
     struct variable *second = variable_part(context, variable_copy(context, self), position, -1);

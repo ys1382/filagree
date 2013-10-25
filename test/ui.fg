@@ -27,71 +27,127 @@ sys.form_set = function(self, form, values)
 
 end
 
-sys.ui = function(self, uictx, item, parent, x, y)
+sys.set_heights = function(self, item, available)
 
-    if not parent then
-        w,h = sys.window(item.w, item.h)
-        parent = ['w':w, 'h':h]
-        return sys.ui(uictx, item, parent, 0, 0)
+    kids = item.part(1)
+    filler = 0
+    for k in kids
+        if k.fill then
+            filler = filler + 1
+        else
+            available = available - k.h
+        end
     end
 
-    o = nil
-    named = item.name != nil
-    item.name = [item.name]
+    if filler then
+        fh = available / filler
+        item.fill = true
+        for k in kids where k.fill
+            self.set_heights(k, fh)
+        end
+    end
+
+    if item.fill then
+        item.h = available
+    end
+
+end
+
+sys.ui = function(self, uictx, item, parent, x, y)
+
+    uictx.ui,w,h = sys.ui_create(uictx, item, parent)
+    sys.print('availh=' + h)
+    sys.set_heights(item, h)
+    sys.ui_place(item)
+
+end
+
+sys.ui_place = function(self, item, x, y)
+
     type = item[0]
     details = item.part(1)
 
     if (type == 'vertical') then
         w = h = 0
         for i in details
-            n,a,b = sys.ui(uictx, i, parent, x, y+h)
-            item.name = item.name + n
+            a,b = sys.ui_place(i, x, y+h)
             if a > w then w = a end
             h = h + b
         end
-
     else if (type == 'horizontal') then
         w = h = 0
         for i in details
-            n,a,b = sys.ui(uictx, i, parent, x+w, y)
-            item.name = item.name + n
+            a,b = sys.ui_place(i, x+w, y)
             w = w + a
             if b > h then h = b end
         end
+    else
+        sys.ui_put(item.widget, x, y, item.w, item.h)
+        return item.w, item.h
+    end
+
+    return w,h
+
+end
+
+sys.ui_create = function(self, uictx, item, parent)
+
+    if not parent then
+        w,h = sys.window(item.w, item.h)
+        parent = ['w':w, 'h':h]
+        sys.print('parh=' + h)
+        return sys.ui_create(uictx, item, parent, 0, 0), w,h
+    end
+
+    names = o = w = h = nil
+    type = item[0]
+    details = item.part(1)
+
+    if (type == 'vertical') or (type == 'horizontal') then
+        for i in details
+            names = sys.ui_create(uictx, i, parent)
+        end
 
     else if type == 'form' then
-        fields = []
+        for k in item.keys
+            item[k] = nil
+        end
+        item.type = 'vertical'
         for name in details
             field = ['horizontal',
                 ['label', 'text' : name],
                 ['input', name, 'name':name],
             ]
-            fields.insert(field)
+            item.insert(field)
         end
-        n,w,h = sys.ui(uictx, ['vertical'] + fields, parent)
-        item.name = item.name + n
+        names = sys.ui_create(uictx, item, parent)
 
     else if type == 'input' then
-        o,w,h = sys.input(uictx, x, y)
+        o,w,h = sys.input(uictx, item.hint, item.multiline, item.readonly)
 
     else if type == 'label' then
-        o,w,h = sys.label(uictx, x, y, item.text)
+        o,w,h = sys.label(uictx, item.text)
 
     else if type == 'button' then
-        o,w,h = sys.button(uictx, x, y, item.logic, item.text, item.image)
+        o,w,h = sys.button(uictx, item.logic, item.text, item.image)
 
     else if type == 'table' then
-        o,w,h = sys.table(uictx, x, y, parent.w-x, parent.h-y, item.list, item.logic)
+        o,w,h = sys.table(uictx, item.list, item.logic)
     end
 
-    if (o and named) then
-        item.name = [item.name[0] : o]
+    item.widget, item.w, item.h = o,w,h
+
+    if not names then
+        names = []
     end
-    uictx.ui = item.name
-    return item.name, w, h
+    if item.name then
+        names[item.name] = item
+    end
+    return names
+
 end
 
-/*
+
 testui = function()
 
     tester = [ 'select' : function(ctx)
@@ -110,7 +166,7 @@ testui = function()
                                 ['button', 'text':'cancel']
                             ],
 
-                            ['table', 'name':'testable', 'list':[7,8,9], 'logic':tester.select],
+                            ['table', 'name':'testable', 'list':[7,8,9], 'fill':true, 'logic':tester.select],
 
                             'w':240, 'h':320
                         ] )
@@ -122,4 +178,3 @@ testui = function()
 end
 
 testui()
-*/

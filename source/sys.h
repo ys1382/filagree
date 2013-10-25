@@ -17,9 +17,8 @@ struct variable *builtin_method(struct context *context,
                                 const struct variable *index);
 
 char *param_str(const struct variable *value, uint32_t index);
-
 int32_t param_int(const struct variable *value, uint32_t index);
-
+bool param_bool(const struct variable *value, uint32_t index);
 struct variable *param_var(struct context *context, const struct variable *value, uint32_t index);
 
 struct file_list_context {

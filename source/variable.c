@@ -6,7 +6,7 @@
 #include "variable.h"
 
 extern void mark_map(struct map *map, bool mark);
-static void variable_value_str2(struct context *context, struct variable* v, char *str, size_t size);
+static void variable_value_str2(struct context *context, struct variable* v, struct byte_array *buf);
 
 #define ERROR_VAR_TYPE  "type error"
 
@@ -204,7 +204,8 @@ struct variable *variable_new_cfnc(struct context *context, callback2func *cfnc)
 }
 
 // todo: check for buffer overruns more carefully
-static void variable_value_strcat(struct context *context, char *str, struct variable *v, bool inkvp)
+static void variable_value_strcat(struct context *context, struct byte_array *buf,
+                                  struct variable *v, bool inkvp)
 {
     int position = strlen(str);
     char *str2 = &str[position];
@@ -217,7 +218,7 @@ static void variable_value_strcat(struct context *context, char *str, struct var
         strcat(str2, ")");
 }
 
-static void variable_value_str2(struct context *context, struct variable* v, char *str, size_t size)
+static void variable_value_str2(struct context *context, struct variable* v, struct byte_array *buf)
 {
     assert_message(v && (v->visited < VISITED_LAST), "corrupt variable");
     null_check(v);
@@ -225,33 +226,35 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
 
     enum VarType vt = (enum VarType)v->type;
 
+    printf("vt=%d\n", vt);
+    
     if (v->visited ==VISITED_MORE) { // first visit of reused variable
-        sprintf(str, "&%d", v->mark);
+        byte_array_format(buf, false, "&%d", v->mark);
         v->visited = VISITED_X;
     }
     else if (v->visited == VISITED_X) { // subsequent visit
-        sprintf(str, "*%d", v->mark);
+        byte_array_format(buf, false, "*%d", v->mark);
         return;
     }
 
     switch (vt) {
-        case VAR_NIL:    sprintf(str, "%snil", str);                                break;
-        case VAR_INT:    sprintf(str, "%s%d", str, v->integer);                     break;
-        case VAR_BOOL:   sprintf(str, "%s%s", str, v->boolean ? "true" : "false");  break;
-        case VAR_FLT:    sprintf(str, "%s%f", str, v->floater);                     break;
+        case VAR_NIL:    byte_array_format(buf, true, "nil", NULL);                 break;
+        case VAR_INT:    byte_array_format(buf, true, "%d", v->integer);            break;
+        case VAR_BOOL:   byte_array_format(buf, true, "%s", "hi");  //(v->boolean ? "true" : "false")); break;
+        case VAR_FLT:    byte_array_format(buf, true, "%f", v->floater);            break;
         case VAR_FNC:
-            sprintf(str, "%sf(%dB)", str, v->fnc.body->length);
+            byte_array_format(buf, true, "f(%dB)", v->fnc.body->length);
             map = v->fnc.closure;
             break;
-        case VAR_CFNC:   sprintf(str, "%sc-fnc", str);                              break;
-        case VAR_VOID:   sprintf(str, "%s%p", str, v->ptr);                         break;
+        case VAR_CFNC:   byte_array_format(buf, true, "c-fnc", NULL);               break;
+        case VAR_VOID:   byte_array_format(buf, true, "%p", v->ptr);                break;
         case VAR_BYT:
-            byte_array_print(str, VV_SIZE, v->str);
+            byte_array_print((char*)buf->current, buf->size - buf->length, v->str);
             break;
         case VAR_KVP:
-            variable_value_strcat(context, str, v->kvp.key, true);
+            variable_value_strcat(context, buf, v->kvp.key, true);
             strcat(str, ":");
-            variable_value_strcat(context, str, v->kvp.val, true);
+            variable_value_strcat(context, buf, v->kvp.val, true);
             break;
         case VAR_SRC:
         case VAR_LST: {
@@ -268,7 +271,9 @@ static void variable_value_str2(struct context *context, struct variable* v, cha
             map = v->list.map;
         } break;
         case VAR_STR: {
-            char *str2 =  byte_array_to_string(v->str);
+            char *str2 = byte_array_to_string(v->str);
+            printf("\nsprintf %p capacity=%lu used=%lu additional=%lu\n", str, sizeof(str), strlen(str), strlen(str2));
+            assert_message(sizeof(str) > strlen(str) + strlen(str2) + 3, "string doesn't fit");
             sprintf(str, "%s'%s'", str, str2);
             free(str2);
         } break;
@@ -372,21 +377,14 @@ void variable_unmark(struct variable *v)
 }
 
 
-char *variable_value_str(struct context *context, struct variable* v, char *buf)
-{
-    *buf = 0;
-    variable_unmark(v);
-    variable_mark(v);
-    variable_value_str2(context, v, buf, sizeof(buf));
-    variable_unmark(v);
-    return buf;
-}
-
 struct byte_array *variable_value(struct context *c, struct variable *v)
 {
-    char buf[VV_SIZE];
-    const char *str = variable_value_str(c, v, buf);
-    return byte_array_from_string(str);
+    struct byte_array *buf = byte_array_new();
+    variable_unmark(v);
+    variable_mark(v);
+    variable_value_str2(context, v, buf);
+    variable_unmark(v);
+    return buf;
 }
 
 struct variable *variable_pop(struct context *context)
@@ -642,7 +640,7 @@ void variable_map_insert(struct context *context, struct variable* v,
         v->list.map = variable_map_insert2(context, v->list.map, key, datum);
     else if (v->type == VAR_FNC)
         v->fnc.closure = variable_map_insert2(context, v->list.map, key, datum);
-    else exit_message("variable type does not have map");
+    else exit_message("variable does not have map");
 }
 
 struct variable *variable_map_get(struct context *context, struct variable *v, struct variable *key)
