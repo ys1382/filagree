@@ -29,8 +29,8 @@ struct variable *sys_print(struct context *context)
     assert_message(args && args->type==VAR_SRC && args->list.ordered, "bad print arg");
     for (int i=1; i<args->list.ordered->length; i++) {
         struct variable *arg = (struct variable*)array_get(args->list.ordered, i);
-        char buf[VV_SIZE];
-        printf("%s\n", variable_value_str(context, arg, buf));
+        const char *str = variable_value_str(context, arg);
+        hal_print(str);
     }
     return NULL;
 }

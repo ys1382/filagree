@@ -6,7 +6,7 @@
 #include "variable.h"
 
 extern void mark_map(struct map *map, bool mark);
-static void variable_value_str2(struct context *context, struct variable* v, struct byte_array *buf);
+static void variable_value2(struct context *context, struct variable* v, struct byte_array *buf);
 
 #define ERROR_VAR_TYPE  "type error"
 
@@ -203,22 +203,7 @@ struct variable *variable_new_cfnc(struct context *context, callback2func *cfnc)
     return v;
 }
 
-// todo: check for buffer overruns more carefully
-static void variable_value_strcat(struct context *context, struct byte_array *buf,
-                                  struct variable *v, bool inkvp)
-{
-    int position = strlen(str);
-    char *str2 = &str[position];
-    int len2 = sizeof(str) - position;
-    bool kk = (inkvp && (v->type == VAR_KVP));
-    if (kk)
-        strcat(str2, "(");
-    variable_value_str2(context, v, str2, len2);
-    if (kk)
-        strcat(str2, ")");
-}
-
-static void variable_value_str2(struct context *context, struct variable* v, struct byte_array *buf)
+static void variable_value2(struct context *context, struct variable* v, struct byte_array *buf)
 {
     assert_message(v && (v->visited < VISITED_LAST), "corrupt variable");
     null_check(v);
@@ -237,50 +222,50 @@ static void variable_value_str2(struct context *context, struct variable* v, str
         return;
     }
 
+    char x[234];
+    sprintf(x, "hi");
+    
     switch (vt) {
-        case VAR_NIL:    byte_array_format(buf, true, "nil", NULL);                 break;
-        case VAR_INT:    byte_array_format(buf, true, "%d", v->integer);            break;
-        case VAR_BOOL:   byte_array_format(buf, true, "%s", "hi");  //(v->boolean ? "true" : "false")); break;
-        case VAR_FLT:    byte_array_format(buf, true, "%f", v->floater);            break;
+        case VAR_NIL:    byte_array_format(buf, true, "nil");                               break;
+        case VAR_INT:    byte_array_format(buf, true, "%d", v->integer);                    break;
+        case VAR_BOOL:   byte_array_format(buf, true, "%s", v->boolean ? "true" : "false"); break;
+        case VAR_FLT:    byte_array_format(buf, true, "%f", v->floater);                    break;
         case VAR_FNC:
             byte_array_format(buf, true, "f(%dB)", v->fnc.body->length);
             map = v->fnc.closure;
             break;
-        case VAR_CFNC:   byte_array_format(buf, true, "c-fnc", NULL);               break;
-        case VAR_VOID:   byte_array_format(buf, true, "%p", v->ptr);                break;
+        case VAR_CFNC:   byte_array_format(buf, true, "c-fnc");                             break;
+        case VAR_VOID:   byte_array_format(buf, true, "%p", v->ptr);                        break;
         case VAR_BYT:
             byte_array_print((char*)buf->current, buf->size - buf->length, v->str);
             break;
         case VAR_KVP:
-            variable_value_strcat(context, buf, v->kvp.key, true);
-            strcat(str, ":");
-            variable_value_strcat(context, buf, v->kvp.val, true);
+            byte_array_format(buf, true, "(");
+            variable_value2(context, v->kvp.key, buf);
+            byte_array_format(buf, true, "):(");
+            variable_value2(context, v->kvp.val, buf);
+            byte_array_format(buf, true, ")");
             break;
         case VAR_SRC:
         case VAR_LST: {
             struct array* list = v->list.ordered;
-            strcat(str, "[");
+            byte_array_format(buf, true, "[");
             vm_null_check(context, list);
             for (int i=0; i<list->length; i++) {
                 struct variable* element = (struct variable*)array_get(list, i);
-                const char *c = i ? "," : "";
-                sprintf(str, "%s%s", str, c);
+                byte_array_format(buf, true, "%s", i ? "," : "");
                 if (NULL != element)
-                    variable_value_strcat(context, str, element, false);
+                    variable_value2(context, element, buf);
             }
             map = v->list.map;
         } break;
         case VAR_STR: {
-            char *str2 = byte_array_to_string(v->str);
-            printf("\nsprintf %p capacity=%lu used=%lu additional=%lu\n", str, sizeof(str), strlen(str), strlen(str2));
-            assert_message(sizeof(str) > strlen(str) + strlen(str2) + 3, "string doesn't fit");
-            sprintf(str, "%s'%s'", str, str2);
-            free(str2);
+            byte_array_format(buf, true, "[");
+            byte_array_append(buf, v->str);
+            byte_array_format(buf, true, "[");
         } break;
         case VAR_ERR: {
-            char *str2 =  byte_array_to_string(v->str);
-            strcpy(str, str2);
-            free(str2);
+            byte_array_append(buf, v->str);
         } break;
         default:
             vm_exit_message(context, ERROR_VAR_TYPE);
@@ -295,23 +280,23 @@ static void variable_value_str2(struct context *context, struct variable* v, str
         for (int i=0; i<keys->length; i++)
         {
             if (v->list.ordered->length + i)
-                strcat(str, ",");
+                byte_array_format(buf, true, ",");
 
             struct variable *key = (struct variable *)array_get(keys, i);
             struct variable *val = (struct variable *)array_get(vals, i);
             struct variable *kvp = variable_new_kvp(context, key, val);
-            variable_value_strcat(context, str, kvp, false);
+            variable_value2(context, kvp, buf);
 
         } // for
 
-        strcat(str, "]");
+        byte_array_format(buf, true, "]");
 
         array_del(keys);
         array_del(vals);
 
     } // map
     else if (vt == VAR_LST || vt == VAR_SRC)
-        strcat(str, "]");
+        byte_array_format(buf, true, "]");
 }
 
 static void variable_mark2(struct variable *v, uint32_t *marker)
@@ -377,14 +362,20 @@ void variable_unmark(struct variable *v)
 }
 
 
-struct byte_array *variable_value(struct context *c, struct variable *v)
+struct byte_array *variable_value(struct context *context, struct variable *v)
 {
     struct byte_array *buf = byte_array_new();
     variable_unmark(v);
     variable_mark(v);
-    variable_value_str2(context, v, buf);
+    variable_value2(context, v, buf);
     variable_unmark(v);
     return buf;
+}
+
+const char *variable_value_str(struct context *context, struct variable *v)
+{
+    struct byte_array *buf = variable_value(context, v);
+    return byte_array_to_string(buf);
 }
 
 struct variable *variable_pop(struct context *context)

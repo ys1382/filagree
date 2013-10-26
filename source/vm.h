@@ -32,7 +32,7 @@ struct context
     uint8_t indent;                     // for formatted display
     struct context_shared *singleton;   // shared state
 #ifdef DEBUG
-    char pcbuf[10000]; // todo: check boundary
+    struct byte_array *pcbuf;
 #else
     char *pcbuf;
 #endif

@@ -32,7 +32,7 @@ void null_check(const void* p);
 
 #ifdef DEBUG
 #define DEBUGPRINT(...)  printf ( __VA_ARGS__ );
-#define DEBUGSPRINT(...) sprintf( __VA_ARGS__ );
+#define DEBUGSPRINT(...) byte_array_format(context->pcbuf, true, __VA_ARGS__ );
 #else
 #define DEBUGPRINT(...)  {};
 #define DEBUGSPRINT(...) {};
