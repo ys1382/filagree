@@ -19,7 +19,7 @@ enum HAL_Event {
 
 struct variable *event_string(struct context *context, enum HAL_Event event);
 
-void hal_print(const char *str);
+void hal_log(const char *str);
 void hal_loop();
 void hal_save(struct context *context, const struct byte_array *key, const struct variable *value);
 struct variable *hal_load(struct context *context, const struct byte_array *key);

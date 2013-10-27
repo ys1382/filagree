@@ -38,6 +38,22 @@ void null_check(const void* p);
 #define DEBUGSPRINT(...) {};
 #endif // #ifdef DEBUG
 
+
+#if !defined MAX
+#define MAX(a,b) \
+({ __typeof__ (a) __a = (a); \
+__typeof__ (b) __b = (b); \
+__a > __b ? __a : __b; })
+#endif
+
+#if !defined MIN
+#define MIN(a,b) \
+({ __typeof__ (a) __a = (a); \
+__typeof__ (b) __b = (b); \
+__a < __b ? __a : __b; })
+#endif
+
+
 struct number_string {
     uint8_t number;
     char* chars;

@@ -396,14 +396,24 @@ void byte_array_format(struct byte_array *ba, bool append, const char *format, .
     bool resize;
 
     do {
-        size_t capacity = append ? ba->size - ba->length : ba->size;
+        size_t capacity = ba->size;
+        uint8_t *at = ba->data;
+        if (append)
+        {
+            capacity -= ba->length;
+            at = ba->current;
+        }
 
         va_list args;
         va_start(args, format);
 
-        int written = vsnprintf((char*)ba->current, capacity, format, args);
+        int written = vsnprintf((char*)at, capacity, format, args) + 1;
         if ((resize = (written > capacity) && (ba->size < VV_SIZE)))
             byte_array_resize(ba, ba->size + written - capacity);
+        else {
+            ba->length = ba->length + MIN(written-1, capacity);
+            ba->current = ba->data + ba->length;
+        }
 
         va_end(args);
 

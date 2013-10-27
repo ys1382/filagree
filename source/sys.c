@@ -30,7 +30,7 @@ struct variable *sys_print(struct context *context)
     for (int i=1; i<args->list.ordered->length; i++) {
         struct variable *arg = (struct variable*)array_get(args->list.ordered, i);
         const char *str = variable_value_str(context, arg);
-        hal_print(str);
+        printf("%s\n", str);
     }
     return NULL;
 }

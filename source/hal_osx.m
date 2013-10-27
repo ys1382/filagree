@@ -784,7 +784,7 @@ struct variable *hal_load(struct context *context, const struct byte_array *key)
     return variable_deserialize(context, &bits);
 }
 
-void hal_print(const char *str) {
+void hal_log(const char *str) {
     NSLog(@"%s", str);
 }
 

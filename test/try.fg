@@ -1,3 +1,7 @@
+a = ['b':3]
+sys.print(a)
+
+/*
 import 'ui'
 
 chat = []
@@ -13,3 +17,4 @@ sys.ui(chat,
 sys.print(chat.ui)
 
 sys.loop()
+*/

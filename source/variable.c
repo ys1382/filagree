@@ -211,7 +211,7 @@ static void variable_value2(struct context *context, struct variable* v, struct 
 
     enum VarType vt = (enum VarType)v->type;
 
-    printf("vt=%d\n", vt);
+    //printf("vt=%d\n", vt);
     
     if (v->visited ==VISITED_MORE) { // first visit of reused variable
         byte_array_format(buf, false, "&%d", v->mark);
@@ -222,9 +222,6 @@ static void variable_value2(struct context *context, struct variable* v, struct 
         return;
     }
 
-    char x[234];
-    sprintf(x, "hi");
-    
     switch (vt) {
         case VAR_NIL:    byte_array_format(buf, true, "nil");                               break;
         case VAR_INT:    byte_array_format(buf, true, "%d", v->integer);                    break;
@@ -240,11 +237,12 @@ static void variable_value2(struct context *context, struct variable* v, struct 
             byte_array_print((char*)buf->current, buf->size - buf->length, v->str);
             break;
         case VAR_KVP:
-            byte_array_format(buf, true, "(");
+//            byte_array_format(buf, true, "(");
             variable_value2(context, v->kvp.key, buf);
-            byte_array_format(buf, true, "):(");
+//            byte_array_format(buf, true, "):(");
+            byte_array_format(buf, true, ":");
             variable_value2(context, v->kvp.val, buf);
-            byte_array_format(buf, true, ")");
+//            byte_array_format(buf, true, ")");
             break;
         case VAR_SRC:
         case VAR_LST: {
@@ -257,12 +255,14 @@ static void variable_value2(struct context *context, struct variable* v, struct 
                 if (NULL != element)
                     variable_value2(context, element, buf);
             }
+            //printf("\n\nlst %s\n\n", byte_array_to_string(buf));
+
             map = v->list.map;
         } break;
         case VAR_STR: {
-            byte_array_format(buf, true, "[");
+            byte_array_format(buf, true, "'");
             byte_array_append(buf, v->str);
-            byte_array_format(buf, true, "[");
+            byte_array_format(buf, true, "'");
         } break;
         case VAR_ERR: {
             byte_array_append(buf, v->str);
