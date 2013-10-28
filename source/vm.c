@@ -239,7 +239,7 @@ void garbage_collect(struct context *context)
         return;
 
     struct variable *v;
-    printf("\n>%" PRIu16 " - garbage collect\n", current_thread_id());
+    DEBUGSPRINT("\n>%" PRIu16 " - garbage collect", current_thread_id());
 
     unmark_all(context);
 
@@ -327,13 +327,12 @@ static void display_program_counter(struct context *context, const struct byte_a
 {
     null_check(context);
 #ifdef __ANDROID__
-    DEBUGSPRINT(">%" PRIu16 " - %2d:%3d ",
+    DEBUGSPRINT("%s>%" PRIu16 " - %2d ",
 #else
-    DEBUGSPRINT(">%" PRIu16 " - %2ld:%3d ",
+    DEBUGSPRINT("%s>%" PRIu16 " - %2d ",
 #endif
             indentation(context),
             current_thread_id(),
-            program->current-program->data,
             *program->current);
 }
 
@@ -528,7 +527,7 @@ static void push_list(struct context *context, struct byte_array *program)
             array_insert(list->list.ordered, 0, v);
     }
 #ifdef DEBUG
-    DEBUGSPRINT(": %s", variable_value(context, list));
+    DEBUGSPRINT(": %s", variable_value_str(context, list));
 #endif
     variable_push(context, list);
 }
@@ -813,7 +812,6 @@ static void set(struct context *context,
 {
     struct byte_array *name = serial_decode_string(program);    // destination variable name
     if (!context->runtime) {
-        //        VM_DEBUGPRINT("%s %s\n", op==VM_SET?"SET":"STX", byte_array_to_string(name));
 #ifdef DEBUG
         char *str = byte_array_to_string(name);
         DEBUGSPRINT("%s %s", op==VM_SET?"SET":"STX", str);
@@ -828,11 +826,10 @@ static void set(struct context *context,
     char *str = byte_array_to_string(name);
     //printf("\nstr=%p\n", variable_value_str(context, value));
 
-/*    DEBUGSPRINT("%s %s to %s\n",
-            context->pcbuf,
+    DEBUGSPRINT("%s %s to %s",
             op==VM_SET ? "SET" : "STX",
             str,
-            variable_value_str(context, value, buf));*/
+            variable_value_str(context, value));
     free(str);
     if (!context->runtime)
         return;
@@ -849,7 +846,7 @@ static void dst(struct context *context) // drop unused assignment right-hand-si
     if (!context->runtime)
         return;
     if (stack_empty(context->operand_stack)) {
-        DEBUGSPRINT(" %p mt", context->operand_stack);
+        DEBUGSPRINT(" %p empty", context->operand_stack);
         return;
     }
 
@@ -1264,7 +1261,6 @@ static bool iterate(struct context *context,
             run(context, where, NULL, true);
         if ((where == NULL) || !where->length || test_operand(context)) {
 
-            DEBUGPRINT("\n");
             INDENT;
             if (run(context, how, NULL, true)) { // returns true if run hits VM_RET
                 returned = true;
@@ -1381,7 +1377,7 @@ bool run(struct context *context,
 #endif
         program->current++; // increment past the instruction
         int32_t pc_offset = 0;
-
+        
         switch (inst) {
             case VM_COM:
             case VM_ITR:    if (iterate(context, inst, state, program)) goto done;  break;
@@ -1437,7 +1433,7 @@ bool run(struct context *context,
         DEBUGPRINT("%s\n", byte_array_to_string(context->pcbuf));
         
     } // while
-
+    
     byte_array_del(program);
     program = NULL;
 

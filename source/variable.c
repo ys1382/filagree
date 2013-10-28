@@ -214,11 +214,11 @@ static void variable_value2(struct context *context, struct variable* v, struct 
     //printf("vt=%d\n", vt);
     
     if (v->visited ==VISITED_MORE) { // first visit of reused variable
-        byte_array_format(buf, false, "&%d", v->mark);
+        byte_array_format(buf, true, "&%d", v->mark);
         v->visited = VISITED_X;
     }
     else if (v->visited == VISITED_X) { // subsequent visit
-        byte_array_format(buf, false, "*%d", v->mark);
+        byte_array_format(buf, true, "*%d", v->mark);
         return;
     }
 
@@ -237,12 +237,9 @@ static void variable_value2(struct context *context, struct variable* v, struct 
             byte_array_print((char*)buf->current, buf->size - buf->length, v->str);
             break;
         case VAR_KVP:
-//            byte_array_format(buf, true, "(");
             variable_value2(context, v->kvp.key, buf);
-//            byte_array_format(buf, true, "):(");
             byte_array_format(buf, true, ":");
             variable_value2(context, v->kvp.val, buf);
-//            byte_array_format(buf, true, ")");
             break;
         case VAR_SRC:
         case VAR_LST: {
@@ -255,8 +252,6 @@ static void variable_value2(struct context *context, struct variable* v, struct 
                 if (NULL != element)
                     variable_value2(context, element, buf);
             }
-            //printf("\n\nlst %s\n\n", byte_array_to_string(buf));
-
             map = v->list.map;
         } break;
         case VAR_STR: {
@@ -356,6 +351,11 @@ void variable_unmark(struct variable *v)
                 variable_unmark(element);
         }
         mark_map(v->list.map, false);
+    }
+    else if (VAR_KVP == v->type)
+    {
+        variable_unmark((struct variable*)v->kvp.key);
+        variable_unmark((struct variable*)v->kvp.val);
     }
     else if (VAR_FNC == v->type)
         mark_map(v->fnc.closure, false);

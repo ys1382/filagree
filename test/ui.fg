@@ -65,18 +65,18 @@ end
 sys.ui_place = function(self, item, x, y)
 
     type = item[0]
-    details = item.part(1)
+    children = item.part(1)
 
     if (type == 'vertical') then
         w = h = 0
-        for i in details
+        for i in children
             a,b = sys.ui_place(i, x, y+h)
             if a > w then w = a end
             h = h + b
         end
     else if (type == 'horizontal') then
         w = h = 0
-        for i in details
+        for i in children
             a,b = sys.ui_place(i, x+w, y)
             w = w + a
             if b > h then h = b end
@@ -101,22 +101,20 @@ sys.ui_create = function(self, uictx, item, parent)
 
     names = o = w = h = nil
     type = item[0]
-    details = item.part(1)
+    kids = item.part(1)
 
     if (type == 'vertical') or (type == 'horizontal') then
-        for i in details
+        for i in kids
             names = sys.ui_create(uictx, i, parent)
         end
 
-    else if type == 'form' then
-        for k in item.keys
-            item[k] = nil
-        end
-        item.type = 'vertical'
-        for name in details
+    else if type == 'form' then # replace with individual fields
+        item.remove(0,item.length)
+        item.insert('vertical')
+        for name in kids
             field = ['horizontal',
                 ['label', 'text' : name],
-                ['input', name, 'name':name],
+                ['input', 'hint' : name, 'name':name],
             ]
             item.insert(field)
         end
@@ -147,7 +145,7 @@ sys.ui_create = function(self, uictx, item, parent)
 
 end
 
-
+/*
 testui = function()
 
     tester = [ 'select' : function(ctx)
@@ -178,3 +176,4 @@ testui = function()
 end
 
 testui()
+*/
