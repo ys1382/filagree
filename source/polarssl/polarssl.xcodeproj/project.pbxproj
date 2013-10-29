@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		88D11F4A17FBA641000C8C63 /* .DS_Store */ = {isa = PBXFileReference; lastKnownFileType = file; path = .DS_Store; sourceTree = "<group>"; };
+		88D11F4A17FBA641000C8C63 /* .DS_Store */ = {isa = PBXFileReference; lastKnownFileType = text; path = .DS_Store; sourceTree = "<group>"; };
 		88D11F4B17FBA641000C8C63 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		88D11F4C17FBA641000C8C63 /* ChangeLog */ = {isa = PBXFileReference; lastKnownFileType = text; path = ChangeLog; sourceTree = "<group>"; };
 		88D11F4D17FBA641000C8C63 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
@@ -56,7 +56,7 @@
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = /Users/yusuf/make/filagree/source/polarssl;
+			buildWorkingDirectory = $SRCROOT;
 			dependencies = (
 			);
 			name = polarssl;

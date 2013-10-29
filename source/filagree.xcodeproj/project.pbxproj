@@ -309,7 +309,6 @@
 				"HEADER_SEARCH_PATHS[arch=*]" = /System/Library/Frameworks/JavaVM.framework/Headers;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_CFLAGS = "-DDEBUG";
-				OTHER_LDFLAGS = "-lcyassl";
 				PRODUCT_NAME = filagree;
 			};
 			name = Debug;
@@ -323,7 +322,6 @@
 				"HEADER_SEARCH_PATHS[arch=*]" = /System/Library/Frameworks/JavaVM.framework/Headers;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "-lcyassl";
 				PRODUCT_NAME = filagree;
 			};
 			name = Release;

@@ -27,28 +27,61 @@ sys.form_set = function(self, form, values)
 
 end
 
-sys.set_heights = function(self, item, available)
+sys.set_size = function(self, item, w, h)
 
+    type = item[0]
     kids = item.part(1)
-    filler = 0
-    for k in kids
-        if k.fill then
-            filler = filler + 1
+
+    if item.align == 'right' then
+        item.dx = w - item.w
+    end
+    item.w = w
+
+    if (type == 'horizontal') then
+
+        if not kids.length then return end
+
+        f = w / kids.length
+        for k in kids
+            self.set_size(k, f, h)
+        end
+
+        item.h = h
+
+    else if (type == 'vertical')
+
+        if not kids.length then return end
+
+        filler = used = 0
+        for k in kids
+            if k.hfill then
+                filler = filler + 1
+            else
+                used = used + k.h
+            end
+        end
+
+        if filler then
+            fh = (h - used) / filler
+            item.hfill = true
+        end
+
+        for k in kids
+            if k.hfill then
+                self.set_size(k, w, fh)
+            else
+                self.set_size(k, w, k.h)
+            end
+        end
+
+        if item.hfill then
+            item.h = h
         else
-            available = available - k.h
+            item.h = used
         end
-    end
 
-    if filler then
-        fh = available / filler
-        item.fill = true
-        for k in kids where k.fill
-            self.set_heights(k, fh)
-        end
-    end
-
-    if item.fill then
-        item.h = available
+    else if item.hfill
+        item.h = h
     end
 
 end
@@ -57,7 +90,7 @@ sys.ui = function(self, uictx, item, parent, x, y)
 
     uictx.ui,w,h = sys.ui_create(uictx, item, parent)
     sys.print('availh=' + h)
-    sys.set_heights(item, h)
+    sys.set_size(item, w, h)
     sys.ui_place(item)
 
 end
@@ -82,7 +115,7 @@ sys.ui_place = function(self, item, x, y)
             if b > h then h = b end
         end
     else
-        sys.ui_put(item.widget, x, y, item.w, item.h)
+        sys.ui_put(item.widget, x + item.dx, y, item.w - item.dx, item.h)
         return item.w, item.h
     end
 
@@ -113,8 +146,8 @@ sys.ui_create = function(self, uictx, item, parent)
         item.insert('vertical')
         for name in kids
             field = ['horizontal',
-                ['label', 'text' : name],
-                ['input', 'hint' : name, 'name':name],
+                ['label', 'text':name, 'align':'right'],
+                ['input', 'hint':name, 'name':name],
             ]
             item.insert(field)
         end
@@ -164,7 +197,7 @@ testui = function()
                                 ['button', 'text':'cancel']
                             ],
 
-                            ['table', 'name':'testable', 'list':[7,8,9], 'fill':true, 'logic':tester.select],
+                            ['table', 'name':'testable', 'list':[7,8,9], 'hfill':true, 'logic':tester.select],
 
                             'w':240, 'h':320
                         ] )
