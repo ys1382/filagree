@@ -88,10 +88,11 @@ end
 
 sys.ui = function(self, uictx, item, parent, x, y)
 
-    uictx.ui,w,h = sys.ui_create(uictx, item, parent)
-    sys.print('availh=' + h)
+    ui,w,h = sys.ui_create(uictx, item, parent)
     sys.set_size(item, w, h)
     sys.ui_place(item)
+
+    return ui
 
 end
 
@@ -128,7 +129,6 @@ sys.ui_create = function(self, uictx, item, parent)
     if not parent then
         w,h = sys.window(item.w, item.h)
         parent = ['w':w, 'h':h]
-        sys.print('parh=' + h)
         return sys.ui_create(uictx, item, parent, 0, 0), w,h
     end
 
@@ -138,8 +138,9 @@ sys.ui_create = function(self, uictx, item, parent)
 
     if (type == 'vertical') or (type == 'horizontal') then
         for i in kids
-            names = sys.ui_create(uictx, i, parent)
+            names = sys.ui_create(uictx, i, parent) + names
         end
+        sys.print('nmz1='+names)
 
     else if type == 'form' then # replace with individual fields
         item.remove(0,item.length)
@@ -152,6 +153,7 @@ sys.ui_create = function(self, uictx, item, parent)
             item.insert(field)
         end
         names = sys.ui_create(uictx, item, parent)
+        sys.print('nmz2='+names)
 
     else if type == 'input' then
         o,w,h = sys.input(uictx, item.hint, item.multiline, item.readonly)
@@ -172,7 +174,7 @@ sys.ui_create = function(self, uictx, item, parent)
         names = []
     end
     if item.name then
-        names[item.name] = item
+        names[item.name] = o
     end
     return names
 

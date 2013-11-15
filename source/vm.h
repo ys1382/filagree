@@ -19,6 +19,7 @@ struct context_shared
     uint32_t num_threads;               // number of active threads
     struct variable *callback;          // for calling back into C
     struct variable *sys;               // sys calls (print, save, etc.)
+    bool keepalive;                     // to not delete context when UI is active
 };
 
 // thread context

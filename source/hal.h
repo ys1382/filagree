@@ -19,8 +19,6 @@ enum HAL_Event {
 
 struct variable *event_string(struct context *context, enum HAL_Event event);
 
-void hal_log(const char *str);
-void hal_loop();
 void hal_save(struct context *context, const struct byte_array *key, const struct variable *value);
 struct variable *hal_load(struct context *context, const struct byte_array *key);
 
@@ -29,6 +27,10 @@ void hal_timer(struct context *context,
                int32_t milliseconds,
                struct variable *logic,
                bool repeats);
+
+void hal_file_listen(struct context *context, const char *path, struct variable *listener);
+
+void hal_loop();
 
 #ifndef NO_UI
 
@@ -63,8 +65,6 @@ void *hal_table (struct context *context,
 struct variable *hal_ui_get(struct context *context, void *field);
 void hal_ui_set(void *field, struct variable *value);
 void hal_ui_put(void *field, int32_t x, int32_t y, int32_t w, int32_t h);
-
-void hal_file_listen(struct context *context, const char *path, struct variable *listener);
 
 
 #endif // NO_UI

@@ -137,6 +137,7 @@ struct context *context_new(struct context *parent, // parent context
         singleton->callback = NULL;
         singleton->tick = 0;
         singleton->num_threads = 0;
+        singleton->keepalive = false;
         context->singleton = singleton;
         context->singleton->sys = sys_funcs ? sys_new(context) : NULL;
     } else {
@@ -159,6 +160,9 @@ void context_del(struct context *context)
 {
     // wait for spawned threads
     struct context_shared *s = context->singleton;
+    if (s->keepalive)
+        return;
+
     gil_lock(context, "context_del");
 
     while (s->num_threads > 0)
@@ -636,7 +640,7 @@ static int32_t iff(struct context *context, struct byte_array *program)
     DEBUGSPRINT("IF %d", offset);
     if (!context->runtime)
         return 0;
-    return test_operand(context) ? 0 : (VOID_INT)offset;
+    return test_operand(context) ? 0 : (int32_t)(VOID_INT)offset;
 }
 
 static void push_nil(struct context *context)
@@ -1455,6 +1459,8 @@ done:
 void execute_with(struct context *context, struct byte_array *program, bool in_state)
 {
     DEBUGPRINT("execute\n");
+    if (NULL == context)
+        context = context_new(NULL, true, true);
 
     null_check(program);
     program = byte_array_copy(program);

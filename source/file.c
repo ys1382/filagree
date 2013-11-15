@@ -30,17 +30,13 @@ long fsize(FILE* file) {
 
 struct byte_array *read_file(const struct byte_array *filename_ba)
 {
-
     FILE * file;
     char *str;
     long size;
     char* filename_str = byte_array_to_string(filename_ba);
 
-    if (!(file = fopen(filename_str, "rb"))) {
-        free(filename_str);
+    if (!(file = fopen(filename_str, "rb")))
         goto no_file;
-    }
-    free(filename_str);
 
     if ((size = fsize(file)) < 0)
         goto no_file;
@@ -57,19 +53,21 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
     if (fclose(file))
         goto no_file;
 
-    struct byte_array* ba = byte_array_new_size(size);
-    ba->length = size;
+    struct byte_array* ba = byte_array_new_size((uint32_t)size);
+    ba->length = (uint32_t)size;
     memcpy(ba->data, str, size);
+    free(filename_str);
     free(str);
     return ba;
 no_file:
+    free(filename_str);
     DEBUGPRINT("\nCould not read file %s\n", filename_str);
     return NULL;
 }
 
 int write_byte_array(struct byte_array* ba, FILE* file) {
     uint16_t len = ba->length;
-    int n = fwrite(ba->data, 1, len, file);
+    int n = (int)fwrite(ba->data, 1, len, file);
     return len - n;
 }
 
@@ -87,7 +85,7 @@ int write_file(const struct byte_array* path, struct byte_array* bytes, int32_t 
     // write bytes
     if (NULL != bytes)
     {
-        int r = fwrite(bytes->data, 1, bytes->length, file);
+        int r = (int)fwrite(bytes->data, 1, bytes->length, file);
         DEBUGPRINT("\twrote %d bytes to %s\n", r, path2);
         int s = fclose(file);
         result = (r<0) || s;
@@ -111,7 +109,7 @@ done:
 
 char* build_path(const char* dir, const char* name)
 {
-    int dirlen = dir ? strlen(dir) : 0;
+    int dirlen = dir ? (int)strlen(dir) : 0;
     char* path = (char*)malloc(dirlen + 1 + strlen(name));
     const char* slash = (dir && dirlen && (dir[dirlen] != '/')) ? "/" : "";
     sprintf(path, "%s%s%s", dir ? dir : "", slash, name);

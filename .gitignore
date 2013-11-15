@@ -2,8 +2,8 @@
 test/sync/synctest
 *.o
 *.class
-source/filagree.xcodeproj/xcuserdata
-source/filagree.xcodeproj/project.xcworkspace
-source/android/bin
-source/android/obj
-source/android/libs
+xcuserdata
+project.xcworkspace
+bin
+obj
+libs

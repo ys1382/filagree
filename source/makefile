@@ -1,14 +1,14 @@
 UNAME := $(shell uname -s)
 
 CC=gcc
-CFLAGS=-Wall -Os -std=gnu99 -I -fPIC -fms-extensions -DDEBUG
+CFLAGS=-Wall -Os -std=gnu99 -I -fPIC -fms-extensions -DDEBUG -DFG_MAIN -DNO_UI
 LDFLAGS=-lm -lpthread
 LD_LIBRARY_PATH=.
 SOURCES=vm.c struct.c serial.c compile.c util.c sys.c variable.c interpret.c node.c file.c
 OBJECTS=$(SOURCES:.c=.o)
 FRAMEWORKS=-framework Cocoa -framework OpenGL -framework OpenAL
 
-osx: $(OBJECTS) hal_osx.o
+all: $(OBJECTS) hal_osx.o
 	cd polarssl/library && $(MAKE) all && cd ../..
 	$(CC) $(OBJECTS) hal_osx.o polarssl/library/libpolarssl.a $(FRAMEWORKS) -o filagree $(LDFLAGS)
 	strip filagree

@@ -8,7 +8,6 @@ void stub(const char *name) {
 	printf("%s is a stub\n", name);
 }
 
-void hal_loop()                                         { stub("hal_loop"); }
 void hal_graphics(const struct variable *shape)         { stub("hal_graphics"); }
 void hal_image()                                        { stub("hal_image"); }
 void hal_sound()                                        { stub("hal_sound"); }
@@ -20,23 +19,20 @@ void *hal_window(struct context *context,
                  int32_t *w, int32_t *h,
                  struct variable *logic)                { stub("hal_window"); return NULL; }
 void *hal_label (struct variable *uictx,
-			     int32_t x, int32_t y,
                  int32_t *w, int32_t *h,
                  const char *str)                       { stub("hal_label"); return NULL; }
 void *hal_input (struct variable *uictx,
-                 int32_t x, int32_t y,
                  int32_t *w, int32_t *h,
                  const char *hint,
-                 bool multiline)                        { stub("hal_input"); return NULL; }
+                 bool multiline,
+                 bool readonly)                        { stub("hal_input"); return NULL; }
 void *hal_button(struct context *context,
                  struct variable *uictx,
-                 int32_t x, int32_t y,
                  int32_t *w, int32_t *h,
                  struct variable *logic,
                  const char *str, const char *img)      { stub("hal_button"); return NULL; }
 void *hal_table (struct context *context,
                  struct variable *uictx,
-                 int x, int y, int w, int h,
                  struct variable *list,
                  struct variable *logic)                { stub("hal_table"); return NULL; }
 
@@ -57,6 +53,7 @@ void hal_file_listen(struct context *context,
 struct variable *hal_ui_get(struct context *context,
                             void *field)                { stub("hal_ui_get"); return NULL; }
 void hal_ui_set(void *field, struct variable *value)    { stub("hal_ui_set"); }
+void hal_ui_put(void *field, int32_t x, int32_t y, int32_t w, int32_t h) { stub("hal_ui_put"); }
 
 void hal_sleep(int32_t miliseconds)                     { stub("hal_sleep"); }
 void hal_timer(struct context *context,

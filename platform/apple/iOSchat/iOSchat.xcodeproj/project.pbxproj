@@ -1,0 +1,672 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		88366658182013ED00B0B324 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88366657182013ED00B0B324 /* Foundation.framework */; };
+		8836665A182013ED00B0B324 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88366659182013ED00B0B324 /* CoreGraphics.framework */; };
+		8836665C182013ED00B0B324 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8836665B182013ED00B0B324 /* UIKit.framework */; };
+		88366662182013ED00B0B324 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 88366660182013ED00B0B324 /* InfoPlist.strings */; };
+		88366664182013ED00B0B324 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 88366663182013ED00B0B324 /* main.m */; };
+		88366668182013ED00B0B324 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 88366667182013ED00B0B324 /* AppDelegate.m */; };
+		8836666B182013ED00B0B324 /* Main_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 88366669182013ED00B0B324 /* Main_iPhone.storyboard */; };
+		8836666E182013ED00B0B324 /* Main_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8836666C182013ED00B0B324 /* Main_iPad.storyboard */; };
+		88366671182013ED00B0B324 /* MasterViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 88366670182013ED00B0B324 /* MasterViewController.m */; };
+		88366674182013ED00B0B324 /* DetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 88366673182013ED00B0B324 /* DetailViewController.m */; };
+		88366676182013ED00B0B324 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 88366675182013ED00B0B324 /* Images.xcassets */; };
+		8836667D182013ED00B0B324 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8836667C182013ED00B0B324 /* XCTest.framework */; };
+		8836667E182013ED00B0B324 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88366657182013ED00B0B324 /* Foundation.framework */; };
+		8836667F182013ED00B0B324 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8836665B182013ED00B0B324 /* UIKit.framework */; };
+		88366687182013ED00B0B324 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 88366685182013ED00B0B324 /* InfoPlist.strings */; };
+		88366689182013ED00B0B324 /* iOSchatTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 88366688182013ED00B0B324 /* iOSchatTests.m */; };
+		886CC3361820B4B600DB6074 /* iPhoneLogin.xib in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3351820B4B600DB6074 /* iPhoneLogin.xib */; };
+		886CC3381820B59C00DB6074 /* iPadLogin.xib in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3371820B59C00DB6074 /* iPadLogin.xib */; };
+		886CC3EB1820C6F400DB6074 /* filagree.png in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3D71820C6F300DB6074 /* filagree.png */; };
+		886CC3EC1820C6F400DB6074 /* im_client.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3D91820C6F400DB6074 /* im_client.fg */; };
+		886CC3ED1820C6F400DB6074 /* im_server.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3DA1820C6F400DB6074 /* im_server.fg */; };
+		886CC3EE1820C6F400DB6074 /* im_test.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3DB1820C6F400DB6074 /* im_test.fg */; };
+		886CC3EF1820C6F400DB6074 /* mesh.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3DC1820C6F400DB6074 /* mesh.fg */; };
+		886CC3F01820C6F400DB6074 /* node.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3DD1820C6F400DB6074 /* node.fg */; };
+		886CC3F11820C6F400DB6074 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3DF1820C6F400DB6074 /* icon.png */; };
+		886CC3F21820C6F400DB6074 /* sync.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3E01820C6F400DB6074 /* sync.fg */; };
+		886CC3F31820C6F400DB6074 /* sync_client.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3E11820C6F400DB6074 /* sync_client.fg */; };
+		886CC3F41820C6F400DB6074 /* sync_server.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3E21820C6F400DB6074 /* sync_server.fg */; };
+		886CC3F51820C6F400DB6074 /* sync_test.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3E31820C6F400DB6074 /* sync_test.fg */; };
+		886CC3F61820C6F400DB6074 /* test_director.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3E41820C6F400DB6074 /* test_director.fg */; };
+		886CC3F71820C6F400DB6074 /* test_syntax.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3E51820C6F400DB6074 /* test_syntax.fg */; };
+		886CC3F81820C6F400DB6074 /* try.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3E61820C6F400DB6074 /* try.fg */; };
+		886CC3F91820C6F400DB6074 /* ui.fg in Resources */ = {isa = PBXBuildFile; fileRef = 886CC3E71820C6F400DB6074 /* ui.fg */; };
+		886CC4121820C74700DB6074 /* compile.c in Sources */ = {isa = PBXBuildFile; fileRef = 886CC4071820C74700DB6074 /* compile.c */; };
+		886CC4131820C74700DB6074 /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 886CC4081820C74700DB6074 /* file.c */; };
+		886CC4141820C74700DB6074 /* hal_stub.c in Sources */ = {isa = PBXBuildFile; fileRef = 886CC4091820C74700DB6074 /* hal_stub.c */; };
+		886CC4151820C74700DB6074 /* interpret.c in Sources */ = {isa = PBXBuildFile; fileRef = 886CC40A1820C74700DB6074 /* interpret.c */; };
+		886CC4161820C74700DB6074 /* node.c in Sources */ = {isa = PBXBuildFile; fileRef = 886CC40B1820C74700DB6074 /* node.c */; };
+		886CC4171820C74700DB6074 /* serial.c in Sources */ = {isa = PBXBuildFile; fileRef = 886CC40C1820C74700DB6074 /* serial.c */; };
+		886CC4181820C74700DB6074 /* struct.c in Sources */ = {isa = PBXBuildFile; fileRef = 886CC40D1820C74700DB6074 /* struct.c */; };
+		886CC4191820C74700DB6074 /* sys.c in Sources */ = {isa = PBXBuildFile; fileRef = 886CC40E1820C74700DB6074 /* sys.c */; };
+		886CC41A1820C74700DB6074 /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 886CC40F1820C74700DB6074 /* util.c */; };
+		886CC41B1820C74700DB6074 /* variable.c in Sources */ = {isa = PBXBuildFile; fileRef = 886CC4101820C74700DB6074 /* variable.c */; };
+		886CC41C1820C74700DB6074 /* vm.c in Sources */ = {isa = PBXBuildFile; fileRef = 886CC4111820C74700DB6074 /* vm.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		88366680182013ED00B0B324 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8836664C182013ED00B0B324 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 88366653182013ED00B0B324;
+			remoteInfo = iOSchat;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		88366654182013ED00B0B324 /* iOSchat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iOSchat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		88366657182013ED00B0B324 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		88366659182013ED00B0B324 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		8836665B182013ED00B0B324 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		8836665F182013ED00B0B324 /* iOSchat-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "iOSchat-Info.plist"; sourceTree = "<group>"; };
+		88366661182013ED00B0B324 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		88366663182013ED00B0B324 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		88366665182013ED00B0B324 /* iOSchat-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iOSchat-Prefix.pch"; sourceTree = "<group>"; };
+		88366666182013ED00B0B324 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		88366667182013ED00B0B324 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		8836666A182013ED00B0B324 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main_iPhone.storyboard; sourceTree = "<group>"; };
+		8836666D182013ED00B0B324 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main_iPad.storyboard; sourceTree = "<group>"; };
+		8836666F182013ED00B0B324 /* MasterViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MasterViewController.h; sourceTree = "<group>"; };
+		88366670182013ED00B0B324 /* MasterViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MasterViewController.m; sourceTree = "<group>"; };
+		88366672182013ED00B0B324 /* DetailViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DetailViewController.h; sourceTree = "<group>"; };
+		88366673182013ED00B0B324 /* DetailViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DetailViewController.m; sourceTree = "<group>"; };
+		88366675182013ED00B0B324 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		8836667B182013ED00B0B324 /* iOSchatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iOSchatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8836667C182013ED00B0B324 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		88366684182013ED00B0B324 /* iOSchatTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "iOSchatTests-Info.plist"; sourceTree = "<group>"; };
+		88366686182013ED00B0B324 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		88366688182013ED00B0B324 /* iOSchatTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSchatTests.m; sourceTree = "<group>"; };
+		886CC3351820B4B600DB6074 /* iPhoneLogin.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iPhoneLogin.xib; sourceTree = "<group>"; };
+		886CC3371820B59C00DB6074 /* iPadLogin.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iPadLogin.xib; sourceTree = "<group>"; };
+		886CC3D71820C6F300DB6074 /* filagree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = filagree.png; sourceTree = "<group>"; };
+		886CC3D91820C6F400DB6074 /* im_client.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_client.fg; sourceTree = "<group>"; };
+		886CC3DA1820C6F400DB6074 /* im_server.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_server.fg; sourceTree = "<group>"; };
+		886CC3DB1820C6F400DB6074 /* im_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_test.fg; sourceTree = "<group>"; };
+		886CC3DC1820C6F400DB6074 /* mesh.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = mesh.fg; sourceTree = "<group>"; };
+		886CC3DD1820C6F400DB6074 /* node.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = node.fg; sourceTree = "<group>"; };
+		886CC3DF1820C6F400DB6074 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
+		886CC3E01820C6F400DB6074 /* sync.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync.fg; sourceTree = "<group>"; };
+		886CC3E11820C6F400DB6074 /* sync_client.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_client.fg; sourceTree = "<group>"; };
+		886CC3E21820C6F400DB6074 /* sync_server.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_server.fg; sourceTree = "<group>"; };
+		886CC3E31820C6F400DB6074 /* sync_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_test.fg; sourceTree = "<group>"; };
+		886CC3E41820C6F400DB6074 /* test_director.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test_director.fg; sourceTree = "<group>"; };
+		886CC3E51820C6F400DB6074 /* test_syntax.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test_syntax.fg; sourceTree = "<group>"; };
+		886CC3E61820C6F400DB6074 /* try.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = try.fg; sourceTree = "<group>"; };
+		886CC3E71820C6F400DB6074 /* ui.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ui.fg; sourceTree = "<group>"; };
+		886CC3FC1820C74700DB6074 /* compile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = compile.h; path = ../../../source/compile.h; sourceTree = "<group>"; };
+		886CC3FD1820C74700DB6074 /* file.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = file.h; path = ../../../source/file.h; sourceTree = "<group>"; };
+		886CC3FE1820C74700DB6074 /* hal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hal.h; path = ../../../source/hal.h; sourceTree = "<group>"; };
+		886CC3FF1820C74700DB6074 /* interpret.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = interpret.h; path = ../../../source/interpret.h; sourceTree = "<group>"; };
+		886CC4001820C74700DB6074 /* node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = node.h; path = ../../../source/node.h; sourceTree = "<group>"; };
+		886CC4011820C74700DB6074 /* serial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = serial.h; path = ../../../source/serial.h; sourceTree = "<group>"; };
+		886CC4021820C74700DB6074 /* struct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = struct.h; path = ../../../source/struct.h; sourceTree = "<group>"; };
+		886CC4031820C74700DB6074 /* sys.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sys.h; path = ../../../source/sys.h; sourceTree = "<group>"; };
+		886CC4041820C74700DB6074 /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../../../source/util.h; sourceTree = "<group>"; };
+		886CC4051820C74700DB6074 /* variable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = variable.h; path = ../../../source/variable.h; sourceTree = "<group>"; };
+		886CC4061820C74700DB6074 /* vm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vm.h; path = ../../../source/vm.h; sourceTree = "<group>"; };
+		886CC4071820C74700DB6074 /* compile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = compile.c; path = ../../../source/compile.c; sourceTree = "<group>"; };
+		886CC4081820C74700DB6074 /* file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = file.c; path = ../../../source/file.c; sourceTree = "<group>"; };
+		886CC4091820C74700DB6074 /* hal_stub.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hal_stub.c; path = ../../../source/hal_stub.c; sourceTree = "<group>"; };
+		886CC40A1820C74700DB6074 /* interpret.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = interpret.c; path = ../../../source/interpret.c; sourceTree = "<group>"; };
+		886CC40B1820C74700DB6074 /* node.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = node.c; path = ../../../source/node.c; sourceTree = "<group>"; };
+		886CC40C1820C74700DB6074 /* serial.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = serial.c; path = ../../../source/serial.c; sourceTree = "<group>"; };
+		886CC40D1820C74700DB6074 /* struct.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = struct.c; path = ../../../source/struct.c; sourceTree = "<group>"; };
+		886CC40E1820C74700DB6074 /* sys.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sys.c; path = ../../../source/sys.c; sourceTree = "<group>"; };
+		886CC40F1820C74700DB6074 /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = util.c; path = ../../../source/util.c; sourceTree = "<group>"; };
+		886CC4101820C74700DB6074 /* variable.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = variable.c; path = ../../../source/variable.c; sourceTree = "<group>"; };
+		886CC4111820C74700DB6074 /* vm.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vm.c; path = ../../../source/vm.c; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		88366651182013ED00B0B324 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8836665A182013ED00B0B324 /* CoreGraphics.framework in Frameworks */,
+				8836665C182013ED00B0B324 /* UIKit.framework in Frameworks */,
+				88366658182013ED00B0B324 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		88366678182013ED00B0B324 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8836667D182013ED00B0B324 /* XCTest.framework in Frameworks */,
+				8836667F182013ED00B0B324 /* UIKit.framework in Frameworks */,
+				8836667E182013ED00B0B324 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		8836664B182013ED00B0B324 = {
+			isa = PBXGroup;
+			children = (
+				886CC3A71820C6D900DB6074 /* filagree */,
+				8836665D182013ED00B0B324 /* iOSchat */,
+				88366682182013ED00B0B324 /* iOSchatTests */,
+				88366656182013ED00B0B324 /* Frameworks */,
+				88366655182013ED00B0B324 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		88366655182013ED00B0B324 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				88366654182013ED00B0B324 /* iOSchat.app */,
+				8836667B182013ED00B0B324 /* iOSchatTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		88366656182013ED00B0B324 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				88366657182013ED00B0B324 /* Foundation.framework */,
+				88366659182013ED00B0B324 /* CoreGraphics.framework */,
+				8836665B182013ED00B0B324 /* UIKit.framework */,
+				8836667C182013ED00B0B324 /* XCTest.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		8836665D182013ED00B0B324 /* iOSchat */ = {
+			isa = PBXGroup;
+			children = (
+				88366666182013ED00B0B324 /* AppDelegate.h */,
+				88366667182013ED00B0B324 /* AppDelegate.m */,
+				88366669182013ED00B0B324 /* Main_iPhone.storyboard */,
+				8836666C182013ED00B0B324 /* Main_iPad.storyboard */,
+				8836666F182013ED00B0B324 /* MasterViewController.h */,
+				88366670182013ED00B0B324 /* MasterViewController.m */,
+				88366672182013ED00B0B324 /* DetailViewController.h */,
+				88366673182013ED00B0B324 /* DetailViewController.m */,
+				88366675182013ED00B0B324 /* Images.xcassets */,
+				8836665E182013ED00B0B324 /* Supporting Files */,
+				886CC3351820B4B600DB6074 /* iPhoneLogin.xib */,
+				886CC3371820B59C00DB6074 /* iPadLogin.xib */,
+			);
+			path = iOSchat;
+			sourceTree = "<group>";
+		};
+		8836665E182013ED00B0B324 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				8836665F182013ED00B0B324 /* iOSchat-Info.plist */,
+				88366660182013ED00B0B324 /* InfoPlist.strings */,
+				88366663182013ED00B0B324 /* main.m */,
+				88366665182013ED00B0B324 /* iOSchat-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		88366682182013ED00B0B324 /* iOSchatTests */ = {
+			isa = PBXGroup;
+			children = (
+				88366688182013ED00B0B324 /* iOSchatTests.m */,
+				88366683182013ED00B0B324 /* Supporting Files */,
+			);
+			path = iOSchatTests;
+			sourceTree = "<group>";
+		};
+		88366683182013ED00B0B324 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				88366684182013ED00B0B324 /* iOSchatTests-Info.plist */,
+				88366685182013ED00B0B324 /* InfoPlist.strings */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		886CC3A71820C6D900DB6074 /* filagree */ = {
+			isa = PBXGroup;
+			children = (
+				886CC3FB1820C70C00DB6074 /* source */,
+				886CC3D61820C6F300DB6074 /* test */,
+			);
+			name = filagree;
+			sourceTree = "<group>";
+		};
+		886CC3D61820C6F300DB6074 /* test */ = {
+			isa = PBXGroup;
+			children = (
+				886CC3D71820C6F300DB6074 /* filagree.png */,
+				886CC3D81820C6F400DB6074 /* im */,
+				886CC3DC1820C6F400DB6074 /* mesh.fg */,
+				886CC3DD1820C6F400DB6074 /* node.fg */,
+				886CC3DE1820C6F400DB6074 /* sync */,
+				886CC3E41820C6F400DB6074 /* test_director.fg */,
+				886CC3E51820C6F400DB6074 /* test_syntax.fg */,
+				886CC3E61820C6F400DB6074 /* try.fg */,
+				886CC3E71820C6F400DB6074 /* ui.fg */,
+			);
+			name = test;
+			path = ../../../test;
+			sourceTree = "<group>";
+		};
+		886CC3D81820C6F400DB6074 /* im */ = {
+			isa = PBXGroup;
+			children = (
+				886CC3D91820C6F400DB6074 /* im_client.fg */,
+				886CC3DA1820C6F400DB6074 /* im_server.fg */,
+				886CC3DB1820C6F400DB6074 /* im_test.fg */,
+			);
+			path = im;
+			sourceTree = "<group>";
+		};
+		886CC3DE1820C6F400DB6074 /* sync */ = {
+			isa = PBXGroup;
+			children = (
+				886CC3DF1820C6F400DB6074 /* icon.png */,
+				886CC3E01820C6F400DB6074 /* sync.fg */,
+				886CC3E11820C6F400DB6074 /* sync_client.fg */,
+				886CC3E21820C6F400DB6074 /* sync_server.fg */,
+				886CC3E31820C6F400DB6074 /* sync_test.fg */,
+			);
+			path = sync;
+			sourceTree = "<group>";
+		};
+		886CC3FB1820C70C00DB6074 /* source */ = {
+			isa = PBXGroup;
+			children = (
+				886CC3FC1820C74700DB6074 /* compile.h */,
+				886CC3FD1820C74700DB6074 /* file.h */,
+				886CC3FE1820C74700DB6074 /* hal.h */,
+				886CC3FF1820C74700DB6074 /* interpret.h */,
+				886CC4001820C74700DB6074 /* node.h */,
+				886CC4011820C74700DB6074 /* serial.h */,
+				886CC4021820C74700DB6074 /* struct.h */,
+				886CC4031820C74700DB6074 /* sys.h */,
+				886CC4041820C74700DB6074 /* util.h */,
+				886CC4051820C74700DB6074 /* variable.h */,
+				886CC4061820C74700DB6074 /* vm.h */,
+				886CC4071820C74700DB6074 /* compile.c */,
+				886CC4081820C74700DB6074 /* file.c */,
+				886CC4091820C74700DB6074 /* hal_stub.c */,
+				886CC40A1820C74700DB6074 /* interpret.c */,
+				886CC40B1820C74700DB6074 /* node.c */,
+				886CC40C1820C74700DB6074 /* serial.c */,
+				886CC40D1820C74700DB6074 /* struct.c */,
+				886CC40E1820C74700DB6074 /* sys.c */,
+				886CC40F1820C74700DB6074 /* util.c */,
+				886CC4101820C74700DB6074 /* variable.c */,
+				886CC4111820C74700DB6074 /* vm.c */,
+			);
+			name = source;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		88366653182013ED00B0B324 /* iOSchat */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8836668C182013ED00B0B324 /* Build configuration list for PBXNativeTarget "iOSchat" */;
+			buildPhases = (
+				88366650182013ED00B0B324 /* Sources */,
+				88366651182013ED00B0B324 /* Frameworks */,
+				88366652182013ED00B0B324 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = iOSchat;
+			productName = iOSchat;
+			productReference = 88366654182013ED00B0B324 /* iOSchat.app */;
+			productType = "com.apple.product-type.application";
+		};
+		8836667A182013ED00B0B324 /* iOSchatTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8836668F182013ED00B0B324 /* Build configuration list for PBXNativeTarget "iOSchatTests" */;
+			buildPhases = (
+				88366677182013ED00B0B324 /* Sources */,
+				88366678182013ED00B0B324 /* Frameworks */,
+				88366679182013ED00B0B324 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				88366681182013ED00B0B324 /* PBXTargetDependency */,
+			);
+			name = iOSchatTests;
+			productName = iOSchatTests;
+			productReference = 8836667B182013ED00B0B324 /* iOSchatTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8836664C182013ED00B0B324 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0500;
+				ORGANIZATIONNAME = filagree;
+				TargetAttributes = {
+					8836667A182013ED00B0B324 = {
+						TestTargetID = 88366653182013ED00B0B324;
+					};
+				};
+			};
+			buildConfigurationList = 8836664F182013ED00B0B324 /* Build configuration list for PBXProject "iOSchat" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 8836664B182013ED00B0B324;
+			productRefGroup = 88366655182013ED00B0B324 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				88366653182013ED00B0B324 /* iOSchat */,
+				8836667A182013ED00B0B324 /* iOSchatTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		88366652182013ED00B0B324 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				886CC3F81820C6F400DB6074 /* try.fg in Resources */,
+				886CC3F11820C6F400DB6074 /* icon.png in Resources */,
+				886CC3F01820C6F400DB6074 /* node.fg in Resources */,
+				8836666E182013ED00B0B324 /* Main_iPad.storyboard in Resources */,
+				886CC3361820B4B600DB6074 /* iPhoneLogin.xib in Resources */,
+				88366676182013ED00B0B324 /* Images.xcassets in Resources */,
+				886CC3EF1820C6F400DB6074 /* mesh.fg in Resources */,
+				886CC3EC1820C6F400DB6074 /* im_client.fg in Resources */,
+				886CC3F71820C6F400DB6074 /* test_syntax.fg in Resources */,
+				886CC3ED1820C6F400DB6074 /* im_server.fg in Resources */,
+				886CC3EB1820C6F400DB6074 /* filagree.png in Resources */,
+				886CC3F21820C6F400DB6074 /* sync.fg in Resources */,
+				886CC3F91820C6F400DB6074 /* ui.fg in Resources */,
+				886CC3F61820C6F400DB6074 /* test_director.fg in Resources */,
+				886CC3F51820C6F400DB6074 /* sync_test.fg in Resources */,
+				886CC3EE1820C6F400DB6074 /* im_test.fg in Resources */,
+				886CC3381820B59C00DB6074 /* iPadLogin.xib in Resources */,
+				886CC3F41820C6F400DB6074 /* sync_server.fg in Resources */,
+				8836666B182013ED00B0B324 /* Main_iPhone.storyboard in Resources */,
+				886CC3F31820C6F400DB6074 /* sync_client.fg in Resources */,
+				88366662182013ED00B0B324 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		88366679182013ED00B0B324 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				88366687182013ED00B0B324 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		88366650182013ED00B0B324 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				886CC41A1820C74700DB6074 /* util.c in Sources */,
+				886CC4121820C74700DB6074 /* compile.c in Sources */,
+				886CC4171820C74700DB6074 /* serial.c in Sources */,
+				886CC4181820C74700DB6074 /* struct.c in Sources */,
+				886CC4151820C74700DB6074 /* interpret.c in Sources */,
+				886CC41B1820C74700DB6074 /* variable.c in Sources */,
+				88366668182013ED00B0B324 /* AppDelegate.m in Sources */,
+				886CC41C1820C74700DB6074 /* vm.c in Sources */,
+				88366671182013ED00B0B324 /* MasterViewController.m in Sources */,
+				88366664182013ED00B0B324 /* main.m in Sources */,
+				886CC4161820C74700DB6074 /* node.c in Sources */,
+				886CC4141820C74700DB6074 /* hal_stub.c in Sources */,
+				886CC4191820C74700DB6074 /* sys.c in Sources */,
+				88366674182013ED00B0B324 /* DetailViewController.m in Sources */,
+				886CC4131820C74700DB6074 /* file.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		88366677182013ED00B0B324 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				88366689182013ED00B0B324 /* iOSchatTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		88366681182013ED00B0B324 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 88366653182013ED00B0B324 /* iOSchat */;
+			targetProxy = 88366680182013ED00B0B324 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		88366660182013ED00B0B324 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				88366661182013ED00B0B324 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		88366669182013ED00B0B324 /* Main_iPhone.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				8836666A182013ED00B0B324 /* Base */,
+			);
+			name = Main_iPhone.storyboard;
+			sourceTree = "<group>";
+		};
+		8836666C182013ED00B0B324 /* Main_iPad.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				8836666D182013ED00B0B324 /* Base */,
+			);
+			name = Main_iPad.storyboard;
+			sourceTree = "<group>";
+		};
+		88366685182013ED00B0B324 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				88366686182013ED00B0B324 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		8836668A182013ED00B0B324 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8836668B182013ED00B0B324 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		8836668D182013ED00B0B324 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iOSchat/iOSchat-Prefix.pch";
+				INFOPLIST_FILE = "iOSchat/iOSchat-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		8836668E182013ED00B0B324 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iOSchat/iOSchat-Prefix.pch";
+				INFOPLIST_FILE = "iOSchat/iOSchat-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		88366690182013ED00B0B324 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/iOSchat.app/iOSchat";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iOSchat/iOSchat-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "iOSchatTests/iOSchatTests-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = xctest;
+			};
+			name = Debug;
+		};
+		88366691182013ED00B0B324 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/iOSchat.app/iOSchat";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iOSchat/iOSchat-Prefix.pch";
+				INFOPLIST_FILE = "iOSchatTests/iOSchatTests-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = xctest;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		8836664F182013ED00B0B324 /* Build configuration list for PBXProject "iOSchat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8836668A182013ED00B0B324 /* Debug */,
+				8836668B182013ED00B0B324 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8836668C182013ED00B0B324 /* Build configuration list for PBXNativeTarget "iOSchat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8836668D182013ED00B0B324 /* Debug */,
+				8836668E182013ED00B0B324 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8836668F182013ED00B0B324 /* Build configuration list for PBXNativeTarget "iOSchatTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				88366690182013ED00B0B324 /* Debug */,
+				88366691182013ED00B0B324 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 8836664C182013ED00B0B324 /* Project object */;
+}

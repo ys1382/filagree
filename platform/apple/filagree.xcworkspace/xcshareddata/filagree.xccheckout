@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>54EDEEA5-83CB-4FF6-82F2-36BBD174E50E</string>
+	<key>IDESourceControlProjectName</key>
+	<string>filagree</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>7AE69D62-AD42-4A8E-ABBE-237499AE8B22</key>
+		<string>https://github.com/ys1382/filagree.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>source/apple/filagree.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>7AE69D62-AD42-4A8E-ABBE-237499AE8B22</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/ys1382/filagree.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>7AE69D62-AD42-4A8E-ABBE-237499AE8B22</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>7AE69D62-AD42-4A8E-ABBE-237499AE8B22</string>
+			<key>IDESourceControlWCCName</key>
+			<string>filagree</string>
+		</dict>
+	</array>
+</dict>
+</plist>

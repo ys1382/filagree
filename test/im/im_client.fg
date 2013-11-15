@@ -1,32 +1,39 @@
+id = 'client'
 port = 9996
 
-import '../mesh'
 import '../ui'
+import '../mesh'
+import '../sync/sync'
 
 ####### net
 
 client = [
 
+    'id' : id,
     'port' : port,
     'w':('w':240), 'h':('h':320),
-    'friends' : [],
+    'friends' : (sys.load('friends') or []),
     'roster' : [],
 
     'connect' : function(self)
-        self.id = sys.form_get(self.ui).username
         sys.connect('127.0.0.1', self.port, self)
     end,
 
     'handle_message' : function(self, socket, mc1)
         if (mc1.event == 'greet') then
-            sys.print('sys=' + sys)
             creds = sys.form_get(self.ui)
             return ['event' : self.entrance] + creds
         else if (mc1.event == 'signup') or (mc1.event == 'signin') then
             self.handle_signin(socket, mc1)
-        else if (mc1.event = 'online') then
+        else if (mc1.event == 'online') then
             self.handle_online(mc1.online)
+        else
+            self.sync.handle_message(socket, mc1)
         end
+    end,
+
+    'greet' : function(self)
+        return self.sync.greet(self)
     end,
 
     'handle_online' : function(self, online)
@@ -46,32 +53,36 @@ client = [
 
 ] + Mesh
 
+client.sync = Sync.init(client, id)
+
 
 ####### ui
 
-ctx = ['w':('w':240), 'h':('h':320),
-       'client' : client,
-       'port' : port,
-       'friends' : (sys.load('friends') or []),
-      ]
-
-ctx.select = function(ctx)
+client.select = function(client)
     sys.print('select ' + sys.args()[1])
 end
 
-ctx.settings = function(ctx)
+client.listfiles = function(client)
+    client.ui = sys.ui( client,
+                        ['vertical',
+                            ['table', 'name':'files', 'list':[], 'logic':client.select],
+                            'w':240, 'h':320
+                        ])
+end
 
-    ctx.ui = sys.ui(ctx, ['vertical',
+client.settings = function(client)
+
+    client.ui = sys.ui(client, ['vertical',
 
                         ['form', 'display name', 'username', 'password'],
 
                         ['horizontal',
-                            ['button', 'text':'save',   'logic':sys.save(sys.form_get(ctx.ui), 'settings')],
-                            ['button', 'text':'cancel', 'logic':ctx.main],
-                            ['button', 'text':'logout', 'logic':ctx.main],
+                            ['button', 'text':'save',   'logic':sys.save(sys.form_get(client.ui), 'settings')],
+                            ['button', 'text':'cancel', 'logic':client.main],
+                            ['button', 'text':'logout', 'logic':client.main],
                         ],
 
-                        ctx.w, ctx.h
+                        client.w, client.h
                     ])
 
     f = sys.load('settings')
@@ -117,29 +128,29 @@ client.added = function(self)
     self.send_to('server', mc4)
 end
 
-ctx.signin = function(self, entrance)
-    self.net.entrance = entrance or 'signin'
-    self.net.connect()
+client.signin = function(self, entrance)
+    self.entrance = entrance or 'signin'
+#    self.id = sys.form_get(self.ui).username
+    self.connect()
 end
 
-ctx.signup = function(self)
+client.signup = function(self)
     self.signin('signup')
 end
 
-client.ui = sys.ui(ctx, ['vertical',
+client.ui_login = function()
+    client.ui = sys.ui(client, ['vertical',
 
-                         ['form', 'username', 'password'],
+                             ['form', 'username', 'password'],
 
-                         ['horizontal',
-                             ['button', 'text':'signin', 'logic':ctx.signin],
-                             ['button', 'text':'signup', 'logic':ctx.signup],
-                         ],
+                             ['horizontal',
+                                 ['button', 'text':'signin', 'logic':client.signin],
+                                 ['button', 'text':'signup', 'logic':client.signup],
+                             ],
 
-                         ctx.w, ctx.h
-             ])
+                             client.w, client.h
+                 ])
+end
 
-ctx.net = client
-
-####### main
-
-sys.loop()
+client.listfiles()
+client.connect()

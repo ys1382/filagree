@@ -2,6 +2,7 @@
 
 id = 'server'
 
+import '../mesh'                    # shared mesh logic
 import 'sync'                       # shared sync logic
 
 server = Sync.init(nil,id)          # initialize server

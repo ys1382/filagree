@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:server/server.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:OSXfgui/OSXfgui.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:iOSfgui/iOSfgui.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:iOSchat/iOSchat.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:OSXcocoa/OSXcocoa.xcodeproj">
+   </FileRef>
+   <Group
+      location = "container:"
+      name = "shared">
+      <FileRef
+         location = "group:../polarssl/polarssl.xcodeproj">
+      </FileRef>
+   </Group>
+</Workspace>

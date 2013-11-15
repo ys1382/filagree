@@ -269,7 +269,7 @@ int insert_token_string(enum Lexeme lexeme, const char* input, int i)
                 case ESCAPED_TAB:        c = '\t';                        break;
                 case ESCAPED_QUOTE:      c = '\'';                        break;
                 default:
-                    return (VOID_INT)exit_message("unknown escape");
+                    return (int)(VOID_INT)exit_message("unknown escape");
             }
         }
         byte_array_add_byte(string, c);
@@ -286,7 +286,7 @@ int insert_token_string(enum Lexeme lexeme, const char* input, int i)
 int insert_lexeme(int index) {
     struct number_string sn = lexemes[index];
     insert_token((enum Lexeme)sn.number);
-    return strlen(sn.chars);
+    return (int)strlen(sn.chars);
 }
 
 int import(const char* input, int i)
@@ -326,7 +326,7 @@ struct array* lex(struct byte_array *binput)
 
     char* input = byte_array_to_string(binput);
     const char* right_comment = lexeme_to_string(LEX_RIGHT_COMMENT);
-    int right_comment_len = strlen(right_comment);
+    int right_comment_len = (int)strlen(right_comment);
 
 lexmore:
     while (i < binput->length) {

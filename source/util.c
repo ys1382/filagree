@@ -30,7 +30,7 @@ const char *make_message(const char *format, va_list ap)
 void exit_message2(const char *format, va_list list)
 {
     const char *message = make_message(format, list);
-    hal_log(message);
+    printf("%s\n", message);
     va_end(list);
     exit(1);
 }

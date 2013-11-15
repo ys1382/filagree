@@ -7,9 +7,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
+
+#ifndef NO_UI
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
 #include <OpenGL/gl.h>
+#endif
 
 #include "struct.h"
 #include "util.h"
@@ -19,12 +22,161 @@
 #include "struct.h"
 #include "file.h"
 
+
+
+@interface Actionifier  : NSObject
+#ifndef NO_UI
+<NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate>
+#endif
+{
+    struct variable *logic;
+    struct context *context;
+    struct variable *uictx;
+    struct variable *param;
+    struct variable *data;
+    NSTimer *timer;
+}
+
+-(void)setData:(struct variable*)value;
+-(void)setTimer:(double)interval repeats:(bool)repeats;
+-(IBAction)pressed:(id)sender;
+-(void)timerCallback:(NSTimer*)timer;
+-(void)callback;
+
+@end
+
+@implementation Actionifier
+
++(Actionifier*) fContext:(struct context *)f
+               uiContext:(struct variable*)u
+                callback:(struct variable*)c
+                userData:(struct variable*)d
+{
+    Actionifier *bp = [Actionifier alloc];
+    bp->logic = c;
+    bp->context = f;
+    bp->uictx = u;
+    bp->data = d;
+    bp->param = NULL;
+    bp->timer = NULL;
+    return bp;
+}
+
+-(void)setTimer:(double)interval repeats:(bool)repeats
+{
+    if (interval >= 1000)
+        interval /= 1000;
+    else
+        interval *= -1;
+    
+    self->timer = [NSTimer scheduledTimerWithTimeInterval:interval
+                                                   target:self
+                                                 selector:@selector(timerCallback:)
+                                                 userInfo:nil
+                                                  repeats:repeats];
+    
+    [[NSRunLoop mainRunLoop] addTimer:self->timer forMode:NSDefaultRunLoopMode];
+}
+
+-(IBAction)pressed:(id)sender {
+    [self callback];
+}
+
+-(void)setData:(struct variable*)value {
+    self->data = value;
+}
+
+#ifndef NO_UI
+
+- (void)windowDidResize:(NSNotification*)notification
+{
+    NSWindow *window = [notification object];
+	CGFloat w = [window frame].size.width;
+	CGFloat h = [window frame].size.height;
+    NSLog(@"resized to %f,%f", w, h);
+}
+
+- (id)          tableView:(NSTableView *) aTableView
+objectValueForTableColumn:(NSTableColumn *) aTableColumn
+                      row:(long) rowIndex
+{
+    struct variable *item = array_get(self->data->list.ordered, (uint32_t)rowIndex);
+    const char *name = variable_value_str(self->context, item);
+    NSString *name2 = [NSString stringWithUTF8String:name];
+    return [name2 stringByReplacingOccurrencesOfString:@"'" withString:@""];
+}
+
+- (long)numberOfRowsInTableView:(NSTableView *)aTableView {
+    return self->data->list.ordered->length;
+}
+
+- (void) tableViewSelectionDidChange:(NSNotification *)notification
+{
+    NSTableView* table = [notification object];
+    int32_t row = (int32_t)[table selectedRow];
+    if (row == -1)
+        return;
+    self->param = variable_new_int(self->context, row);
+    [self pressed:notification];
+}
+
+
+#endif // NO_UI
+
+-(void)timerCallback:(NSTimer*)timer {
+    [self callback];
+}
+
+-(void)callback
+{
+    if (self->logic && self->logic->type != VAR_NIL)
+    {
+        gil_lock(self->context, "pressed");
+        vm_call(self->context, self->logic, self->uictx, self->param, NULL);
+        gil_unlock(self->context, "pressed");
+    }
+}
+
+@end // Actionifier implementation
+
+
+
+
+
+
+
+#ifndef NO_UI
+
 static NSWindow *window = NULL;
 
-void hal_loop(struct context *context) {
-    [NSApp run];
-//    CFRunLoopRun();
+@interface WindowController : NSWindowController <NSWindowDelegate>
+
+@end
+
+@implementation WindowController
+
+- (id)init
+{
+    self = [super initWithWindowNibName:@"MainWindow"];
+    if (self) {
+        [self showWindow:nil];
+    }
+    return self;
 }
+
+- (void)windowDidLoad
+{
+    [super windowDidLoad];
+    [[self window] setDelegate:self];
+}
+
+- (void)windowShouldClose
+{
+    printf("window closed\n");
+}
+
+@end
+
 
 @interface GLView : NSOpenGLView {
     const struct variable *shape;
@@ -123,7 +275,6 @@ void add_graphics()
     [content addSubview:graph];
 }
 
-
 void hal_image()
 {
     NSView *content = [window contentView];
@@ -208,17 +359,6 @@ void exit_al() {
 	alcMakeContextCurrent(NULL);
 	alcDestroyContext(ctx);
 	alcCloseDevice(dev);
-}
-
-void hal_sleep(int32_t miliseconds)
-{
-    struct timespec req={0};
-    time_t sec = (int)(miliseconds/1000);
-    miliseconds = miliseconds - (sec * 1000);
-    req.tv_sec = sec;
-    req.tv_nsec = miliseconds * 1000000L;
-    while (nanosleep(&req,&req) == -1)
-        continue;
 }
 
 #define SYNTH_SAMPLE_RATE 44100 // CD quality
@@ -427,7 +567,7 @@ void resize(NSControl *control,
 
 void hal_ui_put(void *widget, int32_t x, int32_t y, int32_t w, int32_t h)
 {
-    NSControl *control = (NSControl*)widget;
+    NSControl *control = (__bridge NSControl*)widget;
     NSRect rect = whereAmI(x, y, w, h);
     [control setFrame:rect];
 }
@@ -448,114 +588,8 @@ void *hal_label(struct variable *uictx,
     [content addSubview:textField];
 
     resize(textField, w, h);
-    return textField;
+    return (void *)CFBridgingRetain(textField);
 }
-
-@interface Actionifier  : NSObject <NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate>
-{
-    struct variable *logic;
-    struct context *context;
-    struct variable *uictx;
-    struct variable *param;
-    struct variable *data;
-    NSTimer *timer;
-}
-
--(void)setData:(struct variable*)value;
--(void)setTimer:(double)interval repeats:(bool)repeats;
--(IBAction)pressed:(id)sender;
--(void)timerCallback:(NSTimer*)timer;
--(void)callback;
-
-@end
-
-@implementation Actionifier
-
-+(Actionifier*) fContext:(struct context *)f
-               uiContext:(struct variable*)u
-                callback:(struct variable*)c
-                userData:(struct variable*)d
-{
-    Actionifier *bp = [Actionifier alloc];
-    bp->logic = c;
-    bp->context = f;
-    bp->uictx = u;
-    bp->data = d;
-    bp->param = NULL;
-    bp->timer = NULL;
-    return bp;
-}
-
--(void)setTimer:(double)interval repeats:(bool)repeats
-{
-    if (interval >= 1000)
-        interval /= 1000;
-    else
-        interval *= -1;
-    
-    self->timer = [NSTimer scheduledTimerWithTimeInterval:interval
-                                                   target:self
-                                                 selector:@selector(timerCallback:)
-                                                 userInfo:nil
-                                                  repeats:repeats];
-
-    [[NSRunLoop mainRunLoop] addTimer:self->timer forMode:NSDefaultRunLoopMode];
-}
-
--(void)setData:(struct variable*)value {
-    self->data = value;
-}
-
-- (void)windowDidResize:(NSNotification*)notification
-{
-    NSWindow *window = [notification object];
-	CGFloat w = [window frame].size.width;
-	CGFloat h = [window frame].size.height;
-    NSLog(@"resized to %f,%f", w, h);
-}
-
-- (id)          tableView:(NSTableView *) aTableView
-objectValueForTableColumn:(NSTableColumn *) aTableColumn
-                      row:(long) rowIndex {
-    struct variable *item = array_get(self->data->list.ordered, rowIndex);
-    const char *name = variable_value_str(self->context, item);
-    NSString *name2 = [NSString stringWithUTF8String:name];
-    return [name2 stringByReplacingOccurrencesOfString:@"'" withString:@""];
-}
-
-- (long)numberOfRowsInTableView:(NSTableView *)aTableView {
-    return self->data->list.ordered->length;
-}
-
-- (void) tableViewSelectionDidChange:(NSNotification *)notification
-{
-    NSTableView* table = [notification object];
-    int row = [table selectedRow];
-    if (row == -1)
-        return;
-    self->param = variable_new_int(self->context, row);
-    [self pressed:notification];
-}
-
--(IBAction)pressed:(id)sender {
-    [self callback];
-}
-
--(void)timerCallback:(NSTimer*)timer {
-    [self callback];
-}
-
--(void)callback
-{
-    if (self->logic && self->logic->type != VAR_NIL)
-    {
-        gil_lock(self->context, "pressed");
-        vm_call(self->context, self->logic, self->uictx, self->param, NULL);
-        gil_unlock(self->context, "pressed");
-    }
-}
-
-@end // Actionifier implementation
 
 void *hal_button(struct context *context,
                  struct variable *uictx,
@@ -582,12 +616,13 @@ void *hal_button(struct context *context,
                                    uiContext:uictx
                                     callback:logic
                                     userData:NULL];
+    CFRetain((__bridge CFTypeRef)(act));
     [my setTarget:act];
     [my setAction:@selector(pressed:)];
     [my setButtonType:NSMomentaryLightButton];
     [my setBezelStyle:NSTexturedSquareBezelStyle];
     resize(my, w, h);
-    return my;
+    return (void *)CFBridgingRetain(my);
 }
 
 void *hal_input(struct variable *uictx,
@@ -614,15 +649,15 @@ void *hal_input(struct variable *uictx,
         [textField insertText:string];
 
     [content addSubview:textField];
-    return textField;
+    return (void *)CFBridgingRetain(textField);
 }
 
 struct variable *hal_ui_get(struct context *context, void *widget)
 {
-    NSObject *widget2 = (NSObject*)widget;
+    NSObject *widget2 = (__bridge NSObject*)widget;
     if ([widget2 isKindOfClass:[NSTextField class]])
     {
-        NSTextField *widget3 = (NSTextField*)widget;
+        NSTextField *widget3 = (__bridge NSTextField*)widget;
         NSString *value = [widget3 stringValue];
         const char *value2 = [value UTF8String];
         return variable_new_str_chars(context, value2);
@@ -632,11 +667,11 @@ struct variable *hal_ui_get(struct context *context, void *widget)
 
 void hal_ui_set(void *widget, struct variable *value)
 {
-    NSObject *widget2 = (NSObject*)widget;
+    NSObject *widget2 = (__bridge NSObject*)widget;
 
     if ([widget2 isKindOfClass:[NSTextField class]])
     {
-        NSTextField *widget3 = (NSTextField*)widget;
+        NSTextField *widget3 = (__bridge NSTextField*)widget;
         const char *value2 = byte_array_to_string(value->str);
         NSString *value3 = [NSString stringWithUTF8String:value2];
         [widget3 setStringValue:value3];
@@ -644,7 +679,7 @@ void hal_ui_set(void *widget, struct variable *value)
 
     else if ([widget2 isKindOfClass:[NSTableView class]])
     {
-        NSTableView *widget3 = (NSTableView*)widget;
+        NSTableView *widget3 = (__bridge NSTableView*)widget;
         Actionifier *a = (Actionifier*)[widget3 delegate];
         [a setData:value];
         [widget3 reloadData];
@@ -683,74 +718,38 @@ void *hal_table(struct context *context,
     [tableContainer setDocumentView:tableView];
     [tableContainer setHasVerticalScroller:YES];
     [content addSubview:tableContainer];
-    return tableView;
+    return (__bridge void *)(tableView);
 }
 
 void *hal_window(struct context *context,
-                struct variable *uictx,
-                int32_t *w, int32_t *h,
-                struct variable *logic)
+                        struct variable *uictx,
+                        int32_t *w, int32_t *h,
+                        struct variable *logic)
 {
-    if (window) { // clear contents
-        NSView *content = [window contentView];
-        NSArray *subviews = [NSArray arrayWithArray:[content subviews]];
-        [subviews makeObjectsPerformSelector:@selector(removeFromSuperviewWithoutNeedingDisplay)];
-        [content setNeedsDisplay:YES];
+    WindowController *wc = [[WindowController alloc] init];
+    window = [wc window];
 
-        //[inputs removeAllObjects];
-        NSSize size = [content frame].size;
-        *w = size.width;
-        *h = size.height;
-        return window;
-    }
+    NSView *content = [window contentView];
+    NSArray *subviews = [NSArray arrayWithArray:[content subviews]];
+    [subviews makeObjectsPerformSelector:@selector(removeFromSuperviewWithoutNeedingDisplay)];
+    [content setNeedsDisplay:YES];
 
-    if ((NULL == w) || (NULL == h)) {
-        NSLog(@"warning: zero-size window");
-        *w = 240;
-        *h = 320;
-    }
+    //[inputs removeAllObjects];
+    NSSize size = [content frame].size;
+    *w = size.width;
+    *h = size.height;
+    return (__bridge void *)(window);
 
-    [NSApplication sharedApplication];
-    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-    id menubar = [NSMenu new];
-    id appMenuItem = [NSMenuItem new];
-    [menubar addItem:appMenuItem];
-    [NSApp setMainMenu:menubar];
-    id appMenu = [NSMenu new];
-    id appName = [[NSProcessInfo processInfo] processName];
-    id quitTitle = [@"Quit " stringByAppendingString:appName];
-    id quitMenuItem = [[NSMenuItem alloc] initWithTitle:quitTitle
-                                                 action:@selector(terminate:)
-                                          keyEquivalent:@"q"];
-    [appMenu addItem:quitMenuItem];
-    [appMenuItem setSubmenu:appMenu];
-    window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, *w, *h)
-                                         styleMask:NSTitledWindowMask |
-              NSClosableWindowMask |
-              NSMiniaturizableWindowMask |
-              NSResizableWindowMask
-                                           backing:NSBackingStoreBuffered
-                                             defer:NO];
-    [window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
-    [window setTitle:appName];
-    [window makeKeyAndOrderFront:nil];
     Actionifier *a = [Actionifier fContext:context
                                  uiContext:uictx
                                   callback:logic
                                   userData:NULL];
     [window setDelegate:a];
 
-    NSString *path = @"icon.png";
-    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-        NSImage *icon = [[NSImage alloc] initWithContentsOfFile:path];
-        if (icon)
-            [NSApp setApplicationIconImage:icon];
-    }
-
-    [NSApp activateIgnoringOtherApps:YES];
-
-    return window;
+    return (void *)CFBridgingRetain(window);
 }
+
+#endif // NO_UI
 
 void hal_save(struct context *context, const struct byte_array *key, const struct variable *value)
 {
@@ -778,14 +777,10 @@ struct variable *hal_load(struct context *context, const struct byte_array *key)
     NSData *value2 = [defaults dataForKey:key3];
     if (NULL == value2)
         return variable_new_nil(context);
-    struct byte_array bits = {(uint8_t*)[value2 bytes], NULL, [value2 length]};
+    struct byte_array bits = {(uint8_t*)[value2 bytes], NULL, (uint32_t)[value2 length]};
     bits.current = bits.data;
 
     return variable_deserialize(context, &bits);
-}
-
-void hal_log(const char *str) {
-    NSLog(@"%s", str);
 }
 
 struct file_thread {
@@ -817,7 +812,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
          */
 
         char *path = (char*)paths[i];
-        int len = strlen(path) - 1;
+        int len = (int)strlen(path) - 1;
         if (path[len] == '/') path[len] = 0; // pesky trailing slash
         struct variable *path3 = variable_new_str_chars(thread->context, path);
 
@@ -825,7 +820,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
 
         long mod = file_modified(path);
-        struct variable *mod2 = variable_new_int(thread->context, mod); // goes pop in 2038
+        struct variable *mod2 = variable_new_int(thread->context, (int32_t)mod); // goes pop in 2038
         if ((NULL != method3) && (method3->type != VAR_NIL))
             vm_call(thread->context, method3, thread->listener, path3, mod2);
     }
@@ -859,10 +854,7 @@ void hal_file_listen(struct context *context, const char *path, struct variable 
 
     FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 	FSEventStreamStart(stream);
-	//CFRunLoopRun();
 }
-
-/////// timer
 
 void hal_timer(struct context *context,
                int32_t milliseconds,
@@ -875,4 +867,22 @@ void hal_timer(struct context *context,
                                             userData:NULL];
 
     [actionifier setTimer:milliseconds repeats:repeats];
+}
+
+void hal_sleep(int32_t miliseconds)
+{
+    struct timespec req={0};
+    time_t sec = (int)(miliseconds/1000);
+    miliseconds = (int32_t)(miliseconds - (sec * 1000));
+    req.tv_sec = sec;
+    req.tv_nsec = miliseconds * 1000000L;
+    while (nanosleep(&req,&req) == -1)
+        continue;
+}
+
+void hal_loop()
+{
+#ifdef NO_UI
+    CFRunLoopRun();
+#endif
 }

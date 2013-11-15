@@ -73,7 +73,7 @@ void interpret_file(struct byte_array *path,
     byte_array_del(program);
 }
 
-#ifndef FG_LIB
+#ifdef FG_MAIN // define FG_MAIN if filagree is the main app and not just a library
 
 #include <signal.h>
 
@@ -113,5 +113,5 @@ int main (int argc, char** argv)
     }
 }
 
-#endif // FG_LIB
+#endif // FG_MAIN
 

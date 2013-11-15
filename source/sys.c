@@ -91,11 +91,18 @@ struct variable *sys_read(struct context *context)
     variable_push(context, content);
 
     long mod = file_modified(byte_array_to_string(path->str));
-    struct variable *mod2 = variable_new_int(context, mod);
+    struct variable *mod2 = variable_new_int(context, (int32_t)mod);
     variable_push(context, mod2);
     struct variable *result = variable_new_src(context, 2);
     
     return result;
+}
+
+struct variable *sys_loop(struct context *context)
+{
+    stack_pop(context->operand_stack); // args
+    hal_loop();
+    return NULL;
 }
 
 // runs bytecode
@@ -364,23 +371,13 @@ struct variable *sys_window(struct context *context)
     struct variable *uictx = param_var(context, value, 2);
     struct variable *logic = param_var(context, value, 3);
 
-    //pthread_mutex_lock(&context->singleton->lock);
-    context->singleton->num_threads++;
-    //pthread_mutex_unlock(&context->singleton->lock);
-
+    context->singleton->keepalive = true; // so that context_del isn't called when UI is active
     hal_window(context, uictx, &w, &h, logic);
     variable_push(context, variable_new_int(context, w));
     variable_push(context, variable_new_int(context, h));
     return variable_new_src(context, 2);
 }
 
-struct variable *sys_loop(struct context *context)
-{
-    stack_pop(context->operand_stack); // self
-    gil_unlock(context, "sys_loop");
-    hal_loop(context);
-    return NULL;
-}
 
 #endif // NO_UI
 
@@ -408,7 +405,7 @@ int file_list_callback(const char *path, bool dir, long mod, void *fl_context)
     variable_map_insert(flc->context, metadata, key2, value);
 
     key2 = variable_new_str_chars(flc->context, RESERVED_MODIFIED);
-    value = variable_new_int(flc->context, mod);
+    value = variable_new_int(flc->context, (int32_t)mod);
     variable_map_insert(flc->context, metadata, key2, value);
     variable_map_insert(flc->context, flc->result, path3, metadata);
 
@@ -444,9 +441,9 @@ struct string_func builtin_funcs[] = {
     {"disconnect",  &sys_disconnect},
     {"file_list",   &sys_file_list},
     {"file_listen", &sys_file_listen},
+    {"loop",        &sys_loop},
 #ifndef NO_UI
     {"window",      &sys_window},
-    {"loop",        &sys_loop},
     {"label",       &sys_label},
     {"button",      &sys_button},
     {"input",       &sys_input},
@@ -551,7 +548,7 @@ int heapsortfg(struct context *context, void *base, size_t nel, size_t width, st
     if (!nel)
         return 0;
     void *t = malloc(width); // the temporary value
-    unsigned int n = nel, parent = nel/2, index, child; // heap indexes
+    uint32_t n = (uint32_t)nel, parent = (int32_t)nel/2, index, child; // heap indexes
     for (;;) { // loop until array is sorted
         if (parent > 0) { // first stage - Sorting the heap
             heapset(width, t, 0, base, --parent);

@@ -120,8 +120,8 @@ void add_thread(struct node_thread *ta, int sockfd)
 void messaged(struct node_thread *ta0, struct variable *listener, int sockfd, uint8_t *buf, ssize_t n)
 {
     struct node_thread *ta = thread_new(ta0->context, listener, incoming, sockfd);
-    ta->buf = byte_array_new_size(n);
-    ta->buf->length = n;
+    ta->buf = byte_array_new_size((uint32_t)n);
+    ta->buf->length = (uint32_t)n;
     memcpy((void*)ta->buf->data, buf, n);
     ta->event = MESSAGED;
     printf("\n>%" PRIu16 " - incoming %p\n", current_thread_id(), ta->context);

@@ -14,7 +14,7 @@
 #include "struct.h"
 #include "util.h"
 
-#define BYTE_ARRAY_MAX_LEN      10000
+#define BYTE_ARRAY_MAX_LEN      100000
 #define ERROR_BYTE_ARRAY_LEN    "byte array too long"
 #define GROWTH_FACTOR           2
 
@@ -54,7 +54,7 @@ void array_resize(struct array *a, uint32_t size)
 {
     if (!(size = list_resize(a->size, size))) // didn't resize
         return;
-    uint32_t delta = a->current - a->data;
+    uint32_t delta = (uint32_t)(a->current - a->data);
     a->data = (void**)realloc(a->data, size * sizeof(void*));
     null_check(a->data);
 
@@ -189,7 +189,7 @@ void byte_array_resize(struct byte_array* ba, uint32_t size)
     if (!(size = list_resize(ba->size, size))) // didn't resize
         return;
     assert_message(ba->current >= ba->data, "byte_array corrupt");
-    uint32_t delta = ba->current - ba->data;
+    uint32_t delta = (uint32_t)(ba->current - ba->data);
     ba->data = (uint8_t*)realloc(ba->data, size);
     assert_message(ba->data, "could not reallocate data");
     ba->current = ba->data + delta;
@@ -260,7 +260,7 @@ struct byte_array *byte_array_part(struct byte_array *within, uint32_t start, ui
 
 struct byte_array *byte_array_from_string(const char* str)
 {
-    int len = strlen(str);
+    int len = (int)strlen(str);
     struct byte_array* ba = byte_array_new_size(len);
     memcpy(ba->data, str, len);
     ba->length = len;
@@ -409,9 +409,9 @@ void byte_array_format(struct byte_array *ba, bool append, const char *format, .
 
         int written = vsnprintf((char*)at, capacity, format, args) + 1;
         if ((resize = (written > capacity) && (ba->size < VV_SIZE)))
-            byte_array_resize(ba, ba->size + written - capacity);
+            byte_array_resize(ba, (uint32_t)(ba->size + written - capacity));
         else {
-            ba->length = ba->length + MIN(written-1, capacity);
+            ba->length = (uint32_t)(ba->length + MIN(written-1, capacity));
             ba->current = ba->data + ba->length;
         }
 

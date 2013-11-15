@@ -1,14 +1,7 @@
-/*
-p = 'y'
-q = 'z'
-a = ['b', p, q : 'm']
-a.remove(0,a.length)
-sys.print(a)
-*/
-
 import 'ui'
 
 chat = []
+
 
 sys.ui(chat,
         ['vertical',
@@ -18,6 +11,5 @@ sys.ui(chat,
             'w':240, 'h':320
         ] )
 
-sys.print(chat.ui)
 
-sys.loop()
+sys.print(chat.ui)

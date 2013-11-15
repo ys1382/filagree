@@ -1,7 +1,5 @@
 ####### sync.fg
 
-import '../mesh'
-
 test_dir = id + '/'
 
 Sync = [
@@ -49,14 +47,11 @@ Sync = [
 
     end,
 
-    'connected' : function(self, socket)
-        msg1 = ['event' : 'greet', 'from' : self.id, 'files' : self.files]
-        self.send(socket, msg1)
+    'greet' : function(self, socket)
+        return ['files' : self.files]
     end,
 
     'handle_message' : function(self, socket, msg4)
-
-        sys.print('message from ' + socket + ': ' + msg4)
 
         if msg4.event == 'content-request' then
             self.handle_content_request(socket, msg4)
@@ -76,7 +71,7 @@ Sync = [
                 sys.ui_set(self.ctx.ui.files, files)            # update ui
             end
 
-        else if msg4.event = 'test' then
+        else if msg4.event == 'test' then
             self.handle_test(msg4)
         end
 
