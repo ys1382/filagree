@@ -6,8 +6,9 @@ chat = []
 sys.ui(chat,
         ['vertical',
             ['label', 'text':'abi'],
-            ['input', 'name':'record', 'hfill':true, 'readonly':true],
+            ['input', 'name':'record', 'readonly':true],
             ['input', 'name':'send'],
+            ['table', 'name':'testable', 'list':[7,8,9], 'hfill':true],
             'w':240, 'h':320
         ] )
 

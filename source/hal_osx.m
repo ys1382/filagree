@@ -693,31 +693,29 @@ void *hal_table(struct context *context,
                 struct variable *list,
                 struct variable *logic)
 {
-    assert_message(list && list->type == VAR_LST, "not a list");
+    assert_message(list && ((list->type == VAR_LST) || (list->type == VAR_NIL)), "not a list");
+    if (list->type == VAR_NIL)
+        list = variable_new_list(context, NULL);
 
     NSView *content = [window contentView];
-    //NSRect rect = whereAmI(0,0,w,h);
-    //NSScrollView * tableContainer = [[NSScrollView alloc] initWithFrame:rect];
-    //w -= 16;
-    //rect = NSMakeRect(0,0, w,h);
     NSScrollView * tableContainer = [[NSScrollView alloc] init];
     NSTableView *tableView = [[NSTableView alloc] init];
     NSTableColumn * column1 = [[NSTableColumn alloc] initWithIdentifier:@"Col1"];
     [tableView setHeaderView:nil];
-
     [tableView addTableColumn:column1];
 
     Actionifier *a = [Actionifier fContext:context
                                  uiContext:uictx
                                   callback:logic
                                   userData:list];
+    CFRetain((__bridge CFTypeRef)(a));
 
     [tableView setDelegate:a];
     [tableView setDataSource:(id<NSTableViewDataSource>)a];
 
     [tableContainer setDocumentView:tableView];
     [tableContainer setHasVerticalScroller:YES];
-    [content addSubview:tableContainer];
+    [content addSubview:tableView];
     return (__bridge void *)(tableView);
 }
 

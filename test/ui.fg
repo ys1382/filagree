@@ -69,6 +69,8 @@ sys.set_size = function(self, item, w, h)
         for k in kids
             if k.hfill then
                 self.set_size(k, w, fh)
+            else if k[0] == 'table' then
+                k.w, k.h = w, h - used
             else
                 self.set_size(k, w, k.h)
             end
@@ -140,7 +142,6 @@ sys.ui_create = function(self, uictx, item, parent)
         for i in kids
             names = sys.ui_create(uictx, i, parent) + names
         end
-        sys.print('nmz1='+names)
 
     else if type == 'form' then # replace with individual fields
         item.remove(0,item.length)
@@ -153,7 +154,6 @@ sys.ui_create = function(self, uictx, item, parent)
             item.insert(field)
         end
         names = sys.ui_create(uictx, item, parent)
-        sys.print('nmz2='+names)
 
     else if type == 'input' then
         o,w,h = sys.input(uictx, item.hint, item.multiline, item.readonly)
