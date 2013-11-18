@@ -44,8 +44,6 @@
 		88C62F3018351E6B00E6E9DC /* mesh.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = mesh.fg; sourceTree = "<group>"; };
 		88C62F3118351E6B00E6E9DC /* node.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = node.fg; sourceTree = "<group>"; };
 		88C62F3318351E6B00E6E9DC /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
-		88C62F3518351E6B00E6E9DC /* x copy.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "x copy.txt"; sourceTree = "<group>"; };
-		88C62F3618351E6B00E6E9DC /* x.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = x.txt; sourceTree = "<group>"; };
 		88C62F3718351E6B00E6E9DC /* sync.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync.fg; sourceTree = "<group>"; };
 		88C62F3818351E6B00E6E9DC /* sync_client.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_client.fg; sourceTree = "<group>"; };
 		88C62F3918351E6B00E6E9DC /* sync_server.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_server.fg; sourceTree = "<group>"; };
@@ -162,8 +160,6 @@
 		88C62F3418351E6B00E6E9DC /* server */ = {
 			isa = PBXGroup;
 			children = (
-				88C62F3518351E6B00E6E9DC /* x copy.txt */,
-				88C62F3618351E6B00E6E9DC /* x.txt */,
 			);
 			path = server;
 			sourceTree = "<group>";
@@ -386,6 +382,7 @@
 				88C62B5B18351D7400E6E9DC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

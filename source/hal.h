@@ -30,7 +30,7 @@ void hal_timer(struct context *context,
 
 void hal_file_listen(struct context *context, const char *path, struct variable *listener);
 
-void hal_loop();
+void hal_loop(struct context *context);
 
 #ifndef NO_UI
 

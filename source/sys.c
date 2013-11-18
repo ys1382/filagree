@@ -101,7 +101,7 @@ struct variable *sys_read(struct context *context)
 struct variable *sys_loop(struct context *context)
 {
     stack_pop(context->operand_stack); // args
-    hal_loop();
+    hal_loop(context);
     return NULL;
 }
 
@@ -129,6 +129,7 @@ struct variable *sys_rm(struct context *context)
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
     char *path2 = byte_array_to_string(path->str);
+    assert_message(strlen(path2)>1, "oops");
     char rmcmd[100];
     sprintf(rmcmd, "rm -rf %s", path2);
     system(rmcmd);

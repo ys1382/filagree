@@ -1,10 +1,14 @@
+import '../mesh'    # shared mesh logic
+import '../sync/sync'    # shared sync logic
+
+
+id = 'server'
 port = 9996
 
-import '../mesh'   # shared mesh logic
 
-server = [
+im = [
 
-    'id' : 'server',
+    'id' : id,
     'clients' : [],
     'friends' : [],
 
@@ -53,9 +57,9 @@ server = [
         return ['event' : 'signin', 'result' : result] + online
     end,
 
-] + Mesh
+]
 
-####### main
+mesh = Mesh.init(id, port, [im])
 
-sys.listen(port, server)    # server listens for incoming socket connections
+mesh.listen()
 sys.loop()

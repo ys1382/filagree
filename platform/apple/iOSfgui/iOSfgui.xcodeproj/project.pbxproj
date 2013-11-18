@@ -81,21 +81,21 @@
 		886CC498182311C500DB6074 /* iOSfguiTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "iOSfguiTests-Info.plist"; sourceTree = "<group>"; };
 		886CC49A182311C500DB6074 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		886CC49C182311C500DB6074 /* iOSfguiTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSfguiTests.m; sourceTree = "<group>"; };
-		886CC4A6182311D000DB6074 /* filagree.png */ = {isa = PBXFileReference; lastKnownFileType = file; path = filagree.png; sourceTree = "<group>"; };
-		886CC4A7182311D000DB6074 /* im_client.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = im_client.fg; sourceTree = "<group>"; };
-		886CC4A8182311D000DB6074 /* im_server.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = im_server.fg; sourceTree = "<group>"; };
-		886CC4A9182311D000DB6074 /* im_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = im_test.fg; sourceTree = "<group>"; };
-		886CC4AB182311D000DB6074 /* mesh.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = mesh.fg; sourceTree = "<group>"; };
-		886CC4AC182311D000DB6074 /* node.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = node.fg; sourceTree = "<group>"; };
-		886CC4AD182311D000DB6074 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = file; path = icon.png; sourceTree = "<group>"; };
-		886CC4AE182311D000DB6074 /* sync.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = sync.fg; sourceTree = "<group>"; };
-		886CC4AF182311D000DB6074 /* sync_client.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = sync_client.fg; sourceTree = "<group>"; };
-		886CC4B0182311D000DB6074 /* sync_server.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = sync_server.fg; sourceTree = "<group>"; };
-		886CC4B1182311D000DB6074 /* sync_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = sync_test.fg; sourceTree = "<group>"; };
-		886CC4B3182311D000DB6074 /* test_director.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = test_director.fg; sourceTree = "<group>"; };
-		886CC4B4182311D000DB6074 /* test_syntax.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = test_syntax.fg; sourceTree = "<group>"; };
-		886CC4B5182311D000DB6074 /* try.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = try.fg; sourceTree = "<group>"; };
-		886CC4B6182311D000DB6074 /* ui.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file; path = ui.fg; sourceTree = "<group>"; };
+		886CC4A6182311D000DB6074 /* filagree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = filagree.png; sourceTree = "<group>"; };
+		886CC4A7182311D000DB6074 /* im_client.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_client.fg; sourceTree = "<group>"; };
+		886CC4A8182311D000DB6074 /* im_server.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_server.fg; sourceTree = "<group>"; };
+		886CC4A9182311D000DB6074 /* im_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_test.fg; sourceTree = "<group>"; };
+		886CC4AB182311D000DB6074 /* mesh.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = mesh.fg; sourceTree = "<group>"; };
+		886CC4AC182311D000DB6074 /* node.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = node.fg; sourceTree = "<group>"; };
+		886CC4AD182311D000DB6074 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
+		886CC4AE182311D000DB6074 /* sync.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync.fg; sourceTree = "<group>"; };
+		886CC4AF182311D000DB6074 /* sync_client.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_client.fg; sourceTree = "<group>"; };
+		886CC4B0182311D000DB6074 /* sync_server.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_server.fg; sourceTree = "<group>"; };
+		886CC4B1182311D000DB6074 /* sync_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_test.fg; sourceTree = "<group>"; };
+		886CC4B3182311D000DB6074 /* test_director.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test_director.fg; sourceTree = "<group>"; };
+		886CC4B4182311D000DB6074 /* test_syntax.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test_syntax.fg; sourceTree = "<group>"; };
+		886CC4B5182311D000DB6074 /* try.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = try.fg; sourceTree = "<group>"; };
+		886CC4B6182311D000DB6074 /* ui.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ui.fg; sourceTree = "<group>"; };
 		886CC503182312C900DB6074 /* compile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = compile.c; path = ../../../source/compile.c; sourceTree = "<group>"; };
 		886CC504182312C900DB6074 /* file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = file.c; path = ../../../source/file.c; sourceTree = "<group>"; };
 		886CC505182312C900DB6074 /* interpret.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = interpret.c; path = ../../../source/interpret.c; sourceTree = "<group>"; };
@@ -148,9 +148,9 @@
 			isa = PBXGroup;
 			children = (
 				886CC5011823129900DB6074 /* filagree */,
-				886CC4B8182311D000DB6074 /* Resources */,
 				886CC474182311C500DB6074 /* iOSfgui */,
 				886CC496182311C500DB6074 /* iOSfguiTests */,
+				886CC4B8182311D000DB6074 /* Resources */,
 				886CC46D182311C500DB6074 /* Frameworks */,
 				886CC46C182311C500DB6074 /* Products */,
 			);
@@ -650,6 +650,7 @@
 				886CC4A2182311C500DB6074 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		886CC4A3182311C500DB6074 /* Build configuration list for PBXNativeTarget "iOSfguiTests" */ = {
 			isa = XCConfigurationList;
@@ -658,6 +659,7 @@
 				886CC4A5182311C500DB6074 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

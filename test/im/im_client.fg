@@ -1,23 +1,17 @@
-id = 'client'
-port = 9996
-
 import '../ui'
 import '../mesh'
 import '../sync/sync'
+
+id = 'client'
+port = 9996
 
 ####### net
 
 client = [
 
-    'id' : id,
-    'port' : port,
     'w':('w':240), 'h':('h':320),
     'friends' : (sys.load('friends') or []),
     'roster' : [],
-
-    'connect' : function(self)
-        sys.connect('127.0.0.1', self.port, self)
-    end,
 
     'handle_message' : function(self, socket, mc1)
         if (mc1.event == 'greet') then
@@ -51,10 +45,10 @@ client = [
         end
     end
 
-] + Mesh
+]
 
 client.sync = Sync.init(client, id)
-
+client.mesh = Mesh.init(id, port, [client, client.sync])
 
 ####### ui
 
@@ -131,7 +125,7 @@ end
 client.signin = function(self, entrance)
     self.entrance = entrance or 'signin'
 #    self.id = sys.form_get(self.ui).username
-    self.connect()
+    self.mesh.connect()
 end
 
 client.signup = function(self)
@@ -153,4 +147,4 @@ client.ui_login = function()
 end
 
 client.listfiles()
-client.connect()
+client.mesh.connect()

@@ -41,12 +41,13 @@ struct byte_array *read_resource(const char *path)
     struct byte_array *program = build_string(script);
 #else
     struct byte_array *ui = read_resource("ui.fg");
+    struct byte_array *sync = read_resource("sync.fg");
     struct byte_array *mesh = read_resource("mesh.fg");
     struct byte_array *im_client = read_resource("im_client.fg");
-    struct byte_array *script = byte_array_concatenate(3, ui, mesh, im_client);
+    struct byte_array *script = byte_array_concatenate(4, ui, mesh, sync, im_client);
     struct byte_array *program = build_string(script);
 #endif
-    execute(program);    
+    execute(program);
 }
 
 - (void)didReceiveMemoryWarning

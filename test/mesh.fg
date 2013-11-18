@@ -1,16 +1,35 @@
 ####### sync.fg
 
-port = 9999
-
 Mesh = [
 
     'peers' : [], # maps id : socket
     'sreep' : [], # maps socket: id
     'seq' : 0,
 
+    'init' : function(self, id, port, ctx)
+
+        self.id = id
+        self.port = port
+        self.ctx = ctx
+
+        return self
+
+    end,
+
+    'listen' : function(self)
+        sys.listen(self.port, self)    # server listens for incoming socket connections
+    end,
+
+    'connect' : function(self)
+        sys.connect('127.0.0.1', self.port, self)
+    end,
+
     'connected' : function(self, socket)
         msg1 = ['event' : 'greet', 'from' : self.id] + self.greet()
         self.send(socket, msg1)
+        for c in self.ctx
+            c.connected(self, socket)
+        end
     end,
 
     'disconnected' : function(self, socket)
@@ -18,6 +37,9 @@ Mesh = [
         self.handle_disconnect(id)
         sys.print(id + ' disconnected')
         self.peers[id] = nil
+        for c in self.ctx
+            c.disconnected(self, socket)
+        end
     end,
 
     'messaged' : function(self, socket, msg4)
@@ -32,11 +54,16 @@ Mesh = [
                 sys.print('sreepz ' + self.sreep)
             end
 
-            if (response = self.handle_message(socket, msg4))
-
-                mm2 = ['from' : self.id, 'seq' : msg4.seq] + response
-                self.send_to(msg4.from, mm2)
-
+            response = self.handle_message(socket, msg4)
+            if not response then
+                for c in self.ctx
+                    response = c.handle_message(socket, msg4)
+                    if response then
+                        mm2 = ['from' : self.id, 'seq' : msg4.seq] + response
+                        self.send_to(msg4.from, mm2)
+                        return
+                    end
+                end
             end
 
         else # forward to recipient

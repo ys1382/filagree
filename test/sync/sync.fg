@@ -1,21 +1,21 @@
 ####### sync.fg
 
-test_dir = id + '/'
-
 Sync = [
 
     'writing' : [],
 
-    'init' : function(self, ctx, id)
+    'init' : function(self, ctx, id, mesh)
 
-        self.id = id
         watched = id + '/'
 
         # clear directory for testing
         sys.rm(watched)
         sys.mkdir(watched)
 
-        self = ['ctx':ctx, 'watched':watched, 'id':id, 'peers':[]] + self
+        self.ctx = ctx
+        self.watched = watched
+        self.mesh = mesh
+
         self.files = self.local_snapshot()
 
         if ctx and ctx.ui then
@@ -45,10 +45,6 @@ Sync = [
         i = path.find('/', -1)                  # get last path component
         return (i >= 0) and (path[i+1] == '.')  # ignore files that match ".*"
 
-    end,
-
-    'greet' : function(self, socket)
-        return ['files' : self.files]
     end,
 
     'handle_message' : function(self, socket, msg4)
@@ -84,7 +80,7 @@ Sync = [
             fullpath = self.watched + path
             content, modified = sys.read(fullpath)
             response = ['event' : 'content', 'path' : path, 'content' : content, 'modified' : modified]
-            self.send(socket, response)
+            self.mesh.send(socket, response)
 
         end
     end,
@@ -142,7 +138,7 @@ Sync = [
         paths = [path for path in cu where not cu[path].dir]
         if paths.length then
             msg3 = ['event' : 'content-request', 'paths' : paths]
-            self.send(socket, msg3)
+            self.mesh.send(socket, msg3)
         end
 
     end,
@@ -182,8 +178,8 @@ Sync = [
         end
 
         msg8 = ['event' : 'test', 'status' : status, 'seq' : msg7.seq, 'to' : msg7.from]
-        self.send_to(msg7.from, msg8)
+        self.mesh.send_to(msg7.from, msg8)
 
     end,
 
-] + Mesh
+]

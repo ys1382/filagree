@@ -386,13 +386,13 @@ void display_code(struct context *context, struct byte_array *code) {}
 void gil_lock(struct context *context, const char *who)
 {
     pthread_mutex_lock(&context->singleton->gil);
-    // DEBUGPRINT("\n%s>%" PRIu16 " lock %s\n", indentation(context), current_thread_id(), who);
+    //DEBUGPRINT("\n%s>%" PRIu16 " lock %s\n", indentation(context), current_thread_id(), who);
 }
 
 void gil_unlock(struct context *context, const char *who)
 {
     pthread_mutex_unlock(&context->singleton->gil);
-    // DEBUGPRINT("\n%s>%" PRIu16 " unlock %s\n", indentation(context), current_thread_id(), who);
+    //DEBUGPRINT("\n%s>%" PRIu16 " unlock %s\n", indentation(context), current_thread_id(), who);
 }
 
 // instruction implementations /////////////////////////////////////////////

@@ -878,9 +878,10 @@ void hal_sleep(int32_t miliseconds)
         continue;
 }
 
-void hal_loop()
+void hal_loop(struct context *context)
 {
 #ifdef NO_UI
+    gil_unlock(context, "loop");
     CFRunLoopRun();
 #endif
 }
