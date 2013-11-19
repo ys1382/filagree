@@ -1,4 +1,4 @@
-####### sync.fg
+####### mesh.fg
 
 Mesh = [
 
@@ -10,7 +10,7 @@ Mesh = [
 
         self.id = id
         self.port = port
-        self.ctx = ctx
+        self.ctx = ctx or []
 
         return self
 
@@ -51,7 +51,7 @@ Mesh = [
             if msg4.event == 'greet' then
                 self.peers[msg4.from] = socket
                 self.sreep[socket] = msg4.from
-                sys.print('sreepz ' + self.sreep)
+                sys.print('greetz ' + self)
             end
 
             response = self.handle_message(socket, msg4)

@@ -1,16 +1,17 @@
 import 'ui'
 
-chat = []
+client = [
 
+    'select' : function(client)
+        sys.print('select ' + sys.args()[1])
+    end,
 
-sys.ui(chat,
-        ['vertical',
-            ['label', 'text':'abi'],
-            ['input', 'name':'record', 'readonly':true],
-            ['input', 'name':'send'],
-            ['table', 'name':'testable', 'list':[7,8,9], 'hfill':true],
-            'w':240, 'h':320
-        ] )
+]
 
+client.ui = sys.ui( client,
+                    ['vertical',
+                        ['table', 'name':'files', 'list':[], 'logic':client.select],
+                        'w':240, 'h':320
+                    ])
 
-sys.print(chat.ui)
+sys.loop()

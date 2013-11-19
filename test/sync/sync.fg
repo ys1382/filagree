@@ -4,9 +4,9 @@ Sync = [
 
     'writing' : [],
 
-    'init' : function(self, ctx, id, mesh)
+    'init' : function(self, ctx, dirs, mesh)
 
-        watched = id + '/'
+        watched = dirs[0] + '/' # todo: watch all dirs
 
         # clear directory for testing
         sys.rm(watched)
@@ -14,6 +14,7 @@ Sync = [
 
         self.ctx = ctx
         self.watched = watched
+        mesh.ctx = mesh.ctx + [self]
         self.mesh = mesh
 
         self.files = self.local_snapshot()
@@ -56,21 +57,25 @@ Sync = [
             self.snapshot = msg4.files
 
         else if msg4.event == 'change' then
-            self.handle_change(socket,msg4.changes)
+            self.handle_change(socket, msg4)
 
         else if msg4.event == 'content' then
-            sys.print('set writing[ ' + msg4.path + ' ] to ' + msg4.modified)
-            self.writing[msg4.path] = msg4
-            sys.write(self.watched + msg4.path, msg4.content, msg4.modified)   # save file
-            files = self.local_snapshot().keys
-            if self.ctx.ui then
-                sys.ui_set(self.ctx.ui.files, files)            # update ui
-            end
+            self.handle_content(msg4.from, msg4.path, msg4.content, msg4.modified)
 
         else if msg4.event == 'test' then
             self.handle_test(msg4)
         end
 
+    end,
+
+    'handle_content' : function(self, from, path, content, modified)
+
+        self.writing[path] = ['from':from, 'modified':modified]
+        sys.write(self.watched + path, content, modified)   # save file
+        files = self.local_snapshot().keys
+        if self.ctx.ui then
+            sys.ui_set(self.ctx.ui.files, files)            # update ui
+        end
     end,
 
     'handle_content_request' : function(self, socket, msg5)
@@ -87,18 +92,23 @@ Sync = [
 
     'filed' : function(self, path, modified)
 
+        sys.print('fild', self.mesh)
+
+        # skip files we're currently writing to
         skip = self.writing[path].modified
-        if skip == modified # because we're writing to it
+        if skip == modified
             sys.print('...same')
             except = self.writing[path].from
-            self.broadcast(original_message, except)
             self.writing[path] = nil
             return
         end
 
+        # check for new and deleted files
         latest = self.local_snapshot()
         updated = latest - self.files
         deleted = self.files - latest
+
+        # check for files with new mod times
         for f in self.files
             g = self.files[f]
             mod = g.modified
@@ -108,18 +118,24 @@ Sync = [
             end
         end
 
+        # add content of each new or modified file
+        for u in updated.keys
+            updated[u] = updated[u] + 'content':sys.read(self.watched + u)
+        end
+
         if updated.keys.length or deleted.keys.length then
             changes = ['updated' : updated, 'deleted' : deleted]
             msg2 = ['event' : 'change', 'changes' : changes]
-            self.broadcast(msg2)
+            self.mesh.broadcast(msg2)
         end
 
         self.files = latest
 
     end,
 
-    'handle_change' : function(self, socket, changez)
+    'handle_change' : function(self, socket, msg8)
 
+        changez = msg8.changes
         cu = changez.updated
         cd = changez.deleted
 
@@ -135,10 +151,13 @@ Sync = [
 
         # request update file bodies
         self.snapshot = self.snapshot + cu - cd
-        paths = [path for path in cu where not cu[path].dir]
+        paths = [path for path in cu where not (cu[path].dir or cu[path].content)]
         if paths.length then
             msg3 = ['event' : 'content-request', 'paths' : paths]
             self.mesh.send(socket, msg3)
+        end
+        for path in cu where cu[path].content
+            self.handle_content(msg8.from, path, cu[path].content, cu[path].modified)
         end
 
     end,
@@ -180,6 +199,6 @@ Sync = [
         msg8 = ['event' : 'test', 'status' : status, 'seq' : msg7.seq, 'to' : msg7.from]
         self.mesh.send_to(msg7.from, msg8)
 
-    end,
+    end
 
 ]

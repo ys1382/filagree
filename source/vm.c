@@ -1144,7 +1144,7 @@ static void binary_op(struct context *context, enum Opcode op)
 
     variable_push(context, w);
 #ifdef DEBUG
-    DEBUGSPRINT("(%s,%s) = %s",
+    DEBUGSPRINT("%s(%s,%s) = %s",
                NUM_TO_STRING(opcodes, op),
                variable_value_str(context, u),
                variable_value_str(context, v),

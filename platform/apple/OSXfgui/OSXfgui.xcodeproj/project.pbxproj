@@ -571,6 +571,7 @@
 				GCC_PREFIX_HEADER = "OSXfgui/OSXfgui-Prefix.pch";
 				INFOPLIST_FILE = "OSXfgui/OSXfgui-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = x86_64;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -584,6 +585,7 @@
 				GCC_PREFIX_HEADER = "OSXfgui/OSXfgui-Prefix.pch";
 				INFOPLIST_FILE = "OSXfgui/OSXfgui-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = x86_64;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

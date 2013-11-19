@@ -1,24 +1,26 @@
 ####### sync_client.fg
 
-# to run, type ./filagree sync_client.fg "id='<client-id>'"
 
 import 'sync'
 import '../ui'
+import '../mesh'
 
 
-# init client
-client = ['select' : function(ctx)
-              sys.print('select ' + sys.args()[1])
-          end]
+client = [
 
-# client UI
+    'select' : function(client)
+        sys.print('select ' + sys.args()[1])
+    end,
+
+]
+
 client.ui = sys.ui( client,
                     ['vertical',
-                        ['table', 'name':'files', 'list':[], 'logic':client.select],
+                        ['table', 'name':'files', 'list':['x','y'], 'logic':client.select],
                         'w':240, 'h':320
                     ])
 
-client.sync = Sync.init(client, id)         # client sync logic
-sys.connect('127.0.0.1', port, client.sync) # client connects to server
+mesh = Mesh.init('client', 9999, [client])
+sync = Sync.init(client, ['client'], mesh)
 
-sys.loop()
+mesh.connect()

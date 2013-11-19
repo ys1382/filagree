@@ -98,7 +98,7 @@
 
 - (id)          tableView:(NSTableView *) aTableView
 objectValueForTableColumn:(NSTableColumn *) aTableColumn
-                      row:(long) rowIndex
+                      row:(NSInteger) rowIndex
 {
     struct variable *item = array_get(self->data->list.ordered, (uint32_t)rowIndex);
     const char *name = variable_value_str(self->context, item);
@@ -106,8 +106,9 @@ objectValueForTableColumn:(NSTableColumn *) aTableColumn
     return [name2 stringByReplacingOccurrencesOfString:@"'" withString:@""];
 }
 
-- (long)numberOfRowsInTableView:(NSTableView *)aTableView {
-    return self->data->list.ordered->length;
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
+    int n = self->data->list.ordered->length;
+    return n;
 }
 
 - (void) tableViewSelectionDidChange:(NSNotification *)notification
@@ -567,8 +568,17 @@ void resize(NSControl *control,
 
 void hal_ui_put(void *widget, int32_t x, int32_t y, int32_t w, int32_t h)
 {
-    NSControl *control = (__bridge NSControl*)widget;
+    NSView *control = (__bridge NSView*)widget;
     NSRect rect = whereAmI(x, y, w, h);
+
+    if ([control isKindOfClass:[NSTableView class]])
+    {
+        rect.size.height -= 20;
+        [control setFrame:rect];
+        rect.size.height += 20;
+        control = [[control superview] superview];
+    }
+
     [control setFrame:rect];
 }
 
@@ -708,15 +718,17 @@ void *hal_table(struct context *context,
                                  uiContext:uictx
                                   callback:logic
                                   userData:list];
+
     CFRetain((__bridge CFTypeRef)(a));
+    CFRetain((__bridge CFTypeRef)(tableContainer));
 
     [tableView setDelegate:a];
     [tableView setDataSource:(id<NSTableViewDataSource>)a];
 
     [tableContainer setDocumentView:tableView];
     [tableContainer setHasVerticalScroller:YES];
-    [content addSubview:tableView];
-    return (__bridge void *)(tableView);
+    [content addSubview:tableContainer];
+    return (void *)CFBridgingRetain(tableView);
 }
 
 void *hal_window(struct context *context,
