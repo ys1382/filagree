@@ -8,6 +8,10 @@
 #include "struct.h"
 #include "vm.h"
 
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
+
 enum HAL_Event {
     CONNECTED,
     DISCONNECTED,

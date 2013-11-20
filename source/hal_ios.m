@@ -25,6 +25,7 @@
 
 
 static UIView *content = NULL;
+static NSString *documentsDirectory = NULL;
 
 
 CGRect whereAmI(int x, int y, int w, int h)
@@ -359,6 +360,67 @@ struct variable *hal_load(struct context *context, const struct byte_array *key)
 void hal_log(const char *str) {
     NSLog(@"%s", str);
 }
+
+NSString *getDocumentsDirectory()
+{
+    if (NULL == documentsDirectory)
+    {
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        documentsDirectory = [paths objectAtIndex:0];
+    }
+    return documentsDirectory;
+}
+
+struct variable *sys_mkdir(struct context *context)
+{
+    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
+    char *path2 = byte_array_to_string(path->str);
+    NSString *path3 = [NSString stringWithUTF8String:path2];
+    documentsDirectory = getDocumentsDirectory();
+
+    NSError *error;
+    if (![[NSFileManager defaultManager] createDirectoryAtPath:path3
+                                   withIntermediateDirectories:YES
+                                                    attributes:nil
+                                                         error:&error])
+    {
+        NSLog(@"Create directory error: %@", error);
+    }
+
+    free(path2);
+    return NULL;
+}
+
+struct byte_array *read_file(const struct byte_array *path)
+{
+    FILE * file;
+    char *str;
+    long size;
+    char* path2 = byte_array_to_string(path);
+    NSString *path3 = [NSString stringWithUTF8String:path2];
+    NSString *resource = [path3 f]
+
+    NSString *filePath = [[NSBundle mainBundle] pathForResource:resource ofType:type];
+    NSData *myData = [NSData dataWithContentsOfFile:filePath];
+    if (myData) {
+        // do something useful
+    }
+    
+    struct byte_array* ba = byte_array_new_size((uint32_t)size);
+    ba->length = (uint32_t)size;
+    memcpy(ba->data, str, size);
+    free(filename_str);
+    free(str);
+    return ba;
+no_file:
+    free(filename_str);
+    DEBUGPRINT("\nCould not read file %s\n", filename_str);
+    return NULL;
+}
+
+int write_file(const struct byte_array* path, struct byte_array* bytes, int32_t timestamp)
+{
 
 struct file_thread {
     struct context *context;

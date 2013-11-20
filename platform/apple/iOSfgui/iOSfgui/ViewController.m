@@ -38,15 +38,16 @@ struct byte_array *read_resource(const char *path)
 
 #if 0
     struct byte_array *script = byte_array_from_string("sys.print('hi')");
-    struct byte_array *program = build_string(script);
+#else if 1
+    struct byte_array *script = read_resource("ui.fg");
 #else
     struct byte_array *ui = read_resource("ui.fg");
     struct byte_array *sync = read_resource("sync.fg");
     struct byte_array *mesh = read_resource("mesh.fg");
-    struct byte_array *im_client = read_resource("im_client.fg");
+    struct byte_array *im_client = read_resource("sync_client.fg");
     struct byte_array *script = byte_array_concatenate(4, ui, mesh, sync, im_client);
-    struct byte_array *program = build_string(script);
 #endif
+    struct byte_array *program = build_string(script);
     execute(program);
 }
 

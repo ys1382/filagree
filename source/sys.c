@@ -94,7 +94,7 @@ struct variable *sys_read(struct context *context)
     struct variable *mod2 = variable_new_int(context, (int32_t)mod);
     variable_push(context, mod2);
     struct variable *result = variable_new_src(context, 2);
-    
+
     return result;
 }
 
@@ -123,6 +123,8 @@ struct variable *sys_interpret(struct context *context)
     return NULL;
 }
 
+#if !(TARGET_OS_IPHONE)
+
 // deletes file or folder
 struct variable *sys_rm(struct context *context)
 {
@@ -132,10 +134,12 @@ struct variable *sys_rm(struct context *context)
     assert_message(strlen(path2)>1, "oops");
     char rmcmd[100];
     sprintf(rmcmd, "rm -rf %s", path2);
-    system(rmcmd);
+    if (system(rmcmd))
+        DEBUGPRINT("\nCould not rm %s\n", path2);
     free(path2);
     return NULL;
 }
+
 
 // creates directory
 struct variable *sys_mkdir(struct context *context)
@@ -143,12 +147,20 @@ struct variable *sys_mkdir(struct context *context)
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
     char *path2 = byte_array_to_string(path->str);
+
     char mkcmd[100];
     sprintf(mkcmd, "mkdir -p %s", path2);
-    system(mkcmd);
+    if (system(mkcmd))
+        DEBUGPRINT("\nCould not mkdir %s\n", path2);
+
     free(path2);
     return NULL;
 }
+
+#else
+struct variable *sys_mkdir(struct context *context);
+struct variable *sys_rm(struct context *context);
+#endif
 
 // arguments most recently passed into a function
 struct variable *sys_args(struct context *context)

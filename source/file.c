@@ -28,6 +28,9 @@ long fsize(FILE* file) {
     return -1;
 }
 
+
+#if !(TARGET_IOS_PHONE)
+
 struct byte_array *read_file(const struct byte_array *filename_ba)
 {
     FILE * file;
@@ -65,12 +68,6 @@ no_file:
     return NULL;
 }
 
-int write_byte_array(struct byte_array* ba, FILE* file) {
-    uint16_t len = ba->length;
-    int n = (int)fwrite(ba->data, 1, len, file);
-    return len - n;
-}
-
 int write_file(const struct byte_array* path, struct byte_array* bytes, int32_t timestamp)
 {
     // open file
@@ -81,7 +78,7 @@ int write_file(const struct byte_array* path, struct byte_array* bytes, int32_t 
         DEBUGPRINT("could not open file %s\n", path2);
         goto done;
     }
-
+    
     // write bytes
     if (NULL != bytes)
     {
@@ -90,7 +87,7 @@ int write_file(const struct byte_array* path, struct byte_array* bytes, int32_t 
         int s = fclose(file);
         result = (r<0) || s;
     }
-
+    
     // set timestamp
     if (timestamp >= 0)
     {
@@ -101,10 +98,19 @@ int write_file(const struct byte_array* path, struct byte_array* bytes, int32_t 
         goto done;
         result = 0;
     }
-
+    
 done:
     free(path2);
     return result;
+}
+
+#endif // TARGET_IOS_PHONE
+
+
+int write_byte_array(struct byte_array* ba, FILE* file) {
+    uint16_t len = ba->length;
+    int n = (int)fwrite(ba->data, 1, len, file);
+    return len - n;
 }
 
 char* build_path(const char* dir, const char* name)

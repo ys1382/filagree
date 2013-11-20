@@ -180,7 +180,6 @@ sys.ui_create = function(self, uictx, item, parent)
 
 end
 
-/*
 testui = function()
 
     tester = [ 'select' : function(ctx)
@@ -199,7 +198,7 @@ testui = function()
                                 ['button', 'text':'cancel']
                             ],
 
-                            ['table', 'name':'testable', 'list':[7,8,9], 'hfill':true, 'logic':tester.select],
+                            #['table', 'name':'testable', 'list':[7,8,9], 'hfill':true, 'logic':tester.select],
 
                             'w':240, 'h':320
                         ] )
@@ -211,4 +210,3 @@ testui = function()
 end
 
 testui()
-*/
