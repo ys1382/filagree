@@ -38,7 +38,7 @@ struct byte_array *read_resource(const char *path)
 
 #if 0
     struct byte_array *script = byte_array_from_string("sys.print('hi')");
-#else if 1
+#elif 0
     struct byte_array *script = read_resource("ui.fg");
 #else
     struct byte_array *ui = read_resource("ui.fg");

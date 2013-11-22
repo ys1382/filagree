@@ -92,8 +92,6 @@ Sync = [
 
     'filed' : function(self, path, modified)
 
-        sys.print('fild', self.mesh)
-
         # skip files we're currently writing to
         skip = self.writing[path].modified
         if skip == modified

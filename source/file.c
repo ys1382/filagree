@@ -29,14 +29,14 @@ long fsize(FILE* file) {
 }
 
 
-#if !(TARGET_IOS_PHONE)
+//#if !(TARGET_OS_IPHONE)
 
 struct byte_array *read_file(const struct byte_array *filename_ba)
 {
     FILE * file;
     char *str;
     long size;
-    char* filename_str = byte_array_to_string(filename_ba);
+    const char* filename_str = hal_doc_path(filename_ba);
 
     if (!(file = fopen(filename_str, "rb")))
         goto no_file;
@@ -59,11 +59,11 @@ struct byte_array *read_file(const struct byte_array *filename_ba)
     struct byte_array* ba = byte_array_new_size((uint32_t)size);
     ba->length = (uint32_t)size;
     memcpy(ba->data, str, size);
-    free(filename_str);
+    //free(filename_str);
     free(str);
     return ba;
 no_file:
-    free(filename_str);
+    //free(filename_str);
     DEBUGPRINT("\nCould not read file %s\n", filename_str);
     return NULL;
 }
@@ -71,7 +71,7 @@ no_file:
 int write_file(const struct byte_array* path, struct byte_array* bytes, int32_t timestamp)
 {
     // open file
-    char *path2 = byte_array_to_string(path);
+    const char *path2 = hal_doc_path(path);
     int result = -1;
     FILE* file = fopen(path2, "w");
     if (NULL == file) {
@@ -100,11 +100,10 @@ int write_file(const struct byte_array* path, struct byte_array* bytes, int32_t 
     }
     
 done:
-    free(path2);
     return result;
 }
 
-#endif // TARGET_IOS_PHONE
+//#endif // TARGET_OS_IPHONE
 
 
 int write_byte_array(struct byte_array* ba, FILE* file) {
@@ -121,6 +120,7 @@ char* build_path(const char* dir, const char* name)
     sprintf(path, "%s%s%s", dir ? dir : "", slash, name);
     return path;
 }
+
 
 int file_list(const char *path, int (*fn)(const char*, bool, long, void*), void *flc)
 {
@@ -165,6 +165,7 @@ done:
 	errno = sverrno;
 	return (error);
 }
+
 
 long file_modified(const char *path)
 {

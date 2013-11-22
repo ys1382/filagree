@@ -9,7 +9,7 @@ import '../mesh'
 client = [
 
     'select' : function(client)
-        sys.print('select ' + sys.args()[1])
+        sys.print('select ' + sys.args())#[1])
     end,
 
 ]

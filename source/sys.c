@@ -404,10 +404,25 @@ struct variable *sys_file_listen(struct context *context)
     return NULL;
 }
 
+const char *remove_substring(const char *original, const char *toremove)
+{
+    char *s, *copy = malloc(strlen(original)+1);
+    strcpy(copy, original);
+    while (toremove && (s = strstr(copy, toremove)))
+    {
+        char *splice = s + strlen(toremove);
+        memmove(copy, splice, 1 + strlen(splice));
+    }
+    return copy;
+}
+
 // this is the fn parameter passed into file_list()
 int file_list_callback(const char *path, bool dir, long mod, void *fl_context)
 {
-    printf("file_list_callback %s\n", path);//, isDir ? "/" : "");
+    // -> /
+    path = remove_substring(path, "//");
+    path = remove_substring(path, hal_doc_path(NULL));
+    printf("file_list_callback %s\n", path);
 
     struct file_list_context *flc = (struct file_list_context*)fl_context;
     struct variable *path3 = variable_new_str_chars(flc->context, path);
@@ -428,10 +443,13 @@ int file_list_callback(const char *path, bool dir, long mod, void *fl_context)
 struct variable *sys_file_list(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    const char *path = param_str(arguments, 1);
+    struct variable *path = array_get(arguments->list.ordered, 1);
+    const char *path2 = hal_doc_path(path->str);
+
     struct variable *result = variable_new_list(context, NULL);
     struct file_list_context flc = {context, result};
-    file_list(path, &file_list_callback, &flc);
+
+    file_list(path2, &file_list_callback, &flc);
     return flc.result;
 }
 

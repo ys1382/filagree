@@ -180,6 +180,8 @@ sys.ui_create = function(self, uictx, item, parent)
 
 end
 
+/*
+
 testui = function()
 
     tester = [ 'select' : function(ctx)
@@ -210,3 +212,5 @@ testui = function()
 end
 
 testui()
+
+*/

@@ -18,6 +18,7 @@
 #include "hal.h"
 #include "struct.h"
 #include "file.h"
+#include "sys.h"
 
 
 #define MARGIN_X 10
@@ -25,7 +26,7 @@
 
 
 static UIView *content = NULL;
-static NSString *documentsDirectory = NULL;
+static NSString *doc_dir = NULL;
 
 
 CGRect whereAmI(int x, int y, int w, int h)
@@ -199,13 +200,12 @@ void *hal_button(struct context *context,
     NSString *string = [NSString stringWithUTF8String:str];
     [my setTitle:string forState: UIControlStateNormal];
 
-    if (img) {
+    if (img)
+    {
         string = [NSString stringWithUTF8String:img];
         NSURL* url = [NSURL fileURLWithPath:string];
         UIImage *image = [UIImage imageWithData:[NSData dataWithContentsOfURL:url]];
         [my setImage:image forState:UIControlStateNormal];
-    } else {
-        
     }
 
     Actionifier *act = [Actionifier fContext:context
@@ -230,12 +230,15 @@ void *hal_input(struct variable *uictx,
     NSString *string = hint ? [NSString stringWithUTF8String:hint] : NULL;
 
     UIView *textField;
-    if (multiline) {
+    if (multiline)
+    {
         textField = [[UITextView alloc] initWithFrame:rect];
         [(UITextView*)textField setEditable:!readonly];
         ((UITextView*)textField).layer.borderWidth = 1;
         ((UITextView*)textField).layer.borderColor = [[UIColor grayColor] CGColor];
-    } else {
+    }
+    else
+    {
         textField = [[UITextField alloc] initWithFrame:rect];
         [(UITextField*)textField setEnabled:!readonly];
         [(UITextField*)textField setBorderStyle:UITextBorderStyleBezel];
@@ -361,26 +364,39 @@ void hal_log(const char *str) {
     NSLog(@"%s", str);
 }
 
-NSString *getDocumentsDirectory()
+NSString *doc_path2(const struct byte_array *path)
 {
-    if (NULL == documentsDirectory)
+    if (NULL == doc_dir)
     {
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-        documentsDirectory = [paths objectAtIndex:0];
+        doc_dir = [paths objectAtIndex:0];
     }
-    return documentsDirectory;
+
+    NSString *path3;
+    if (NULL == path)
+        path3 = @"";
+    else
+    {
+        char* path2 = byte_array_to_string(path);
+        path3 = [NSString stringWithUTF8String:path2];
+        free(path2);
+    }
+    return [doc_dir stringByAppendingFormat:@"/%@", path3];
+}
+
+const char *hal_doc_path(const struct byte_array *path)
+{
+    NSString *path2 = doc_path2(path);
+    return [path2 UTF8String];
 }
 
 struct variable *sys_mkdir(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
-    char *path2 = byte_array_to_string(path->str);
-    NSString *path3 = [NSString stringWithUTF8String:path2];
-    documentsDirectory = getDocumentsDirectory();
 
     NSError *error;
-    if (![[NSFileManager defaultManager] createDirectoryAtPath:path3
+    if (![[NSFileManager defaultManager] createDirectoryAtPath:doc_path2(path->str)
                                    withIntermediateDirectories:YES
                                                     attributes:nil
                                                          error:&error])
@@ -388,44 +404,42 @@ struct variable *sys_mkdir(struct context *context)
         NSLog(@"Create directory error: %@", error);
     }
 
-    free(path2);
     return NULL;
 }
 
+
+struct variable *sys_rm(struct context *context)
+{
+    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
+
+    NSError *error;
+    if (![[NSFileManager defaultManager] removeItemAtPath:doc_path2(path->str) error:&error])
+        NSLog(@"File delete error: %@", error);
+    
+    return NULL;
+}
+
+/*
 struct byte_array *read_file(const struct byte_array *path)
 {
-    FILE * file;
-    char *str;
-    long size;
-    char* path2 = byte_array_to_string(path);
-    NSString *path3 = [NSString stringWithUTF8String:path2];
-    NSString *resource = [path3 f]
+    NSData *data = [NSData dataWithContentsOfFile:doc_path2(path)];
 
-    NSString *filePath = [[NSBundle mainBundle] pathForResource:resource ofType:type];
-    NSData *myData = [NSData dataWithContentsOfFile:filePath];
-    if (myData) {
-        // do something useful
-    }
-    
-    struct byte_array* ba = byte_array_new_size((uint32_t)size);
-    ba->length = (uint32_t)size;
-    memcpy(ba->data, str, size);
-    free(filename_str);
-    free(str);
+    uint32_t size = [data length];
+    struct byte_array *ba = byte_array_new_size(size);
+    ba->length = size;
+    memcpy(ba->data, [data bytes], size);
+
     return ba;
-no_file:
-    free(filename_str);
-    DEBUGPRINT("\nCould not read file %s\n", filename_str);
-    return NULL;
 }
 
-int write_file(const struct byte_array* path, struct byte_array* bytes, int32_t timestamp)
-{
 
-struct file_thread {
-    struct context *context;
-    struct variable *listener;
-};
+int xwrite_file(const struct byte_array* path, struct byte_array* bytes, int32_t timestamp)
+{
+    NSData *bytes2 = [NSData dataWithBytes:bytes->data length:bytes->length];
+    [bytes2 writeToFile:doc_path2(path) atomically:YES];
+}
+*/
 
 void hal_file_listen(struct context *context, const char *path, struct variable *listener)
 {

@@ -8,9 +8,6 @@
 #include "struct.h"
 #include "vm.h"
 
-#if defined(__APPLE__)
-#include <TargetConditionals.h>
-#endif
 
 enum HAL_Event {
     CONNECTED,
@@ -33,6 +30,7 @@ void hal_timer(struct context *context,
                bool repeats);
 
 void hal_file_listen(struct context *context, const char *path, struct variable *listener);
+const char *hal_doc_path(const struct byte_array *path);
 
 void hal_loop(struct context *context);
 

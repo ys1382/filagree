@@ -25,6 +25,7 @@ struct file_list_context {
     struct context *context;
     struct variable *result;
 };
+int file_list_callback(const char *path, bool dir, long mod, void *fl_context);
 
 
 #endif // SYS_H

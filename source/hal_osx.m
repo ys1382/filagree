@@ -796,7 +796,18 @@ struct variable *hal_load(struct context *context, const struct byte_array *key)
 struct file_thread {
     struct context *context;
     struct variable *listener;
+    const char *watched;
 };
+
+struct variable *path_var(struct file_thread *thread, const char *path)
+{
+    NSString *path2 = [NSString stringWithUTF8String:path];
+    NSString *watched = [NSString stringWithUTF8String:thread->watched];
+    path2 = [path2 substringFromIndex:[watched length]];
+    if ([path2 hasSuffix:@"/"])
+        path2 = [path2 substringToIndex:[path2 length]-1];
+    return variable_new_str_chars(thread->context, [path2 UTF8String]);
+}
 
 void file_listener_callback(ConstFSEventStreamRef streamRef,
                             void *clientCallBackInfo,
@@ -806,13 +817,13 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
                             const FSEventStreamEventId eventIds[])
 {
     DEBUGPRINT("file_listener_callback\n");
-    int i;
+
     char **paths = eventPaths;
     struct file_thread *thread = (struct file_thread*)clientCallBackInfo;
 
     gil_lock(thread->context, "file_listener_callback");
 
-    for (i=0; i<numEvents; i++) {
+    for (int i=0; i<numEvents; i++) {
         /*
          FSEventStreamEventFlags event = eventFlags[i];
          if (event & kFSEventStreamEventFlagItemCreated)     DEBUGPRINT("\t\tcreated\n");
@@ -820,12 +831,13 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
          if (event & kFSEventStreamEventFlagItemRemoved)     DEBUGPRINT("\t\tdeleted\n");
          if (event & kFSEventStreamEventFlagItemModified)    DEBUGPRINT("\t\tmodified\n");
          */
-
         char *path = (char*)paths[i];
+/*
         int len = (int)strlen(path) - 1;
         if (path[len] == '/') path[len] = 0; // pesky trailing slash
         struct variable *path3 = variable_new_str_chars(thread->context, path);
-
+*/
+        struct variable *path3 = path_var(thread, paths[i]);
         struct variable *method2 = event_string(thread->context, FILED);
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
 
@@ -846,21 +858,26 @@ void hal_file_listen(struct context *context, const char *path, struct variable 
     ft->context = context;
     ft->listener = listener;
 
-    CFStringRef path2 = CFStringCreateWithCString(NULL, path, kCFStringEncodingUTF8);
-    CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path2, 1, NULL);
+    NSString *path2 = [NSString stringWithUTF8String:path];
+    NSURL *fileUrl = [NSURL fileURLWithPath:path2];
+    NSString *scheme = [[fileUrl scheme] stringByAppendingString:@"://"];
+    NSString *watched = [[fileUrl absoluteString] substringFromIndex:[scheme length]];
+    ft->watched = [watched UTF8String];
+
+    CFStringRef path3 = CFStringCreateWithCString(NULL, path, kCFStringEncodingUTF8);
+    CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path3, 1, NULL);
 
     FSEventStreamContext fsc = {0, ft, NULL, NULL, NULL};
-    FSEventStreamRef stream;
     CFAbsoluteTime latency = 1.0; // seconds
 
-    stream = FSEventStreamCreate(NULL,
-                                 &file_listener_callback,
-                                 &fsc,
-                                 pathsToWatch,
-                                 kFSEventStreamEventIdSinceNow, // Or a previous event ID
-                                 latency,
-                                 kFSEventStreamCreateFlagNone
-                                 );
+    FSEventStreamRef stream = FSEventStreamCreate(NULL,
+                                                  &file_listener_callback,
+                                                  &fsc,
+                                                  pathsToWatch,
+                                                  kFSEventStreamEventIdSinceNow, // Or a previous event ID
+                                                  latency,
+                                                  kFSEventStreamCreateFlagNone
+                                                  );
 
     FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 	FSEventStreamStart(stream);
@@ -896,4 +913,8 @@ void hal_loop(struct context *context)
     gil_unlock(context, "loop");
     CFRunLoopRun();
 #endif
+}
+
+const char *hal_doc_path(const struct byte_array *path) {
+    return path ? byte_array_to_string(path) : NULL;
 }

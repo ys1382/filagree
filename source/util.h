@@ -13,6 +13,10 @@
 #define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "TAG", __VA_ARGS__);
 #endif
 
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
+
 #ifdef __LP64__
 #define VOID_INT int64_t
 #define VOID_FLT long double
