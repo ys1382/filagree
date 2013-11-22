@@ -64,8 +64,9 @@ struct variable *sys_write(struct context *context)
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = param_var(context, args, 1);
     struct variable *v = param_var(context, args, 2);
+    uint32_t timestamp = param_int(args, 3);
 
-    int w = write_file(path->str, v->str, -1);
+    int w = write_file(path->str, v->str, timestamp);
     return variable_new_int(context, w);
 }
 

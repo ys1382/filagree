@@ -70,8 +70,9 @@ Sync = [
 
     'handle_content' : function(self, from, path, content, modified)
 
-        self.writing[path] = ['from':from, 'modified':modified]
+        self.writing[path] = true
         sys.write(self.watched + path, content, modified)   # save file
+        self.writing[path] = nil
         files = self.local_snapshot().keys
         if self.ctx.ui then
             sys.ui_set(self.ctx.ui.files, files)            # update ui
@@ -90,16 +91,7 @@ Sync = [
         end
     end,
 
-    'filed' : function(self, path, modified)
-
-        # skip files we're currently writing to
-        skip = self.writing[path].modified
-        if skip == modified
-            sys.print('...same')
-            except = self.writing[path].from
-            self.writing[path] = nil
-            return
-        end
+    'filed' : function(self, dir)
 
         # check for new and deleted files
         latest = self.local_snapshot()
@@ -107,7 +99,7 @@ Sync = [
         deleted = self.files - latest
 
         # check for files with new mod times
-        for f in self.files
+        for f in self.files where (f != self.writing)
             g = self.files[f]
             mod = g.modified
             h = latest[f]

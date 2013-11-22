@@ -831,20 +831,15 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
          if (event & kFSEventStreamEventFlagItemRemoved)     DEBUGPRINT("\t\tdeleted\n");
          if (event & kFSEventStreamEventFlagItemModified)    DEBUGPRINT("\t\tmodified\n");
          */
-        char *path = (char*)paths[i];
-/*
-        int len = (int)strlen(path) - 1;
-        if (path[len] == '/') path[len] = 0; // pesky trailing slash
-        struct variable *path3 = variable_new_str_chars(thread->context, path);
-*/
+//        char *path = (char*)paths[i];
         struct variable *path3 = path_var(thread, paths[i]);
         struct variable *method2 = event_string(thread->context, FILED);
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
 
-        long mod = file_modified(path);
-        struct variable *mod2 = variable_new_int(thread->context, (int32_t)mod); // goes pop in 2038
+//        long mod = file_modified(path);
+//        struct variable *mod2 = variable_new_int(thread->context, (int32_t)mod); // goes pop in 2038
         if ((NULL != method3) && (method3->type != VAR_NIL))
-            vm_call(thread->context, method3, thread->listener, path3, mod2);
+            vm_call(thread->context, method3, thread->listener, path3);
     }
 
     gil_unlock(thread->context, "file_listener_callback");
