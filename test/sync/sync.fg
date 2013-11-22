@@ -19,10 +19,6 @@ Sync = [
 
         self.files = self.local_snapshot()
 
-        if ctx and ctx.ui then
-            sys.ui_set(ctx.ui.files, self.files.keys) # update ui
-        end
-
         sys.file_listen(watched, self)   # listen for file changes
 
         return self
@@ -73,9 +69,9 @@ Sync = [
         self.writing[path] = true
         sys.write(self.watched + path, content, modified)   # save file
         self.writing[path] = nil
-        files = self.local_snapshot().keys
+        self.files = self.local_snapshot()
         if self.ctx.ui then
-            sys.ui_set(self.ctx.ui.files, files)            # update ui
+            sys.ui_set(self.ctx.ui.files, self.files.keys)            # update ui
         end
     end,
 

@@ -8,8 +8,9 @@ import '../mesh'
 
 client = [
 
-    'select' : function(client)
-        sys.print('select ' + sys.args())#[1])
+    'select' : function(self, row)
+        sys.print('select ' + self.sync.files.keys[row])
+        sys.open(self.sync.watched + self.sync.files.keys[row])
     end,
 
 ]
@@ -21,6 +22,8 @@ client.ui = sys.ui( client,
                     ])
 
 mesh = Mesh.init('client', 9999, [client])
-sync = Sync.init(client, ['client'], mesh)
+client.sync = Sync.init(client, ['client'], mesh)
+
+sys.ui_set(client.ui.files, client.sync.files.keys) # update ui
 
 mesh.connect()

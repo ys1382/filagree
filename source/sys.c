@@ -65,9 +65,23 @@ struct variable *sys_write(struct context *context)
     struct variable *path = param_var(context, args, 1);
     struct variable *v = param_var(context, args, 2);
     uint32_t timestamp = param_int(args, 3);
-
+    
     int w = write_file(path->str, v->str, timestamp);
     return variable_new_int(context, w);
+}
+
+struct variable *sys_open(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *path = param_var(context, args, 1);
+    char *path2 = byte_array_to_string(path->str);
+
+    bool result = hal_open(path2);
+
+    struct variable *result2 = variable_new_bool(context, result);
+    variable_push(context, result2);
+    free(path2);
+    return NULL;
 }
 
 // returns contents and modification time of file
@@ -460,6 +474,7 @@ struct string_func builtin_funcs[] = {
     {"atoi",        &sys_atoi},
     {"read",        &sys_read},
     {"write",       &sys_write},
+    {"open",        &sys_open},
     {"save",        &sys_save},
     {"load",        &sys_load},
     {"rm",          &sys_rm},

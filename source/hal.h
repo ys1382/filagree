@@ -31,6 +31,7 @@ void hal_timer(struct context *context,
 
 void hal_file_listen(struct context *context, const char *path, struct variable *listener);
 const char *hal_doc_path(const struct byte_array *path);
+bool hal_open(const char *path);
 
 void hal_loop(struct context *context);
 

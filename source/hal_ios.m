@@ -462,6 +462,11 @@ void hal_timer(struct context *context,
 }
 
 
+bool hal_open(const char *path)
+{
+    [[NSFileManager defaultManager] open(path, 0)];
+}
+
 //////////////////////////////////////////////////////////// graphics
 
 void hal_graphics(const struct variable *shape) {

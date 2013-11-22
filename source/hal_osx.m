@@ -910,6 +910,11 @@ void hal_loop(struct context *context)
 #endif
 }
 
+bool hal_open(const char *path)
+{
+    return [[NSWorkspace sharedWorkspace] openFile:[NSString stringWithUTF8String:path]];
+}
+
 const char *hal_doc_path(const struct byte_array *path) {
     return path ? byte_array_to_string(path) : NULL;
 }
