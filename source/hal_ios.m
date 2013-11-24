@@ -19,7 +19,7 @@
 #include "struct.h"
 #include "file.h"
 #include "sys.h"
-
+#include "ViewController.h"
 
 #define MARGIN_X 10
 #define MARGIN_Y 30
@@ -461,10 +461,36 @@ void hal_timer(struct context *context,
     [actionifier setTimer:milliseconds repeats:repeats];
 }
 
+/////// open-in
+
+@interface Docufier : NSObject <UIDocumentInteractionControllerDelegate>
+{
+}
+
+@end
+
+@implementation Docufier
+
+- (UIViewController *)documentInteractionControllerViewControllerForPreview: (UIDocumentInteractionController *)controller {
+    return [ViewController sharedViewController];
+}
+
+@end // Docufier implementation
 
 bool hal_open(const char *path)
 {
-    [[NSFileManager defaultManager] open(path, 0)];
+    NSString *path2 = [doc_dir stringByAppendingFormat:@"/%s", path];
+    NSURL *fileUrl = [NSURL fileURLWithPath:path2];
+    UIDocumentInteractionController *dic = [UIDocumentInteractionController interactionControllerWithURL:fileUrl];
+    Docufier *df = [Docufier alloc];
+    [dic setDelegate:df];
+
+    CFRetain((__bridge CFTypeRef)(dic));
+    CFRetain((__bridge CFTypeRef)(df));
+
+//    CGRect rect = CGRectMake(0, 0, 10, 10);
+//    return [dic presentOpenInMenuFromRect:rect inView:content animated:YES];
+    return [dic presentPreviewAnimated:YES];
 }
 
 //////////////////////////////////////////////////////////// graphics

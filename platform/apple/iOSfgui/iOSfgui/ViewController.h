@@ -2,4 +2,6 @@
 
 @interface ViewController : UIViewController
 
++ (ViewController *)sharedViewController;
+
 @end

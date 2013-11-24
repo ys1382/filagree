@@ -4,9 +4,7 @@
 
 void hal_set_content();
 
-@interface ViewController ()
-
-@end
+static ViewController *theViewController = NULL;
 
 struct byte_array *read_resource(const char *path)
 {
@@ -31,9 +29,14 @@ struct byte_array *read_resource(const char *path)
 
 @implementation ViewController
 
++ (ViewController *)sharedViewController {
+    return theViewController;
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    theViewController = self;
     hal_set_content(self.view);
 
 #if 0
