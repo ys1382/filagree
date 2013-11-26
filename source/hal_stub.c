@@ -50,6 +50,11 @@ void hal_file_listen(struct context *context,
                      const char *path,
                      struct variable *listener)         { stub("hal_file_listen"); }
 
+const char *hal_doc_path(const struct byte_array *path)	{ stub("hal_doc_path"); return NULL; }
+bool hal_open(const char *path)				{ stub("hal_open"); return false;	}
+
+void hal_loop(struct context *context)			{ stub("hal_loop");	}
+
 struct variable *hal_ui_get(struct context *context,
                             void *field)                { stub("hal_ui_get"); return NULL; }
 void hal_ui_set(void *field, struct variable *value)    { stub("hal_ui_set"); }

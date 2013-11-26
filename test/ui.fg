@@ -180,7 +180,7 @@ sys.ui_create = function(self, uictx, item, parent)
 
 end
 
-/*
+
 
 testui = function()
 
@@ -213,4 +213,3 @@ end
 
 testui()
 
-*/

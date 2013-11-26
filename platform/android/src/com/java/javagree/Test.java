@@ -26,8 +26,12 @@ public class Test {
 	}
 
 	void test3(Javagree jg, HalAndroid sys) {
-		String source = sys.read("mesh.fg") + sys.read("ui.fg") + sys.read("sync/sync.fg") + sys.read("sync/sync_client.fg");
-		jg.eval(source);
+		String s1 = sys.read("mesh.fg");
+		String s2 = sys.read("ui.fg");
+		String s3 = sys.read("sync/sync.fg");
+		String s4 = sys.read("sync/sync_client.fg");
+		String source = s1 + s2 + s3 + s4;
+		jg.eval(s2);
 	}
 
 	void doTesting() {

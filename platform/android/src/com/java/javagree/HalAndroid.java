@@ -32,6 +32,7 @@ class HalAndroid implements OnClickListener {
 	private final static int FUDGE = 30;
 	private static int id = 1001;
 	private SparseArray<Object> actionifiers = new SparseArray<Object>();
+	private SparseArray<Object> views = new SparseArray<Object>();
 	private Javagree javagree;
 
 	void setJavagree(Javagree jg) {
@@ -63,37 +64,36 @@ class HalAndroid implements OnClickListener {
 		return new Integer[]{width, height};
 	}
 
-	public Object[] table(Object uictx, Object x, Object y, Object w, Object h,  Object[] values, byte[] logic) {
+	public Object[] table(Object uictx, Object[] values, byte[] logic) {
 		Activity activity = App.getCurrentActivity();
 		ListView lv = new ListView(activity);
-		String[] values2 = Arrays.copyOf(values, values.length, String[].class);
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(activity, android.R.layout.simple_list_item_1, values2);		 
+		Object[] values2 = Arrays.copyOf(values, values.length, Object[].class);
+		ArrayAdapter<Object> adapter = new ArrayAdapter<Object>(activity, android.R.layout.simple_list_item_1, values2);		 
 	    lv.setAdapter(adapter);
-		return this.putView(lv, uictx, (Integer)x, (Integer)y, (Integer)w, (Integer)h, logic);
+		return this.makeView(lv, uictx, 0, 0, logic);
 	}
 
-	public Object[] input(Object uictx, Object x, Object y) {
+	public Object[] input(Object uictx) {
 		MainActivity activity = App.getCurrentActivity();
 		EditText et = new EditText(activity);
 		int h = (int)et.getTextSize();
 		int frameWidth = this.window(0, 0)[0];
-		int w = frameWidth - (Integer)x - h;
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-		return this.putView(et, uictx, (Integer)x, (Integer)y, w, h + FUDGE, params, null);
+		int w = frameWidth / 2;
+		return this.makeView(et, uictx, 	w, h + FUDGE, null);
 	}
 
-	public Object[] button(Object uictx, Object x, Object y, byte[] logic, String text, String image) {
-		Log.d("Javagree", "button: " + uictx + " "+ x +","+ y +", logic=" + logic + ", text=" + text + ", image=" + image);
+	public Object[] button(Object uictx, byte[] logic, String text, String image) {
+		Log.d("Javagree", "button: " + uictx + ", logic=" + logic + ", text=" + text + ", image=" + image);
 		Activity activity = App.getCurrentActivity();
 		Button b = new Button(activity);
 		b.setOnClickListener(this);
-		return this.putTextView(b, uictx, (Integer)x, (Integer)y, text, logic);
+		return this.putTextView(b, uictx, logic, text);
 	}
 
-	public Object[] label(Object uictx, Object x, Object y, String text) {		
+	public Object[] label(Object uictx, String text) {		
 		Activity activity = App.getCurrentActivity();
 		TextView tv = new TextView(activity);
-		return this.putTextView(tv, uictx, (Integer)x, (Integer)y, text, null);
+		return this.putTextView(tv, uictx, null, text);
 	}
 
 	public Object[] ui_set(Object id, Object value) {
@@ -103,8 +103,8 @@ class HalAndroid implements OnClickListener {
 			((TextView)v).setText((String)value);
 		return new Object[]{};
 	}
-	
-	private Object[] putTextView(TextView tv, Object uictx, int x, int y, String text, byte[] logic) {
+
+	private Object[] putTextView(TextView tv, Object uictx, byte[] logic, String text) {
 
 		tv.setText(text);
 
@@ -114,32 +114,40 @@ class HalAndroid implements OnClickListener {
 		int width = bounds.width() + tv.getPaddingLeft() + tv.getPaddingRight() + FUDGE;
 		int height = bounds.height() + tv.getPaddingBottom() + tv.getPaddingTop() + FUDGE;
 
-		return this.putView(tv, uictx, x, y, width, height, logic);
+		return this.makeView(tv, uictx, width, height, logic);
 	}
 
-	private Object[] putView(View v, Object uictx, int x, int y, int width, int height, byte[] logic) {
-		v.setId(HalAndroid.id++);
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width, height);
-		return this.putView(v, uictx, x, y, width, height, params, logic);
-	}
-	
-	private Object[] putView(View v, Object uictx, int x, int y, int width, int height, RelativeLayout.LayoutParams params, byte[] logic) {
-		v.setId(HalAndroid.id++);
+	private Object[] makeView(View v, Object uictx, int width, int height, byte[] logic) {
 
-		params.leftMargin = (Integer)x;
-		params.topMargin = (Integer)y;
-		MainActivity activity = App.getCurrentActivity();
-		RelativeLayout layout = activity.getLayout();
-		layout.addView(v, params);
+		v.setId(HalAndroid.id++);
 
 		if (logic != null) {
 			Actionifier a = new Actionifier(uictx, logic);
 			Log.d("Javagree", "put actionifiers[ " + v.getId() + " ]");
 			this.actionifiers.put(v.getId(), a); 
 		}
+		this.views.put(v.getId(), v); 
 
 		return new Object[]{v.getId(), width, height};
 	}
+	
+	public Object[] ui_put(Object widget, Object x, Object y, Object w, Object h) {
+
+		View v = (View)this.views.get((Integer)widget);
+		RelativeLayout.LayoutParams params;
+		if (v.getClass() == EditText.class)
+			params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+		else
+			 params = new RelativeLayout.LayoutParams((Integer)w, (Integer)h);
+
+		params.leftMargin = (Integer)(x == null ? 0 : x);
+		params.topMargin = (Integer)y;
+		MainActivity activity = App.getCurrentActivity();
+		RelativeLayout layout = activity.getLayout();
+		layout.addView(v, params);
+
+		return new Object[]{};
+}
 
 	public void onClick(View v) {
 		Actionifier a = (Actionifier) this.actionifiers.get(v.getId());

@@ -28,7 +28,9 @@ const char *jni_class_name(JNIEnv *env, jobject jo)
     // get name
     jstring name = (*env)->CallObjectMethod(env, jocls, getName);
     assert_message(name, "cannot call getName");
-    
+    (*env)->DeleteLocalRef( env, jocls );
+    (*env)->DeleteLocalRef( env, clscls );
+
     return (*env)->GetStringUTFChars(env, name, NULL);
 }
 
@@ -56,6 +58,8 @@ struct variable *vj2f_int(struct context *context, JNIEnv *env, jobject ji)
 #else
     jint intValue = (jint)((*env)->CallObjectMethod(env, ji, intValueMethod));
 #endif
+
+    //(*env)->DeleteLocalRef( env, jclass_of_integer );
 
     // return new variable
     return variable_new_int(context, intValue);
@@ -144,6 +148,8 @@ struct variable *vj2f_map(struct context *context, JNIEnv *env, jobject hashmap)
         variable_map_insert(context, v, key2, val2);
     }
 
+    //(*env)->DeleteLocalRef( env, jclass_of_hashmap );
+
     DEBUGPRINT("vj2f_map done\n");
     return v;
 }
@@ -216,6 +222,9 @@ struct variable *vj2f_bespoke(struct context *context, JNIEnv *env, jobject jo)
 
     //char buf[1000];
     //DEBUGPRINT("bespoke: %s\n", variable_value_str(context, result, buf));
+
+    //(*env)->DeleteLocalRef( env, jocls );
+
     return result;
 }
 
@@ -223,8 +232,8 @@ struct variable *vj2f_bespoke(struct context *context, JNIEnv *env, jobject jo)
 jobject vf2j_lst(JNIEnv *env, struct variable *f)
 {
     uint32_t length = f->list.ordered->length;
-    jclass ocls = (*env)->FindClass(env, "java/lang/Object");
-    jobjectArray result = (jobjectArray)(*env)->NewObjectArray(env, length, ocls, NULL);
+    jclass jocls = (*env)->FindClass(env, "java/lang/Object");
+    jobjectArray result = (jobjectArray)(*env)->NewObjectArray(env, length, jocls, NULL);
 
     for (int i=0; i<length; i++)
     {
@@ -233,6 +242,7 @@ jobject vf2j_lst(JNIEnv *env, struct variable *f)
         (*env)->SetObjectArrayElement(env, result, i, jo);
     }
 
+    //(*env)->DeleteLocalRef( env, jocls );
     return result;
 }
 
@@ -262,6 +272,7 @@ jobject vf2j_map(JNIEnv *env, struct map *map)
         (*env)->CallObjectMethod(env, result, put, jkey, jval);
     }
 
+    //(*env)->DeleteLocalRef( env, hmcls );
     return result;
 }
 
@@ -275,6 +286,8 @@ jobject vf2j_int(JNIEnv *env, struct variable *f)
     // get Integer constructor
     jmethodID constructor = (*env)->GetMethodID(env, intcls, "<init>", "(I)V");
     assert_message(constructor, "can't get Integer constructor");
+
+    //(*env)->DeleteLocalRef( env, intcls );
 
     // call constructor
     return (*env)->NewObject(env, intcls, constructor, f->integer);
@@ -326,12 +339,12 @@ struct variable *invoke(struct context *context,
                         jvalue *args)
 {
     // get method class
-    jclass m_cls = (*env)->GetObjectClass(env, method);
-    assert_message(m_cls, "cannot Method.GetObjectClass");
+    jclass mcls = (*env)->GetObjectClass(env, method);
+    assert_message(mcls, "cannot Method.GetObjectClass");
 
     // get MethodID invoke
     const char *param_list = "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;";
-    jmethodID invoke = (*env)->GetMethodID(env, m_cls, "invoke", param_list);
+    jmethodID invoke = (*env)->GetMethodID(env, mcls, "invoke", param_list);
     invoke = (*env)->FromReflectedMethod (env, method);
     assert_message(invoke, "cannot GetMethodID Method.invoke");
 
@@ -342,6 +355,8 @@ struct variable *invoke(struct context *context,
     if (!result)
         printf("cannot call Method.invoke. Oh, the irony!");
 
+//    (*env)->DeleteLocalRef( env, mcls );
+    
     // translate result from Java to filagree
     struct variable *ret = variable_new_j2f(context, env, result);
     if (ret->type == VAR_LST)
@@ -519,8 +534,8 @@ struct variable *variable_new_java_find(struct context *context,
     if (NULL != sys)
     {
         struct variable *javaSys = variable_new_j2f(context, env, sys);
-        map_union(javaSys->list.map, context->sys->list.map);
-        context->sys = javaSys;
+        map_union(javaSys->list.map, context->singleton->sys->list.map);
+        context->singleton->sys = javaSys;
     }
 
     // filagree callback object

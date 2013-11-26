@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-LOCAL_PATH := $(call my-dir)/../..
+LOCAL_PATH := $(call my-dir)/../../../source
 
 include $(CLEAR_VARS)
 
