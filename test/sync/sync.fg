@@ -31,6 +31,8 @@ Sync = [
 
     'local_snapshot' : function(self)
 
+		sys.print('files are ' + sys.file_list(self.watched))
+
         list = sys.file_list(self.watched) - self.watched
         normalized = [(f-self.watched):list[f] for f in list where not self.ignore(f)]
         return normalized

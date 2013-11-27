@@ -31,7 +31,7 @@ public class Test {
 		String s3 = sys.read("sync/sync.fg");
 		String s4 = sys.read("sync/sync_client.fg");
 		String source = s1 + s2 + s3 + s4;
-		jg.eval(s2);
+		jg.eval(source);
 	}
 
 	void doTesting() {

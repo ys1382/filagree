@@ -1,5 +1,6 @@
 package com.java.javagree;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -7,6 +8,7 @@ import java.util.Arrays;
 import android.app.Activity;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.Environment;
 import android.text.TextPaint;
 import android.util.Log;
 import android.util.SparseArray;
@@ -54,6 +56,27 @@ class HalAndroid implements OnClickListener {
 		}
 	}
 
+	private File localFile(String path) {
+		return new File(Environment
+				.getExternalStorageDirectory()
+				.getAbsolutePath()
+				+"/"+ path);
+	}
+
+	public Object[] file_list(String path) {
+		return localFile(path).list();
+	}
+
+	public Object[] rm(String path) {
+		localFile(path).delete();
+		return new Object[]{};
+	}
+
+	public Object[] mkdir(String path) {
+		localFile(path).mkdir();
+		return new Object[]{};
+	}
+	
 	public Integer[] window(int w, int h) {
 		Activity activity = App.getCurrentActivity();
 		Display display = activity.getWindowManager().getDefaultDisplay();
@@ -79,7 +102,7 @@ class HalAndroid implements OnClickListener {
 		int h = (int)et.getTextSize();
 		int frameWidth = this.window(0, 0)[0];
 		int w = frameWidth / 2;
-		return this.makeView(et, uictx, 	w, h + FUDGE, null);
+		return this.makeView(et, uictx, w, h + FUDGE, null);
 	}
 
 	public Object[] button(Object uictx, byte[] logic, String text, String image) {

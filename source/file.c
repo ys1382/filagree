@@ -29,14 +29,12 @@ long fsize(FILE* file) {
 }
 
 
-//#if !(TARGET_OS_IPHONE)
-
 struct byte_array *read_file(const struct byte_array *filename_ba)
 {
     FILE * file;
     char *str;
     long size;
-    const char* filename_str = hal_doc_path(filename_ba);
+    const char *filename_str = hal_doc_path(filename_ba);
 
     if (!(file = fopen(filename_str, "rb")))
         goto no_file;
@@ -103,7 +101,6 @@ done:
     return result;
 }
 
-//#endif // TARGET_OS_IPHONE
 
 
 int write_byte_array(struct byte_array* ba, FILE* file) {
