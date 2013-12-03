@@ -29,7 +29,7 @@
 uint32_t line;
 struct array* lex_list;
 struct map *imports = NULL;
-struct byte_array *read_file(const struct byte_array *filename);
+//struct byte_array *read_file(const struct byte_array *filename);
 
 static struct context *context;
 
@@ -305,7 +305,7 @@ int import(const char* input, int i)
     if (!map_has(imports, path2))
     {
         map_insert(imports, path2, NULL);
-        struct byte_array *imported = read_file(path);
+        struct byte_array *imported = read_file(path, 0, 0);
         if (NULL != imported)
         {
             lex(imported);
@@ -1586,7 +1586,7 @@ struct byte_array *build_string(const struct byte_array *input) {
 
 struct byte_array *build_file(const struct byte_array* filename)
 {
-    struct byte_array *input = read_file(filename);
+    struct byte_array *input = read_file(filename, 0, 0);
     assert_message(NULL != input, "could not read file %s", byte_array_to_string(filename));
     struct byte_array *result = build_string(input);
     byte_array_del(input);
@@ -1603,7 +1603,7 @@ void compile_file(const char* str)
     int offset = byte_array_find(filename, dotfg, 0);
     assert_message(offset > 0, "invalid source file name");
     byte_array_replace(filename, dotfgbc, offset, dotfg->length);
-    write_file(filename, program, -1);
+    write_file(filename, program, 0, -1);
 
     byte_array_del(filename);
     byte_array_del(program);

@@ -47,18 +47,19 @@ Sync = [
     end,
 
     'handle_message' : function(self, socket, msg4)
-
+/*
         if msg4.event == 'content-request' then
             self.handle_content_request(socket, msg4)
-
-        else if msg4.event == 'greet' then
+        else
+*/
+        if msg4.event == 'greet' then
             self.snapshot = msg4.files
 
         else if msg4.event == 'change' then
             self.handle_change(socket, msg4)
 
         else if msg4.event == 'content' then
-            self.handle_content(msg4.from, msg4.path, msg4.content, msg4.modified)
+            self.handle_content(msg4.path, msg4.content, msg4.modified, msg4.offset)
 
         else if msg4.event == 'test' then
             self.handle_test(msg4)
@@ -66,17 +67,22 @@ Sync = [
 
     end,
 
-    'handle_content' : function(self, from, path, content, modified)
+    'handle_content' : function(self, path, content, modified, offset)
 
         self.writing[path] = true
-        sys.write(self.watched + path, content, modified)   # save file
+
+#       sys.write(self.watched + path, content, modified)   # save file
+        path = self.watched + path
+        if not offset then sys.rm(path) end
+        sys.write(path, content, offset)
+
         self.writing[path] = nil
         self.files = self.local_snapshot()
         if self.ctx.ui then
             sys.ui_set(self.ctx.ui.files, self.files.keys)            # update ui
         end
     end,
-
+/*
     'handle_content_request' : function(self, socket, msg5)
 
         for path in msg5.paths
@@ -88,7 +94,7 @@ Sync = [
 
         end
     end,
-
+*/
     'filed' : function(self, dir)
 
         # check for new and deleted files
@@ -105,26 +111,52 @@ Sync = [
                 updated = updated + f:g
             end
         end
+        if deleted.keys.length then
+            changes = ['deleted' : deleted]
+            msg2 = ['event' : 'change', 'changes' : changes]
+            self.mesh.broadcast(msg2)
+        end
 
         # add content of each new or modified file
         for u in updated.keys
-            updated[u] = updated[u] + 'content':sys.read(self.watched + u)
-        end
-
-        if updated.keys.length or deleted.keys.length then
-            changes = ['updated' : updated, 'deleted' : deleted]
-            msg2 = ['event' : 'change', 'changes' : changes]
-            self.mesh.broadcast(msg2)
+            self.send_file(u)
         end
 
         self.files = latest
 
     end,
 
+    # send a file in chunks
+    'send_file' : function(self, path)
+
+        msg7 = ['event' : 'content', 'path' : path]
+
+        chunk = 1024 # chunk size in number of bytes
+        offset = 0
+        path = self.watched + path
+
+        while true
+
+            if (bytes,mod = sys.read(path, offset, chunk))
+                msg7.content = bytes
+                msg7.modified = mod
+                msg7.offset = offset
+
+                offset = offset + bytes.length
+
+                #sys.send(to, msg)
+                self.mesh.broadcast(msg7)
+
+            end
+            if bytes.length < chunk then return end
+        end
+
+    end,
+
     'handle_change' : function(self, socket, msg8)
 
         changez = msg8.changes
-        cu = changez.updated
+#        cu = changez.updated
         cd = changez.deleted
 
         # create new directories
@@ -136,7 +168,7 @@ Sync = [
         for path in cd
             sys.rm(self.watched + path)
         end
-
+/*
         # request update file bodies
         self.snapshot = self.snapshot + cu - cd
         paths = [path for path in cu where not (cu[path].dir or cu[path].content)]
@@ -147,7 +179,7 @@ Sync = [
         for path in cu where cu[path].content
             self.handle_content(msg8.from, path, cu[path].content, cu[path].modified)
         end
-
+*/
     end,
 
     ####### test

@@ -824,13 +824,13 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
     gil_lock(thread->context, "file_listener_callback");
 
     for (int i=0; i<numEvents; i++) {
-        /*
-         FSEventStreamEventFlags event = eventFlags[i];
-         if (event & kFSEventStreamEventFlagItemCreated)     DEBUGPRINT("\t\tcreated\n");
-         if (event & kFSEventStreamEventFlagItemRenamed)     DEBUGPRINT("\t\trenamed\n");
-         if (event & kFSEventStreamEventFlagItemRemoved)     DEBUGPRINT("\t\tdeleted\n");
-         if (event & kFSEventStreamEventFlagItemModified)    DEBUGPRINT("\t\tmodified\n");
-         */
+
+        FSEventStreamEventFlags event = eventFlags[i];
+        if (event & kFSEventStreamEventFlagItemCreated)     DEBUGPRINT("\t\tcreated\n");
+        if (event & kFSEventStreamEventFlagItemRenamed)     DEBUGPRINT("\t\trenamed\n");
+        if (event & kFSEventStreamEventFlagItemRemoved)     DEBUGPRINT("\t\tdeleted\n");
+        if (event & kFSEventStreamEventFlagItemModified)    DEBUGPRINT("\t\tmodified\n");
+
         struct variable *path3 = path_var(thread, paths[i]);
         struct variable *method2 = event_string(thread->context, FILED);
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);

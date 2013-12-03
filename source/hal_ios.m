@@ -420,27 +420,6 @@ struct variable *sys_rm(struct context *context)
     return NULL;
 }
 
-/*
-struct byte_array *read_file(const struct byte_array *path)
-{
-    NSData *data = [NSData dataWithContentsOfFile:doc_path2(path)];
-
-    uint32_t size = [data length];
-    struct byte_array *ba = byte_array_new_size(size);
-    ba->length = size;
-    memcpy(ba->data, [data bytes], size);
-
-    return ba;
-}
-
-
-int xwrite_file(const struct byte_array* path, struct byte_array* bytes, int32_t timestamp)
-{
-    NSData *bytes2 = [NSData dataWithBytes:bytes->data length:bytes->length];
-    [bytes2 writeToFile:doc_path2(path) atomically:YES];
-}
-*/
-
 void hal_file_listen(struct context *context, const char *path, struct variable *listener)
 {
     printf("hal_file_listen not implemented\n");

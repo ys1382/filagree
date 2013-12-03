@@ -42,7 +42,7 @@ struct variable *sys_save(struct context *context)
     struct variable *path = param_var(context, args, 2);
     struct byte_array *bytes = byte_array_new();
     variable_serialize(context, bytes, v);
-    int w = write_file(path->str, bytes, -1);
+    int w = write_file(path->str, bytes, 0, -1);
     byte_array_del(bytes);
     return variable_new_int(context, w);
 }
@@ -51,7 +51,7 @@ struct variable *sys_load(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
-    struct byte_array *file_bytes = read_file(path->str);
+    struct byte_array *file_bytes = read_file(path->str, 0, 0);
     if (NULL == file_bytes)
         return variable_new_nil(context);
     struct variable *v = variable_deserialize(context, file_bytes);
@@ -64,9 +64,10 @@ struct variable *sys_write(struct context *context)
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = param_var(context, args, 1);
     struct variable *v = param_var(context, args, 2);
-    uint32_t timestamp = param_int(args, 3);
+    uint32_t from = param_int(args, 3);
+    uint32_t timestamp = param_int(args, 4);
     
-    int w = write_file(path->str, v->str, timestamp);
+    int w = write_file(path->str, v->str, from, timestamp);
     return variable_new_int(context, w);
 }
 
@@ -89,10 +90,12 @@ struct variable *sys_read(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = param_var(context, args, 1);
+    uint32_t offset = param_int(args, 2);
+    uint32_t length = param_int(args, 3);
+
+    struct byte_array *bytes = read_file(path->str, offset, length);
 
     struct variable *content = NULL;
-
-    struct byte_array *bytes = read_file(path->str);
     if (NULL != bytes)
     {
         content = variable_new_str(context, bytes);

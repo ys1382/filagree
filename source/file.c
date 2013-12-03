@@ -29,27 +29,33 @@ long fsize(FILE* file) {
 }
 
 
-struct byte_array *read_file(const struct byte_array *filename_ba)
+struct byte_array *read_file(const struct byte_array *filename_ba, uint32_t offset, long size)
 {
     FILE * file;
     char *str;
-    long size;
     const char *filename_str = hal_doc_path(filename_ba);
 
     if (!(file = fopen(filename_str, "rb")))
         goto no_file;
 
-    if ((size = fsize(file)) < 0)
+    long available;
+    if ((available = fsize(file)) < 0)
         goto no_file;
-    if (size == 0)
+    available -= offset;
+    size = size ? MIN(size, available) : available;
+    if (size <= 0)
         return byte_array_new();
+
     if (size > INPUT_MAX_LEN)
         goto no_file;
     if (!(str = (char*)malloc((size_t)size + 1)))
         goto no_file;
 
-    fread(str, 1, (size_t)size, file);
-    if (feof(file) || ferror(file))
+    if (fseek(file, offset, SEEK_SET))
+        goto no_file;
+    if (fread(str, 1, (size_t)size, file) == EOF)
+        goto no_file;
+    if (ferror(file))
         goto no_file;
     if (fclose(file))
         goto no_file;
@@ -66,16 +72,20 @@ no_file:
     return NULL;
 }
 
-int write_file(const struct byte_array* path, struct byte_array* bytes, int32_t timestamp)
+int write_file(const struct byte_array* path, struct byte_array* bytes, uint32_t from, int32_t timestamp)
 {
     // open file
     const char *path2 = hal_doc_path(path);
     int result = -1;
-    FILE* file = fopen(path2, "w");
+    FILE* file = fopen(path2, "r+"); // allows fseek for an existing file
+    if (NULL == file)
+        file = fopen(path2, "w"); // creates the file
     if (NULL == file) {
         DEBUGPRINT("could not open file %s\n", path2);
         goto done;
     }
+    if (fseek(file, from, SEEK_SET))
+        goto done;
     
     // write bytes
     if (NULL != bytes)
