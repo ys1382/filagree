@@ -527,7 +527,10 @@ static bool default_comparator(const void *a, const void *b, void *context) {
 
 static void *default_copyor(const void *key, void *context)
 {
-    return variable_copy((struct context *)context, (struct variable *)key);
+    struct variable *v = (struct variable *)key;
+    struct variable *u = variable_copy((struct context *)context, v);
+    variable_old(u);
+    return u;
 }
 
 static void default_rm(const void *key, void *context) {}

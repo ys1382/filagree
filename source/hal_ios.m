@@ -328,6 +328,7 @@ void *hal_window(struct context *context,
     return NULL;
 }
 
+/*
 void hal_save(struct context *context, const struct byte_array *key, const struct variable *value)
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -339,8 +340,6 @@ void hal_save(struct context *context, const struct byte_array *key, const struc
     NSData *value2 = [NSData dataWithBytes:bits->data length:bits->length];
 
     byte_array_reset(bits);
-    struct variable *tst = variable_deserialize(context, bits);
-    NSLog(@"tst = %s", variable_value_str(context, tst));
 
     [defaults setObject:value2 forKey:key3];
     [defaults synchronize];
@@ -359,6 +358,7 @@ struct variable *hal_load(struct context *context, const struct byte_array *key)
 
     return variable_deserialize(context, &bits);
 }
+*/
 
 void hal_log(const char *str) {
     NSLog(@"%s", str);

@@ -4,9 +4,11 @@
 #include "struct.h"
 #include "serial.h"
 #include "variable.h"
+#include "node.h"
 
 extern void mark_map(struct map *map, bool mark);
 static void variable_value2(struct context *context, struct variable* v, struct byte_array *buf);
+static struct variable *variable_deserialize2(struct context *context, struct byte_array *bits);
 
 #define ERROR_VAR_TYPE  "type error"
 
@@ -33,19 +35,22 @@ const char *var_type_str(enum VarType vt)
 struct variable* variable_new(struct context *context, enum VarType type)
 {
     struct variable* v = (struct variable*)malloc(sizeof(struct variable));
+    //DEBUGPRINT("\n>%" PRIu16 " - variable_new %p %s\n", current_thread_id(), v, var_type_str(type));
+
     v->type = type;
     v->mark = 0;
     v->ptr = NULL;
     v->visited = VISITED_NOT;
+    v->gc_state = GC_NEW;
 
     struct array *oldarray = context->singleton->all_variables;
-    
+
     array_add(context->singleton->all_variables, v);
 
     struct array *newarray = context->singleton->all_variables;
     if (oldarray != newarray)
         DEBUGPRINT("all_variables %p -> %p\n", oldarray, newarray);
-    
+
     //DEBUGPRINT("variable_new %s %p\n", var_type_str(type), v);
     return v;
 }
@@ -82,9 +87,16 @@ struct variable* variable_new_bool(struct context *context, bool b)
     return v;
 }
 
+void variable_old(struct variable *v)
+{
+    if (v->gc_state != GC_SAFE)
+        v->gc_state = GC_OLD;
+}
+
 void variable_del(struct context *context, struct variable *v)
 {
-    //DEBUGPRINT("variable_del %p->%p %s\n", v, v->list, var_type_str(v->type));
+    assert_message(v->gc_state == GC_OLD, "killing an orphan");
+    //DEBUGPRINT("\n>%" PRIu16 " - variable_del %p %s\n", current_thread_id(), v, var_type_str(v->type));
     switch (v->type) {
         case VAR_CFNC:
         case VAR_NIL:
@@ -103,7 +115,7 @@ void variable_del(struct context *context, struct variable *v)
         case VAR_FNC:
             byte_array_del(v->str);
             break;
-        case VAR_VOID: // todo: I suppose I should do something here
+        case VAR_VOID: // todo
             break;
         default:
             vm_exit_message(context, "bad var type");
@@ -125,7 +137,7 @@ struct variable *variable_new_src(struct context *context, uint32_t size)
             o->list.map = map_union(o->list.map, v->list.map);
             array_append(o->list.ordered, v->list.ordered);
             v = o;
-        } else if (o->type == VAR_KVP)
+        } else if (o->type == VAR_KVP) // then put o's kvp into v's map
             variable_map_insert(context, v, o->kvp.key, o->kvp.val);
         else
             array_insert(v->list.ordered, 0, o);
@@ -168,7 +180,11 @@ struct variable *variable_new_fnc(struct context *context, struct byte_array *bo
 
     struct variable *v = variable_new(context, VAR_FNC);
     v->fnc.body = byte_array_copy(body);
-    v->fnc.closure = (NULL != closure) ? map_copy(context, closure->list.map) : NULL;
+    if (NULL != closure)
+        v->fnc.closure = map_copy(context, closure->list.map);
+    else
+        v->fnc.closure = NULL;
+
     return v;
 }
 
@@ -176,7 +192,7 @@ struct variable *variable_new_list(struct context *context, struct array *list)
 {
     struct variable *v = variable_new(context, VAR_LST);
     v->list.ordered = array_new();
-    //DEBUGPRINT("variable_new_list %p->%p\n", v, v->list);
+    //DEBUGPRINT("variable_new_list %p->%p\n", v, v->list.ordered);
     for (uint32_t i=0; list && (i<list->length); i++) {
         struct variable *u = (struct variable*)array_get(list, i);
         if (u->type == VAR_KVP) {
@@ -212,12 +228,12 @@ static void variable_value2(struct context *context, struct variable* v, struct 
     enum VarType vt = (enum VarType)v->type;
 
     //printf("vt=%d\n", vt);
-    
+
     if (v->visited ==VISITED_MORE) { // first visit of reused variable
         byte_array_format(buf, true, "&%d", v->mark);
-        v->visited = VISITED_X;
+        v->visited = VISITED_REPEAT;
     }
-    else if (v->visited == VISITED_X) { // subsequent visit
+    else if (v->visited == VISITED_REPEAT) { // subsequent visit
         byte_array_format(buf, true, "*%d", v->mark);
         return;
     }
@@ -281,6 +297,7 @@ static void variable_value2(struct context *context, struct variable* v, struct 
             struct variable *val = (struct variable *)array_get(vals, i);
             struct variable *kvp = variable_new_kvp(context, key, val);
             variable_value2(context, kvp, buf);
+            kvp->gc_state = GC_OLD;
 
         } // for
 
@@ -302,6 +319,8 @@ static void variable_mark2(struct variable *v, uint32_t *marker)
         v->visited = VISITED_MORE;
         return;
     }
+
+    //DEBUGPRINT("\n>%" PRIu16 " - variable_mark %p %s\n", current_thread_id(), v, var_type_str(v->type));
 
     // first visit
     v->mark = ++(*marker);
@@ -329,6 +348,8 @@ static void variable_mark2(struct variable *v, uint32_t *marker)
 
 void variable_mark(struct variable *v)
 {
+    if (NULL == v)
+        return;
     uint32_t marker = 0;
     variable_mark2(v, &marker);
 }
@@ -338,6 +359,8 @@ void variable_unmark(struct variable *v)
     assert_message(v->type < VAR_LAST, "corrupt variable");
     if (VISITED_NOT == v->visited)
         return;
+
+    //DEBUGPRINT("\n>%" PRIu16 " - variable_unmark %p %s\n", current_thread_id(), v, var_type_str(v->type));
 
     v->mark = 0;
     v->visited = VISITED_NOT;
@@ -360,7 +383,6 @@ void variable_unmark(struct variable *v)
     else if (VAR_FNC == v->type)
         mark_map(v->fnc.closure, false);
 }
-
 
 struct byte_array *variable_value(struct context *context, struct variable *v)
 {
@@ -393,6 +415,8 @@ struct variable *variable_pop(struct context *context)
 
 void inline variable_push(struct context *context, struct variable *v) {
     stack_push(context->operand_stack, v);
+    v->gc_state = GC_OLD;
+    //DEBUGPRINT("\n>%" PRIu16 " - variable_push %p %s\n", current_thread_id(), v, var_type_str(v->type));
 }
 
 void map_serialize(struct context *context, struct byte_array *bits, struct map *map)
@@ -467,14 +491,21 @@ struct map *map_deserialize(struct context *context, struct byte_array *bits)
     struct map *map = map_new(context);
     for (int i=0; i<map_length; i++)
     {
-        struct variable *key = variable_deserialize(context, bits);
-        struct variable *val = variable_deserialize(context, bits);
+        struct variable *key = variable_deserialize2(context, bits);
+        struct variable *val = variable_deserialize2(context, bits);
         map_insert(map, key, val);
     }
     return map;
 }
 
 struct variable *variable_deserialize(struct context *context, struct byte_array *bits)
+{
+    struct variable *v = variable_deserialize2(context, bits);
+    v->gc_state = GC_NEW;
+    return v;
+}
+
+static struct variable *variable_deserialize2(struct context *context, struct byte_array *bits)
 {
 	null_check(context);
     assert_message(bits->length, "zero length serialized variable");
@@ -512,14 +543,17 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
             uint32_t len = serial_decode_int(bits);
             struct array *list = array_new_size(len);
             while (len--)
-                array_add(list, variable_deserialize(context, bits));
+            {
+                struct variable *vd = variable_deserialize2(context, bits);
+                array_add(list, vd);
+            }
             result = variable_new_list(context, list);
             array_del(list);
             result->list.map = map_deserialize(context, bits);
             break;
         case VAR_KVP: {
-            struct variable *key = variable_deserialize(context, bits);
-            struct variable *val = variable_deserialize(context, bits);
+            struct variable *key = variable_deserialize2(context, bits);
+            struct variable *val = variable_deserialize2(context, bits);
             result = variable_new_kvp(context, key, val);
             } break;
         }
@@ -529,6 +563,10 @@ struct variable *variable_deserialize(struct context *context, struct byte_array
 
     if (NULL != str)
         byte_array_del(str);
+
+    DEBUGPRINT("\n>%" PRIu16 " - variable_deserialize2 %p %s\n", current_thread_id(), result, var_type_str(result->type));
+
+    result->gc_state = GC_NEW;
     return result;
 }
 
@@ -599,7 +637,7 @@ struct variable *variable_concatenate(struct context *context, int n, const stru
         struct variable* parameter = va_arg(argp, struct variable* );
         if (NULL == parameter)
             continue;
-        else switch (result->type) {
+        switch (result->type) {
             case VAR_STR: byte_array_append(result->str, parameter->str); break;
             case VAR_LST: array_append(result->list.ordered, parameter->list.ordered);    break;
             default: return (struct variable*)exit_message("bad concat type");
@@ -610,17 +648,19 @@ struct variable *variable_concatenate(struct context *context, int n, const stru
     return result;
 }
 
-struct map *variable_map_insert2(struct context *context, struct map* map,
+static struct map *variable_map_insert2(struct context *context, struct map* map,
                                  struct variable *key, struct variable *datum)
 {
     if (NULL == map)
         map = map_new(context);
-    
+
     // setting a value to nil means removing the key
     if (datum->type == VAR_NIL)
         map_remove(map, key);
     else
         map_insert(map, key, datum);
+
+    key->gc_state = datum->gc_state = GC_OLD;
     return map;
 }
 
@@ -731,7 +771,6 @@ struct variable* variable_set(struct context *context, struct variable *dst, con
 
 struct variable* variable_copy(struct context *context, const struct variable* v)
 {
-    //    DEBUGPRINT("variable_copy");
     vm_null_check(context, v);
     struct variable *u = variable_new(context, (enum VarType)v->type);
     variable_set(context, u, v);
@@ -745,19 +784,22 @@ struct variable *variable_find(struct context *context,
                                struct variable *start)
 {
     struct variable *result = NULL;
-    
-    if (self->type == VAR_STR && sought->type == VAR_STR) {                     // search for substring
+
+    // search for substring
+    if (self->type == VAR_STR && sought->type == VAR_STR)
+    {
         assert_message(!start || start->type == VAR_INT, "non-integer index");
         int32_t beginning = start ? start->integer : 0;
         int32_t index = byte_array_find(self->str, sought->str, beginning);
         if (index == -1)
             return variable_new_nil(context);
         return variable_new_int(context, index);
-        
     }
-    
-    if (self->type == VAR_LST) {
-        for (int i=0; !result && i<self->list.ordered->length; i++) {
+
+    if (self->type == VAR_LST)
+    {
+        for (int i=0; !result && i<self->list.ordered->length; i++)
+        {
             struct variable *v = (struct variable*)array_get(self->list.ordered, i);
             if ((sought->type == VAR_INT && v->type == VAR_INT && v->integer == sought->integer) ||
                 (sought->type == VAR_STR && v->type == VAR_STR && byte_array_equals(sought->str, v->str)))

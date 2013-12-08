@@ -19,6 +19,7 @@ struct context_shared
     uint32_t num_threads;               // number of active threads
     struct variable *callback;          // for calling back into C
     struct variable *sys;               // sys calls (print, save, etc.)
+    struct array *contexts;             // list of all contexts
     bool keepalive;                     // to not delete context when UI is active
 };
 
@@ -29,13 +30,11 @@ struct context
     struct stack *program_stack;        // call stack
     struct stack *operand_stack;        // operand stack
     struct byte_array *program;         // bytecode
-    bool runtime;                       // false when just displaying
-    uint8_t indent;                     // for formatted display
     struct context_shared *singleton;   // shared state
+    bool runtime;                       // false when just displaying
 #ifdef DEBUG
+    uint8_t indent;                     // for formatted display
     struct byte_array *pcbuf;
-#else
-    char *pcbuf;
 #endif
 };
 

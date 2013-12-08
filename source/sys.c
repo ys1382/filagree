@@ -94,6 +94,7 @@ struct variable *sys_read(struct context *context)
     uint32_t length = param_int(args, 3);
 
     struct byte_array *bytes = read_file(path->str, offset, length);
+    printf("read %d bytes\n", bytes->length);
 
     struct variable *content = NULL;
     if (NULL != bytes)
@@ -440,7 +441,7 @@ int file_list_callback(const char *path, bool dir, long mod, void *fl_context)
     // -> /
     path = remove_substring(path, "//");
     path = remove_substring(path, hal_doc_path(NULL));
-    printf("file_list_callback %s\n", path);
+    //printf("file_list_callback %s\n", path);
 
     struct file_list_context *flc = (struct file_list_context*)fl_context;
     struct variable *path3 = variable_new_str_chars(flc->context, path);
@@ -751,7 +752,7 @@ struct variable *cfnc_insert(struct context *context) // todo: test
     struct variable *first = variable_part(context, variable_copy(context, self), 0, position);
     struct variable *second = variable_part(context, variable_copy(context, self), position, -1);
     struct variable *joined = variable_concatenate(context, 3, first, insertion, second);
-
+    
     if (self->type == VAR_LST) {
         array_del(self->list.ordered);
         self->list.ordered = array_copy(joined->list.ordered);

@@ -33,7 +33,7 @@ static void dst(struct context *context);
 
 #endif // not DEBUG
 
-#define VAR_MAX         9999
+#define VAR_MAX         99999
 #define GIL_SWITCH      100
 
 // assertions //////////////////////////////////////////////////////////////
@@ -41,20 +41,20 @@ static void dst(struct context *context);
 jmp_buf trying;
 
 static void vm_exit() {
-    DEBUGPRINT("exiting thread %" PRIu16 "\n", current_thread_id());
+    printf("exiting thread %" PRIu16 "\n", current_thread_id());
     longjmp(trying, 1);
 }
 
 void set_error(struct context *context, const char *format, va_list list)
 {
-    if (context == NULL)
+    if (NULL == context)
     {
         DEBUGPRINT("can't set error because context is null");
         return;
     }
     null_check(format);
     const char *message = make_message(format, list);
-    DEBUGPRINT("vm_error: %s\n", message);
+    printf("\n>%" PRIu16 " - vm_error: %s\n", current_thread_id(), message);
     context->error = variable_new_err(context, message);
 }
 
@@ -95,7 +95,7 @@ struct program_state *program_state_new(struct context *context, struct map *env
     null_check(context);
     struct program_state *state = (struct program_state*)malloc(sizeof(struct program_state));
     state->named_variables = env ? map_copy(context, env) : map_new(context);
-    state->args = variable_new_list(context, NULL); // todo: prevent GC
+    state->args = NULL;
     stack_push(context->program_stack, state);
     //DEBUGPRINT("push state %p onto %p\n", state, context->program_stack);
     //printf("\n>%" PRIu16 " - push state %p onto %p->%p\n", current_thread_id(),
@@ -105,11 +105,12 @@ struct program_state *program_state_new(struct context *context, struct map *env
 }
 
 
-
 void program_state_del(struct context *context, struct program_state *state)
 {
     //printf("\n>%" PRIu16 " - program_state_del %p from %p\n", current_thread_id(), state, context->program_stack);
     map_del(state->named_variables);
+    if (NULL != state->args)
+        state->args->gc_state = GC_OLD;
     free(state);
 }
 
@@ -118,7 +119,7 @@ static inline void cfnc_length(struct context *context) {
     struct variable *indexable = (struct variable*)array_get(args->list.ordered, 0);
     assert_message(indexable->type==VAR_LST || indexable->type==VAR_STR, "no length for non-indexable");
     struct variable *result = variable_new_int(context, indexable->list.ordered->length);
-    stack_push(context->operand_stack, result);
+    variable_push(context,result);
 }
 
 struct context *context_new(struct context *parent, // parent context
@@ -138,19 +139,22 @@ struct context *context_new(struct context *parent, // parent context
         singleton->tick = 0;
         singleton->num_threads = 0;
         singleton->keepalive = false;
+        singleton->contexts = array_new();
         context->singleton = singleton;
         context->singleton->sys = sys_funcs ? sys_new(context) : NULL;
     } else {
         context->singleton = parent->singleton;
     }
+    array_add(context->singleton->contexts, context);
 
     context->program_stack = stack_new();
     context->operand_stack = stack_new();
     context->runtime = runtime;
-    context->indent = 0;
     context->error = NULL;
+#ifdef DEBUG
+    context->indent = 0;
     context->pcbuf = byte_array_new();
-
+#endif
     //printf("\n>%" PRIu16 " - context_new %p - %p\n", current_thread_id(), context, context->program_stack);
 
     return context;
@@ -168,6 +172,17 @@ void context_del(struct context *context)
     while (s->num_threads > 0)
     {
         assert_message(!pthread_cond_wait(&s->thread_cond, &s->gil), "could not wait");
+
+        // remove from singleton's list of contexts
+        for (int i=0; i<s->contexts->length; i++)
+        {
+            struct context *c = array_get(s->contexts, i);
+            if (c == context)
+            {
+                array_remove(s->contexts, i, 0);
+                break;
+            }
+        }
 
         if (s->num_threads == 0) // last remaining thread
         {
@@ -191,12 +206,13 @@ void context_del(struct context *context)
     while (!stack_empty(context->program_stack))
     {
         struct program_state *s = (struct program_state *)stack_pop(context->program_stack);
-        DEBUGPRINT("del state %p from %p\n", s, context->program_stack);
+        printf("del state %p from %p\n", s, context->program_stack);
         program_state_del(context, s);
     }
 
     stack_del(context->program_stack);
     stack_del(context->operand_stack);
+
     free(context);
 }
 
@@ -233,42 +249,69 @@ void mark_map(struct map *map, bool mark)
     array_del(b);
 }
 
-void garbage_collect(struct context *context)
+void garbage_collect_mark_context(struct context *context)
 {
-    int i;
-    null_check(context);
-    if (!context->runtime)
-        return;
-    if (context->singleton->all_variables->length < VAR_MAX)
-        return;
-
-    struct variable *v;
-    DEBUGSPRINT("\n>%" PRIu16 " - garbage collect", current_thread_id());
-
-    unmark_all(context);
-
     // mark named variables
     struct program_state *state;
-    for (i=0; (state = (struct program_state*)stack_peek(context->program_stack, i)); i++) {
+    for (int i=0; (state = (struct program_state*)stack_peek(context->program_stack, i)); i++)
+    {
         mark_map(state->named_variables, true);
+        variable_mark(state->args);
     }
 
     // mark variables in operand stack
-    for (i=0; (v = (struct variable*)stack_peek(context->operand_stack, i)); i++) {
+    struct variable *v;
+    for (int i=0; (v = (struct variable*)stack_peek(context->operand_stack, i)); i++)
+    {
         variable_mark(v);
     }
+}
 
+void garbage_collect(struct context *context)
+{
+    null_check(context);
+    if (!context->runtime || context->singleton->all_variables->length < VAR_MAX)
+        return;
+
+    DEBUGPRINT("\n>%" PRIu16 " - garbage collect %d vars exist", current_thread_id(), context->singleton->all_variables->length);
+
+    unmark_all(context);
+
+    // mark all
+    struct array *contexts = context->singleton->contexts;
+    for (int i=0; i<contexts->length; i++)
+    {
+        struct context *c = array_get(contexts, i);
+        garbage_collect_mark_context(c);
+    }
+
+    // mark system functions
     variable_mark(context->singleton->sys);
 
-    // sweep
+    // mark C callback
+    variable_mark(context->singleton->callback);
+
+    // mark vars used by protected vars
     struct array *vars = context->singleton->all_variables;
-    for (i=0; i<vars->length; i++) {
+    for (int i=0; i<vars->length; i++)
+    {
         struct variable *v = (struct variable*)array_get(vars, i);
-        if (v->visited == VISITED_NOT) {
+        if (v->gc_state != GC_OLD)
+            variable_mark(v);
+    }
+    
+    // sweep
+    for (int i=0; i<vars->length; i++)
+    {
+        struct variable *v = (struct variable*)array_get(vars, i);
+        if (v->visited == VISITED_NOT)
+        {
             variable_del(context, v);
             array_remove(context->singleton->all_variables, i--, 1);
         }
     }
+
+    printf("\n>%" PRIu16 " - garbage collected: %d vars left", current_thread_id(), context->singleton->all_variables->length);
 
     unmark_all(context);
 }
@@ -404,7 +447,7 @@ struct variable *src(struct context *context, enum Opcode op, struct byte_array 
     if (!context->runtime)
         return NULL;
     struct variable *v = variable_new_src(context, size);
-    stack_push(context->operand_stack, v);
+    variable_push(context,v);
     return v;
 }
 
@@ -421,6 +464,7 @@ void vm_call_src(struct context *context, struct variable *func)
         array_insert(s->list.ordered, 1, func->cfnc.data); // first argument
 
     state->args = variable_copy(context, s);
+    state->args->gc_state = GC_SAFE;
 
     INDENT
 
@@ -434,11 +478,11 @@ void vm_call_src(struct context *context, struct variable *func)
             if (v == NULL)
                 v = variable_new_src(context, 0);
             else if (v->type != VAR_SRC) { // convert to VAR_SRC variable
-                stack_push(context->operand_stack, v);
+                variable_push(context,v);
                 v = variable_new_src(context, 1);
             }
 
-            stack_push(context->operand_stack, v); // push the result
+            variable_push(context,v); // push the result
         } break;
         case VAR_NIL:
             dst(context); // drop the params
@@ -469,7 +513,10 @@ void vm_call(struct context *context, struct variable *func, struct variable *ar
             s = variable_new_src(context, 0);
 
         for (; arg; arg = va_arg(argp, struct variable*))
+        {
             array_add(s->list.ordered, arg);
+            variable_old(arg);
+        }
 
         va_end(argp);
         variable_push(context, s);
@@ -497,8 +544,9 @@ void func_call(struct context *context, enum Opcode op,
 
     if (!resulted) { // need a result for an expression, so pretend it returned nil
         struct variable *v = variable_new_src(context, 0);
-        array_add(v->list.ordered, variable_new_nil(context));
-        stack_push(context->operand_stack, v);
+        struct variable *nada = variable_new_nil(context);
+        array_add(v->list.ordered, nada);
+        variable_push(context, v);
     }
 }
 
@@ -523,7 +571,7 @@ static void push_list(struct context *context, struct byte_array *program)
 
     struct variable *list = variable_new_list(context, NULL);
     while (num_items--) {
-        struct variable* v = variable_pop(context);
+        struct variable *v = variable_pop(context);
         enum VarType vt = v->type;
         if (vt == VAR_KVP)
             variable_map_insert(context, list, v->kvp.key, v->kvp.val);
@@ -541,9 +589,9 @@ static void push_kvp(struct context *context, struct byte_array *program)
     DEBUGSPRINT("KVP");
     if (!context->runtime)
         return;
-    struct variable* val = variable_pop(context);
-    struct variable* key = variable_pop(context);
-    struct variable *v = variable_new_kvp(context, key, val);
+    struct variable *val = variable_pop(context);
+    struct variable *key = variable_pop(context);
+    struct variable *v   = variable_new_kvp(context, key, val);
 #ifdef DEBUG
     struct byte_array *buf = variable_value(context, v);
     DEBUGSPRINT(": %s", byte_array_to_string(buf));//  variable_value_str(context, v, buf));
@@ -704,6 +752,8 @@ struct variable *find_var(struct context *context, struct variable *key)
     assert_message(v, "\n>%" PRIu16 " - could not find %s in %p from %p",
                    current_thread_id(), byte_array_to_string(key->str), state, context->program_stack);
 
+    //DEBUGPRINT("\n>%" PRIu16 " - found %s in %p from %p", current_thread_id(), byte_array_to_string(key->str), state, context->program_stack);
+
     return v;
 }
 
@@ -751,7 +801,6 @@ static void push_fnc(struct context *context, struct byte_array *program)
             if (closures == NULL)
                 closures = variable_new_list(context, NULL);
             struct variable *c = find_var(context, key);
-            //c = variable_copy(context, c);
             variable_map_insert(context, closures, key, c);
         }
     }
@@ -759,7 +808,6 @@ static void push_fnc(struct context *context, struct byte_array *program)
     struct byte_array *body = serial_decode_string(program);
 
     DEBUGSPRINT("FNC %u,%u", num_closures, body->length);
-    //display_code(context, body);
 
     if (context->runtime) {
         struct variable *f = variable_new_fnc(context, body, closures);
@@ -780,27 +828,36 @@ void set_named_variable(struct context *context,
     struct variable *name2 = variable_new_str(context, name);
     map_insert(var_map, name2, value);
 
-    //DEBUGPRINT("SET %s to %s\n", byte_array_to_string(name), variable_value_str(context, value));
+    variable_old(name2);
+    variable_old(value);
+
+    // DEBUGPRINT("SET %s to %s\n", byte_array_to_string(name), variable_value_str(context, value));
     // DEBUGPRINT(" SET %s at %p in {p:%p, s:%p, m:%p}\n", byte_array_to_string(name), to_var, context->program_stack, state, var_map);
 }
 
+// pop variable off operand stack
 static struct variable *get_value(struct context *context, enum Opcode op)
 {
-    bool interim = op == VM_STX || op == VM_PTX;
     struct variable *value = stack_peek(context->operand_stack, 0);
     if (NULL == value)
         return variable_new_nil(context);
 
-    if (value->type == VAR_SRC) {
+    bool interim = op == VM_STX || op == VM_PTX;
+
+    if (value->type == VAR_SRC)
+    {
         struct array *values = value->list.ordered;
         struct map *kvps = value->list.map;
         bool listvar = values->length > values->current - values->data;
+
         if (listvar)
             value = (struct variable*)*values->current++;
-        else if (NULL != kvps) {
+        else if (NULL != kvps)
+        {
             value = variable_new_list(context, NULL);
             value->list.map = map_copy(context, kvps);
-        } else
+        }
+        else
             value = variable_new_nil(context);
     }
     else if (!interim)
@@ -1101,7 +1158,7 @@ static int32_t boolean_op(struct context *context, struct byte_array *program, e
         default:        tistrue = true;         break;
     }
     if (tistrue ^ (op == VM_AND)) {
-        stack_push(context->operand_stack, v);
+        variable_push(context,v);
         return short_circuit;
     }
     return 0;
@@ -1285,7 +1342,7 @@ static bool iterate(struct context *context,
     }
 
     if (comprehending)
-        stack_push(context->operand_stack, result);
+        variable_push(context,result);
 
 done:
     byte_array_del(who);
@@ -1381,7 +1438,7 @@ bool run(struct context *context,
 #endif
         program->current++; // increment past the instruction
         int32_t pc_offset = 0;
-        
+
         switch (inst) {
             case VM_COM:
             case VM_ITR:    if (iterate(context, inst, state, program)) goto done;  break;
@@ -1435,9 +1492,9 @@ bool run(struct context *context,
         }
         program->current += pc_offset;
         DEBUGPRINT("%s\n", byte_array_to_string(context->pcbuf));
-        
+
     } // while
-    
+
     byte_array_del(program);
     program = NULL;
 
@@ -1446,7 +1503,7 @@ bool run(struct context *context,
 done:
     if (!in_state) {
         struct program_state *s = stack_pop(context->program_stack);
-        //printf("\n>%" PRIu16 " - pop state %p from %p\n", current_thread_id(), s, context->program_stack);
+        //DEBUGPRINT("\n>%" PRIu16 " - pop state %p from %p\n", current_thread_id(), s, context->program_stack);
         assert_message(s == state, "not same");
         program_state_del(context, state);
     }

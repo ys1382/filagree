@@ -21,6 +21,7 @@
 #include "hal.h"
 #include "struct.h"
 #include "file.h"
+#include "node.h"
 
 
 
@@ -56,7 +57,7 @@
     bp->logic = c;
     bp->context = f;
     bp->uictx = u;
-    bp->data = d;
+    bp->data = NULL; //d;
     bp->param = NULL;
     bp->timer = NULL;
     return bp;
@@ -83,7 +84,7 @@
 }
 
 -(void)setData:(struct variable*)value {
-    self->data = value;
+//    self->data = value;
 }
 
 #ifndef NO_UI
@@ -107,8 +108,9 @@ objectValueForTableColumn:(NSTableColumn *) aTableColumn
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
-    int n = self->data->list.ordered->length;
-    return n;
+    if (NULL == self->data)
+        return 0;
+    return self->data->list.ordered->length;
 }
 
 - (void) tableViewSelectionDidChange:(NSNotification *)notification
@@ -761,6 +763,7 @@ void *hal_window(struct context *context,
 
 #endif // NO_UI
 
+/*
 void hal_save(struct context *context, const struct byte_array *key, const struct variable *value)
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -779,7 +782,7 @@ void hal_save(struct context *context, const struct byte_array *key, const struc
     [defaults synchronize];
 }
 
-struct variable *hal_load(struct context *context, const struct byte_array *key)
+ struct variable *hal_load(struct context *context, const struct byte_array *key)
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     const char *key2 = byte_array_to_string(key);
@@ -792,6 +795,7 @@ struct variable *hal_load(struct context *context, const struct byte_array *key)
 
     return variable_deserialize(context, &bits);
 }
+*/
 
 struct file_thread {
     struct context *context;
@@ -816,7 +820,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
                             const FSEventStreamEventFlags eventFlags[],
                             const FSEventStreamEventId eventIds[])
 {
-    DEBUGPRINT("file_listener_callback\n");
+    DEBUGPRINT("\n>%" PRIu16 " - file_listener_callback\n", current_thread_id());
 
     char **paths = eventPaths;
     struct file_thread *thread = (struct file_thread*)clientCallBackInfo;
@@ -836,7 +840,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
         struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
 
         if ((NULL != method3) && (method3->type != VAR_NIL))
-            vm_call(thread->context, method3, thread->listener, path3);
+            vm_call(thread->context, method3, thread->listener, path3, NULL);
     }
 
     gil_unlock(thread->context, "file_listener_callback");
@@ -844,11 +848,12 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
 
 void hal_file_listen(struct context *context, const char *path, struct variable *listener)
 {
-    DEBUGPRINT("hal_file_listen %s\n", path);
+    DEBUGPRINT("\n>%" PRIu16 " - hal_file_listen %s\n", current_thread_id(), path);
 
     struct file_thread *ft = (struct file_thread*)malloc((sizeof(struct file_thread)));
     ft->context = context;
     ft->listener = listener;
+    listener->gc_state = GC_SAFE;
 
     NSString *path2 = [NSString stringWithUTF8String:path];
     NSURL *fileUrl = [NSURL fileURLWithPath:path2];

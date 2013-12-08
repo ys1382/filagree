@@ -42,6 +42,9 @@ struct node_thread *thread_new(struct context *context,
     struct node_thread *ta = (struct node_thread *)malloc(sizeof(struct node_thread));
     ta->context = context_new(context, true, true);
     ta->listener = listener;
+    if (NULL != listener)
+        listener->gc_state = GC_SAFE;
+
     ta->fd = fd;
     ta->message = NULL;
     ta->buf = NULL;
@@ -55,7 +58,7 @@ void *node_callback(void *arg)
     if (NULL == ta->listener)
         return NULL;
     gil_lock(ta->context, "node_callback");
-    
+
     struct variable *key = event_string(ta->context, ta->event);
     struct variable *callback = variable_map_get(ta->context, ta->listener, key);
     struct variable *id = variable_new_int(ta->context, ta->fd);
@@ -71,15 +74,15 @@ void *incoming(void *arg)
 {
     struct node_thread *ta = (struct node_thread *)arg;
 
-    gil_lock(ta->context, "incoming");
+    gil_lock(ta->context, "ncoming");
     ta->message = variable_deserialize(ta->context, ta->buf);
-#ifdef DEBUG
-    //char buf[1000];
-    //DEBUGPRINT("received %s\n", variable_value_str(ta->context, ta->message, buf));
-#endif
-    gil_unlock(ta->context, "incoming");
 
-    // todo: make a context copy
+#ifdef DEBUG
+//    char buf[1000];
+//    DEBUGPRINT("received %s\n", variable_value_str(ta->context, ta->message, buf));
+#endif
+
+    gil_unlock(ta->context, "ncoming");
 
     node_callback(ta);
 	return NULL;
@@ -124,7 +127,7 @@ void messaged(struct node_thread *ta0, struct variable *listener, int sockfd, ui
     ta->buf->length = (uint32_t)n;
     memcpy((void*)ta->buf->data, buf, n);
     ta->event = MESSAGED;
-    printf("\n>%" PRIu16 " - incoming %p\n", current_thread_id(), ta->context);
+    DEBUGPRINT("\n>%" PRIu16 " - msgd %p\n", current_thread_id(), ta->context);
     add_thread(ta, 0);
 }
 
@@ -133,6 +136,7 @@ void *sys_socket_listen2(void *arg)
 {
     struct node_thread *ta0 = (struct node_thread*)arg;
     struct variable *listener = ta0->listener;
+    listener->gc_state = GC_SAFE;
 
 	int					i, maxi, maxfd, connfd, sockfd;
 	int					nready, client[FD_SETSIZE];
@@ -208,6 +212,7 @@ void *sys_socket_listen2(void *arg)
                     add_thread(ta, 0);
 
 				} else
+                    DEBUGPRINT("\nmessagd1\n");
                     messaged(ta0, listener, sockfd, buf, n);
 
                 if (--nready <= 0) // no more readable descriptors
@@ -259,8 +264,6 @@ void *sys_connect2(void *arg)
     struct node_thread *ta = (struct node_thread *)arg;
 
     // Blocking connect to socket file descriptor
-    //int reuse = 1;
-    //setsockopt(ta->fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
 	if (connect(ta->fd, (struct sockaddr *)&ta->servaddr, sizeof(ta->servaddr)))
     {
         perror("connect");
@@ -277,6 +280,7 @@ void *sys_connect2(void *arg)
             ssize_t n = read(ta->fd, buf, sizeof(buf)); // read from the socket
             if (n <= 0)
                     return NULL;
+            printf("\nmessaged2\n");
             messaged(ta, ta->listener, ta->fd, buf, n);
         }
     }
@@ -288,7 +292,8 @@ void *sys_connect2(void *arg)
 struct variable *sys_connect(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *listener   = param_var(context, arguments, 3);
+    struct variable *listener = param_var(context, arguments, 3);
+    listener->gc_state = GC_SAFE;
     struct node_thread *ta = thread_new(context, listener, &sys_connect2, 0);
     char *serveraddr = param_str(arguments, 1);
     int serverport = param_int(arguments, 2);
@@ -312,9 +317,9 @@ void *sys_send2(void *arg)
     struct node_thread *ta = (struct node_thread *)arg;
 
     if (write(ta->fd, ta->buf->data, ta->buf->length) != ta->buf->length) {
-        DEBUGPRINT("write error\n");
+        printf("write error\n");
     } else {
-        DEBUGPRINT("sent to %d\n", ta->fd);
+        printf("sent to %d\n", ta->fd);
     }
     return NULL;
 }
@@ -326,7 +331,6 @@ struct variable *sys_send(struct context *context)
     int fd = param_int(arguments, 1);
     assert_message(fd < 10, "bad fd");
     struct variable *listener = param_var(context, arguments, 3);
-
     struct node_thread *ta = thread_new(context, listener, &sys_send2, fd);
 
     struct variable *v = param_var(ta->context, arguments, 2);

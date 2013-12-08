@@ -26,8 +26,15 @@ enum Visited
     VISITED_NOT,
     VISITED_ONCE,
     VISITED_MORE,
-    VISITED_X,
+    VISITED_REPEAT,
     VISITED_LAST
+};
+
+enum GCsafety
+{
+    GC_NEW,
+    GC_OLD,
+    GC_SAFE
 };
 
 typedef struct context *context_p; // forward declaration
@@ -38,6 +45,7 @@ struct variable
     enum VarType type;
     enum Visited visited;
     uint32_t mark;
+    enum GCsafety gc_state;
 
     union {
         struct byte_array* str;
@@ -71,6 +79,7 @@ const char *variable_value_str(struct context *context, struct variable *v);
 struct byte_array *variable_serialize(struct context *context, struct byte_array *bits,
                                       const struct variable *in);
 struct variable *variable_deserialize(struct context *context, struct byte_array *str);
+void variable_old(struct variable *v);
 
 struct variable* variable_new_bool(struct context *context, bool b);
 struct variable *variable_new_err(struct context *context, const char* message);

@@ -47,11 +47,6 @@ Mesh = [
         if msg5.event == 'greet' then
             self.peers[msg5.from] = socket
             self.sreep[socket] = msg5.from
-            sys.print('greetz ' + self)
-/*      else if msg5.event == 'file' then
-            if not msg5.offset then sys.rm(msg5.file) end
-            sys.write(msg5.file, msg5.content, msg5.offset)
-*/
         end
     end,
 
@@ -59,7 +54,7 @@ Mesh = [
 
         if (not msg4.to) or (msg4.to == self.id) # por moi
 
-            sys.print('message to ' + self.id + ' from ' + socket + ': ' + msg4)
+            sys.print('message to ' + self.id + ' from ' + socket + ': ' + msg4.event)
 
             if not (response = self.handle_message(socket, msg4)) then
                 for c in self.ctx
@@ -105,26 +100,8 @@ Mesh = [
     end,
 
     'send' : function(self, to, msg)
-        sys.print(self.id + ' send to ' + to + ': ' + msg)
-/*
-        if msg.file then # send in chunks
-            offset = 0
-            onek = 1024
-            path = msg.local_dir + msg.file
-            msg.local_dir = nil
-            while true
-                if (bytes = sys.read(path, offset, onek))
-                    msg.content = bytes
-                    msg.offset = offset
-                    offset = offset + bytes.length
-                    sys.send(to, msg)
-                end
-                if bytes.length < onek then return end
-            end
-        else
-*/
-            sys.send(to, msg)
-#        end
+        sys.print(self.id + ' send to ' + to + ': ' + msg.event)
+        sys.send(to, msg)
     end,
 
     'broadcast' : function(self, msg6, except)

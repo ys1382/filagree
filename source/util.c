@@ -1,6 +1,8 @@
 #include "struct.h"
 #include "util.h"
 #include "hal.h"
+#include "node.h"
+
 #include <string.h>
 #include <stdarg.h>
 #include <sys/stat.h>
@@ -30,7 +32,7 @@ const char *make_message(const char *format, va_list ap)
 void exit_message2(const char *format, va_list list)
 {
     const char *message = make_message(format, list);
-    printf("%s\n", message);
+    printf("\n>%" PRIu16 " - %s\n", current_thread_id(), message);
     va_end(list);
     exit(1);
 }
