@@ -142,7 +142,7 @@ struct variable *sys_interpret(struct context *context)
     return NULL;
 }
 
-#if !(TARGET_OS_IPHONE)
+#if !(TARGET_OS_IPHONE) && !(_WIN32) && !(_WIN64)
 
 // deletes file or folder
 struct variable *sys_rm(struct context *context)
