@@ -1,40 +1,20 @@
-id = 'test_director'
+####### test_sync.fg
+
+# to run,  launches server and two clients, 'A' and 'B'
+
 
 import 'sync'
 import '../test_director'
 
+
 director = [
-
-    'connected' : function(self, peer)
-
-        msg1 = ['event' : 'greet', 'from' : self.id, 'files' : self.files]
-        sys.send(peer, msg1)
-
-    end,
 
     'run_tests' : function(self)
 
-        self.sync_direct('A',      'update', 'a.txt', '123')
-        self.sync_direct('A',      'verify', 'a.txt', '123')
-        self.sync_direct('server', 'verify', 'a.txt', '123')
-        self.sync_direct('B',      'verify', 'a.txt', '123')
-
-        self.sync_direct('A',      'update', 'a.txt', '456')
-        self.sync_direct('A',      'verify', 'a.txt', '456')
-        self.sync_direct('server', 'verify', 'a.txt', '456')
-        self.sync_direct('B',      'verify', 'a.txt', '456')
-
-        self.sync_direct('A',      'rename', 'a.txt', 'b.txt')
-        self.sync_direct('A',      'verify', 'b.txt', '123')
-        self.sync_direct('server', 'verify', 'b.txt', '123')
-        self.sync_direct('B',      'verify', 'b.txt', '123')
-
-        self.sync_direct('A',      'delete', 'a.txt')
-        self.sync_direct('A',      'verify', 'a.txt')
-        self.sync_direct('server', 'verify', 'a.txt')
-        self.sync_direct('B',      'verify', 'a.txt')
+        self.crud()
 
     end,
+
 
     'sync_direct' : function(self, whom, action, path, content)
 
@@ -42,7 +22,42 @@ director = [
 
     end,
 
+
+    #
+    # test to create, rename, update, delete
+    #
+
+    'crud' : function(self)
+
+        # create
+        self.sync_direct('A',      'update', 'a.txt', '123')
+        self.sync_direct('A',      'verify', 'a.txt', '123')
+        self.sync_direct('server', 'verify', 'a.txt', '123')
+        self.sync_direct('B',      'verify', 'a.txt', '123')
+
+        # rename
+        self.sync_direct('A',      'rename', 'a.txt', 'b.txt')
+        self.sync_direct('A',      'verify', 'b.txt', '123')
+        self.sync_direct('server', 'verify', 'b.txt', '123')
+        self.sync_direct('B',      'verify', 'b.txt', '123')
+
+        # update
+        self.sync_direct('B',      'update', 'a.txt', '456')
+        self.sync_direct('B',      'verify', 'a.txt', '456')
+        self.sync_direct('server', 'verify', 'a.txt', '456')
+        self.sync_direct('A',      'verify', 'a.txt', '456')
+
+        #delete
+        self.sync_direct('A',      'delete', 'a.txt')
+        self.sync_direct('A',      'verify', 'a.txt')
+        self.sync_direct('server', 'verify', 'a.txt')
+        self.sync_direct('B',      'verify', 'a.txt')
+
+    end,
+
+
 ] + test_director
 
-sys.connect('127.0.0.1', port, director) # client connects to server
+
+sys.connect('127.0.0.1', port, director) # test client connects to sync server
 sys.loop()

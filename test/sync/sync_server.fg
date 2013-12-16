@@ -5,8 +5,11 @@ import 'sync'                       # shared sync logic
 import '../mesh'                    # shared mesh logic
 
 
-mesh = Mesh.init('server', 9999, nil)
-sync = Sync.init(nil, ['server'], mesh)
+id = 'server'
+
+
+mesh = Mesh.init(id, 9999, nil)
+sync = Sync.init(nil, id, mesh)
 
 
 mesh.listen()

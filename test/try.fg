@@ -1,17 +1,1 @@
-import 'ui'
-
-client = [
-
-    'select' : function(client)
-        sys.print('select ' + sys.args()[1])
-    end,
-
-]
-
-client.ui = sys.ui( client,
-                    ['vertical',
-                        ['table', 'name':'files', 'list':[], 'logic':client.select],
-                        'w':240, 'h':320
-                    ])
-
-sys.loop()
+sys.fork('sys.print(7)')

@@ -1,10 +1,13 @@
 ####### mesh.fg
 
+
 Mesh = [
+
 
     'peers' : [], # maps id : socket
     'sreep' : [], # maps socket: id
-    'seq' : 0,
+    'seq'   : 0,
+
 
     'init' : function(self, id, port, ctx)
 
@@ -16,13 +19,16 @@ Mesh = [
 
     end,
 
+
     'listen' : function(self)
         sys.listen(self.port, self)    # server listens for incoming socket connections
     end,
 
+
     'connect' : function(self)
         sys.connect('127.0.0.1', self.port, self)
     end,
+
 
     'connected' : function(self, socket)
         msg1 = ['event' : 'greet', 'from' : self.id] + self.greet()
@@ -31,6 +37,7 @@ Mesh = [
             c.connected(self, socket)
         end
     end,
+
 
     'disconnected' : function(self, socket)
         id = self.sreep[socket]
@@ -42,6 +49,7 @@ Mesh = [
         end
     end,
 
+
     'handle_message' : function(self, socket, msg5)
 
         if msg5.event == 'greet' then
@@ -49,6 +57,7 @@ Mesh = [
             self.sreep[socket] = msg5.from
         end
     end,
+
 
     'messaged' : function(self, socket, msg4)
 
@@ -79,11 +88,13 @@ Mesh = [
 
     end,
 
+
     'request' : function(self, to, msg)
         msg.seq = self.seq
         self.requests[self.seq] = msg
         self.send_to(to, msg)
     end,
+
 
     'send_to' : function(self, to, msg)
         msg.from = self.id
@@ -99,10 +110,12 @@ Mesh = [
         self.send(to2, msg)
     end,
 
+
     'send' : function(self, to, msg)
         sys.print(self.id + ' send to ' + to + ': ' + msg.event)
         sys.send(to, msg)
     end,
+
 
     'broadcast' : function(self, msg6, except)
         if self.offline then

@@ -1,12 +1,20 @@
 ####### sync.fg
 
+
+import '../ui'
+import '../mesh'
+
+
+port = 1999
+
+
 Sync = [
 
     'writing' : [],
 
-    'init' : function(self, ctx, dirs, mesh)
+    'init' : function(self, ctx, dir, mesh)
 
-        watched = dirs[0] + '/' # todo: watch all dirs
+        watched = dir + '/'
 
         # clear directory for testing
         sys.rm(watched)

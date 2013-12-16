@@ -1,8 +1,13 @@
+####### test_director
+
+
 import 'mesh'
+
 
 test_director = [
 
-    'id'    : id,
+
+    'id'    : 'test_director',
     'seq'   : 0,
     'queue' : [],
     'active': [],
@@ -67,6 +72,7 @@ test_director = [
 
     end,
 
+
     'print_report' : function(self)
 
             total = self.passed + self.tested
@@ -74,6 +80,7 @@ test_director = [
             sys.exit()
 
     end,
+
 
     'dequeue' : function(self)
 
@@ -92,5 +99,6 @@ test_director = [
         sys.send(self.peers.server, msg4)
 
     end,
+
 
 ] + Mesh

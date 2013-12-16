@@ -6,6 +6,9 @@ import '../ui'
 import '../mesh'
 
 
+id = 'client' + id
+
+
 client = [
 
     'select' : function(self, row)
@@ -21,8 +24,8 @@ client.ui = sys.ui( client,
                         'w':240, 'h':320
                     ])
 
-mesh = Mesh.init('client', 9999, [client])
-client.sync = Sync.init(client, ['client'], mesh)
+mesh = Mesh.init(id, 9999, [client])
+client.sync = Sync.init(client, id, mesh)
 
 sys.ui_set(client.ui.files, client.sync.files.keys) # update ui
 

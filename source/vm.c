@@ -1542,4 +1542,11 @@ void execute(struct byte_array *program)
     struct context *context = context_new(NULL, true, true);
     execute_with(context, program, false);
     context_del(context);
+
+    pid_t pid;
+    while ((pid = waitpid(WAIT_ANY, NULL, 0)))
+    {
+        if (errno == ECHILD)
+            break;
+    }
 }

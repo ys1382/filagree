@@ -152,10 +152,14 @@ void *sys_socket_listen2(void *arg)
 	FD_ZERO(&allset);
 	FD_SET(ta0->fd, &allset);
 
-	for (;;) {
+	for (;;)
+    {
+        DEBUGPRINT("server listen on socket\n");
 
 		rset = allset;
 		nready = select(maxfd+1, &rset, NULL, NULL, NULL);
+
+        DEBUGPRINT("client connected\n");
 
 		if (FD_ISSET(ta0->fd, &rset))   // new client connection
         {
@@ -169,7 +173,8 @@ void *sys_socket_listen2(void *arg)
 
 			for (i = 0; i < FD_SETSIZE; i++)
             {
-				if (client[i] < 0) {
+				if (client[i] < 0)
+                {
 					client[i] = connfd;	// save descriptor
 					break;
 				}

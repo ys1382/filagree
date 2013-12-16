@@ -2,6 +2,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <unistd.h>
+#include <errno.h>
 
 #include "hal.h"
 #include "interpret.h"
