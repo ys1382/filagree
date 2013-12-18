@@ -1,9 +1,9 @@
 ####### test_sync.fg
 
-# to run,  launches server and two clients, 'A' and 'B'
+# to run, launch    server and two clients, 'A' and 'B'
 
 
-import 'sync'
+import 'sync' # for host and port
 import '../test_director'
 
 
@@ -31,6 +31,7 @@ director = [
 
         # create
         self.sync_direct('A',      'update', 'a.txt', '123')
+/*
         self.sync_direct('A',      'verify', 'a.txt', '123')
         self.sync_direct('server', 'verify', 'a.txt', '123')
         self.sync_direct('B',      'verify', 'a.txt', '123')
@@ -52,12 +53,12 @@ director = [
         self.sync_direct('A',      'verify', 'a.txt')
         self.sync_direct('server', 'verify', 'a.txt')
         self.sync_direct('B',      'verify', 'a.txt')
-
+*/
     end,
 
 
 ] + test_director
 
 
-sys.connect('127.0.0.1', port, director) # test client connects to sync server
-sys.loop()
+director.mesh = Mesh.init(director.id, host, port, [director])
+director.mesh.connect()

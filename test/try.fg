@@ -1,1 +1,2 @@
-sys.fork('sys.print(7)')
+a = 0 + true
+sys.print(a)

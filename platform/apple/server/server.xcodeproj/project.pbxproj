@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8869B94218623D9E00907FA2 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8869B94118623D9E00907FA2 /* Cocoa.framework */; };
 		88C6304518351EC200E6E9DC /* hal_osx.m in Sources */ = {isa = PBXBuildFile; fileRef = 88C6303A18351EC200E6E9DC /* hal_osx.m */; };
 		88C6304618351EC200E6E9DC /* compile.c in Sources */ = {isa = PBXBuildFile; fileRef = 88C6303B18351EC200E6E9DC /* compile.c */; };
 		88C6304718351EC200E6E9DC /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 88C6303C18351EC200E6E9DC /* file.c */; };
@@ -18,7 +19,6 @@
 		88C6304D18351EC200E6E9DC /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 88C6304218351EC200E6E9DC /* util.c */; };
 		88C6304E18351EC200E6E9DC /* variable.c in Sources */ = {isa = PBXBuildFile; fileRef = 88C6304318351EC200E6E9DC /* variable.c */; };
 		88C6304F18351EC200E6E9DC /* vm.c in Sources */ = {isa = PBXBuildFile; fileRef = 88C6304418351EC200E6E9DC /* vm.c */; };
-		88C6305118351EDE00E6E9DC /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88C6305018351EDE00E6E9DC /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -34,6 +34,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8869B94118623D9E00907FA2 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		88C62B5018351D7400E6E9DC /* server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = server; sourceTree = BUILT_PRODUCTS_DIR; };
 		88C62F2818351E6B00E6E9DC /* filagree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = filagree.png; sourceTree = "<group>"; };
 		88C62F2B18351E6B00E6E9DC /* x copy.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "x copy.txt"; sourceTree = "<group>"; };
@@ -63,7 +64,6 @@
 		88C6304218351EC200E6E9DC /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = util.c; path = ../../../source/util.c; sourceTree = "<group>"; };
 		88C6304318351EC200E6E9DC /* variable.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = variable.c; path = ../../../source/variable.c; sourceTree = "<group>"; };
 		88C6304418351EC200E6E9DC /* vm.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vm.c; path = ../../../source/vm.c; sourceTree = "<group>"; };
-		88C6305018351EDE00E6E9DC /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		88C630521835221700E6E9DC /* compile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = compile.h; path = ../../../source/compile.h; sourceTree = "<group>"; };
 		88C630531835221700E6E9DC /* file.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = file.h; path = ../../../source/file.h; sourceTree = "<group>"; };
 		88C630541835221700E6E9DC /* hal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = hal.h; path = ../../../source/hal.h; sourceTree = "<group>"; };
@@ -82,19 +82,27 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				88C6305118351EDE00E6E9DC /* Cocoa.framework in Frameworks */,
+				8869B94218623D9E00907FA2 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8869B94318623DAA00907FA2 /* frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8869B94118623D9E00907FA2 /* Cocoa.framework */,
+			);
+			name = frameworks;
+			sourceTree = "<group>";
+		};
 		88C62B4718351D7400E6E9DC = {
 			isa = PBXGroup;
 			children = (
-				88C6305018351EDE00E6E9DC /* Cocoa.framework */,
 				88C6303918351E9200E6E9DC /* source */,
 				88C62F2718351E6B00E6E9DC /* test */,
+				8869B94318623DAA00907FA2 /* frameworks */,
 				88C62B5118351D7400E6E9DC /* Products */,
 			);
 			sourceTree = "<group>";

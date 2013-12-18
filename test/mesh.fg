@@ -9,11 +9,12 @@ Mesh = [
     'seq'   : 0,
 
 
-    'init' : function(self, id, port, ctx)
+    'init' : function(self, id, address, port, mesh_subscribers)
 
         self.id = id
+        self.address = address
         self.port = port
-        self.ctx = ctx or []
+        self.ctx = mesh_subscribers or []
 
         return self
 
@@ -26,7 +27,7 @@ Mesh = [
 
 
     'connect' : function(self)
-        sys.connect('127.0.0.1', self.port, self)
+        sys.connect(self.address, self.port, self)
     end,
 
 
@@ -97,9 +98,12 @@ Mesh = [
 
 
     'send_to' : function(self, to, msg)
+
         msg.from = self.id
         msg.to = to
         to2 = self.peers[to] # id -> socket
+
+        # if no direct connection, then send via 'server'
         if not to2 then
             if self.id != 'server' then
                 to2 = self.peers['server']
@@ -107,7 +111,9 @@ Mesh = [
                 sys.print('no peer ' + to)
             end
         end
+
         self.send(to2, msg)
+
     end,
 
 

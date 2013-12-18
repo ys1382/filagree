@@ -11,6 +11,7 @@ test_director = [
     'seq'   : 0,
     'queue' : [],
     'active': [],
+    'passed': 0,
 
 
     'handle_message' : function(self, socket, msg4)
@@ -94,11 +95,10 @@ test_director = [
             sys.exit(2)
         end
 
-        sys.print('send ' + msg4)
-
-        sys.send(self.peers.server, msg4)
+        #sys.print('send ' + msg4)
+        #sys.send(self.peers.server, msg4)
+        self.mesh.send_to(msg4.to, msg4)
 
     end,
 
-
-] + Mesh
+]

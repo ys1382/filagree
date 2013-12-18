@@ -564,7 +564,7 @@ static struct variable *variable_deserialize2(struct context *context, struct by
     if (NULL != str)
         byte_array_del(str);
 
-    DEBUGPRINT("\n>%" PRIu16 " - variable_deserialize2 %p %s\n", current_thread_id(), result, var_type_str(result->type));
+    //DEBUGPRINT("\n>%" PRIu16 " - variable_deserialize2 %p %s\n", current_thread_id(), result, var_type_str(result->type));
 
     result->gc_state = GC_NEW;
     return result;
