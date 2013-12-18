@@ -93,12 +93,8 @@ void *thread_wrapper(void *param)
     struct node_thread *ta = (struct node_thread *)param;
     struct context_shared *s = ta->context->singleton;
 
-    gil_lock(ta->context, "thread_wrapper");
-    s->num_threads++;
-    gil_unlock(ta->context, "thread_wrapper");
-
     ta->start_routine(ta);
-
+    
     gil_lock(ta->context, "thread_wrapper b");
     s->num_threads--;
     pthread_cond_signal(&s->thread_cond);
@@ -114,9 +110,16 @@ void add_thread(struct node_thread *ta, int sockfd)
         perror("malloc");
         return;
     }
-    if (pthread_create(tid, NULL, &thread_wrapper, (void*)ta)) {
+
+    struct context_shared *s = ta->context->singleton;
+    s->num_threads++;
+
+    if (pthread_create(tid, NULL, &thread_wrapper, (void*)ta))
+    {
         perror("pthread_create");
-        return;
+
+        s->num_threads--;
+        pthread_cond_signal(&s->thread_cond);
     }
 }
 
@@ -215,11 +218,13 @@ void *sys_socket_listen2(void *arg)
                     struct node_thread *ta = thread_new(ta0->context, listener, node_callback, sockfd);
                     ta->event = DISCONNECTED;
                     add_thread(ta, 0);
-
-				} else
+				}
+                else
+                {
                     DEBUGPRINT("\nmessagd1\n");
                     messaged(ta0, listener, sockfd, buf, n);
-
+                }
+    
                 if (--nready <= 0) // no more readable descriptors
 					break;
 			}
