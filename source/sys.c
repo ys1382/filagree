@@ -144,6 +144,21 @@ struct variable *sys_interpret(struct context *context)
     return NULL;
 }
 
+// deletes file or folder
+struct variable *sys_move(struct context *context)
+{
+    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
+    const char *src = param_str(value, 1);
+    const char *dst = param_str(value, 2);
+    assert_message((strlen(src)>1) && (strlen(dst)>1), "oops");
+
+    char mvcmd[100];
+    sprintf(mvcmd, "mv %s %s", src, dst);
+    if (system(mvcmd))
+        DEBUGPRINT("\nCould not mv from %s to %s\n", src, dst);
+    return NULL;
+}
+
 #if !(TARGET_OS_IPHONE)
 
 // deletes file or folder
@@ -160,7 +175,6 @@ struct variable *sys_rm(struct context *context)
     free(path2);
     return NULL;
 }
-
 
 // creates directory
 struct variable *sys_mkdir(struct context *context)
@@ -484,6 +498,7 @@ struct string_func builtin_funcs[] = {
     {"save",        &sys_save},
     {"load",        &sys_load},
     {"rm",          &sys_rm},
+    {"move",        &sys_move},
     {"mkdir",       &sys_mkdir},
     {"sin",         &sys_sin},
     {"run",         &sys_run},

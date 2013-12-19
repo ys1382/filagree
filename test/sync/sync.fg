@@ -151,16 +151,8 @@ Sync = [
 
     'handle_change' : function(self, socket, msg8)
 
-        changez = msg8.changes
-        cd = changez.deleted
-
-        # create new directories
-        for path in cu where cu[path].dir
-            sys.mkdir(self.watched + path)
-        end
-
         # delete removed directories and files
-        for path in cd
+        for path in msg8.changes.deleted
             sys.rm(self.watched + path)
         end
 
@@ -177,19 +169,14 @@ Sync = [
         status = 'done'
 
         if action == 'update' then
+            # sys.mkdir(path)
             sys.write(path, msg7.content)
 
-        else if action == 'move' then
-                sys.rename(from, to)
+        else if action == 'rename' then
+            sys.move(path, self.watched + msg7.path2)
 
         else if action == 'delete' then
             sys.rm(path)
-
-        else if action == 'offline' then
-                self.offline = msg7.offline
-                if not msg7.offline then
-                    self.connected()
-                end
 
         else if action == 'verify' then
             content = sys.read(path)
@@ -197,6 +184,12 @@ Sync = [
                 status = 'pass'
             else
                 status = 'fail: ' + content +' != '+ msg7.content
+            end
+
+        else if action == 'offline' then
+            self.offline = msg7.offline
+            if not msg7.offline then
+                self.connected()
             end
         end
 

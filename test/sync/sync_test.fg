@@ -15,9 +15,9 @@ director = [
 
     end,
 
-    'sync_direct' : function(self, whom, action, path, content)
+    'sync_direct' : function(self, whom, action, path, content, path2)
 
-        self.direct(whom, action, ['path':path, 'content':content])
+        self.direct(whom, action, ['path':path, 'content':content, 'path2':path2])
 
     end,
 
@@ -32,15 +32,16 @@ director = [
         self.sync_direct('A',      'verify', 'a.txt', '123')
         self.sync_direct('server', 'verify', 'a.txt', '123')
         self.sync_direct('B',      'verify', 'a.txt', '123')
-/*
+
         # rename
-        self.sync_direct('A',      'rename', 'a.txt', 'b.txt')
+        self.sync_direct('A',      'rename', 'a.txt', nil, 'b.txt')
         self.sync_direct('A',      'verify', 'b.txt', '123')
         self.sync_direct('server', 'verify', 'b.txt', '123')
         self.sync_direct('B',      'verify', 'b.txt', '123')
 
         # update
         self.sync_direct('B',      'update', 'a.txt', '456')
+/*
         self.sync_direct('B',      'verify', 'a.txt', '456')
         self.sync_direct('server', 'verify', 'a.txt', '456')
         self.sync_direct('A',      'verify', 'a.txt', '456')
