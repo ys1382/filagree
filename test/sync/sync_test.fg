@@ -15,13 +15,11 @@ director = [
 
     end,
 
-
     'sync_direct' : function(self, whom, action, path, content)
 
-        self.direct(whom, action, 'path':path, 'content':content)
+        self.direct(whom, action, ['path':path, 'content':content])
 
     end,
-
 
     #
     # test to create, rename, update, delete
@@ -31,11 +29,10 @@ director = [
 
         # create
         self.sync_direct('A',      'update', 'a.txt', '123')
-/*
         self.sync_direct('A',      'verify', 'a.txt', '123')
         self.sync_direct('server', 'verify', 'a.txt', '123')
         self.sync_direct('B',      'verify', 'a.txt', '123')
-
+/*
         # rename
         self.sync_direct('A',      'rename', 'a.txt', 'b.txt')
         self.sync_direct('A',      'verify', 'b.txt', '123')

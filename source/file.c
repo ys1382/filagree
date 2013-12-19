@@ -69,7 +69,7 @@ struct byte_array *read_file(const struct byte_array *filename_ba, uint32_t offs
 no_file:
     //free(filename_str);
     printf("\nCould not read file %s\n", filename_str);
-    return NULL;
+    return byte_array_new();
 }
 
 int write_file(const struct byte_array* path, struct byte_array* bytes, uint32_t from, int32_t timestamp)

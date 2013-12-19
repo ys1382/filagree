@@ -51,7 +51,8 @@ test_director = [
 
     end,
 
-    'direct' : function(self, whom, action)
+
+    'direct' : function(self, whom, action, params)
 
         self.seq = self.seq + 1
 
@@ -59,14 +60,7 @@ test_director = [
                 'action'    : action,
                 'from'      : self.id,
                 'to'        : whom,
-                'seq'       : self.seq]
-
-        a = sys.args()
-        i = 3
-        while i < a.length
-            ai = a[i]
-            msg5 = msg5 + ai
-        end
+                'seq'       : self.seq] + params
 
         self.queue = self.queue + [msg5]
         self.dequeue()
@@ -76,9 +70,9 @@ test_director = [
 
     'print_report' : function(self)
 
-            total = self.passed + self.tested
-            sys.print('test complete: ' + self.passed +' / '+ self.tested +' passed')
-            sys.exit()
+        total = self.passed + self.tested
+        sys.print('test complete: ' + self.passed +' / '+ self.tested +' passed')
+        sys.exit()
 
     end,
 

@@ -27,3 +27,4 @@ client.sync = Sync.init(client, id, mesh)
 sys.ui_set(client.ui.files, client.sync.files.keys) # update ui
 
 mesh.connect()
+sys.loop()

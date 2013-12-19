@@ -835,14 +835,19 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
         if (event & kFSEventStreamEventFlagItemRemoved)     DEBUGPRINT("\t\tdeleted\n");
         if (event & kFSEventStreamEventFlagItemModified)    DEBUGPRINT("\t\tmodified\n");
 
-        struct variable *path3 = path_var(thread, paths[i]);
-        struct variable *method2 = event_string(thread->context, FILED);
-        struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
+        @try {
 
-        if ((NULL != method3) && (method3->type != VAR_NIL))
-            vm_call(thread->context, method3, thread->listener, path3, NULL);
-    }
+            struct variable *path3 = path_var(thread, paths[i]);
+            struct variable *method2 = event_string(thread->context, FILED);
+            struct variable *method3 = variable_map_get(thread->context, thread->listener, method2);
 
+            if ((NULL != method3) && (method3->type != VAR_NIL))
+                vm_call(thread->context, method3, thread->listener, path3, NULL);
+
+        }   @catch (NSException * e) {
+            NSLog(@"Exception: %@", e);
+        }
+}
     gil_unlock(thread->context, "file_listener_callback");
 }
 
