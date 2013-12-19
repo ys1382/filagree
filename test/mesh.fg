@@ -77,6 +77,10 @@ Mesh = [
                 end
             end
 
+            if msg4.flood then
+                self.broadcast(msg4, socket)
+            end
+
         else # forward to recipient
 
             to = self.peers[msg4.to] # id -> socket
@@ -127,6 +131,7 @@ Mesh = [
         if self.offline then
             return
         end
+        msg6.flood = true
         msg6.from = msg6.from or self.id
         for socket in self.peers.vals where (socket != except)
             self.send(socket, msg6)
