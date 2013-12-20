@@ -761,41 +761,9 @@ void *hal_window(struct context *context,
     return (void *)CFBridgingRetain(window);
 }
 
+
 #endif // NO_UI
 
-/*
-void hal_save(struct context *context, const struct byte_array *key, const struct variable *value)
-{
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-
-    const char *key2 = byte_array_to_string(key);
-    NSString *key3 = [NSString stringWithUTF8String:key2];
-
-    struct byte_array *bits = variable_serialize(context, NULL, value);
-    NSData *value2 = [NSData dataWithBytes:bits->data length:bits->length];
-
-    byte_array_reset(bits);
-    struct variable *tst = variable_deserialize(context, bits);
-    NSLog(@"tst = %s", variable_value_str(context, tst));
-
-    [defaults setObject:value2 forKey:key3];
-    [defaults synchronize];
-}
-
- struct variable *hal_load(struct context *context, const struct byte_array *key)
-{
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    const char *key2 = byte_array_to_string(key);
-    NSString *key3 = [NSString stringWithUTF8String:key2];
-    NSData *value2 = [defaults dataForKey:key3];
-    if (NULL == value2)
-        return variable_new_nil(context);
-    struct byte_array bits = {(uint8_t*)[value2 bytes], NULL, (uint32_t)[value2 length]};
-    bits.current = bits.data;
-
-    return variable_deserialize(context, &bits);
-}
-*/
 
 struct file_thread {
     struct context *context;
@@ -845,7 +813,9 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
                 vm_call(thread->context, method3, thread->listener, path3, NULL);
 
         }   @catch (NSException * e) {
+#ifdef DEBUG
             NSLog(@"Exception: %@", e);
+#endif
         }
 }
     gil_unlock(thread->context, "file_listener_callback");

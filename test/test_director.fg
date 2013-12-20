@@ -7,11 +7,11 @@ import 'mesh'
 test_director = [
 
 
-    'id'    : 'test_director',
-    'seq'   : 0,
-    'queue' : [],
-    'active': [],
-    'passed': 0,
+    'id'    :       'test_director',
+    'seq'   :       0,
+    'queue' :       [],
+    'active':       [],
+    'descriptions': [],
 
 
     'handle_message' : function(self, socket, msg4)
@@ -19,11 +19,11 @@ test_director = [
         if (msg4.event == 'greet') then
 
             self.run_tests()
+            self.dequeue()
 
         else if (msg4.event == 'test') then
 
-            sys.print('test result: ' + msg4)
-            #sys.print('test result: ' + msg4.seq + ': ' + msg4.status)
+            #sys.print('test result: ' + msg4)
 
             seq = ''+msg4.seq
             original_request = self.active[seq]
@@ -35,29 +35,38 @@ test_director = [
 
                 original_request.retry = original_request.retry + 1
                 sys.sleep(original_request.retry * 1000)
-                self.queue = [original_request] + self.queue
+                self.queue = [original_request] + self.queue # add back to head of q
 
-            else # try again
-
-                self.passed = self.passed + ok
-                self.tested = self.tested + 1
-
+            else
+                self.received_result(msg4.seq, ok)
             end
 
-            self.dequeue()
-
-            if (msg4.seq == self.seq) then
-                self.print_report()
+            if self.dequeue() then # all tests done
+                sys.print('testing complete: ' + self.score +' / '+ self.descriptions.length +' passed')
+                sys.exit()
             end
 
         end
+    end,
+
+    'received_result' : function(self, seq, ok)
+
+        if ok then
+            self.score = self.score + 1
+            text = 'passed'
+        else
+            text = 'failed'
+        end
+
+        desc = self.descriptions[seq]
+        sys.print(seq +' '+ desc.who +' '+ desc.title +': '+ text)
 
     end,
 
 
-    'direct' : function(self, whom, action, params)
+    'direct' : function(self, title, whom, action, params)
 
-        self.seq = self.seq + 1
+        self.descriptions[self.seq] = ['title' : title, 'who' : whom]
 
         msg5 = ['event'     : 'test',
                 'action'    : action,
@@ -66,34 +75,27 @@ test_director = [
                 'seq'       : self.seq] + params
 
         self.queue = self.queue + [msg5]
-        self.dequeue()
+
+        self.seq = self.seq + 1
 
     end,
-
-
-    'print_report' : function(self)
-
-        total = self.passed + self.tested
-        sys.print('test complete: ' + self.passed +' / '+ self.tested +' passed')
-        sys.exit()
-
-    end,
-
 
     'dequeue' : function(self)
 
-        if (not self.queue.length) or self.active.keys.length then # busy
-            return
+        if self.active.keys.length then # busy
+            sys.print('dq busy')
+            return false
+        else if (not self.queue.length) then # all done
+            return true
         end
 
         msg4 = self.queue.remove()[0]
         self.active[''+msg4.seq] = msg4
         if self.active.keys.length != 1 then
+            sys.print('dq error: ' + self.active)
             sys.exit(2)
         end
 
-        #sys.print('send ' + msg4)
-        #sys.send(self.peers.server, msg4)
         self.mesh.send_to(msg4.to, msg4)
 
     end,

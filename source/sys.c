@@ -96,7 +96,7 @@ struct variable *sys_read(struct context *context)
     uint32_t length = param_int(args, 3);
 
     struct byte_array *bytes = read_file(path->str, offset, length);
-    printf("read %d bytes\n", bytes->length);
+    DEBUGPRINT("read %d bytes\n", bytes->length);
 
     struct variable *content = NULL;
     if (NULL != bytes)
@@ -125,6 +125,40 @@ struct variable *sys_loop(struct context *context)
     hal_loop(context);
     return NULL;
 }
+
+struct variable *sys_exit(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    int32_t ret = param_int(args, 1);
+    DEBUGPRINT("\nexit %d\n", ret);
+    exit(ret);
+    return NULL;
+}
+
+struct variable *sys_sleep(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    int32_t milliseconds = param_int(args, 1);
+    hal_sleep(milliseconds);
+    return NULL;
+}
+
+struct variable *sys_timer(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    int32_t milliseconds = param_int(args, 1);
+    struct variable *logic = param_var(context, args, 2);
+    bool repeats = false;
+    if (args->list.ordered->length > 3)
+    {
+        struct variable *arg3 = array_get(args->list.ordered, 3);
+        repeats = arg3->integer;
+    }
+    
+    hal_timer(context, milliseconds, logic, repeats);
+    return NULL;
+}
+
 
 // runs bytecode
 struct variable *sys_run(struct context *context)
@@ -510,6 +544,9 @@ struct string_func builtin_funcs[] = {
     {"file_list",   &sys_file_list},
     {"file_listen", &sys_file_listen},
     {"loop",        &sys_loop},
+    {"exit",        &sys_exit},
+    {"sleep",       &sys_sleep},
+    {"timer",       &sys_timer},
 #ifndef NO_UI
     {"window",      &sys_window},
     {"label",       &sys_label},
@@ -559,9 +596,7 @@ struct variable *sys_new(struct context *context)
 #define FNC_PART        "part"
 #define FNC_REMOVE      "remove"
 #define FNC_INSERT      "insert"
-#define FNC_EXIT        "exit"
-#define FNC_SLEEP       "sleep"
-#define FNC_TIMER       "timer"
+
 
 int compar(struct context *context, const void *a, const void *b, struct variable *comparator)
 {
@@ -799,38 +834,6 @@ struct variable *cfnc_deserialize(struct context *context)
     return variable_deserialize(context, bits);
 }
 
-struct variable *cfnc_exit(struct context *context)
-{
-    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    int32_t ret = param_int(args, 1);
-    exit(ret);
-    return NULL;
-}
-
-struct variable *cfnc_sleep(struct context *context)
-{
-    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    int32_t milliseconds = param_int(args, 1);
-    hal_sleep(milliseconds);
-    return NULL;
-}
-
-struct variable *cfnc_timer(struct context *context)
-{
-    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    int32_t milliseconds = param_int(args, 1);
-    struct variable *logic = param_var(context, args, 2);
-    bool repeats = false;
-    if (args->list.ordered->length > 3)
-    {
-        struct variable *arg3 = array_get(args->list.ordered, 3);
-        repeats = arg3->integer;
-    }
-
-    hal_timer(context, milliseconds, logic, repeats);
-    return NULL;
-}
-
 //    a                b        c
 // <sought> <replacement> [<start>]
 // <start> <length> <replacement>
@@ -992,15 +995,6 @@ struct variable *builtin_method(struct context *context,
 
     else if (!strcmp(idxstr, FNC_REPLACE))
         result = variable_new_cfnc(context, &cfnc_replace);
-
-    else if (!strcmp(idxstr, FNC_EXIT))
-        result = variable_new_cfnc(context, &cfnc_exit);
-    
-    else if (!strcmp(idxstr, FNC_SLEEP))
-        result = variable_new_cfnc(context, &cfnc_sleep);
-
-    else if (!strcmp(idxstr, FNC_TIMER))
-        result = variable_new_cfnc(context, &cfnc_timer);
 
     free(idxstr);
     return result;

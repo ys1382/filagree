@@ -1,2 +1,3 @@
-a = 0 + true
-sys.print(a)
+x = function() end
+y = x()
+sys.print(y)

@@ -44,7 +44,7 @@ struct byte_array *read_file(const struct byte_array *filename_ba, uint32_t offs
     available -= offset;
     size = size ? MIN(size, available) : available;
     if (size <= 0)
-        return byte_array_new();
+        goto no_file;
 
     if (size > INPUT_MAX_LEN)
         goto no_file;
@@ -68,8 +68,8 @@ struct byte_array *read_file(const struct byte_array *filename_ba, uint32_t offs
     return ba;
 no_file:
     //free(filename_str);
-    printf("\nCould not read file %s\n", filename_str);
-    return byte_array_new();
+    DEBUGPRINT("\nCould not read file %s\n", filename_str);
+    return NULL;
 }
 
 int write_file(const struct byte_array* path, struct byte_array* bytes, uint32_t from, int32_t timestamp)
@@ -97,7 +97,7 @@ int write_file(const struct byte_array* path, struct byte_array* bytes, uint32_t
     }
     
     // set timestamp
-    if (timestamp >= 0)
+    if (timestamp > 0)
     {
         struct utimbuf timestamp2;
         timestamp2.modtime = timestamp;

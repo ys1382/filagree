@@ -64,7 +64,7 @@ Mesh = [
 
         if (not msg4.to) or (msg4.to == self.id) # por moi
 
-            sys.print('message to ' + self.id + ' from ' + socket + ': ' + msg4.event)
+            #sys.print('message to ' + self.id + ' from ' + socket + ': ' + msg4.event)
 
             if not (response = self.handle_message(socket, msg4)) then
                 for c in self.ctx
@@ -122,7 +122,7 @@ Mesh = [
 
 
     'send' : function(self, to, msg)
-        sys.print(self.id + ' send to ' + to + ': ' + msg.event)
+        #sys.print(self.id + ' send to ' + to + ': ' + msg.event)
         sys.send(to, msg)
     end,
 

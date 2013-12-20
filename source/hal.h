@@ -18,10 +18,9 @@ enum HAL_Event {
     ERROR,
 };
 
+
 struct variable *event_string(struct context *context, enum HAL_Event event);
 
-//void hal_save(struct context *context, const struct byte_array *key, const struct variable *value);
-//struct variable *hal_load(struct context *context, const struct byte_array *key);
 
 void hal_sleep(int32_t miliseconds);
 void hal_timer(struct context *context,

@@ -130,7 +130,7 @@ void messaged(struct node_thread *ta0, struct variable *listener, int sockfd, ui
     ta->buf->length = (uint32_t)n;
     memcpy((void*)ta->buf->data, buf, n);
     ta->event = MESSAGED;
-    DEBUGPRINT("\n>%" PRIu16 " - msgd %p\n", current_thread_id(), ta->context);
+    //DEBUGPRINT("\n>%" PRIu16 " - msgd %p\n", current_thread_id(), ta->context);
     add_thread(ta, 0);
 }
 
@@ -290,7 +290,7 @@ void *sys_connect2(void *arg)
             ssize_t n = read(ta->fd, buf, sizeof(buf)); // read from the socket
             if (n <= 0)
                     return NULL;
-            printf("\nmessaged2\n");
+            //printf("\nmessaged2\n");
             messaged(ta, ta->listener, ta->fd, buf, n);
         }
     }
@@ -329,7 +329,7 @@ void *sys_send2(void *arg)
     if (write(ta->fd, ta->buf->data, ta->buf->length) != ta->buf->length) {
         printf("write error\n");
     } else {
-        printf("sent to %d\n", ta->fd);
+        DEBUGPRINT("sent to %d\n", ta->fd);
     }
     return NULL;
 }

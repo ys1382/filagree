@@ -17,7 +17,12 @@ director = [
 
     'sync_direct' : function(self, whom, action, path, content, path2)
 
-        self.direct(whom, action, ['path':path, 'content':content, 'path2':path2])
+        title = action +' '+ path
+        if path2 then
+            title = title +' to '+ path2
+        end
+
+        self.direct(title, whom, action, ['path':path, 'content':content, 'path2':path2])
 
     end,
 
@@ -40,20 +45,18 @@ director = [
         self.sync_direct('B',      'verify', 'b.txt', '123')
 
         # update
-        self.sync_direct('B',      'update', 'a.txt', '456')
-/*
-        self.sync_direct('B',      'verify', 'a.txt', '456')
-        self.sync_direct('server', 'verify', 'a.txt', '456')
-        self.sync_direct('A',      'verify', 'a.txt', '456')
+        self.sync_direct('B',      'update', 'b.txt', '456')
+        self.sync_direct('B',      'verify', 'b.txt', '456')
+        self.sync_direct('server', 'verify', 'b.txt', '456')
+        self.sync_direct('A',      'verify', 'b.txt', '456')
 
         #delete
-        self.sync_direct('A',      'delete', 'a.txt')
-        self.sync_direct('A',      'verify', 'a.txt')
-        self.sync_direct('server', 'verify', 'a.txt')
-        self.sync_direct('B',      'verify', 'a.txt')
-*/
-    end,
+        self.sync_direct('A',      'delete', 'b.txt')
+        self.sync_direct('A',      'verify', 'b.txt')
+        self.sync_direct('server', 'verify', 'b.txt')
+        self.sync_direct('B',      'verify', 'b.txt')
 
+    end,
 
 ] + test_director
 

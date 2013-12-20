@@ -40,8 +40,6 @@ Sync = [
 
     'local_snapshot' : function(self)
 
-		sys.print('files are ' + sys.file_list(self.watched))
-
         list = sys.file_list(self.watched) - self.watched
         normalized = [(f-self.watched):list[f] for f in list where not self.ignore(f)]
         return normalized
@@ -94,7 +92,8 @@ Sync = [
         updated = latest - self.files
         deleted = self.files - latest
 
-        sys.print('updated='+updated +', deleted='+deleted)
+        sys.print('latest=' +latest  +', self.files='+self.files)
+        sys.print('updated='+updated +', deleted='   +deleted)
 
         # check for files with new mod times
         for f in self.files where (f != self.writing)
@@ -139,8 +138,7 @@ Sync = [
 
                 offset = offset + bytes.length
 
-                #sys.send(to, msg)
-                sys.print('send chunk ' + offset)
+                #sys.print('send chunk ' + offset)
                 self.mesh.broadcast(msg7)
 
             end

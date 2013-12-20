@@ -40,14 +40,6 @@ void hal_sound_url(const char *address)                 { stub("hal_sound_url");
 void hal_sound_bytes(const uint8_t *bytes,
                      uint32_t length)                   { stub("hal_sound_bytes"); }
 
-/*
-void hal_save(struct context *context,
-              const struct byte_array *key,
-              const struct variable *value)             { stub("hal_save"); }
-struct variable *hal_load(struct context *context,
-                          const struct byte_array *key) { stub("hal_load"); return NULL; }
-*/
-
 void hal_file_listen(struct context *context,
                      const char *path,
                      struct variable *listener)         { stub("hal_file_listen"); }
