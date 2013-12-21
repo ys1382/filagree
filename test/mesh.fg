@@ -43,8 +43,10 @@ Mesh = [
     'disconnected' : function(self, socket)
         id = self.sreep[socket]
         self.handle_disconnect(id)
-        sys.print(id + ' disconnected')
-        self.peers[id] = nil
+        self.peers[id] = self.sreep[socket] = nil
+
+        sys.print('disconnected from' + id)
+
         for c in self.ctx
             c.disconnected(self, socket)
         end
@@ -54,6 +56,7 @@ Mesh = [
     'handle_message' : function(self, socket, msg5)
 
         if msg5.event == 'greet' then
+            sys.print('connected to ' + msg5.from)
             self.peers[msg5.from] = socket
             self.sreep[socket] = msg5.from
         end

@@ -106,7 +106,8 @@ void *thread_wrapper(void *param)
 void add_thread(struct node_thread *ta, int sockfd)
 {
     pthread_t *tid = malloc(sizeof(pthread_t));
-    if (NULL == tid) {
+    if (NULL == tid)
+    {
         perror("malloc");
         return;
     }
@@ -243,7 +244,8 @@ struct variable *sys_socket_listen(struct context *context)
 
 	struct sockaddr_in servaddr;
 
-	if ((ta->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+	if ((ta->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    {
         perror("socket");
         return NULL;
     }
@@ -255,11 +257,13 @@ struct variable *sys_socket_listen(struct context *context)
 
     int reuse = 1;
     setsockopt(ta->fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
-	if (bind(ta->fd, (struct sockaddr*)&servaddr, sizeof(servaddr))) {
+	if (bind(ta->fd, (struct sockaddr*)&servaddr, sizeof(servaddr)))
+    {
         perror("bind");
         return NULL;
     }
-	if (listen(ta->fd, SOMAXCONN)) {
+	if (listen(ta->fd, SOMAXCONN))
+    {
         perror("listen");
         return NULL;
     }
@@ -278,9 +282,9 @@ void *sys_connect2(void *arg)
     {
         perror("connect");
         return NULL;
-
-    } else {
-
+    }
+    else
+    {
         ta->event = CONNECTED;
         node_callback(ta);
 
@@ -326,11 +330,10 @@ void *sys_send2(void *arg)
 {
     struct node_thread *ta = (struct node_thread *)arg;
 
-    if (write(ta->fd, ta->buf->data, ta->buf->length) != ta->buf->length) {
+    if (write(ta->fd, ta->buf->data, ta->buf->length) != ta->buf->length)
         printf("write error\n");
-    } else {
+    else
         DEBUGPRINT("sent to %d\n", ta->fd);
-    }
     return NULL;
 }
 
@@ -339,7 +342,7 @@ struct variable *sys_send(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     int fd = param_int(arguments, 1);
-    assert_message(fd < 10, "bad fd");
+    assert_message(fd >= 0, "bad fd");
     struct variable *listener = param_var(context, arguments, 3);
     struct node_thread *ta = thread_new(context, listener, &sys_send2, fd);
 
