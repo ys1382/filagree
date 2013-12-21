@@ -135,6 +135,26 @@ void messaged(struct node_thread *ta0, struct variable *listener, int sockfd, ui
     add_thread(ta, 0);
 }
 
+bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
+{
+    ssize_t n;
+    uint8_t buf[MAXLINE];
+
+    if ((n = read(fd, buf, MAXLINE)) <= 0)
+    {
+        struct node_thread *ta = thread_new(ta0->context, listener, node_callback, fd);
+        ta->event = DISCONNECTED;
+        add_thread(ta, 0);
+        return true;
+    }
+    else
+    {
+        DEBUGPRINT("\nmessagd1\n");
+        messaged(ta0, listener, fd, buf, n);
+        return false;
+    }
+}
+
 // listens for inbound connections
 void *sys_socket_listen2(void *arg)
 {
@@ -145,7 +165,6 @@ void *sys_socket_listen2(void *arg)
 	int					i, maxi, maxfd, connfd, sockfd;
 	int					nready, client[FD_SETSIZE];
 	fd_set				rset, allset;
-	uint8_t				buf[MAXLINE];
 	socklen_t			clilen;
 	struct sockaddr_in	cliaddr;
 
@@ -209,7 +228,15 @@ void *sys_socket_listen2(void *arg)
 
 			if (FD_ISSET(sockfd, &rset))
             {
-                ssize_t n;
+                if (socket_event(ta0, listener, sockfd))
+                {
+                    // connection closed by client
+					FD_CLR(sockfd, &allset);
+					client[i] = -1;
+                }
+
+                
+/*                ssize_t n;
 				if ((n = read(sockfd, buf, MAXLINE)) <= 0)
                 {
                     // connection closed by client
@@ -225,7 +252,7 @@ void *sys_socket_listen2(void *arg)
                     DEBUGPRINT("\nmessagd1\n");
                     messaged(ta0, listener, sockfd, buf, n);
                 }
-    
+*/
                 if (--nready <= 0) // no more readable descriptors
 					break;
 			}
