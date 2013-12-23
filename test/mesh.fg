@@ -22,6 +22,7 @@ Mesh = [
 
 
     'listen' : function(self)
+        sys.print('listening on port ' + self.port)
         sys.listen(self.port, self)    # server listens for incoming socket connections
     end,
 

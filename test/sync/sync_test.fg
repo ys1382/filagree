@@ -1,6 +1,6 @@
 ####### test_sync.fg
 
-# to run, launch    server and two clients, 'A' and 'B'
+# to run, launch server and two clients, 'A' and 'B'
 
 
 import 'sync' # for host and port
@@ -12,18 +12,104 @@ director = [
     'run_tests' : function(self)
 
         self.crud()
+        self.large()
+        self.conflict()
+        self.many()
 
     end,
 
-    'sync_direct' : function(self, whom, action, path, content, path2)
+    #
+    # Scalability test
+    #
+    'many' : function(self)
 
-        title = action +' '+ path
-        if path2 then
-            title = title +' to '+ path2
+        servers = 1
+        while servers < 10
+
+            clients = 100
+            while clients < 10000
+
+                test_cruds(servers, clients)
+
+                clients = clients * 10
+            end
+            servers = servers + 10
+        end
+    end,
+
+    'test_cruds(servers, clients)
+
+            pids = []
+            c = s = 0
+
+            # fork servers
+            while s < servers
+                pids[c+s] = sys.forkexec('../../filagree sync_server.fg')
+                s = s + 1
+            end
+
+            while c < clients
+                pids[c+s] = sys.forkexec('../../filagree sync_client.fg \"id=\'' + c + \'\")
+                c = c + 1
+            end
+
+            test_crud(clients)
+
+    end,
+
+    'conflict' : function(self)
+
+
+    #
+    # Sync & Conflict Resolution - Test Cases
+    #
+
+    'conflict' : function(self)
+
+        # TC 1: Simple Edit – Variation 1
+        self.sync_direct('server', 'update', 'tc1.txt', 'tc1a')
+        self.sync_direct('A',      'verify', 'tc1.txt', 'tc1a')
+        self.sync_direct('A',      'update', 'tc1.txt', 'tc1b')
+        self.sync_direct('A',      'verify', 'tc1.txt', 'tc1b')
+        self.sync_direct('server', 'verify', 'tc1.txt', 'tc1b')
+        
+        # TC 2: Simple Edit – Variation 2
+        self.create_local_file('tc2', 1024)
+        self.create_local_file('tc2', 1)
+        self.sync_direct('A',      'verify', 'tc2', nil, 1)
+        self.sync_direct('server', 'verify', 'tc2', nil, 1)
+
+        # etc.
+
+    end,
+
+    #
+    # test to transfer large files
+    #
+
+    'large' : function(self)
+
+        test_xfer = function(size)
+
+            filename = 'A/' + size + 'KB'
+            self.create_local_file(filename, size)
+            self.sync_direct('A', 'verify', filename, nil, size)
+            self.sync_direct('server', 'verify', filename, nil, size)
+            self.sync_direct('B', 'verify', filename, nil, size)
+
         end
 
-        self.direct(title, whom, action, ['path':path, 'content':content, 'path2':path2])
+        size = 1 # KB
+        while size <= (1024*1024) # 1GB
+            test_xfer(size)
+            size = size * 2
+        end
 
+    end,
+
+    # creates local file of random content, size in KB
+    'create_local_file' : function(self, name, size)
+        sys.forkexec('dd if=/dev/urandom bs=1024 count=' + size + of=' + name)
     end,
 
     #
@@ -56,7 +142,24 @@ director = [
         self.sync_direct('server', 'verify', 'b.txt')
         self.sync_direct('B',      'verify', 'b.txt')
 
+        # tell servers and client to exit
+        self.direct(nil, 'A',      'die')
+        self.direct(nil, 'B',      'die')
+        self.direct(nil, 'server', 'die')
+
     end,
+
+    'sync_direct' : function(self, whom, action, path, content, path2)
+
+        title = action +' '+ path
+        if path2 then
+            title = title +' to '+ path2
+        end
+
+        self.direct(title, whom, action, ['path':path, 'content':content, 'path2':path2])
+
+    end,
+
 
 ] + test_director
 

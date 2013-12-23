@@ -189,6 +189,9 @@ Sync = [
             if not msg7.offline then
                 self.connected()
             end
+
+        else if action == 'die' then
+            sys.exit(0)
         end
 
         msg8 = ['event' : 'test', 'status' : status, 'seq' : msg7.seq, 'to' : msg7.from]
