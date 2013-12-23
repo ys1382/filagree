@@ -34,7 +34,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		88401D2E18675E9C00BC8071 /* policy.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = policy.fg; sourceTree = "<group>"; };
 		8869B94118623D9E00907FA2 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		88C62B5018351D7400E6E9DC /* cmdline */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cmdline; sourceTree = BUILT_PRODUCTS_DIR; };
 		88C62F2818351E6B00E6E9DC /* filagree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = filagree.png; sourceTree = "<group>"; };
@@ -128,7 +127,6 @@
 				88C62F3C18351E6B00E6E9DC /* test_syntax.fg */,
 				88C62F3D18351E6B00E6E9DC /* try.fg */,
 				88C62F3E18351E6B00E6E9DC /* ui.fg */,
-				88401D2E18675E9C00BC8071 /* policy.fg */,
 			);
 			name = test;
 			path = ../../../test;

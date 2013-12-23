@@ -43,6 +43,7 @@ test_director = [
 
             if self.dequeue() then # all tests done
                 sys.print('testing complete: ' + self.score +' / '+ self.descriptions.length +' passed')
+                self.scythe()
                 sys.exit()
             end
 
@@ -97,6 +98,17 @@ test_director = [
         end
 
         self.mesh.send_to(msg4.to, msg4)
+
+    end,
+
+    # send message to peer to exit
+    'scythe' : function(self)
+
+        msgdie = ['event'   : 'test',
+                'action'    : 'die',
+                'from'      : self.id]
+
+        self.mesh.broadcast(msgdie)
 
     end,
 

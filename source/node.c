@@ -150,7 +150,7 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
     }
     else
     {
-        DEBUGPRINT("\nmessagd1\n");
+        DEBUGPRINT("\nsocket_event\n");
         messaged(ta0, listener, fd, buf, n);
         return false;
     }

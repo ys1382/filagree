@@ -70,6 +70,10 @@ Mesh = [
 
             #sys.print('message to ' + self.id + ' from ' + socket + ': ' + msg4.event)
 
+            if msg4.flood then
+                self.broadcast(msg4, socket)
+            end
+
             if not (response = self.handle_message(socket, msg4)) then
                 for c in self.ctx
                     response = c.handle_message(socket, msg4)
@@ -79,10 +83,6 @@ Mesh = [
                         return
                     end
                 end
-            end
-
-            if msg4.flood then
-                self.broadcast(msg4, socket)
             end
 
         else # forward to recipient
