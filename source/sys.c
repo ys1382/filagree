@@ -159,6 +159,29 @@ struct variable *sys_timer(struct context *context)
     return NULL;
 }
 
+struct variable *sys_forkexec(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+
+    const char *app = param_str(args, 1);
+
+    uint32_t argc = args->list.ordered->length - 2;
+    char **argv = malloc(sizeof(char*) * argc);
+    for (int i=0; i<argc; i++)
+        argv[i] = param_str(args, i);
+
+    pid_t pid = fork();
+    if (pid < 0)
+        perror("fork error");
+    else if (pid == 0)
+    {
+        if (execv(app, argv) < 0)
+            perror("execv error");
+        exit(0);
+    }
+    return variable_new_int(context, pid);
+}
+
 
 // runs bytecode
 struct variable *sys_run(struct context *context)
@@ -547,6 +570,7 @@ struct string_func builtin_funcs[] = {
     {"exit",        &sys_exit},
     {"sleep",       &sys_sleep},
     {"timer",       &sys_timer},
+    {"forkexec",    &sys_forkexec},
 #ifndef NO_UI
     {"window",      &sys_window},
     {"label",       &sys_label},

@@ -34,8 +34,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		88401D2E18675E9C00BC8071 /* policy.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = policy.fg; sourceTree = "<group>"; };
 		8869B94118623D9E00907FA2 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
-		88C62B5018351D7400E6E9DC /* server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = server; sourceTree = BUILT_PRODUCTS_DIR; };
+		88C62B5018351D7400E6E9DC /* cmdline */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cmdline; sourceTree = BUILT_PRODUCTS_DIR; };
 		88C62F2818351E6B00E6E9DC /* filagree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = filagree.png; sourceTree = "<group>"; };
 		88C62F2B18351E6B00E6E9DC /* x copy.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "x copy.txt"; sourceTree = "<group>"; };
 		88C62F2C18351E6B00E6E9DC /* x.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = x.txt; sourceTree = "<group>"; };
@@ -110,7 +111,7 @@
 		88C62B5118351D7400E6E9DC /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				88C62B5018351D7400E6E9DC /* server */,
+				88C62B5018351D7400E6E9DC /* cmdline */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -127,6 +128,7 @@
 				88C62F3C18351E6B00E6E9DC /* test_syntax.fg */,
 				88C62F3D18351E6B00E6E9DC /* try.fg */,
 				88C62F3E18351E6B00E6E9DC /* ui.fg */,
+				88401D2E18675E9C00BC8071 /* policy.fg */,
 			);
 			name = test;
 			path = ../../../test;
@@ -204,9 +206,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		88C62B4F18351D7400E6E9DC /* server */ = {
+		88C62B4F18351D7400E6E9DC /* cmdline */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 88C62B5918351D7400E6E9DC /* Build configuration list for PBXNativeTarget "server" */;
+			buildConfigurationList = 88C62B5918351D7400E6E9DC /* Build configuration list for PBXNativeTarget "cmdline" */;
 			buildPhases = (
 				88C62B4C18351D7400E6E9DC /* Sources */,
 				88C62B4D18351D7400E6E9DC /* Frameworks */,
@@ -216,9 +218,9 @@
 			);
 			dependencies = (
 			);
-			name = server;
+			name = cmdline;
 			productName = server;
-			productReference = 88C62B5018351D7400E6E9DC /* server */;
+			productReference = 88C62B5018351D7400E6E9DC /* cmdline */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -230,7 +232,7 @@
 				LastUpgradeCheck = 0500;
 				ORGANIZATIONNAME = filagree;
 			};
-			buildConfigurationList = 88C62B4B18351D7400E6E9DC /* Build configuration list for PBXProject "server" */;
+			buildConfigurationList = 88C62B4B18351D7400E6E9DC /* Build configuration list for PBXProject "cmdline" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -242,7 +244,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				88C62B4F18351D7400E6E9DC /* server */,
+				88C62B4F18351D7400E6E9DC /* cmdline */,
 			);
 		};
 /* End PBXProject section */
@@ -352,7 +354,7 @@
 					"-DNO_UI",
 					"-DFG_MAIN",
 				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = cmdline;
 			};
 			name = Debug;
 		};
@@ -367,14 +369,14 @@
 					"-DNO_UI",
 					"-DFG_MAIN",
 				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = cmdline;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		88C62B4B18351D7400E6E9DC /* Build configuration list for PBXProject "server" */ = {
+		88C62B4B18351D7400E6E9DC /* Build configuration list for PBXProject "cmdline" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				88C62B5718351D7400E6E9DC /* Debug */,
@@ -383,7 +385,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		88C62B5918351D7400E6E9DC /* Build configuration list for PBXNativeTarget "server" */ = {
+		88C62B5918351D7400E6E9DC /* Build configuration list for PBXNativeTarget "cmdline" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				88C62B5A18351D7400E6E9DC /* Debug */,

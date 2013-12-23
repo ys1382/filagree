@@ -22,6 +22,7 @@ Mesh = [
 
 
     'listen' : function(self)
+        sys.print('listening on port ' + self.port)
         sys.listen(self.port, self)    # server listens for incoming socket connections
     end,
 
@@ -45,7 +46,7 @@ Mesh = [
         self.handle_disconnect(id)
         self.peers[id] = self.sreep[socket] = nil
 
-        sys.print('disconnected from' + id)
+        sys.print('disconnected from ' + id)
 
         for c in self.ctx
             c.disconnected(self, socket)

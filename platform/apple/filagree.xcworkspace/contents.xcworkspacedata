@@ -2,7 +2,7 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:server/server.xcodeproj">
+      location = "group:server/cmdline.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:OSXfgui/OSXfgui.xcodeproj">
