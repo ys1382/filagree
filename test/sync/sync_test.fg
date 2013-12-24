@@ -1,6 +1,6 @@
 ####### test_sync.fg
 
-# to run, launch server and two clients, 'A' and 'B'
+# to run, launch server and two clients, 'client1' and 'client2'
 
 
 import 'sync' # for host and port
@@ -25,28 +25,28 @@ director = [
     'crud' : function(self)
 
         # create
-        self.sync_direct('A',      'update', 'a.txt', '123')
-        self.sync_direct('A',      'verify', 'a.txt', '123')
-        self.sync_direct('server', 'verify', 'a.txt', '123')
-        self.sync_direct('B',      'verify', 'a.txt', '123')
+        self.sync_direct('client1', 'update', 'a.txt', '123')
+        self.sync_direct('client1', 'verify', 'a.txt', '123')
+        self.sync_direct('server1', 'verify', 'a.txt', '123')
+        self.sync_direct('client2', 'verify', 'a.txt', '123')
 /*
         # rename
-        self.sync_direct('A',      'rename', 'a.txt', nil, 'b.txt')
-        self.sync_direct('A',      'verify', 'b.txt', '123')
-        self.sync_direct('server', 'verify', 'b.txt', '123')
-        self.sync_direct('B',      'verify', 'b.txt', '123')
+        self.sync_direct('client1', 'rename', 'a.txt', nil, 'b.txt')
+        self.sync_direct('client1', 'verify', 'b.txt', '123')
+        self.sync_direct('server1', 'verify', 'b.txt', '123')
+        self.sync_direct('client2', 'verify', 'b.txt', '123')
 
         # update
-        self.sync_direct('B',      'update', 'b.txt', '456')
-        self.sync_direct('B',      'verify', 'b.txt', '456')
-        self.sync_direct('server', 'verify', 'b.txt', '456')
-        self.sync_direct('A',      'verify', 'b.txt', '456')
+        self.sync_direct('client2', 'update', 'b.txt', '456')
+        self.sync_direct('client2', 'verify', 'b.txt', '456')
+        self.sync_direct('server1', 'verify', 'b.txt', '456')
+        self.sync_direct('client1', 'verify', 'b.txt', '456')
 
         #delete
-        self.sync_direct('A',      'delete', 'b.txt')
-        self.sync_direct('A',      'verify', 'b.txt')
-        self.sync_direct('server', 'verify', 'b.txt')
-        self.sync_direct('B',      'verify', 'b.txt')
+        self.sync_direct('client1', 'delete', 'b.txt')
+        self.sync_direct('client1', 'verify', 'b.txt')
+        self.sync_direct('server1'  'verify', 'b.txt')
+        self.sync_direct('client2', 'verify', 'b.txt')
 */
     end,
 
@@ -65,5 +65,6 @@ director = [
 ] + test_director
 
 
-director.mesh = Mesh.init(director.id, host, port, [director])
-director.mesh.connect()
+mesh = Mesh.init(director.id, host, port, [director])
+
+director.launch(mesh, 1)

@@ -344,7 +344,7 @@ void *sys_send2(void *arg)
     struct node_thread *ta = (struct node_thread *)arg;
 
     if (write(ta->fd, ta->buf->data, ta->buf->length) != ta->buf->length)
-        printf("write error\n");
+        perror("write");
     else
         DEBUGPRINT("sent to %d\n", ta->fd);
     return NULL;

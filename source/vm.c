@@ -951,13 +951,22 @@ static void list_put(struct context *context, enum Opcode op)
     }
 }
 
+static int32_t variable_val_int(const struct variable *v)
+{
+    switch (v->type) {
+        case VAR_INT:   return v->integer;
+        case VAR_BOOL:  return  v->boolean;
+        default: return 0;
+    }
+}
+                
 static struct variable *binary_op_int(struct context *context,
                                       enum Opcode op,
                                       const struct variable *u,
                                       const struct variable *v)
 {
-    int32_t m = u->type == VAR_INT ? u->integer : u->boolean;
-    int32_t n = v->type == VAR_INT ? v->integer : v->boolean;
+    int32_t m = variable_val_int(u);
+    int32_t n = variable_val_int(v);
     int32_t i;
     switch (op) {
         case VM_MUL:    i = m * n;    break;
@@ -1121,8 +1130,8 @@ static struct variable *binary_op_nil(struct context *context,
                                       const struct variable *v)
 {
     vm_assert(context, u->type==VAR_NIL || v->type==VAR_NIL, "nil op with non-nils");
-    if (v->type == VAR_NIL && u->type != VAR_NIL)
-        return binary_op_nil(context, op, v, u); // 1st var should be nil
+//    if (v->type == VAR_NIL && u->type != VAR_NIL)
+//        return binary_op_nil(context, op, v, u); // 1st var should be nil
 
     switch (op) {
         case VM_EQU:    return variable_new_bool(context, v->type == u->type);
@@ -1131,9 +1140,9 @@ static struct variable *binary_op_nil(struct context *context,
         case VM_SUB:    return variable_copy(context, v);
         case VM_MUL:    return variable_new_nil(context);
         case VM_LTN:
-        case VM_LEQ:    return variable_new_bool(context, true);
+        case VM_LEQ:
         case VM_GTN:
-        case VM_GRQ:    return variable_new_bool(context, false);
+        case VM_GRQ:    return binary_op_int(context, op, u, v);
         default:
             return vm_exit_message(context, "unknown binary nil op");
     }

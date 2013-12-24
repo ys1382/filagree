@@ -166,19 +166,21 @@ struct variable *sys_forkexec(struct context *context)
     const char *app = param_str(args, 1);
 
     uint32_t argc = args->list.ordered->length - 2;
-    char **argv = malloc(sizeof(char*) * argc);
-    for (int i=0; i<argc; i++)
-        argv[i] = param_str(args, i);
-
+    char **argv = malloc(sizeof(char*) * (argc+1));
+    for (int i=1; i<argc+2; i++)
+        argv[i-1] = param_str(args, i);
+    argv[argc+1] = NULL;
+    
     pid_t pid = fork();
     if (pid < 0)
-        perror("fork error");
+        perror("fork");
     else if (pid == 0)
     {
         if (execv(app, argv) < 0)
-            perror("execv error");
+            perror("execv");
         exit(0);
     }
+
     return variable_new_int(context, pid);
 }
 

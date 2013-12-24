@@ -35,7 +35,7 @@ void *exit_message(const char *format, ...);
 void null_check(const void* p);
 
 #ifdef DEBUG
-#define DEBUGPRINT(...)  printf ( __VA_ARGS__ );
+#define DEBUGPRINT(...)  fprintf (stderr, __VA_ARGS__ );
 #define DEBUGSPRINT(...) byte_array_format(context->pcbuf, true, __VA_ARGS__ );
 #else
 #define DEBUGPRINT(...)  {};

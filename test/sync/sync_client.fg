@@ -6,6 +6,8 @@ import '../ui'
 import '../mesh'
 
 
+id = 'client' + id
+
 client = [
 
     'select' : function(self, row)
