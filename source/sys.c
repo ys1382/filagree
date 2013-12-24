@@ -31,8 +31,10 @@ struct variable *sys_print(struct context *context)
     assert_message(args && args->type==VAR_SRC && args->list.ordered, "bad print arg");
     for (int i=1; i<args->list.ordered->length; i++) {
         struct variable *arg = (struct variable*)array_get(args->list.ordered, i);
-        const char *str = variable_value_str(context, arg);
-        printf("%s\n", str);
+        struct byte_array *str = variable_value(context, arg);
+        if (arg->type == VAR_STR)
+            str = byte_array_part(str, 1, str->length-2);
+        printf("%s\n", byte_array_to_string(str));
     }
     return NULL;
 }
@@ -157,6 +159,31 @@ struct variable *sys_timer(struct context *context)
     
     hal_timer(context, milliseconds, logic, repeats);
     return NULL;
+}
+
+struct variable *sys_forkexec(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+
+    const char *app = param_str(args, 1);
+
+    uint32_t argc = args->list.ordered->length - 2;
+    char **argv = malloc(sizeof(char*) * (argc+1));
+    for (int i=1; i<argc+2; i++)
+        argv[i-1] = param_str(args, i);
+    argv[argc+1] = NULL;
+    
+    pid_t pid = fork();
+    if (pid < 0)
+        perror("fork");
+    else if (pid == 0)
+    {
+        if (execv(app, argv) < 0)
+            perror("execv");
+        exit(0);
+    }
+
+    return variable_new_int(context, pid);
 }
 
 
@@ -547,6 +574,7 @@ struct string_func builtin_funcs[] = {
     {"exit",        &sys_exit},
     {"sleep",       &sys_sleep},
     {"timer",       &sys_timer},
+    {"forkexec",    &sys_forkexec},
 #ifndef NO_UI
     {"window",      &sys_window},
     {"label",       &sys_label},

@@ -29,7 +29,7 @@ director = [
         self.sync_direct('client1', 'verify', 'a.txt', '123')
         self.sync_direct('server1', 'verify', 'a.txt', '123')
         self.sync_direct('client2', 'verify', 'a.txt', '123')
-/*
+
         # rename
         self.sync_direct('client1', 'rename', 'a.txt', nil, 'b.txt')
         self.sync_direct('client1', 'verify', 'b.txt', '123')
@@ -45,9 +45,9 @@ director = [
         #delete
         self.sync_direct('client1', 'delete', 'b.txt')
         self.sync_direct('client1', 'verify', 'b.txt')
-        self.sync_direct('server1'  'verify', 'b.txt')
+        self.sync_direct('server1', 'verify', 'b.txt')
         self.sync_direct('client2', 'verify', 'b.txt')
-*/
+
     end,
 
     'sync_direct' : function(self, whom, action, path, content, path2)
@@ -66,5 +66,6 @@ director = [
 
 
 mesh = Mesh.init(director.id, host, port, [director])
-director.mesh = mesh
-mesh.connect()
+#director.mesh = mesh
+director.launch(mesh)
+#mesh.connect()

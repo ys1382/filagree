@@ -92,8 +92,8 @@ Sync = [
         updated = latest - self.files
         deleted = self.files - latest
 
-        sys.print('latest=' +latest  +', self.files='+self.files)
-        sys.print('updated='+updated +', deleted='   +deleted)
+        #sys.print('latest=' +latest  +', self.files='+self.files)
+        #sys.print('updated='+updated +', deleted='   +deleted)
 
         # check for files with new mod times
         for f in self.files where (f != self.writing)
@@ -160,7 +160,7 @@ Sync = [
 
     'handle_test' : function(self, msg7)
 
-        sys.print('test directive: ' + msg7)
+        sys.print(self.mesh.id + ' -- test directive: ' + msg7)
 
         action = msg7.action
         path = self.watched + msg7.path

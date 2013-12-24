@@ -42,7 +42,7 @@ test_director = [
             end
 
             if self.dequeue() then # all tests done
-                sys.print('testing complete: ' + self.score +' / '+ self.descriptions.length +' passed')
+                sys.print('\ntesting complete: ' + self.score +' / '+ self.descriptions.length +' passed\n')
                 self.scythe()
                 sys.exit()
             end
@@ -60,7 +60,7 @@ test_director = [
         end
 
         desc = self.descriptions[seq]
-        sys.print(seq +' '+ desc.who +' '+ desc.title +': '+ text)
+        sys.print(self.id + ' -- ' + seq +' '+ desc.who +' '+ desc.title +': '+ text)
 
     end,
 
@@ -98,6 +98,27 @@ test_director = [
         end
 
         self.mesh.send_to(msg4.to, msg4)
+
+    end,
+
+    # fork-exec server and clients
+    'launch' : function(self, mesh, num_clients)
+
+        sys.forkexec('../../source/filagree', 'sync_server.fg')
+        sys.sleep(1000)
+/*
+        i = 1
+#        while i <= num_clients
+            sys.forkexec('../../source/filagree', 'sync_client.fg', 'id=' + i)
+            i = i + 1
+#        end
+*/
+            sys.forkexec('../../source/filagree', 'sync_client.fg', 'id=' + 1)
+            sys.forkexec('../../source/filagree', 'sync_client.fg', 'id=' + 2)
+        sys.sleep(1000)
+
+        self.mesh = mesh
+        self.mesh.connect()
 
     end,
 
