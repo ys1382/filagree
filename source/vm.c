@@ -1073,7 +1073,8 @@ static struct variable *binary_op_map(struct context *context,
 static void variable_purge(struct context *context, struct variable *v, struct variable *p)
 {
     struct variable *position = variable_find(context, v, p, NULL);
-    if (position->type != VAR_NIL)
+    enum VarType pt = position->type;
+    if (pt != VAR_NIL && !(pt == VAR_INT && position->integer == -1))
         array_remove(v->list.ordered, position->integer, 1);
     else if (NULL != v->list.map)
         map_remove(v->list.map, p);

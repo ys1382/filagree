@@ -96,7 +96,7 @@ struct variable *sys_read(struct context *context)
     uint32_t length = param_int(args, 3);
 
     struct byte_array *bytes = read_file(path->str, offset, length);
-    DEBUGPRINT("read %d bytes\n", bytes->length);
+    DEBUGPRINT("read %d bytes\n", bytes ? bytes->length : 0);
 
     struct variable *content = NULL;
     if (NULL != bytes)
