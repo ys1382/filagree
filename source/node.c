@@ -301,14 +301,6 @@ void *sys_connect2(void *arg)
         {
             if (socket_event(ta, ta->listener, ta->fd))
                 return NULL;
-/*
-            uint8_t buf[MAXLINE];
-            ssize_t n = read(ta->fd, buf, sizeof(buf)); // read from the socket
-            if (n <= 0)
-                    return NULL;
-            //printf("\nmessaged2\n");
-            messaged(ta, ta->listener, ta->fd, buf, n);
-*/
         }
     }
 

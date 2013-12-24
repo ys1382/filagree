@@ -76,9 +76,12 @@ struct variable* variable_new(struct context *context, enum VarType type);
 void variable_del(struct context *context, struct variable *v);
 struct byte_array* variable_value(struct context *context, struct variable* v);
 const char *variable_value_str(struct context *context, struct variable *v);
+int32_t variable_value_int(const struct variable *v);
+
 struct byte_array *variable_serialize(struct context *context, struct byte_array *bits,
                                       const struct variable *in);
 struct variable *variable_deserialize(struct context *context, struct byte_array *str);
+
 void variable_old(struct variable *v);
 
 struct variable* variable_new_bool(struct context *context, bool b);

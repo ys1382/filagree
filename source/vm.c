@@ -950,23 +950,15 @@ static void list_put(struct context *context, enum Opcode op)
             break;
     }
 }
-
-static int32_t variable_val_int(const struct variable *v)
-{
-    switch (v->type) {
-        case VAR_INT:   return v->integer;
-        case VAR_BOOL:  return  v->boolean;
-        default: return 0;
-    }
-}
                 
 static struct variable *binary_op_int(struct context *context,
                                       enum Opcode op,
                                       const struct variable *u,
-                                      const struct variable *v)
+                                      const struct variable *v,
+                                      bool return_boolean)
 {
-    int32_t m = variable_val_int(u);
-    int32_t n = variable_val_int(v);
+    int32_t m = variable_value_int(u);
+    int32_t n = variable_value_int(v);
     int32_t i;
     switch (op) {
         case VM_MUL:    i = m * n;    break;
@@ -989,6 +981,9 @@ static struct variable *binary_op_int(struct context *context,
         default:
             return (struct variable*)vm_exit_message(context, "bad math int operator");
     }
+
+    if (return_boolean)
+        return variable_new_bool(context, i);
     return variable_new_int(context, i);
 }
 
@@ -1024,7 +1019,7 @@ static struct variable *binary_op_flt(struct context *context,
 }
 
 static bool is_num(enum VarType vt) {
-    return vt == VAR_INT || vt == VAR_FLT;
+    return vt == VAR_INT || vt == VAR_FLT || vt == VAR_BOOL || vt == VAR_NIL;
 }
 
 static struct variable *binary_op_str(struct context *context,
@@ -1136,13 +1131,27 @@ static struct variable *binary_op_nil(struct context *context,
     switch (op) {
         case VM_EQU:    return variable_new_bool(context, v->type == u->type);
         case VM_NEQ:    return variable_new_bool(context, v->type != u->type);
+        case VM_SUB:
+            if (u->type != VAR_NIL)
+                return variable_copy(context, u);
+                return variable_new_int(context, -variable_value_int(v));
         case VM_ADD:
-        case VM_SUB:    return variable_copy(context, v);
-        case VM_MUL:    return variable_new_nil(context);
+            if (u->type != VAR_NIL)
+                v = u;
+            return variable_copy(context, v);
+        case VM_MUL:
+            if (is_num(u->type) && is_num(v->type))
+                return variable_new_int(context, 0);
+            return variable_new_nil(context);
+        case VM_DIV: {
+            int32_t vviv = variable_value_int(v);
+            vm_assert(context, vviv, "divide by zero");
+            return variable_new_int(context, variable_value_int(u) / vviv);
+        }
         case VM_LTN:
         case VM_LEQ:
         case VM_GTN:
-        case VM_GRQ:    return binary_op_int(context, op, u, v);
+        case VM_GRQ:    return binary_op_int(context, op, u, v, true) ;
         default:
             return vm_exit_message(context, "unknown binary nil op");
     }
@@ -1200,12 +1209,11 @@ static void binary_op(struct context *context, enum Opcode op)
         w = binary_op_str(context, op, u, v);
     } else {
         bool floater = (ut == VAR_FLT && is_num(vt)) || (vt == VAR_FLT && is_num(ut));
-        bool inter = (ut==VAR_INT || ut==VAR_BOOL) && (vt==VAR_INT || vt==VAR_BOOL);
+        bool inter = (is_num(ut) && is_num(vt));
 
-        if (floater)                                w = binary_op_flt(context, op, u, v);
-        else if (inter)                             w = binary_op_int(context, op, u, v);
-        else
-            vm_exit_message(context, "unknown binary op");
+        if (floater)    w = binary_op_flt(context, op, u, v);
+        else if (inter) w = binary_op_int(context, op, u, v, false);
+        else            vm_exit_message(context, "unknown binary op");
     }
 
     variable_push(context, w);

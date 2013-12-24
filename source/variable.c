@@ -706,6 +706,15 @@ static bool variable_compare_maps(struct context *context, const struct map *uma
     return result;
 }
 
+int32_t variable_value_int(const struct variable *v)
+{
+    switch (v->type) {
+        case VAR_INT:   return v->integer;
+        case VAR_BOOL:  return  v->boolean;
+        default: return 0;
+    }
+}
+
 bool variable_compare(struct context *context, const struct variable *u, const struct variable *v)
 {
     if ((NULL == u) != (NULL == v))
@@ -713,6 +722,9 @@ bool variable_compare(struct context *context, const struct variable *u, const s
     enum VarType ut = (enum VarType)u->type;
     enum VarType vt = (enum VarType)v->type;
 
+    if ((ut == VAR_INT || ut == VAR_BOOL || ut == VAR_NIL) && (vt == VAR_INT || vt == VAR_BOOL || vt == VAR_NIL))
+        return variable_value_int(u) == variable_value_int(v);
+    
     if (ut != vt)
         return false;
 
@@ -783,22 +795,18 @@ struct variable *variable_find(struct context *context,
                                struct variable *sought,
                                struct variable *start)
 {
-    struct variable *result = NULL;
-
     // search for substring
     if (self->type == VAR_STR && sought->type == VAR_STR)
     {
         assert_message(!start || start->type == VAR_INT, "non-integer index");
         int32_t beginning = start ? start->integer : 0;
         int32_t index = byte_array_find(self->str, sought->str, beginning);
-        if (index == -1)
-            return variable_new_nil(context);
-        return variable_new_int(context, index);
+        if (index >= 0)
+            return variable_new_int(context, index);
     }
-
-    if (self->type == VAR_LST)
+    else if (self->type == VAR_LST)
     {
-        for (int i=0; !result && i<self->list.ordered->length; i++)
+        for (int i=0; i<self->list.ordered->length; i++)
         {
             struct variable *v = (struct variable*)array_get(self->list.ordered, i);
             if ((sought->type == VAR_INT && v->type == VAR_INT && v->integer == sought->integer) ||
@@ -807,5 +815,5 @@ struct variable *variable_find(struct context *context,
         }
     }
 
-    return (NULL == result) ? variable_new_nil(context) : result;
+    return variable_new_int(context, -1); // -1 means 'not found'
 }

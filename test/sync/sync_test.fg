@@ -66,5 +66,5 @@ director = [
 
 
 mesh = Mesh.init(director.id, host, port, [director])
-
-director.launch(mesh, 1)
+director.mesh = mesh
+mesh.connect()
