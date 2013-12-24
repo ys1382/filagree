@@ -131,7 +131,8 @@ Sync = [
 
         while true
 
-            if (bytes,mod = sys.read(path, offset, chunk))
+            if (bytes = sys.read(path, offset, chunk))
+                mod = sys.fileattr(path)
                 msg7.content = bytes
                 msg7.modified = mod
                 msg7.offset = offset
@@ -178,7 +179,7 @@ Sync = [
 
         else if action == 'verify' then
             content = sys.read(path)
-            if content == msg7.content then
+            if msg7.size == sys.fileattr(path) or msg7.content == sys.read(path) then
                 status = 'pass'
             else
                 status = 'fail: ' + content +' != '+ msg7.content

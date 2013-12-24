@@ -11,8 +11,8 @@ director = [
 
     'run_tests' : function(self)
 
-        self.crud()
-        #self.large()
+        #self.crud()
+        self.large()
         #self.conflict()
         #self.many()
 
@@ -49,15 +49,110 @@ director = [
         self.sync_direct('client2', 'verify', 'b.txt')
 
     end,
+/*
+    #
+    # Scalability test
+    #
+    'many' : function(self)
 
-    'sync_direct' : function(self, whom, action, path, content, path2)
+        servers = 1
+        while servers < 10
+
+            clients = 100
+            while clients < 10000
+
+                test_cruds(servers, clients)
+
+                clients = clients * 10
+            end
+            servers = servers + 10
+        end
+    end,
+
+    'test_cruds(servers, clients)
+
+            pids = []
+            c = s = 0
+
+            # fork servers
+            while s < servers
+                pids[c+s] = sys.forkexec('../../filagree sync_server.fg')
+                s = s + 1
+            end
+
+            while c < clients
+                pids[c+s] = sys.forkexec('../../filagree sync_client.fg \"id=\'' + c + \'\")
+                c = c + 1
+            end
+
+            test_crud(clients)
+
+    end,
+
+    'conflict' : function(self)
+
+
+    #
+    # Sync & Conflict Resolution - Test Cases
+    #
+
+    'conflict' : function(self)
+
+        # TC 1: Simple Edit – Variation 1
+        self.sync_direct('server1', 'update', 'tc1.txt', 'tc1a')
+        self.sync_direct('client1', 'verify', 'tc1.txt', 'tc1a')
+        self.sync_direct('client1', 'update', 'tc1.txt', 'tc1b')
+        self.sync_direct('client1', 'verify', 'tc1.txt', 'tc1b')
+        self.sync_direct('server1', 'verify', 'tc1.txt', 'tc1b')
+        
+        # TC 2: Simple Edit – Variation 2
+        self.create_local_file('tc2', 1024) # create file that take time to upload
+        sleep(2000)                         # wait for client to detect file, and start uploading
+        self.create_local_file('tc2', 1)    # overwrite with another file
+        self.sync_direct('client1', 'verify', 'tc2', nil, 1)
+        self.sync_direct('server1', 'verify', 'tc2', nil, 1)
+
+        # etc.
+
+    end,
+*/
+    #
+    # test to transfer large files
+    #
+
+    'large' : function(self)
+
+        test_xfer = function(self, size)
+
+            filename = 'client1/' + size + 'KB'
+            self.create_local_file(filename, size)
+            self.sync_direct('client1', 'verify', filename, nil, nil, size)
+            self.sync_direct('server1', 'verify', filename, nil, nil, size)
+            self.sync_direct('client2', 'verify', filename, nil, nil, size)
+
+        end
+
+        size = 1 # KB
+        #while size <= (1024*1024) # 1GB
+            test_xfer(self, size)
+            size = size * 2
+        #end
+
+    end,
+
+    # creates local file of random content, size in KB
+    'create_local_file' : function(self, name, size)
+        sys.forkexec('/bin/dd', 'if=/dev/urandom', 'bs=1024', 'count=' + size, 'of=' + name)
+    end,
+
+    'sync_direct' : function(self, whom, action, path, content, path2, size)
 
         title = action +' '+ path
         if path2 then
             title = title +' to '+ path2
         end
 
-        self.direct(title, whom, action, ['path':path, 'content':content, 'path2':path2])
+        self.direct(title, whom, action, ['path':path, 'content':content, 'path2':path2, 'size':size])
 
     end,
 
@@ -66,6 +161,4 @@ director = [
 
 
 mesh = Mesh.init(director.id, host, port, [director])
-#director.mesh = mesh
 director.launch(mesh)
-#mesh.connect()

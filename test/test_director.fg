@@ -104,6 +104,7 @@ test_director = [
     # fork-exec server and clients
     'launch' : function(self, mesh, num_clients)
 
+        sys.print('launch server')
         sys.forkexec('../../source/filagree', 'sync_server.fg')
         sys.sleep(1000)
 /*

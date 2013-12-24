@@ -4,6 +4,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include "hal.h"
 #include "interpret.h"
@@ -111,11 +112,21 @@ struct variable *sys_read(struct context *context)
         context->error = variable_new_str_chars(context, "could not load file");
         content = variable_new_nil(context);
     }
-    variable_push(context, content);
+    return content;
+}
 
-    long mod = file_modified(byte_array_to_string(path->str));
+struct variable *sys_fileattr(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *path = param_var(context, args, 1);
+
+    const char *path2 = byte_array_to_string(path->str);
+    long siz = file_size(path2);
+    long mod = file_modified(path2);
+    struct variable *siz2 = variable_new_int(context, (int32_t)siz);
     struct variable *mod2 = variable_new_int(context, (int32_t)mod);
-    variable_push(context, mod2);
+    variable_push(context, siz2);
+    variable_push(context, mod2 );
     struct variable *result = variable_new_src(context, 2);
 
     return result;
@@ -178,6 +189,12 @@ struct variable *sys_forkexec(struct context *context)
         perror("fork");
     else if (pid == 0)
     {
+/*
+        int fd = open("/dev/null", O_WRONLY);
+        dup2(fd,STDOUT_FILENO); // copy the file descriptor fd into standard output
+        dup2(fd,STDERR_FILENO); // same, for the standard error
+        close(fd); // close the file descriptor as we don't need it more
+*/
         if (execv(app, argv) < 0)
             perror("execv");
         exit(0);
@@ -555,6 +572,7 @@ struct string_func builtin_funcs[] = {
     {"atoi",        &sys_atoi},
     {"read",        &sys_read},
     {"write",       &sys_write},
+    {"fileattr",    &sys_fileattr},
     {"open",        &sys_open},
     {"save",        &sys_save},
     {"load",        &sys_load},
