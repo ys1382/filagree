@@ -1,3 +1,1 @@
-sys.print(1)
-sys.print('2')
-sys.print([3])
+sys.print(nil or 0)

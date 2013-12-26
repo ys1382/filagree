@@ -1,7 +1,7 @@
 UNAME := $(shell uname -s)
 
 CC=gcc
-DBGFLAG=-DDEBUG
+DBGFLAG=#-DDEBUG
 CFLAGS=-Wall -Os -std=gnu99 -I -fPIC -fms-extensions -DFG_MAIN -DNO_UI $(DBGFLAG)
 LDFLAGS=-lm -lpthread
 LD_LIBRARY_PATH=.

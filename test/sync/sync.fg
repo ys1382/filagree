@@ -28,6 +28,7 @@ Sync = [
 
         self.files = self.local_snapshot()
 
+        self.mesh.print('file_listen on ' + dir)
         sys.file_listen(watched, self)   # listen for file changes
 
         return self
@@ -86,6 +87,8 @@ Sync = [
     end,
 
     'filed' : function(self, dir)
+
+        #self.mesh.print('filed ' + dir)
 
         # check for new and deleted files
         latest = self.local_snapshot()
@@ -161,11 +164,11 @@ Sync = [
 
     'handle_test' : function(self, msg7)
 
-        sys.print(self.mesh.id + ' -- test directive: ' + msg7)
-
         action = msg7.action
         path = self.watched + msg7.path
         status = 'done'
+
+        #self.mesh.print('test directive ' + action +': '+ msg7)
 
         if action == 'update' then
             # sys.mkdir(path)
@@ -178,12 +181,16 @@ Sync = [
             sys.rm(path)
 
         else if action == 'verify' then
-            content = sys.read(path)
-            if msg7.size == sys.fileattr(path) or msg7.content == sys.read(path) then
-                status = 'pass'
+            #self.mesh.print('verify ' + path)
+            if msg7.size then
+                match = msg7.size == sys.fileattr(path)
+                #self.mesh.print('size match ' + sys.fileattr(path) +' => '+ match)
             else
-                status = 'fail: ' + content +' != '+ msg7.content
+                match = msg7.content == sys.read(path)
+                self.mesh.print('content match = ' + match)
             end
+
+            if match then status='pass' else status='fail' end
 
         else if action == 'offline' then
             self.offline = msg7.offline
@@ -193,7 +200,12 @@ Sync = [
 
         else if action == 'die' then
             sys.exit(0)
+
+        else
+            status = 'fail: unknown action ' + action
         end
+    
+        #self.mesh.print('result for ' + action +': '+ status)
 
         msg8 = ['event' : 'test', 'status' : status, 'seq' : msg7.seq, 'to' : msg7.from]
         self.mesh.send_to(msg7.from, msg8)

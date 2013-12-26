@@ -11,7 +11,7 @@ director = [
 
     'run_tests' : function(self)
 
-        #self.crud()
+        self.crud()
         self.large()
         #self.conflict()
         #self.many()
@@ -124,15 +124,16 @@ director = [
 
         test_xfer = function(self, size)
 
-            filename = 'client1/' + size + 'KB'
-            self.create_local_file(filename, size)
+            dir = 'client1'
+            filename = size + 'B'
+            self.create_local_file(dir, filename, size)
             self.sync_direct('client1', 'verify', filename, nil, nil, size)
             self.sync_direct('server1', 'verify', filename, nil, nil, size)
             self.sync_direct('client2', 'verify', filename, nil, nil, size)
 
         end
 
-        size = 1 # KB
+        size = 1024 # bytes
         #while size <= (1024*1024) # 1GB
             test_xfer(self, size)
             size = size * 2
@@ -141,8 +142,8 @@ director = [
     end,
 
     # creates local file of random content, size in KB
-    'create_local_file' : function(self, name, size)
-        sys.forkexec('/bin/dd', 'if=/dev/urandom', 'bs=1024', 'count=' + size, 'of=' + name)
+    'create_local_file' : function(self, dir, name, size)
+        sys.forkexec('/bin/dd', 'if=/dev/urandom', 'bs=1', 'count=' + size, 'of=' + dir +'/'+ name)
     end,
 
     'sync_direct' : function(self, whom, action, path, content, path2, size)
