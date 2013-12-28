@@ -96,14 +96,14 @@ director = [
     #
 
     'conflict' : function(self)
-
+/*
         # TC 1: Simple Edit – Variation 1
         self.sync_direct('server1', 'update', 'tc1.txt', 'tc1a')
         self.sync_direct('client1', 'verify', 'tc1.txt', 'tc1a')
         self.sync_direct('client1', 'update', 'tc1.txt', 'tc1b')
         self.sync_direct('client1', 'verify', 'tc1.txt', 'tc1b')
         self.sync_direct('server1', 'verify', 'tc1.txt', 'tc1b')
-
+*/
         # TC 2: Simple Edit – Variation 2
         dir = 'client1'
         # todo: fix out of order bug
@@ -182,7 +182,7 @@ director = [
 
     # creates local file of random content, size in KB
     'create_local_file' : function(self, dir, name, size)
-        sys.forkexec(true '/bin/dd', 'if=/dev/urandom', 'bs=1', 'count=' + size, 'of=' + dir +'/'+ name)
+        sys.forkexec(true, '/bin/dd', 'if=/dev/urandom', 'bs=1', 'count=' + size, 'of=' + dir +'/'+ name)
     end,
 
     'sync_direct' : function(self, whom, action, path, content, path2, size)

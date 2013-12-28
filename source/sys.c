@@ -182,7 +182,10 @@ struct variable *sys_forkexec(struct context *context)
     uint32_t argc = args->list.ordered->length - 3;
     char **argv = malloc(sizeof(char*) * (argc+1));
     for (int i=2; i<argc+3; i++)
+    {
+        printf("arg %d/%D = %s\n", i-2, argc, param_str(args, i));
         argv[i-2] = param_str(args, i);
+    }
     argv[argc+1] = NULL;
     
     pid_t pid = fork();

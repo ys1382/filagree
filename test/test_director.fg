@@ -106,7 +106,7 @@ test_director = [
     'launch' : function(self, mesh, num_clients)
 
         sys.print('launch server')
-        sys.forkexec('../../source/filagree', 'sync_server.fg')
+        sys.forkexec(false, '../../source/filagree', 'sync_server.fg')
         sys.sleep(1000)
 /*
         i = 1
@@ -115,8 +115,8 @@ test_director = [
             i = i + 1
         end
 */
-        sys.forkexec('../../source/filagree', 'sync_client.fg', 'id=' + 1)
-        sys.forkexec('../../source/filagree', 'sync_client.fg', 'id=' + 2)
+        sys.forkexec(false, '../../source/filagree', 'sync_client.fg', 'id=' + 1)
+        sys.forkexec(false, '../../source/filagree', 'sync_client.fg', 'id=' + 2)
         sys.sleep(1000)
 
         self.mesh = mesh
