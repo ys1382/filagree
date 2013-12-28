@@ -12,6 +12,8 @@ port = 1999
 Sync = [
 
     'writing' : [],
+    'sending' : [],
+    'offset'  : [],
 
     'init' : function(self, ctx, dir, mesh)
 
@@ -73,13 +75,17 @@ Sync = [
 
     'handle_content' : function(self, path, content, modified, offset)
 
+        self.mesh.print('handle_content ' + path +' '+ offset)
+
         self.writing[path] = true
 
         path = self.watched + path
         if not offset then sys.rm(path) end
+
         sys.write(path, content, offset)
 
         self.writing[path] = nil
+
         self.files = self.local_snapshot()
         if self.ctx.ui then
             sys.ui_set(self.ctx.ui.files, self.files.keys)            # update ui
@@ -126,27 +132,37 @@ Sync = [
     # send a file in chunks
     'send_file' : function(self, path)
 
+        self.mesh.print('send_file ' + path +' '+ self.offset[path])
+
+        self.offset[path] = 0
+        if self.sending[path] then return end
+        self.sending[path] = true
+
         msg7 = ['event' : 'content', 'path' : path]
 
         chunk = 100    # chunk size in number of bytes
-        offset = 0
-        path = self.watched + path
+        full_local_path = self.watched + path
 
         while true
 
-            if (bytes = sys.read(path, offset, chunk))
-                mod = sys.fileattr(path)
+            if (bytes = sys.read(full_local_path, self.offset[path], chunk))
+                size,mod = sys.fileattr(full_local_path)
                 msg7.content = bytes
                 msg7.modified = mod
-                msg7.offset = offset
+                msg7.offset = self.offset[path]
 
-                offset = offset + bytes.length
+                self.offset[path] = self.offset[path] + bytes.length
 
                 #sys.print('send chunk ' + offset)
                 self.mesh.broadcast(msg7)
+                sys.sleep(500) # to facilitate TC 2 test only
 
             end
-            if bytes.length < chunk then return end
+
+            if bytes.length < chunk then
+                self.offset[path] = self.sending[path] = nil
+                return
+            end
         end
 
     end,
@@ -168,7 +184,7 @@ Sync = [
         path = self.watched + msg7.path
         status = 'done'
 
-        #self.mesh.print('test directive ' + action +': '+ msg7)
+        self.mesh.print('test directive ' + action +': '+ msg7)
 
         if action == 'update' then
             # sys.mkdir(path)

@@ -11,9 +11,9 @@ director = [
 
     'run_tests' : function(self)
 
-        self.crud()
-        self.large()
-        #self.conflict()
+        #self.crud()
+        #self.large()
+        self.conflict()
         #self.many()
 
     end,
@@ -89,8 +89,7 @@ director = [
 
     end,
 
-    'conflict' : function(self)
-
+*/
 
     #
     # Sync & Conflict Resolution - Test Cases
@@ -104,18 +103,21 @@ director = [
         self.sync_direct('client1', 'update', 'tc1.txt', 'tc1b')
         self.sync_direct('client1', 'verify', 'tc1.txt', 'tc1b')
         self.sync_direct('server1', 'verify', 'tc1.txt', 'tc1b')
-        
+
         # TC 2: Simple Edit – Variation 2
-        self.create_local_file('tc2', 1024) # create file that take time to upload
-        sleep(2000)                         # wait for client to detect file, and start uploading
-        self.create_local_file('tc2', 1)    # overwrite with another file
-        self.sync_direct('client1', 'verify', 'tc2', nil, 1)
-        self.sync_direct('server1', 'verify', 'tc2', nil, 1)
+        dir = 'client1'
+        # todo: fix out of order bug
+        self.create_local_file(dir, 'tc2', 1024)    # create file that take time to upload
+        sys.sleep(2000)                             # wait for client to detect file, and start uploading
+        self.create_local_file(dir, 'tc2', 1)       # overwrite with another file
+        self.sync_direct('client1', 'verify', 'tc2', nil, nil, 1)
+        self.sync_direct('client2', 'verify', 'tc2', nil, nil, 1)
+        self.sync_direct('server1', 'verify', 'tc2', nil, nil, 1)
 
         # etc.
 
     end,
-*/
+
     #
     # test to transfer large files
     #

@@ -958,7 +958,8 @@ struct variable *builtin_method(struct context *context,
         int n;
         switch (indexable->type) {
             case VAR_LST: n = indexable->list.ordered->length;  break;
-            case VAR_STR: n = indexable->str->length;   break;
+            case VAR_STR: n = indexable->str->length;           break;
+            case VAR_NIL: n = 0;                                break;
             default:
                 free(idxstr);
                 exit_message("no length for non-indexable");

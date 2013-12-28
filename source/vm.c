@@ -114,14 +114,6 @@ void program_state_del(struct context *context, struct program_state *state)
     free(state);
 }
 
-static inline void cfnc_length(struct context *context) {
-    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *indexable = (struct variable*)array_get(args->list.ordered, 0);
-    assert_message(indexable->type==VAR_LST || indexable->type==VAR_STR, "no length for non-indexable");
-    struct variable *result = variable_new_int(context, indexable->list.ordered->length);
-    variable_push(context,result);
-}
-
 struct context *context_new(struct context *parent, // parent context
                             bool runtime,           // for interpreting bytecode
                             bool sys_funcs)         // create sys funcs
