@@ -163,21 +163,30 @@ struct variable *sys_forkexec(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
 
-    const char *app = param_str(args, 1);
+    bool wait = param_bool(args, 1);
+    const char *app = param_str(args, 2);
 
-    uint32_t argc = args->list.ordered->length - 2;
+    uint32_t argc = args->list.ordered->length - 3;
     char **argv = malloc(sizeof(char*) * argc);
     for (int i=0; i<argc; i++)
-        argv[i] = param_str(args, i);
+        argv[i] = param_str(args, i+2);
 
     pid_t pid = fork();
     if (pid < 0)
+    {
         perror("fork error");
-    else if (pid == 0)
+    }
+    else if (pid == 0) // child
     {
         if (execv(app, argv) < 0)
             perror("execv error");
         exit(0);
+    }
+    else if (wait) // parent waits for child to finish
+    {
+        int status;
+        if (waitpid(pid, &status, 0) != pid)
+            perror("waitpid");
     }
     return variable_new_int(context, pid);
 }

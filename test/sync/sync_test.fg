@@ -44,12 +44,12 @@ director = [
 
             # fork servers
             while s < servers
-                pids[c+s] = sys.forkexec('../../filagree sync_server.fg')
+                pids[c+s] = sys.forkexec(false, '../../filagree sync_server.fg')
                 s = s + 1
             end
 
             while c < clients
-                pids[c+s] = sys.forkexec('../../filagree sync_client.fg \"id=\'' + c + \'\")
+                pids[c+s] = sys.forkexec(false, '../../filagree sync_client.fg \"id=\'' + c + \'\")
                 c = c + 1
             end
 
@@ -107,9 +107,9 @@ director = [
 
     end,
 
-    # creates local file of random content, size in KB
+    # creates local file of random content, size in bytes
     'create_local_file' : function(self, name, size)
-        sys.forkexec('dd if=/dev/urandom bs=1024 count=' + size + of=' + name)
+        sys.forkexec(true, '/bin/dd if=/dev/urandom bs=1024 count=' + size + of=' + name)
     end,
 
     #
