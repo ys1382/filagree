@@ -99,7 +99,7 @@ int main (int argc, char** argv)
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
 	sigaction(SIGINT, &act, &oact);
-
+    
     if (1 == argc)
         repl();
     else

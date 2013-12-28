@@ -12,6 +12,8 @@ port = 1999
 Sync = [
 
     'writing' : [],
+    'sending' : [],
+    'offset'  : [],
 
     'init' : function(self, ctx, dir, mesh)
 
@@ -28,6 +30,7 @@ Sync = [
 
         self.files = self.local_snapshot()
 
+        self.mesh.print('file_listen on ' + dir)
         sys.file_listen(watched, self)   # listen for file changes
 
         return self
@@ -72,13 +75,17 @@ Sync = [
 
     'handle_content' : function(self, path, content, modified, offset)
 
+        self.mesh.print('handle_content ' + path +' '+ offset)
+
         self.writing[path] = true
 
         path = self.watched + path
         if not offset then sys.rm(path) end
+
         sys.write(path, content, offset)
 
         self.writing[path] = nil
+
         self.files = self.local_snapshot()
         if self.ctx.ui then
             sys.ui_set(self.ctx.ui.files, self.files.keys)            # update ui
@@ -87,13 +94,15 @@ Sync = [
 
     'filed' : function(self, dir)
 
+        #self.mesh.print('filed ' + dir)
+
         # check for new and deleted files
         latest = self.local_snapshot()
         updated = latest - self.files
         deleted = self.files - latest
 
-        sys.print('latest=' +latest  +', self.files='+self.files)
-        sys.print('updated='+updated +', deleted='   +deleted)
+        #sys.print('latest=' +latest  +', self.files='+self.files)
+        #sys.print('updated='+updated +', deleted='   +deleted)
 
         # check for files with new mod times
         for f in self.files where (f != self.writing)
@@ -123,26 +132,37 @@ Sync = [
     # send a file in chunks
     'send_file' : function(self, path)
 
+        self.mesh.print('send_file ' + path +' '+ self.offset[path])
+
+        self.offset[path] = 0
+        if self.sending[path] then return end
+        self.sending[path] = true
+
         msg7 = ['event' : 'content', 'path' : path]
 
         chunk = 100    # chunk size in number of bytes
-        offset = 0
-        path = self.watched + path
+        full_local_path = self.watched + path
 
         while true
 
-            if (bytes,mod = sys.read(path, offset, chunk))
+            if (bytes = sys.read(full_local_path, self.offset[path], chunk))
+                size,mod = sys.fileattr(full_local_path)
                 msg7.content = bytes
                 msg7.modified = mod
-                msg7.offset = offset
+                msg7.offset = self.offset[path]
 
-                offset = offset + bytes.length
+                self.offset[path] = self.offset[path] + bytes.length
 
                 #sys.print('send chunk ' + offset)
                 self.mesh.broadcast(msg7)
+                sys.sleep(500) # to facilitate TC 2 test only
 
             end
-            if bytes.length < chunk then return end
+
+            if bytes.length < chunk then
+                self.offset[path] = self.sending[path] = nil
+                return
+            end
         end
 
     end,
@@ -160,11 +180,11 @@ Sync = [
 
     'handle_test' : function(self, msg7)
 
-        sys.print('test directive: ' + msg7)
-
         action = msg7.action
         path = self.watched + msg7.path
         status = 'done'
+
+        self.mesh.print('test directive ' + action +': '+ msg7)
 
         if action == 'update' then
             # sys.mkdir(path)
@@ -177,12 +197,16 @@ Sync = [
             sys.rm(path)
 
         else if action == 'verify' then
-            content = sys.read(path)
-            if content == msg7.content then
-                status = 'pass'
+            #self.mesh.print('verify ' + path)
+            if msg7.size then
+                match = msg7.size == sys.fileattr(path)
+                #self.mesh.print('size match ' + sys.fileattr(path) +' => '+ match)
             else
-                status = 'fail: ' + content +' != '+ msg7.content
+                match = msg7.content == sys.read(path)
+                self.mesh.print('content match = ' + match)
             end
+
+            if match then status='pass' else status='fail' end
 
         else if action == 'offline' then
             self.offline = msg7.offline
@@ -192,7 +216,12 @@ Sync = [
 
         else if action == 'die' then
             sys.exit(0)
+
+        else
+            status = 'fail: unknown action ' + action
         end
+    
+        #self.mesh.print('result for ' + action +': '+ status)
 
         msg8 = ['event' : 'test', 'status' : status, 'seq' : msg7.seq, 'to' : msg7.from]
         self.mesh.send_to(msg7.from, msg8)

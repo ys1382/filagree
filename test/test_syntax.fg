@@ -358,5 +358,46 @@ tester.test('sparse array',
     end,
     '[,,,9]')
 
+tester.test('nil',
+    function()
+
+        fz = function(z)
+
+            a = nil <  z == true
+            b = nil >  z == false
+            c = nil <= z == true
+            d = nil >= z == false
+
+            e = z >  nil == true
+            f = z <  nil == false
+            g = z >= nil == true
+            h = z <= nil == false
+
+            i = nil + z == z
+            j = nil - z == -z
+            k = nil * z == 0
+            l = nil / z == 0
+
+            m = z + nil == z
+            n = z - nil == z
+            o = z * nil == 0
+
+            return a and b and c and d and e and f and g and h and i and j and k and l and m and n and o
+
+        end
+
+        p = nil == nil = true
+        q = nil > nil == false
+        r = nil < nil == false
+        s = nil >= nil == true
+        t = nil <= nil == true
+        u = nil + nil == nil
+        v = nil - nil == nil
+        w = nil * nil == nil
+
+        return fz(1) and fz(2) and p and q and r and s and t and u and v and w
+
+    end,
+    true)
 
 tester.done()

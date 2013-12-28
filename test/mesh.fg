@@ -22,7 +22,7 @@ Mesh = [
 
 
     'listen' : function(self)
-        sys.print('listening on port ' + self.port)
+        self.print(' listening on port ' + self.port)
         sys.listen(self.port, self)    # server listens for incoming socket connections
     end,
 
@@ -46,7 +46,7 @@ Mesh = [
         self.handle_disconnect(id)
         self.peers[id] = self.sreep[socket] = nil
 
-        sys.print('disconnected from ' + id)
+        self.print(' disconnected from ' + id)
 
         for c in self.ctx
             c.disconnected(self, socket)
@@ -57,18 +57,25 @@ Mesh = [
     'handle_message' : function(self, socket, msg5)
 
         if msg5.event == 'greet' then
-            sys.print('connected to ' + msg5.from)
+            self.print(' connected to ' + msg5.from)
             self.peers[msg5.from] = socket
             self.sreep[socket] = msg5.from
         end
     end,
 
+    'print' : function(self, line)
+        sys.print(self.id +' -- '+ line)
+    end,
 
     'messaged' : function(self, socket, msg4)
 
         if (not msg4.to) or (msg4.to == self.id) # por moi
 
-            #sys.print('message to ' + self.id + ' from ' + socket + ': ' + msg4.event)
+            self.print('message from ' + msg4.from + ': ' + msg4.event)
+
+            if msg4.flood then
+                self.broadcast(msg4, socket)
+            end
 
             if not (response = self.handle_message(socket, msg4)) then
                 for c in self.ctx
@@ -79,10 +86,6 @@ Mesh = [
                         return
                     end
                 end
-            end
-
-            if msg4.flood then
-                self.broadcast(msg4, socket)
             end
 
         else # forward to recipient
@@ -113,8 +116,8 @@ Mesh = [
 
         # if no direct connection, then send via 'server'
         if not to2 then
-            if self.id != 'server' then
-                to2 = self.peers['server']
+            if self.id != 'server1' then
+                to2 = self.peers['server1']
             else
                 sys.print('no peer ' + to)
             end

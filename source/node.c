@@ -135,6 +135,7 @@ void messaged(struct node_thread *ta0, struct variable *listener, int sockfd, ui
     add_thread(ta, 0);
 }
 
+// handles socket recv and disconnect
 bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
 {
     ssize_t n;
@@ -149,7 +150,7 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
     }
     else
     {
-        DEBUGPRINT("\nmessagd1\n");
+        DEBUGPRINT("\nsocket_event\n");
         messaged(ta0, listener, fd, buf, n);
         return false;
     }
@@ -228,31 +229,12 @@ void *sys_socket_listen2(void *arg)
 
 			if (FD_ISSET(sockfd, &rset))
             {
-                if (socket_event(ta0, listener, sockfd))
+                if (socket_event(ta0, listener, sockfd)) // connection closed by client
                 {
-                    // connection closed by client
 					FD_CLR(sockfd, &allset);
 					client[i] = -1;
                 }
 
-                
-/*                ssize_t n;
-				if ((n = read(sockfd, buf, MAXLINE)) <= 0)
-                {
-                    // connection closed by client
-					FD_CLR(sockfd, &allset);
-					client[i] = -1;
-
-                    struct node_thread *ta = thread_new(ta0->context, listener, node_callback, sockfd);
-                    ta->event = DISCONNECTED;
-                    add_thread(ta, 0);
-				}
-                else
-                {
-                    DEBUGPRINT("\nmessagd1\n");
-                    messaged(ta0, listener, sockfd, buf, n);
-                }
-*/
                 if (--nready <= 0) // no more readable descriptors
 					break;
 			}
@@ -317,12 +299,8 @@ void *sys_connect2(void *arg)
 
         for (;;)
         {
-            uint8_t buf[MAXLINE];
-            ssize_t n = read(ta->fd, buf, sizeof(buf)); // read from the socket
-            if (n <= 0)
-                    return NULL;
-            //printf("\nmessaged2\n");
-            messaged(ta, ta->listener, ta->fd, buf, n);
+            if (socket_event(ta, ta->listener, ta->fd))
+                return NULL;
         }
     }
 
@@ -358,7 +336,7 @@ void *sys_send2(void *arg)
     struct node_thread *ta = (struct node_thread *)arg;
 
     if (write(ta->fd, ta->buf->data, ta->buf->length) != ta->buf->length)
-        printf("write error\n");
+        perror("write");
     else
         DEBUGPRINT("sent to %d\n", ta->fd);
     return NULL;

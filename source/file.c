@@ -28,6 +28,13 @@ long fsize(FILE* file) {
     return -1;
 }
 
+long file_size(const char *path)
+{
+    FILE * file;
+    if (!(file = fopen(path, "rb")))
+        return -1;
+    return fsize(file);
+}
 
 struct byte_array *read_file(const struct byte_array *filename_ba, uint32_t offset, long size)
 {

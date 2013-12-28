@@ -4,6 +4,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include "hal.h"
 #include "interpret.h"
@@ -31,8 +32,10 @@ struct variable *sys_print(struct context *context)
     assert_message(args && args->type==VAR_SRC && args->list.ordered, "bad print arg");
     for (int i=1; i<args->list.ordered->length; i++) {
         struct variable *arg = (struct variable*)array_get(args->list.ordered, i);
-        const char *str = variable_value_str(context, arg);
-        printf("%s\n", str);
+        struct byte_array *str = variable_value(context, arg);
+        if (arg->type == VAR_STR)
+            str = byte_array_part(str, 1, str->length-2);
+        printf("%s\n", byte_array_to_string(str));
     }
     return NULL;
 }
@@ -96,7 +99,7 @@ struct variable *sys_read(struct context *context)
     uint32_t length = param_int(args, 3);
 
     struct byte_array *bytes = read_file(path->str, offset, length);
-    DEBUGPRINT("read %d bytes\n", bytes->length);
+    DEBUGPRINT("read %d bytes\n", bytes ? bytes->length : 0);
 
     struct variable *content = NULL;
     if (NULL != bytes)
@@ -109,11 +112,21 @@ struct variable *sys_read(struct context *context)
         context->error = variable_new_str_chars(context, "could not load file");
         content = variable_new_nil(context);
     }
-    variable_push(context, content);
+    return content;
+}
 
-    long mod = file_modified(byte_array_to_string(path->str));
+struct variable *sys_fileattr(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *path = param_var(context, args, 1);
+
+    const char *path2 = byte_array_to_string(path->str);
+    long siz = file_size(path2);
+    long mod = file_modified(path2);
+    struct variable *siz2 = variable_new_int(context, (int32_t)siz);
     struct variable *mod2 = variable_new_int(context, (int32_t)mod);
-    variable_push(context, mod2);
+    variable_push(context, siz2);
+    variable_push(context, mod2 );
     struct variable *result = variable_new_src(context, 2);
 
     return result;
@@ -167,19 +180,18 @@ struct variable *sys_forkexec(struct context *context)
     const char *app = param_str(args, 2);
 
     uint32_t argc = args->list.ordered->length - 3;
-    char **argv = malloc(sizeof(char*) * argc);
-    for (int i=0; i<argc; i++)
-        argv[i] = param_str(args, i+2);
-
+    char **argv = malloc(sizeof(char*) * (argc+1));
+    for (int i=2; i<argc+3; i++)
+        argv[i-2] = param_str(args, i);
+    argv[argc+1] = NULL;
+    
     pid_t pid = fork();
     if (pid < 0)
-    {
-        perror("fork error");
-    }
+        perror("fork");
     else if (pid == 0) // child
     {
         if (execv(app, argv) < 0)
-            perror("execv error");
+            perror("execv");
         exit(0);
     }
     else if (wait) // parent waits for child to finish
@@ -188,6 +200,7 @@ struct variable *sys_forkexec(struct context *context)
         if (waitpid(pid, &status, 0) != pid)
             perror("waitpid");
     }
+
     return variable_new_int(context, pid);
 }
 
@@ -560,6 +573,7 @@ struct string_func builtin_funcs[] = {
     {"atoi",        &sys_atoi},
     {"read",        &sys_read},
     {"write",       &sys_write},
+    {"fileattr",    &sys_fileattr},
     {"open",        &sys_open},
     {"save",        &sys_save},
     {"load",        &sys_load},
@@ -945,7 +959,8 @@ struct variable *builtin_method(struct context *context,
         int n;
         switch (indexable->type) {
             case VAR_LST: n = indexable->list.ordered->length;  break;
-            case VAR_STR: n = indexable->str->length;   break;
+            case VAR_STR: n = indexable->str->length;           break;
+            case VAR_NIL: n = 0;                                break;
             default:
                 free(idxstr);
                 exit_message("no length for non-indexable");
