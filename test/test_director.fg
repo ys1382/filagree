@@ -13,6 +13,7 @@ test_director = [
     'active':       [],
     'descriptions': [],
     'score' :       0,
+    'num_tests':    0,
 
 
     'handle_message' : function(self, socket, msg4)
@@ -43,7 +44,7 @@ test_director = [
             end
 
             if self.dequeue() then # all tests done
-                sys.print('\ntesting complete: ' + self.score +' / '+ self.descriptions.length +' passed\n')
+                sys.print('\ntesting complete: ' + self.score +' / '+ self.num_tests +' passed\n')
                 self.scythe()
                 sys.exit()
             end
@@ -60,6 +61,7 @@ test_director = [
             text = 'failed'
         end
 
+        self.num_tests = self.num_tests + 1
         desc = self.descriptions[seq]
         sys.print(self.id + ' -- ' + seq +' '+ desc.who +' '+ desc.title +': '+ text)
 
@@ -74,7 +76,11 @@ test_director = [
                 'action'    : action,
                 'from'      : self.id,
                 'to'        : whom,
-                'seq'       : self.seq] + params
+                'seq'       : self.seq
+                ] + params
+
+        sys.print('\ndirect ' + msg5 +'\n')
+
 
         self.queue = self.queue + [msg5]
 
@@ -82,23 +88,39 @@ test_director = [
 
     end,
 
+    'local_step' : function(self)
+        args = sys.args()
+        sys.print('\nlocal_step ' + args.part(1) + '\n')
+        self.direct(args[1], nil, args.part(1))
+    end,
+
+
     'dequeue' : function(self)
 
         if self.active.keys.length then # busy
             sys.print('dq busy')
             return false
         else if (not self.queue.length) then # all done
+            sys.print('dq done')
             return true
         end
 
         msg4 = self.queue.remove()[0]
-        self.active[''+msg4.seq] = msg4
-        if self.active.keys.length != 1 then
-            sys.print('dq error: ' + self.active)
-            sys.exit(2)
-        end
 
-        self.mesh.send_to(msg4.to, msg4)
+        if not msg4.to then
+            sys.print('dq fork')
+            sys.forkexec(msg4.action.pack())
+            self.dequeue() # proceed to next step
+        else
+            self.active[''+msg4.seq] = msg4
+            if self.active.keys.length != 1 then
+                sys.print('dq error: ' + self.active)
+                sys.exit(2)
+            end
+
+            sys.print('dq send')
+            self.mesh.send_to(msg4.to, msg4)
+        end
 
     end,
 

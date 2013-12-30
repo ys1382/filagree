@@ -23,7 +23,7 @@ struct string_func
     callback2func* func;
 };
 
-// system functions
+// system functionsb
 
 struct variable *sys_print(struct context *context)
 {
@@ -183,7 +183,7 @@ struct variable *sys_forkexec(struct context *context)
     char **argv = malloc(sizeof(char*) * (argc+1));
     for (int i=2; i<argc+3; i++)
     {
-        printf("arg %d/%D = %s\n", i-2, argc, param_str(args, i));
+        //printf("arg %d/%D = %s\n", i-2, argc, param_str(args, i));
         argv[i-2] = param_str(args, i);
     }
     argv[argc+1] = NULL;
@@ -646,6 +646,7 @@ struct variable *sys_new(struct context *context)
 #define FNC_PART        "part"
 #define FNC_REMOVE      "remove"
 #define FNC_INSERT      "insert"
+#define FNC_PACK        "pack"
 
 
 int compar(struct context *context, const void *a, const void *b, struct variable *comparator)
@@ -734,7 +735,7 @@ int heapsortfg(struct context *context, void *base, size_t nel, size_t width, st
     }
 }
 
-struct variable *cfnc_char(struct context *context)
+static inline struct variable *cfnc_char(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *from = (struct variable*)array_get(args->list.ordered, 0);
@@ -746,7 +747,7 @@ struct variable *cfnc_char(struct context *context)
     return variable_new_int(context, n);
 }
 
-struct variable *cfnc_sort(struct context *context)
+static inline struct variable *cfnc_sort(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *self = (struct variable*)array_get(args->list.ordered, 0);
@@ -763,7 +764,7 @@ struct variable *cfnc_sort(struct context *context)
     return NULL;
 }
 
-struct variable *cfnc_chop(struct context *context, bool snip)
+static inline struct variable *cfnc_chop(struct context *context, bool snip)
 {
     int32_t beginning, foraslongas;
 
@@ -790,7 +791,7 @@ struct variable *cfnc_chop(struct context *context, bool snip)
     return result;
 }
 
-static inline struct variable *cfnc_part(struct context *context) {
+static inline  struct variable *cfnc_part(struct context *context) {
     return cfnc_chop(context, false);
 }
 
@@ -798,7 +799,7 @@ static inline struct variable *cfnc_remove(struct context *context) {
     return cfnc_chop(context, true);
 }
 
-struct variable *cfnc_find2(struct context *context, bool has)
+static inline struct variable *cfnc_find2(struct context *context, bool has)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *self = (struct variable*)array_get(args->list.ordered, 0);
@@ -814,15 +815,15 @@ struct variable *cfnc_find2(struct context *context, bool has)
     return result;
 }
 
-struct variable *cfnc_find(struct context *context) {
+static inline struct variable *cfnc_find(struct context *context) {
     return cfnc_find2(context, false);
 }
 
-struct variable *cfnc_has(struct context *context) {
+static inline struct variable *cfnc_has(struct context *context) {
     return cfnc_find2(context, true);
 }
 
-struct variable *cfnc_insert(struct context *context) // todo: test
+static inline struct variable *cfnc_insert(struct context *context) // todo: test
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *self = (struct variable*)array_get(args->list.ordered, 0);
@@ -864,7 +865,17 @@ struct variable *cfnc_insert(struct context *context) // todo: test
     } return joined;
 }
 
-struct variable *cfnc_serialize(struct context *context)
+// VAR_LST -> VAR_SRC
+static inline struct variable *cfnc_pack(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *indexable = (struct variable*)array_get(args->list.ordered, 0);
+    assert_message(indexable->type == VAR_LST, "wrong type for packing");
+    indexable->type = VAR_SRC;
+    return indexable;
+}
+
+static inline struct variable *cfnc_serialize(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *indexable = (struct variable*)array_get(args->list.ordered, 0);
@@ -875,7 +886,7 @@ struct variable *cfnc_serialize(struct context *context)
     return result;
 }
 
-struct variable *cfnc_deserialize(struct context *context)
+static inline struct variable *cfnc_deserialize(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *indexable = (struct variable*)array_get(args->list.ordered, 0);
@@ -887,7 +898,7 @@ struct variable *cfnc_deserialize(struct context *context)
 //    a                b        c
 // <sought> <replacement> [<start>]
 // <start> <length> <replacement>
-struct variable *cfnc_replace(struct context *context)
+static inline struct variable *cfnc_replace(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *self = (struct variable*)array_get(args->list.ordered, 0);
@@ -1015,9 +1026,12 @@ struct variable *builtin_method(struct context *context,
     else if (!strcmp(idxstr, FNC_VALS))
         result = variable_map_list(context, indexable, &map_vals);
 
+    else if (!strcmp(idxstr, FNC_PACK))
+        result = variable_new_cfnc(context, &cfnc_pack);
+
     else if (!strcmp(idxstr, FNC_SERIALIZE))
         result = variable_new_cfnc(context, &cfnc_serialize);
-
+    
     else if (!strcmp(idxstr, FNC_DESERIALIZE))
         result = variable_new_cfnc(context, &cfnc_deserialize);
 

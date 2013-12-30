@@ -358,6 +358,13 @@ tester.test('sparse array',
     end,
     '[,,,9]')
 
+tester.test('pack',
+    function()
+        a,b,c = [7,8,9].pack()
+        return a + b + c
+    end,
+    24)
+
 tester.test('nil',
     function()
 

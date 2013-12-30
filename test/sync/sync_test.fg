@@ -11,8 +11,8 @@ director = [
 
     'run_tests' : function(self)
 
-        #self.crud()
-        #self.large()
+        self.crud()
+        self.large()
         self.conflict()
         #self.many()
 
@@ -182,7 +182,7 @@ director = [
 
     # creates local file of random content, size in KB
     'create_local_file' : function(self, dir, name, size)
-        sys.forkexec(true, '/bin/dd', 'if=/dev/urandom', 'bs=1', 'count=' + size, 'of=' + dir +'/'+ name)
+        self.local_step(true, '/bin/dd', 'if=/dev/urandom', 'bs=1', 'count=' + size, 'of=' + dir +'/'+ name)
     end,
 
     'sync_direct' : function(self, whom, action, path, content, path2, size)
