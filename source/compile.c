@@ -1367,31 +1367,48 @@ void generate_math(struct byte_array *code, struct symbol *root)
     generate_step(code, 1, op);
 }
 
-// if A then ( B + jmp back )
+// if !A then jump_over ( B + jump_back )
 void generate_loop(struct byte_array *code, struct symbol *root)
 {
-    struct byte_array *ifa, *b, *jmp;
+    struct byte_array *ifa, *b;
 
     ifa = byte_array_new();
     b = byte_array_new();
-    jmp = byte_array_new();
+    struct byte_array *jump_over = byte_array_new();
+    struct byte_array *jump_back = byte_array_new();
 
     int32_t loop_length;
 
     generate_code(b, root->value);
     generate_code(ifa, root->index);
     generate_step(ifa, 1, VM_IFF);
-    serial_encode_int(ifa, b->length + 2);
+    
+    // make sure the jump forward and back values are correct
+    for (int jb_len=2;;)
+    {
+        // serial_encode_int(ifa, b->length + jmp_len);
+        serial_encode_int(jump_over, b->length + jb_len);
 
-    loop_length = ifa->length + b->length;
-    generate_jump(jmp, -loop_length);
+        loop_length = ifa->length + jump_over->length + b->length;
+        generate_jump(jump_back, -loop_length);
+        if (jump_back->length == jb_len)
+            break;
+        else
+        {
+            jb_len = jump_back->length;
+            byte_array_reset(jump_over);
+            byte_array_reset(jump_back);
+            jump_over->length = jump_back->length = 0;
+        }
+    }
 
-    struct byte_array *while_a_do_b = byte_array_concatenate(3, ifa, b, jmp);
+    struct byte_array *while_a_do_b = byte_array_concatenate(4, ifa, jump_over, b, jump_back);
     byte_array_append(code, while_a_do_b);
 
     byte_array_del(ifa);
     byte_array_del(b);
-    byte_array_del(jmp);
+    byte_array_del(jump_over);
+    byte_array_del(jump_back);
     byte_array_del(while_a_do_b);
 }
 

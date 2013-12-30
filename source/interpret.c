@@ -71,6 +71,10 @@ void interpret_file(struct byte_array *path,
         program = build_file(path);
     }
 
+#ifdef DEBUG
+    display_program(program);
+#endif
+
     execute(program);
     byte_array_del(program);
 }

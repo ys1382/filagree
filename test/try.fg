@@ -1,3 +1,8 @@
-a,b,c = [7,8,9].pack()
-sys.print(a,b,c)
+i = 1
+while i <= 2
+    sys.forkexec(true, '../../source/filagree', 'sync_client.fg', 'id=' + i)
 
+    i = i + 1
+end
+
+sys.print('done')

@@ -366,12 +366,13 @@ static void display_program_counter(struct context *context, const struct byte_a
 {
     null_check(context);
 #ifdef __ANDROID__
-    DEBUGSPRINT("%s>%" PRIu16 " - %2d ",
+    DEBUGSPRINT("%s>%" PRIu16 " - %3d:%3d ",
 #else
-    DEBUGSPRINT("%s>%" PRIu16 " - %2d ",
+    DEBUGSPRINT("%s>%" PRIu16 " - %3d:%3d ",
 #endif
             indentation(context),
             current_thread_id(),
+            program->current - program->data,
             *program->current);
 }
 
@@ -680,7 +681,7 @@ static int32_t iff(struct context *context, struct byte_array *program)
     DEBUGSPRINT("IF %d", offset);
     if (!context->runtime)
         return 0;
-    return test_operand(context) ? 0 : (int32_t)(VOID_INT)offset;
+    return test_operand(context) ? 0 : offset;
 }
 
 static void push_nil(struct context *context)
