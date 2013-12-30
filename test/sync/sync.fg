@@ -75,7 +75,7 @@ Sync = [
 
     'handle_content' : function(self, path, content, modified, offset)
 
-        self.mesh.print('handle_content ' + path +' '+ offset)
+        # self.mesh.print('handle_content ' + path +' '+ offset)
 
         self.writing[path] = true
 
@@ -94,7 +94,7 @@ Sync = [
 
     'filed' : function(self, dir)
 
-        #self.mesh.print('filed ' + dir)
+        self.mesh.print('filed ' + dir)
 
         # check for new and deleted files
         latest = self.local_snapshot()

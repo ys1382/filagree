@@ -101,14 +101,12 @@ test_director = [
             sys.print('dq busy')
             return false
         else if (not self.queue.length) then # all done
-            sys.print('dq done')
             return true
         end
 
         msg4 = self.queue.remove()[0]
 
         if not msg4.to then
-            sys.print('dq fork')
             sys.forkexec(msg4.action.pack())
             self.dequeue() # proceed to next step
         else
@@ -118,7 +116,6 @@ test_director = [
                 sys.exit(2)
             end
 
-            sys.print('dq send')
             self.mesh.send_to(msg4.to, msg4)
         end
 

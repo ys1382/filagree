@@ -1386,7 +1386,6 @@ void generate_loop(struct byte_array *code, struct symbol *root)
     // make sure the jump forward and back values are correct
     for (int jb_len=2;;)
     {
-        // serial_encode_int(ifa, b->length + jmp_len);
         serial_encode_int(jump_over, b->length + jb_len);
 
         loop_length = ifa->length + jump_over->length + b->length;
