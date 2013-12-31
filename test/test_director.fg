@@ -107,7 +107,15 @@ test_director = [
         msg4 = self.queue.remove()[0]
 
         if not msg4.to then
-            sys.forkexec(msg4.action.pack())
+            params = msg4.action
+            verb = params[0]
+            sys.print('verb = ' + verb)
+            sys.print('params = ' + params)
+            if verb == 'fork' then
+                sys.forkexec(params.part(1).pack())
+            else
+                self.step(params)
+            end
             self.dequeue() # proceed to next step
         else
             self.active[''+msg4.seq] = msg4

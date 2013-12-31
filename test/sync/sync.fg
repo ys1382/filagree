@@ -94,7 +94,7 @@ Sync = [
 
     'filed' : function(self, dir)
 
-        self.mesh.print('filed ' + dir)
+        #self.mesh.print('filed ' + dir)
 
         # check for new and deleted files
         latest = self.local_snapshot()
@@ -209,10 +209,10 @@ Sync = [
             if match then status='pass' else status='fail' end
 
         else if action == 'offline' then
-            self.offline = msg7.offline
-            if not msg7.offline then
-                self.connected()
-            end
+            self.offline = true
+        else if action == 'online' then
+            self.offline = true
+            self.connected()
 
         else if action == 'die' then
             sys.exit(0)
