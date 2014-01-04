@@ -84,7 +84,7 @@
 }
 
 -(void)setData:(struct variable*)value {
-//    self->data = value;
+    self->data = value;
 }
 
 #ifndef NO_UI

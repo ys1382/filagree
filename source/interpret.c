@@ -72,7 +72,7 @@ void interpret_file(struct byte_array *path,
     }
 
 #ifdef DEBUG
-    display_program(program);
+    //display_program(program);
 #endif
 
     execute(program);
