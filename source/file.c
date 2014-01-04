@@ -163,6 +163,8 @@ int file_list(const char *path, int (*fn)(const char*, bool, long, void*), void 
         bool dir = S_ISDIR(cur->fts_statp->st_mode);
 #ifdef __ANDROID__
         long mod = cur->fts_statp->st_atime;
+#elif defined(_WIN32) || defined(_WIN64) || defined(__linux)
+        long mod = cur->fts_statp->st_mtim.tv_sec;
 #else
         long mod = cur->fts_statp->st_mtimespec.tv_sec;
 #endif
