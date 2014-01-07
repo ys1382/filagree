@@ -78,8 +78,7 @@ void *incoming(void *arg)
     ta->message = variable_deserialize(ta->context, ta->buf);
 
 #ifdef DEBUG
-//    char buf[1000];
-//    DEBUGPRINT("received %s\n", variable_value_str(ta->context, ta->message, buf));
+    DEBUGPRINT("received %s\n", variable_value_str(ta->context, ta->message));
 #endif
 
     gil_unlock(ta->context, "ncoming");
@@ -124,36 +123,49 @@ void add_thread(struct node_thread *ta, int sockfd)
     }
 }
 
-void messaged(struct node_thread *ta0, struct variable *listener, int sockfd, uint8_t *buf, ssize_t n)
-{
-    struct node_thread *ta = thread_new(ta0->context, listener, incoming, sockfd);
-    ta->buf = byte_array_new_size((uint32_t)n);
-    ta->buf->length = (uint32_t)n;
-    memcpy((void*)ta->buf->data, buf, n);
-    ta->event = MESSAGED;
-    //DEBUGPRINT("\n>%" PRIu16 " - msgd %p\n", current_thread_id(), ta->context);
-    add_thread(ta, 0);
-}
-
 // handles socket recv and disconnect
+// returns true iff disconnect
 bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
 {
+    //DEBUGPRINT("\nsocket_event\n");
+
     ssize_t n;
     uint8_t buf[MAXLINE];
+    struct byte_array *received = byte_array_new();
 
-    if ((n = read(fd, buf, MAXLINE)) <= 0)
+    do
     {
-        struct node_thread *ta = thread_new(ta0->context, listener, node_callback, fd);
-        ta->event = DISCONNECTED;
-        add_thread(ta, 0);
-        return true;
+        n = read(fd, buf, MAXLINE); // read bytes from socket (blocking)
+
+        if (n < 0)  // disconnected
+        {
+            struct node_thread *ta = thread_new(ta0->context, listener, node_callback, fd);
+            ta->event = DISCONNECTED;
+            add_thread(ta, 0);
+            return true;
+        }
+
+        if (received->length + n > BYTE_ARRAY_MAX_LEN)  // too long
+        {
+            printf("socket message too long, dropping\n");
+            break;
+        }
+
+        struct byte_array *chunk = byte_array_new_data((int32_t)n, buf);
+        byte_array_append(received, chunk);
     }
-    else
-    {
-        DEBUGPRINT("\nsocket_event\n");
-        messaged(ta0, listener, fd, buf, n);
-        return false;
-    }
+    while (n == MAXLINE);
+
+    // process message in another thread
+    assert_message(received && received->length, "no input");
+    byte_array_reset(received);
+    struct node_thread *ta = thread_new(ta0->context, listener, incoming, fd);
+    ta->buf = received;
+    ta->event = MESSAGED;
+    DEBUGPRINT("\n>%" PRIu16 " - msgd %d\n", current_thread_id(), received->length);
+    add_thread(ta, 0);
+
+    return false;
 }
 
 // listens for inbound connections

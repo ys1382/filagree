@@ -67,22 +67,22 @@ Mesh = [
         sys.print(self.id +' -- '+ line)
     end,
 
-    'messaged' : function(self, socket, msg4)
+    'messaged' : function(self, socket, msgm4)
 
-        if (not msg4.to) or (msg4.to == self.id) # por moi
+        if (not msgm4.to) or (msgm4.to == self.id) # por moi
 
-            #self.print('message from ' + msg4.from + ': ' + msg4.event)
+            #self.print('message from ' + msgm4.from + ': ' + msgm4.event)
 
-            if msg4.flood then
-                self.broadcast(msg4, socket)
+            if msgm4.flood then
+                self.broadcast(msgm4, socket)
             end
 
-            if not (response = self.handle_message(socket, msg4)) then
+            if not (response = self.handle_message(socket, msgm4)) then
                 for c in self.ctx
-                    response = c.handle_message(socket, msg4)
+                    response = c.handle_message(socket, msgm4)
                     if response then
-                        mm2 = ['from' : self.id, 'seq' : msg4.seq] + response
-                        self.send_to(msg4.from, mm2)
+                        mm2 = ['from' : self.id, 'seq' : msgm4.seq] + response
+                        self.send_to(msgm4.from, mm2)
                         return
                     end
                 end
@@ -90,11 +90,11 @@ Mesh = [
 
         else # forward to recipient
 
-            to = self.peers[msg4.to] # id -> socket
+            to = self.peers[msgm4.to] # id -> socket
             if not to then
-                sys.print('no peer ' + msg4.to)
+                sys.print('no peer ' + msgm4.to)
             else
-                self.send(to, msg4)
+                self.send(to, msgm4)
             end
         end
 

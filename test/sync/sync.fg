@@ -56,19 +56,19 @@ Sync = [
 
     end,
 
-    'handle_message' : function(self, socket, msg4)
+    'handle_message' : function(self, socket, msgs4)
 
-        if msg4.event == 'greet' then
-            self.snapshot = msg4.files
+        if msgs4.event == 'greet' then
+            self.snapshot = msgs4.files
 
-        else if msg4.event == 'change' then
-            self.handle_change(socket, msg4)
+        else if msgs4.event == 'change' then
+            self.handle_change(socket, msgs4)
 
-        else if msg4.event == 'content' then
-            self.handle_content(msg4.path, msg4.content, msg4.modified, msg4.offset)
+        else if msgs4.event == 'content' then
+            self.handle_content(msgs4.path, msgs4.content, msgs4.modified, msgs4.offset)
 
-        else if msg4.event == 'test' then
-            self.handle_test(msg4)
+        else if msgs4.event == 'test' then
+            self.handle_test(msgs4)
         end
 
     end,
@@ -140,7 +140,7 @@ Sync = [
 
         msg7 = ['event' : 'content', 'path' : path]
 
-        chunk = 100    # chunk size in number of bytes
+        chunk = 1000    # chunk size in number of bytes
         full_local_path = self.watched + path
 
         while true

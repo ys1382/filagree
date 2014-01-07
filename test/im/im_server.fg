@@ -2,8 +2,9 @@ import '../mesh'    # shared mesh logic
 import '../sync/sync'    # shared sync logic
 
 
+host = '127.0.0.1'
 id = 'server'
-port = 9996
+port = 9999
 
 
 im = [
@@ -59,7 +60,8 @@ im = [
 
 ]
 
-mesh = Mesh.init(id, port, [im])
+
+mesh = Mesh.init(id, host, port, [im])
 
 mesh.listen()
 sys.loop()

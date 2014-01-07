@@ -278,7 +278,7 @@ char* byte_array_to_string(const struct byte_array* ba)
     return s;
 }
 
-void byte_array_reset(struct byte_array* ba) {
+inline void byte_array_reset(struct byte_array* ba) {
     ba->current = ba->data;
 }
 
