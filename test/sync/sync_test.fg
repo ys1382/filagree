@@ -11,9 +11,9 @@ director = [
 
     'run_tests' : function(self)
 
-        self.crud()
+        #self.crud()
         self.large_file()
-        self.conflict()
+        #self.conflict()
 
     end,
 
@@ -100,10 +100,10 @@ director = [
         end
 
         size = 1024 # bytes
-        #while size <= (1024*1024) # 1GB
+        while size <= (1024*1024) # 1MB
             test_xfer(self, size)
             size = size * 2
-        #end
+        end
 
     end,
 

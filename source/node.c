@@ -147,7 +147,7 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
 
         if (received->length + n > BYTE_ARRAY_MAX_LEN)  // too long
         {
-            printf("socket message too long, dropping\n");
+            printf("socket message too long (%d), dropping\n", received->length);
             break;
         }
 

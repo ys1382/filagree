@@ -14,7 +14,6 @@
 #include "struct.h"
 #include "util.h"
 
-#define BYTE_ARRAY_MAX_LEN      100000
 #define ERROR_BYTE_ARRAY_LEN    "byte array too long"
 #define GROWTH_FACTOR           2
 

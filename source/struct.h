@@ -15,7 +15,7 @@
 
 #define ERROR_INDEX	"index out of bounds"
 #define ERROR_NULL "null pointer"
-#define BYTE_ARRAY_MAX_LEN      100000
+#define BYTE_ARRAY_MAX_LEN      (1024*1024)
 
 
 // array ///////////////////////////////////////////////////////////////////

@@ -140,7 +140,7 @@ Sync = [
 
         msg7 = ['event' : 'content', 'path' : path]
 
-        chunk = 1000    # chunk size in number of bytes
+        chunk = 10000    # chunk size in number of bytes
         full_local_path = self.watched + path
 
         while true
