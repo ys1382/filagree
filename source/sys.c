@@ -811,7 +811,7 @@ static inline struct variable *cfnc_find2(struct context *context, bool has)
 
     struct variable *result = variable_find(context, self, sought, start);
     if (has)
-        return variable_new_bool(context, result->type != VAR_NIL);
+        return variable_new_bool(context, result->integer != -1);
     return result;
 }
 

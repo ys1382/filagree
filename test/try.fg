@@ -1,8 +1,6 @@
-i = 1
-while i <= 2
-    sys.forkexec(true, '../../source/filagree', 'sync_client.fg', 'id=' + i)
+a = []
+b = [4,5,6]
+c = [z for z in b where a.has(z)]
 
-    i = i + 1
-end
 
-sys.print('done')
+sys.print(c)

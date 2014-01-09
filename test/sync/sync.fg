@@ -30,7 +30,6 @@ Sync = [
 
         self.files = self.local_snapshot()
 
-        self.mesh.print('file_listen on ' + dir)
         sys.file_listen(watched, self)   # listen for file changes
 
         return self
@@ -38,6 +37,7 @@ Sync = [
     end,
 
     'greet' : function(self)
+        sys.print('sync.greet ' + self.files)
         return ['files' : self.files]
     end,
 
@@ -59,10 +59,10 @@ Sync = [
     'handle_message' : function(self, socket, msgs4)
 
         if msgs4.event == 'greet' then
-            self.snapshot = msgs4.files
+            self.handle_greet(msgs4)
 
-        else if msgs4.event == 'change' then
-            self.handle_change(socket, msgs4)
+        else if msgs4.event == 'delete' then
+            self.handle_delete(socket, msgs4)
 
         else if msgs4.event == 'content' then
             self.handle_content(msgs4.path, msgs4.content, msgs4.modified, msgs4.offset)
@@ -70,6 +70,15 @@ Sync = [
         else if msgs4.event == 'test' then
             self.handle_test(msgs4)
         end
+
+    end,
+
+    'handle_greet' : function(self, msgg)
+
+        sys.print('handle_greet:' + msgg)
+        self.snapshot = msgg.files
+        sys.print('self.snapshot='+self.snapshot)
+        self.filed()
 
     end,
 
@@ -92,37 +101,51 @@ Sync = [
         end
     end,
 
+    # called when the OS detects a file change
     'filed' : function(self, dir)
+
+        if self.offline then
+            self.offline_change = true
+            return
+        end
 
         #self.mesh.print('filed ' + dir)
 
         # check for new and deleted files
         latest = self.local_snapshot()
         updated = latest - self.files
-        deleted = self.files - latest
-
-        #sys.print('latest=' +latest  +', self.files='+self.files)
-        #sys.print('updated='+updated +', deleted='   +deleted)
+        #deleted = self.files - latest
+        deleted = [f for f in (self.files - latest) where self.snapshot.has(f)]
 
         # check for files with new mod times
-        for f in self.files where (f != self.writing)
-            g = self.files[f]
+        for f in latest where (f != self.writing)
+            g = latest[f]
             mod = g.modified
-            h = latest[f]
-            if h and (mod != h.modified) then
-                updated = updated + f:g
+            h = self.files[f]
+            if h then
+                if mod < h.modified then
+                    f2 = f + '_conflict_' + h.modified
+                    sys.rename(f, f2)
+                    latest[f2] = latest[f]
+                    latest[f] = nil
+                    updated = updated + f2:g
+                else if mod > h.modified then
+                    updated = updated + f:g
+                end
             end
         end
 
-        if deleted.keys.length then
-            changes = ['deleted' : deleted]
-            msg2 = ['event' : 'change', 'changes' : changes]
+        if deleted.length then
+            msg2 = ['event' : 'delete', 'delete' : deleted]
             self.mesh.broadcast(msg2)
         end
+
+        sys.mesh.print('updated='+updated)
 
         # add content of each new or modified file
         for u in updated.keys
             self.send_file(u)
+            self.snapshot = self.snapshot + u
         end
 
         self.files = latest
@@ -132,7 +155,7 @@ Sync = [
     # send a file in chunks
     'send_file' : function(self, path)
 
-        self.mesh.print('send_file ' + path +' '+ self.offset[path])
+        #self.mesh.print('send_file ' + path +' '+ self.offset[path])
 
         self.offset[path] = 0
         if self.sending[path] then return end
@@ -167,10 +190,15 @@ Sync = [
 
     end,
 
-    'handle_change' : function(self, socket, msg8)
+    'handle_delete' : function(self, socket, msg8)
+
+        sys.print('handle_delete ' + msg8)
 
         # delete removed directories and files
-        for path in msg8.changes.deleted
+        for path in msg8.delete
+            sys.print('snapshot0=' + self.snapshot)
+            self.snapshot = self.snapshot - path
+            sys.print('snapshot1=' + self.snapshot)
             sys.rm(self.watched + path)
         end
 
@@ -184,7 +212,9 @@ Sync = [
         path = self.watched + msg7.path
         status = 'done'
 
-        self.mesh.print('test directive ' + action +': '+ msg7)
+        if not msg7.retry then
+            self.mesh.print('test ' + msg7.seq  +': '+ msg7)
+        end
 
         if action == 'update' then
             # sys.mkdir(path)
@@ -203,7 +233,7 @@ Sync = [
                 #self.mesh.print('size match ' + sys.fileattr(path) +' => '+ match)
             else
                 match = msg7.content == sys.read(path)
-                self.mesh.print('content match = ' + match)
+                #self.mesh.print('content match = ' + match)
             end
 
             if match then status='pass' else status='fail' end
@@ -211,8 +241,8 @@ Sync = [
         else if action == 'offline' then
             self.offline = true
         else if action == 'online' then
-            self.offline = true
-            self.connected()
+            self.offline = false
+            self.mesh.connected()
 
         else if action == 'die' then
             sys.exit(0)

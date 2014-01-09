@@ -12,8 +12,8 @@ director = [
     'run_tests' : function(self)
 
         #self.crud()
-        self.large_file()
-        #self.conflict()
+        #self.large_file()
+        self.conflict()
 
     end,
 
@@ -55,6 +55,7 @@ director = [
 
     'conflict' : function(self)
 
+/*
         # TC 1: Simple Edit – Variation 1
         self.sync_direct('server1', 'update', 'tc1.txt', 'tc1a')
         self.sync_direct('client1', 'verify', 'tc1.txt', 'tc1a')
@@ -78,13 +79,25 @@ director = [
         self.create_file('client1', 'tc3.txt', nil, '789') # overwrite with another file while offline
         self.sync_direct('client1', 'online')
         self.sync_direct('server1', 'verify', 'tc3.txt', '789')
+*/
 
+        # TC 4: Conflicted Edit – Variation 1
+        self.sync_direct('client1', 'update', 'tc4.txt', '123')
+        self.sync_direct('server1', 'verify', 'tc4.txt', '123')
+        self.sync_direct('client1', 'offline')
+        self.create_file('client1', 'tc4.txt', nil, '456') # overwrite with another file while offline
+        self.create_file('server1', 'tc4.txt', nil, '789') # out of band edit
+        self.sync_direct('client1', 'online')
+        self.sync_direct('server1', 'verify', 'tc3.txt', '789')
+        self.sync_direct('server1', 'verify', 'tc3_conflict.txt', '456')
 
     end,
 
     #
     # test to transfer large files
     #
+
+    # todo: 1) dynamic chunk size in sync.fg, 2) reuse buffer in node.c, 3) staging area in sync.fg 
 
     'large_file' : function(self)
 
@@ -100,10 +113,10 @@ director = [
         end
 
         size = 1024 # bytes
-        while size <= (1024*1024) # 1MB
+        #while size <= (1024*1024) # 1MB
             test_xfer(self, size)
             size = size * 2
-        end
+        #end
 
     end,
 

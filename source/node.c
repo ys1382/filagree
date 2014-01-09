@@ -156,8 +156,10 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
     }
     while (n == MAXLINE);
 
+    if (!received->length)
+        return false;
+    
     // process message in another thread
-    assert_message(received && received->length, "no input");
     byte_array_reset(received);
     struct node_thread *ta = thread_new(ta0->context, listener, incoming, fd);
     ta->buf = received;

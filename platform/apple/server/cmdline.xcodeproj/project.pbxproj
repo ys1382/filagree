@@ -156,20 +156,12 @@
 			isa = PBXGroup;
 			children = (
 				88C62F3318351E6B00E6E9DC /* icon.png */,
-				88C62F3418351E6B00E6E9DC /* server */,
 				88C62F3718351E6B00E6E9DC /* sync.fg */,
 				88C62F3818351E6B00E6E9DC /* sync_client.fg */,
 				88C62F3918351E6B00E6E9DC /* sync_server.fg */,
 				88C62F3A18351E6B00E6E9DC /* sync_test.fg */,
 			);
 			path = sync;
-			sourceTree = "<group>";
-		};
-		88C62F3418351E6B00E6E9DC /* server */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = server;
 			sourceTree = "<group>";
 		};
 		88C6303918351E9200E6E9DC /* source */ = {

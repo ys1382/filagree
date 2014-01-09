@@ -63,7 +63,7 @@ test_director = [
 
         self.num_tests = self.num_tests + 1
         desc = self.descriptions[seq]
-        sys.print(self.id + ' -- ' + seq +' '+ desc.who +' '+ desc.title +': '+ text)
+        sys.print('test ' + seq +': '+ text)
 
     end,
 
@@ -79,7 +79,7 @@ test_director = [
                 'seq'       : self.seq
                 ] + params
 
-        sys.print('direct ' + msg5)
+        #sys.print('direct ' + msg5)
 
 
         self.queue = self.queue + [msg5]
@@ -109,8 +109,6 @@ test_director = [
         if not msg4.to then
             params = msg4.action
             verb = params[0]
-            sys.print('verb = ' + verb)
-            sys.print('params = ' + params)
             if verb == 'fork' then
                 sys.forkexec(params.part(1).pack())
             else
