@@ -39,7 +39,7 @@ test_director = [
                 sys.sleep(original_request.retry * 1000)
                 self.queue = [original_request] + self.queue # add back to head of q
 
-            else
+            else if msg4.status != 'done'
                 self.received_result(msg4.seq, ok)
             end
 
@@ -63,7 +63,7 @@ test_director = [
 
         self.num_tests = self.num_tests + 1
         desc = self.descriptions[seq]
-        sys.print('test ' + seq +': '+ text)
+        sys.print('test ' + self.num_tests +': '+ text)
 
     end,
 
@@ -90,7 +90,7 @@ test_director = [
 
     'local_step' : function(self)
         args = sys.args()
-        sys.print('local_step ' + args.part(1))
+        #sys.print('local_step ' + args.part(1))
         self.direct(args[1], nil, args.part(1))
     end,
 

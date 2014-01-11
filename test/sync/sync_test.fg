@@ -43,6 +43,7 @@ director = [
 
         #delete
         self.sync_direct('client1', 'delete', 'b.txt')
+        self.wait()                                     # wait for delete to propogate
         self.sync_direct('client1', 'verify', 'b.txt')
         self.sync_direct('server1', 'verify', 'b.txt')
         self.sync_direct('client2', 'verify', 'b.txt')
@@ -55,41 +56,43 @@ director = [
 
     'conflict' : function(self)
 
-/*
         # TC 1: Simple Edit – Variation 1
         self.sync_direct('server1', 'update', 'tc1.txt', 'tc1a')
         self.sync_direct('client1', 'verify', 'tc1.txt', 'tc1a')
         self.sync_direct('client1', 'update', 'tc1.txt', 'tc1b')
         self.sync_direct('client1', 'verify', 'tc1.txt', 'tc1b')
         self.sync_direct('server1', 'verify', 'tc1.txt', 'tc1b')
-
+/*
         # TC 2: Simple Edit – Variation 2
         self.create_file('client1', 'tc2', 1024)    # create file that take time to upload
-        sys.sleep(2000)                             # wait for client to detect file, and start uploading
+        self.wait()                                 # wait for client to detect file, and start uploading
         self.create_file('client1', 'tc2', 1)       # overwrite with another file
         self.sync_direct('client1', 'verify', 'tc2', nil, nil, 1)
         self.sync_direct('client2', 'verify', 'tc2', nil, nil, 1)
         self.sync_direct('server1', 'verify', 'tc2', nil, nil, 1)
-
+*/
         # TC 3: Simple Edit – Variation 3
         self.sync_direct('client1', 'update', 'tc3.txt', '123')
         self.sync_direct('client1', 'verify', 'tc3.txt', '123')
         self.sync_direct('server1', 'verify', 'tc3.txt', '123')
         self.sync_direct('client1', 'offline')
-        self.create_file('client1', 'tc3.txt', nil, '789') # overwrite with another file while offline
+        self.create_file('client1', 'tc3.txt', nil, '789')  # overwrite with another file while offline
+        self.wait()                                         # ignore file event
         self.sync_direct('client1', 'online')
         self.sync_direct('server1', 'verify', 'tc3.txt', '789')
-*/
 
+/*
         # TC 4: Conflicted Edit – Variation 1
         self.sync_direct('client1', 'update', 'tc4.txt', '123')
-        self.sync_direct('server1', 'verify', 'tc4.txt', '123')
         self.sync_direct('client1', 'offline')
-        self.create_file('client1', 'tc4.txt', nil, '456') # overwrite with another file while offline
-        self.create_file('server1', 'tc4.txt', nil, '789') # out of band edit
+        self.create_file('client1', 'tc4.txt', nil, '456')  # overwrite with another file while offline
+        self.wait()                                         # ensure different timestamps
+        self.create_file('server1', 'tc4.txt', nil, '789')  # out of band edit
+        self.wait()                                         # ignore file event
         self.sync_direct('client1', 'online')
         self.sync_direct('server1', 'verify', 'tc3.txt', '789')
         self.sync_direct('server1', 'verify', 'tc3_conflict.txt', '456')
+*/
 
     end,
 
@@ -168,11 +171,23 @@ director = [
         end
     end,
 
+    'wait' : function(self)
+        self.local_step('wait')
+    end,
+
+    # perform a test step, instead of asking another client to
     'step' : function(self, params)
-        sys.print('step '   + params)
-        if params[0] == 'write' then
+        self.mesh.print('step '   + params)
+
+        action = params[0]
+
+        if action == 'write' then # write contents to file
             sys.write(params[1], params[2])
+
+        else if action == 'wait' then # wait so as to ignore file event
+            sys.sleep(2000)
         end
+
     end,
 
     'sync_direct' : function(self, whom, action, path, content, path2, size)

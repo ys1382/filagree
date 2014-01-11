@@ -33,12 +33,23 @@ Mesh = [
 
 
     'send_greet' : function(self, socket)
+        test = (socket.type == 'nil')
         msg1 = ['event' : 'greet', 'from' : self.id, 'test' : test]
         for c in self.ctx
             msg1 = msg1 + c.greet()
         end
-        self.send(socket, msg1)
+
+        #self.print('socket.type='+socket.type+' test='+test)
+        if test then
+            #self.print('peers='+self.peers)
+            for socket in self.peers.vals
+                self.send(socket, msg1)
+            end
+        else
+            self.send(socket, msg1)
+        end
     end,
+
 
     'connected' : function(self, socket)
         self.send_greet(socket)
