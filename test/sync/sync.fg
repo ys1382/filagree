@@ -27,15 +27,60 @@ Sync = [
         self.view = view
         self.mesh = mesh
 
-        self.guids  = sys.load('../' + mesh.id + 'guids') # path -> guid map
+        self.load_db()
 
         sys.file_listen(self.watched, self)   # listen for file changes
 
-        self.files = self.local_snapshot()
-        # sys.mesh.print('sync.greet ' + self.files)
-
         return self
 
+    end,
+
+    'load_db' : function(self)
+        self.files = sys.load('../' + mesh.id + 'guids')        # guid -> [path,version,modified]
+
+        self.guids = [self.guids[guid].path : guid for guid in self.guids.keys]
+
+        self.reconcile_local()
+    end,
+
+    # figure out what changed on local device
+    'reconcile_local' : function(self)
+
+        updated = []
+        deleted = []
+
+        files = self.local_snapshot()                           # path -> attributes
+
+        for path in files.keys
+
+            file = files[path]
+            guid = self.guids[path]
+
+            if not guid then                                   # new file
+
+                guid = self.guidnum
+                self.guids[guid] = ['path' : path,
+                                    'version' : 0,
+                                    'modified' : file.modified]
+                self.guidnum = self.guidnum + 1
+                updates = updates + guid
+
+            else
+
+                if file.modified != datum.modified then # offline change detected
+                self.increment_version(datum.guid)
+                updates = updates + guid
+            end
+        end
+
+        deleted = [guid for guid in self.guids.vals where not files[self.guids[guid]]]
+
+        rename updated, deleted
+
+    end,
+
+    'increment_version' : function(self, guid)
+        self.files[guid].version = self.files[guid].version + 1
     end,
 
     'greet' : function(self)
