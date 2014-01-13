@@ -36,46 +36,63 @@ Sync = [
     end,
 
     'load_db' : function(self)
+
         self.files = sys.load('../' + mesh.id + 'guids')        # guid -> [path,version,modified]
-
         self.guids = [self.guids[guid].path : guid for guid in self.guids.keys]
-
         self.reconcile_local()
+
     end,
+
+    # todo: ++, for key,val in map
+
 
     # figure out what changed on local device
     'reconcile_local' : function(self)
 
         updated = []
-        deleted = []
 
-        files = self.local_snapshot()                           # path -> attributes
+#        files = self.local_snapshot()               # path -> attributes
+
+        list = sys.file_list(self.watched) - self.watched
+        for f in list where not self.ignore(f)
+            path = 'path' : f - self.watched
+            guid = self.guid(path)
+            result = result + g:(list[f]+version)
+        end
+        sys.print('local_snapshot: ' + result)
+
+
 
         for path in files.keys
 
             file = files[path]
+            fmod = file.modified
             guid = self.guids[path]
 
-            if not guid then                                   # new file
+            if not guid then                        # new file
 
                 guid = self.guidnum
-                self.guids[guid] = ['path' : path,
-                                    'version' : 0,
-                                    'modified' : file.modified]
+                self.files[guid] = ['path'     : path,
+                                    'version'  : 0,
+                                    'modified' : fmod]
+                self.guids[path] = guid
                 self.guidnum = self.guidnum + 1
                 updates = updates + guid
 
             else
 
-                if file.modified != datum.modified then # offline change detected
+                dbmod = self.files[guid].modified
+                if fmod != dbmod then               # offline update detected
                 self.increment_version(datum.guid)
                 updates = updates + guid
+
             end
         end
 
         deleted = [guid for guid in self.guids.vals where not files[self.guids[guid]]]
 
-        rename updated, deleted
+        self.mesh.print('updated='+updated+', deleted='+deleted)
+        return updated, deleted
 
     end,
 
@@ -92,20 +109,6 @@ Sync = [
         self.guid[path] = self.guid[path] or (self.mesh.id + self.guidnum)
         self.guidnum = self.guidnum + 1
         return self.guid[path]
-
-    end,
-
-    'local_snapshot' : function(self)
-
-        list = sys.file_list(self.watched) - self.watched
-        result = []
-        for f in list where not self.ignore(f)
-            path = 'path' : f - self.watched
-            guid = self.guid(path)
-            result = result + g:(list[f]+version)
-        end
-        sys.print('local_snapshot: ' + result)
-        return result
 
     end,
 
@@ -184,15 +187,17 @@ Sync = [
         if self.offline then
             return
         end
-
+/*
         latest = self.local_snapshot()
-
         updated = latest - self.files
+        deleted = self.files - latest
+*/
+        updated,deleted = self.reconcile_local()
+
         for u in updated
             self.send_file(u)
         end
 
-        deleted = self.files - latest
         if deleted.keys.length then
             msg2 = ['event' : 'delete', 'delete' : deleted]
             self.mesh.broadcast(msg2)

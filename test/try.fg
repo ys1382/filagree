@@ -1,6 +1,9 @@
-a = []
-b = [4,5,6]
-c = [z for z in b where a.has(z)]
+/*
+x = ['a':1, 'b':2, 'c':3]
 
+for y,z in x
+    sys.print(y+z)
+end
+*/
 
-sys.print(c)
+a,b = 7,8
