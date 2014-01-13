@@ -15,7 +15,6 @@ Sync = [
     'sending' : [],
     'offset'  : [],
     'guidnum' : 0,
-    'db'      : sys.load(id + 'db')
 
     'init' : function(self, view, dir, mesh)
 
@@ -28,23 +27,26 @@ Sync = [
         self.view = view
         self.mesh = mesh
 
-        sys.file_listen(watched, self)   # listen for file changes
+        self.guids  = sys.load('../' + mesh.id + 'guids') # path -> guid map
+
+        sys.file_listen(self.watched, self)   # listen for file changes
+
+        self.files = self.local_snapshot()
+        # sys.mesh.print('sync.greet ' + self.files)
 
         return self
 
     end,
 
     'greet' : function(self)
-        self.files = self.local_snapshot()
-        sys.mesh.print('sync.greet ' + self.files)
         return ['files' : self.files]
     end,
 
     'guid' : function(self, path)
 
-        g = self.files[guid] or (self.mesh.id + self.guidnum)
+        self.guid[path] = self.guid[path] or (self.mesh.id + self.guidnum)
         self.guidnum = self.guidnum + 1
-        return g
+        return self.guid[path]
 
     end,
 
@@ -55,9 +57,9 @@ Sync = [
         for f in list where not self.ignore(f)
             path = 'path' : f - self.watched
             guid = self.guid(path)
-            version = 'version' : self.files[guid] or 0
             result = result + g:(list[f]+version)
         end
+        sys.print('local_snapshot: ' + result)
         return result
 
     end,
@@ -88,12 +90,11 @@ Sync = [
             self.handle_delete(msgs4.deleted)
 
         else if msgs4.event == 'content' then
-            self.handle_content(msgs4))
+            self.handle_content(msgs4)
 
         else if msgs4.event == 'test' then
             self.handle_test(msgs4)
         end
-
     end,
 
     'handle_greet' : function(self, msgg)

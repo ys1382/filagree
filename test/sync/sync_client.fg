@@ -26,6 +26,8 @@ client.ui = sys.ui( client,
 mesh = Mesh.init(id, host, port, [client])
 client.sync = Sync.init(client, id, mesh)
 
+sys.print('files='+client.sync.files.type)
+
 sys.ui_set(client.ui.files, client.sync.files.keys) # update ui
 
 mesh.connect()
