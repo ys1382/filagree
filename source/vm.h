@@ -65,6 +65,7 @@ enum Opcode {
     VM_SUB, // subtract two values
     VM_MUL, // multiply two values
     VM_DIV, // divide two values
+    VM_INC, // increment by 1
     VM_MOD, // modulo
     VM_BND, // bitwise and
     VM_BOR, // bitwise or

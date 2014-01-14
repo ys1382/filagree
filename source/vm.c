@@ -330,6 +330,7 @@ const struct number_string opcodes[] = {
     {VM_SUB,    "SUB"},
     {VM_MUL,    "MUL"},
     {VM_DIV,    "DIV"},
+    {VM_INC,    "INC"},
     {VM_MOD,    "MOD"},
     {VM_AND,    "AND"},
     {VM_ORR,    "ORR"},
@@ -1226,26 +1227,34 @@ static void unary_op(struct context *context, enum Opcode op)
         DEBUGSPRINT("%s", NUM_TO_STRING(opcodes, op));
         return;
     }
-
+    
     struct variable *v = (struct variable*)variable_pop(context);
     struct variable *result = NULL;
 
-    switch (v->type) {
+    if (op == VM_INC) {
+        v->type = VAR_INT;
+        result = v;
+    }
+
+    switch (v->type)
+    {
         case VAR_NIL:
         {
             switch (op) {
-                case VM_NEG:    result = variable_new_nil(context);              break;
-                case VM_NOT:    result = variable_new_bool(context, true);       break;
-                default:        vm_exit_message(context, "bad math operator");   break;
+                case VM_NEG:    result = variable_new_nil(context);             break;
+                case VM_NOT:    result = variable_new_bool(context, true);      break;
+                case VM_INC:    v->integer = 1;                                 break;
+                default:        vm_exit_message(context, "bad math operator");  break;
             }
         } break;
         case VAR_INT: {
             int32_t n = v->integer;
             switch (op) {
-                case VM_NEG:    result = variable_new_int(context, -n);          break;
-                case VM_NOT:    result = variable_new_bool(context, !n);         break;
-                case VM_INV:    result = variable_new_int(context, ~n);          break;
-                default:        vm_exit_message(context, "bad math operator");   break;
+                case VM_NEG:    result = variable_new_int(context, -n);         break;
+                case VM_NOT:    result = variable_new_bool(context, !n);        break;
+                case VM_INV:    result = variable_new_int(context, ~n);         break;
+                case VM_INC:    v->integer++;                                   break;
+                default:        vm_exit_message(context, "bad math operator");  break;
             }
         } break;
         case VAR_FLT: {
@@ -1259,7 +1268,9 @@ static void unary_op(struct context *context, enum Opcode op)
         case VAR_BOOL:
             switch (op) {
                 case VM_NOT:    result = variable_new_bool(context, !v->boolean);break;
+                case VM_INC:    v->integer = v->boolean + 1;                     break;
                 default:        vm_exit_message(context, "bad math operator");   break;
+
             }
             break;
         default:
@@ -1498,6 +1509,7 @@ bool run(struct context *context,
             case VM_LSF:    binary_op(context, inst);                       break;
             case VM_ORR:
             case VM_AND:    pc_offset = boolean_op(context, program, inst); break;
+            case VM_INC:
             case VM_NEG:
             case VM_NOT:    unary_op(context, inst);                        break;
             case VM_SRC:    src(context, inst, program);                    break;

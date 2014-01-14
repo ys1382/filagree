@@ -69,13 +69,13 @@ Sync = [
                 guid = self.guidnum
                 self.files[guid] = ['path':path, 'version':0] + file
                 self.guids[path] = guid
-                self.guidnum ++
+                self.guidnum++
                 updates = updates + guid
 
             else if fmod != self.files[guid].modified then # offline update
 
-                self.files[guid].version ++
-                updates += guid
+                self.files[guid].version++
+                updates = updates + guid
 
             end
         end
