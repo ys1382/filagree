@@ -1,12 +1,12 @@
 ####### sync_client.fg
 
 
-import 'sync'
 import '../ui'
-import '../mesh'
+import 'sync'
 
 
 id = 'client' + id
+
 
 client = [
 
@@ -25,6 +25,7 @@ client.ui = sys.ui( client,
 
 mesh = Mesh.init(id, host, port, [client])
 client.sync = Sync.init(client, id, mesh)
+sys.print('mesh='+mesh)
 
 sys.print('files='+client.sync.files.type)
 

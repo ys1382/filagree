@@ -229,7 +229,7 @@ tester.test('for each',
             sum = sum - n
         end
         y = ['a':7,'b':8]
-        for k in y.keys
+        for k in y
             sum = sum + y[k]
         end
         return sum

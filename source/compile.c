@@ -397,7 +397,7 @@ BNF:
                   ( ELSE <statements>)? LEX_END
 <loop> --> WHILE <expression> LEX_DO <statements> LEX_END
 
-<iterator> --> LEX_FOR LEX_IDENTIFIER LEX_IN <expression> ( LEX_WHERE <expression> )?
+<iterator> --> LEX_FOR LEX_IDENTIFIER (,LEX_IDENTIFIER2) LEX_IN <expression> ( LEX_WHERE <expression> )?
 <iterloop> --> <iterator> LEX_DO <statements> LEX_END
 <comprehension> --> LEX_LEFTSQUARE <expression> <iterator> LEX_RIGHTSQUARE
 
@@ -460,7 +460,7 @@ enum Exp_type {
 struct symbol {
     enum Nonterminal nonterminal;
     struct token *token;
-    struct array* list;
+    struct array *list;
     struct symbol *index, *value, *other;
     float floater;
     bool statement;
@@ -671,6 +671,7 @@ struct token *fetch_lookahead(enum Lexeme lexeme, ...) {
     return t;
 }
 
+// fetches one of the goal lexemes
 struct symbol *symbol_fetch(enum Nonterminal n, enum Lexeme goal, ...)
 {
     if (parse_index >= parse_list->length)
@@ -1022,14 +1023,14 @@ struct symbol *loop()
     return s;
 }
 
-// <iterator> --> LEX_FOR LEX_IDENTIFIER LEX_IN <expression> ( LEX_WHERE <expression> )?
+// <iterator> --> LEX_FOR <variable> (,<variable>) LEX_IN <expression> ( LEX_WHERE <expression> )?
 struct symbol *iterator()
 {
     FETCH_OR_QUIT(LEX_FOR);
-    struct token *t = fetch(LEX_IDENTIFIER);
     struct symbol *s = symbol_new(SYMBOL_ITERATOR);
-    s->token = t;
-
+    symbol_add(s, variable());
+    if (fetch_lookahead(LEX_COMMA, NULL))
+        symbol_add(s, variable());
     FETCH_OR_ERROR(LEX_IN);
     s->value = expression();
     if (fetch_lookahead(LEX_WHERE, NULL))
@@ -1471,8 +1472,15 @@ void generate_iterator(struct byte_array *code, struct symbol *root, enum Opcode
     struct symbol *ator = root->index;
     generate_code(code, ator->value);                   // IN b
     generate_step(code, 1, op);                         // iterator or comprehension
-    serial_encode_string(code, ator->token->string);    // FOR a
 
+    // FOR a (or k,v)
+    serial_encode_int(code, (ator->list->length > 1));
+    for (int i=0; i<ator->list->length && i<2; i++)
+    {
+        struct symbol *a = array_get(ator->list, i);
+        serial_encode_string(code, a->token->string);
+    }
+    
     if (ator->index) {                                  // WHERE c
         struct byte_array *where = byte_array_new();
         generate_code(where, ator->index);

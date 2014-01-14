@@ -1287,9 +1287,13 @@ static bool iterate(struct context *context,
 {
     bool returned = false;
 
+    bool two = serial_decode_int(program);
     struct byte_array *who = serial_decode_string(program);
+    struct byte_array *who2 = two ? serial_decode_string(program) : NULL;
     struct byte_array *where = serial_decode_string(program);
     struct byte_array *how = serial_decode_string(program);
+
+    struct variable *what = variable_pop(context);
 
 #ifdef DEBUG
     char *str = byte_array_to_string(who);
@@ -1298,13 +1302,17 @@ static bool iterate(struct context *context,
             NUM_TO_STRING(opcodes, op),
             str);
     free(str);
+    if (two)
+    {
+        str = byte_array_to_string(who2);
+        DEBUGPRINT(",%s", str);
+        free(str);
+    }
     if (!context->runtime) {
         if (where && where->length) {
             DEBUGSPRINT("%s\tWHERE %d", indentation(context), where->length);
-            //display_code(context, where);
         }
         DEBUGSPRINT("%s\tDO %d", indentation(context), how->length);
-        //display_code(context, how);
         goto done;
     }
 #endif
@@ -1312,13 +1320,21 @@ static bool iterate(struct context *context,
     bool comprehending = (op == VM_COM);
     struct variable *result = comprehending ? variable_new_list(context, NULL) : NULL;
 
-    struct variable *what = variable_pop(context);
+    if (what->type == VAR_NIL)
+        goto done2;
+    
     assert_message(what->type == VAR_LST, "iterating over non-list");
     struct array *list = what->list.ordered;
-    if (!list->length && what->list.map)
+
+    bool its_a_map = (!list->length && what->list.map);
+    struct array *vals = NULL;
+    if (its_a_map) {
         list = map_keys(what->list.map);
+        vals = map_vals(what->list.map);
+    }
     uint32_t len = list->length;
 
+    // run through list or map
     for (int i=0; i<len; i++) {
 
         INDENT;
@@ -1327,6 +1343,12 @@ static bool iterate(struct context *context,
             continue;
         set_named_variable(context, state, who, that);
 
+        if (two && its_a_map) // for k,v in map
+        {
+            that = (struct variable*)array_get(vals, i);
+            set_named_variable(context, state, who2, that);
+        }
+        
         byte_array_reset(where);
         byte_array_reset(how);
         if (where && where->length)
@@ -1352,6 +1374,7 @@ static bool iterate(struct context *context,
         UNDENT;
     }
 
+done2:
     if (comprehending)
         variable_push(context,result);
 

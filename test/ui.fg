@@ -11,7 +11,7 @@ sys.form_get = function(self, form)
 
     result = []
 
-    for key in form.keys
+    for key in form
         result = result + (key : sys.ui_get(form[key]))
     end
 

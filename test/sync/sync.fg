@@ -27,7 +27,7 @@ Sync = [
         self.view = view
         self.mesh = mesh
 
-        self.load_db()
+        self.load_db(mesh.id)
 
         sys.file_listen(self.watched, self)   # listen for file changes
 
@@ -35,82 +35,63 @@ Sync = [
 
     end,
 
-    'load_db' : function(self)
+    'load_db' : function(self, id)
 
-        self.files = sys.load('../' + mesh.id + 'guids')        # guid -> [path,version,modified]
-        self.guids = [self.guids[guid].path : guid for guid in self.guids.keys]
+        self.files = sys.load('../' + id + 'guids')        # guid -> [path,version,modified]
+        self.guids = [v.path : guid for guid,v in self.guids]
         self.reconcile_local()
 
     end,
 
-    # todo: ++, for key,val in map
 
+    'local_snapshot' : function(self)
+
+        list = sys.file_list(self.watched) - self.watched           # remove root element
+        return [(path - self.watched):attr for path,attr in list]   # make paths relative
+
+    end,
 
     # figure out what changed on local device
     'reconcile_local' : function(self)
 
         updated = []
 
-#        files = self.local_snapshot()               # path -> attributes
+        files = self.local_snapshot()   # path -> attributes
 
-        list = sys.file_list(self.watched) - self.watched
-        for f in list where not self.ignore(f)
-            path = 'path' : f - self.watched
-            guid = self.guid(path)
-            result = result + g:(list[f]+version)
-        end
-        sys.print('local_snapshot: ' + result)
+        for path in files
 
-
-
-        for path in files.keys
-
-            file = files[path]
+            file = files[path]          # [modified,dir]
             fmod = file.modified
             guid = self.guids[path]
 
-            if not guid then                        # new file
+            if not guid then            # new file
 
                 guid = self.guidnum
-                self.files[guid] = ['path'     : path,
-                                    'version'  : 0,
-                                    'modified' : fmod]
+                self.files[guid] = ['path':path, 'version':0] + file
                 self.guids[path] = guid
-                self.guidnum = self.guidnum + 1
+                self.guidnum ++
                 updates = updates + guid
 
-            else
+            else if fmod != self.files[guid].modified then # offline update
 
-                dbmod = self.files[guid].modified
-                if fmod != dbmod then               # offline update detected
-                self.increment_version(datum.guid)
-                updates = updates + guid
+                self.files[guid].version ++
+                updates += guid
 
             end
         end
 
-        deleted = [guid for guid in self.guids.vals where not files[self.guids[guid]]]
+        deleted = [guid for guid,v in self.guids where not files[v]]
 
-        self.mesh.print('updated='+updated+', deleted='+deleted)
+        self.mesh.print('updated=' + updated + ', deleted=' + deleted)
         return updated, deleted
 
     end,
 
-    'increment_version' : function(self, guid)
-        self.files[guid].version = self.files[guid].version + 1
-    end,
 
     'greet' : function(self)
         return ['files' : self.files]
     end,
 
-    'guid' : function(self, path)
-
-        self.guid[path] = self.guid[path] or (self.mesh.id + self.guidnum)
-        self.guidnum = self.guidnum + 1
-        return self.guid[path]
-
-    end,
 
     'ignore' : function(self, path)
 
@@ -253,7 +234,7 @@ Sync = [
         sys.print('handle_delete ' + deleted)
 
         # delete removed directories and files
-        for guid in deleted.keys
+        for guid in deleted
             path = self.guids[guid]
             sys.rm(self.watched + path)
         end

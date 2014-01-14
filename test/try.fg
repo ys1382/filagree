@@ -1,9 +1,1 @@
-/*
-x = ['a':1, 'b':2, 'c':3]
-
-for y,z in x
-    sys.print(y+z)
-end
-*/
-
-a,b = 7,8
+sys.print( sys.file_list('/Users/yusuf/make/filagree/test/sync') )
