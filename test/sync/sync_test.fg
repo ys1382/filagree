@@ -11,9 +11,9 @@ director = [
 
     'run_tests' : function(self)
 
-        #self.crud()
-        #self.large_file()
-        self.conflict()
+        self.crud()
+        self.large_file()
+        #self.conflict()
 
     end,
 
