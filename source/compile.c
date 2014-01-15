@@ -377,7 +377,7 @@ lexmore:
             return (struct array*)exit_message(ERROR_LEX);
     }
 #ifdef DEBUG
-    display_lex_list();
+    //display_lex_list();
 #endif
     free(input);
     return lex_list;
@@ -1132,7 +1132,7 @@ struct symbol *parse(struct array *list, uint32_t index)
 
     struct symbol *p = statements();
 #ifdef DEBUG
-    display_symbol(p, 1);
+    //display_symbol(p, 1);
 #endif
     return p;
 }

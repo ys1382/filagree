@@ -11,9 +11,9 @@ director = [
 
     'run_tests' : function(self)
 
-        #self.crud()
+        self.crud()
         #self.large_file()
-        self.conflict()
+        #self.conflict()
 
     end,
 
@@ -28,6 +28,7 @@ director = [
         self.sync_direct('client1', 'verify', 'a.txt', '123')
         self.sync_direct('server1', 'verify', 'a.txt', '123')
         self.sync_direct('client2', 'verify', 'a.txt', '123')
+/*
 
         # rename
         self.sync_direct('client1', 'rename', 'a.txt', nil, 'b.txt')
@@ -47,7 +48,7 @@ director = [
         self.sync_direct('client1', 'verify', 'b.txt')
         self.sync_direct('server1', 'verify', 'b.txt')
         self.sync_direct('client2', 'verify', 'b.txt')
-
+*/
     end,
 
     #

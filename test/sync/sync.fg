@@ -18,14 +18,19 @@ Sync = [
 
     'init' : function(self, view, dir, mesh)
 
+        self.view = view
+        self.mesh = mesh
+        mesh.subscribe(self)
+
         self.watched = dir + '/'
 
         # clear directory for testing
         sys.rm(self.watched)
         sys.mkdir(self.watched)
 
-        self.view = view
-        self.mesh = mesh
+        self.tmpdir = self.watched +'../tmp/' + self.mesh.id +'/'
+        sys.rm(self.tmpdir)
+        sys.mkdir(self.tmpdir)
 
         self.load_db(mesh.id)
 
@@ -37,7 +42,7 @@ Sync = [
 
     'load_db' : function(self, id)
 
-        self.files = sys.load('../' + id + 'guids')        # guid -> [path,version,modified]
+        self.files = sys.load('../' + id + 'guids') or []           # guid -> [path,version,modified]
         self.guids = [v.path : guid for guid,v in self.guids]
         self.reconcile_local()
 
@@ -54,8 +59,7 @@ Sync = [
     # figure out what changed on local device
     'reconcile_local' : function(self)
 
-        updated = []
-
+        updates = []
         files = self.local_snapshot()   # path -> attributes
 
         for path in files
@@ -67,24 +71,21 @@ Sync = [
             if not guid then            # new file
 
                 guid = self.guidnum
-                self.files[guid] = ['path':path, 'version':0] + file
+                self.files[guid] = (['path':path, 'version':0] + file)
                 self.guids[path] = guid
-                self.guidnum++
+                ++self.guidnum
                 updates = updates + guid
 
             else if fmod != self.files[guid].modified then # offline update
 
-                self.files[guid].version++
+                ++self.files[guid].version
                 updates = updates + guid
 
             end
         end
 
-        deleted = [guid for guid,v in self.guids where not files[v]]
-
-        self.mesh.print('updated=' + updated + ', deleted=' + deleted)
-        return updated, deleted
-
+        deletes = [guid for guid,v in self.guids where not files[v]]
+        return updates, deletes
     end,
 
 
@@ -102,6 +103,8 @@ Sync = [
 
     'handle_message' : function(self, socket, msgs4)
 
+        self.mesh.print('handle_message ' + msgs4)
+
         if msgs4.event == 'test' then
             self.handle_test(msgs4)
             return
@@ -116,7 +119,7 @@ Sync = [
             self.handle_greet(msgs4)
 
         else if msgs4.event == 'delete' then
-            self.handle_delete(msgs4.deleted)
+            self.handle_delete(msgs4.deletes)
 
         else if msgs4.event == 'content' then
             self.handle_content(msgs4)
@@ -132,30 +135,28 @@ Sync = [
         if not msgg.files then return end
 
         give = self.files - msgg.files
-        for i in i_have.keys
+        for i in give
             self.send_file(i)
         end
 
-        for j in msgg.files where j.deleted
+        for j in msgg.files where j.deletes
             path = self.guids[j.guid].path
             sys.rm(path)
         end
 
     end,
 
-    'handle_content' : function(self, msgc)
+    'handle_content' : function(self, msgc4)
     
         path, content, modified, offset, last = msgc4.path, msgc4.content, msgc4.modified, msgc4.offset, msgc4.last
 
-        # self.mesh.print('handle_content ' + path +' '+ offset)
-
-        tmppath = self.watched +'/../tmp' + self.mesh.id +'/'+ path
-        if not offset then sys.rm(tmppath) end
+        tmppath = self.tmpdir + path
+        if (not offset) then sys.rm(tmppath) end
 
         sys.write(tmppath, content, offset)
 
         if last then
-            sys.mv(tmppath, path)
+            sys.mv(tmppath, self.watched + path)
             self.guids[msgc4.guid] = ['path':path, 'modified':modified]
             self.update_ui()
         end
@@ -168,35 +169,35 @@ Sync = [
         if self.offline then
             return
         end
-/*
-        latest = self.local_snapshot()
-        updated = latest - self.files
-        deleted = self.files - latest
-*/
-        updated,deleted = self.reconcile_local()
 
-        for u in updated
+        updates,deletes = self.reconcile_local()
+
+        for u in updates
             self.send_file(u)
         end
 
-        if deleted.keys.length then
-            msg2 = ['event' : 'delete', 'delete' : deleted]
+        if deletes.keys.length then
+            msg2 = ['event' : 'delete', 'delete' : deletes]
             self.mesh.broadcast(msg2)
         end
 
-        self.files = latest
+        #self.files = latest
         self.update_ui()
 
     end,
 
     # send a file in chunks
-    'send_file' : function(self, path)
+    'send_file' : function(self, guid)
+
+        #self.mesh.print('files='+self.files[guid])
+        path = self.files[guid].path
+        #self.mesh.print('send ' + path)
 
         self.offset[path] = 0
         if self.sending[path] then return end
         self.sending[path] = true
 
-        msg7 = ['event' : 'content', 'path' : path]
+        msg7 = ['event':'content', 'path':path, 'guid':guid]
 
         chunk = 10000    # chunk size in number of bytes
         full_local_path = self.watched + path
@@ -212,13 +213,9 @@ Sync = [
 
                 self.offset[path] = self.offset[path] + bytes.length
 
-                #sys.print('send chunk ' + offset)
                 self.mesh.broadcast(msg7)
                 
-                if self.slowdown then
-                    sys.sleep(500) # to facilitate TC2
-                end
-
+                if self.slowdown then sys.sleep(500) end # to facilitate TC2
             end
 
             if bytes.length < chunk then
@@ -229,12 +226,12 @@ Sync = [
 
     end,
 
-    'handle_delete' : function(self, deleted)
+    'handle_delete' : function(self, deletes)
 
-        sys.print('handle_delete ' + deleted)
+        sys.print('handle_delete ' + deletes)
 
         # delete removed directories and files
-        for guid in deleted
+        for guid in deletes
             path = self.guids[guid]
             sys.rm(self.watched + path)
         end
@@ -255,9 +252,9 @@ Sync = [
         path = self.watched + msg7.path
         status = 'done'
 
-        # if not msg7.retry then
-        #    self.mesh.print('test ' + msg7.seq  +': '+ msg7)
-        # end
+        if not msg7.retry then
+        self.mesh.print('test ' + msg7.seq  +': '+ msg7)
+        end
 
         if action == 'update' then
             # sys.mkdir(path)
@@ -288,6 +285,7 @@ Sync = [
             self.mesh.connected()
 
         else if action == 'die' then
+            sys.sleep(1000) # wait for broadcast to go out
             sys.exit(0)
 
         else

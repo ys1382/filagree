@@ -891,6 +891,11 @@ static void set(struct context *context,
 #endif // DEBUG
 
     assert_message(state && name && value, "value2");
+
+    enum VarType vt = value->type;
+    if (vt==VAR_NIL || vt==VAR_INT || vt==VAR_BOOL)
+        value = variable_copy(context, value);
+    
     set_named_variable(context, state, name, value); // set the variable to the value
     byte_array_del(name);
 }
@@ -1354,9 +1359,12 @@ static bool iterate(struct context *context,
             continue;
         set_named_variable(context, state, who, that);
 
-        if (two && its_a_map) // for k,v in map
+        if (two) // for k,v in map
         {
-            that = (struct variable*)array_get(vals, i);
+            if (its_a_map)
+                that = (struct variable*)array_get(vals, i);
+            else
+                that = variable_new_nil(context);
             set_named_variable(context, state, who2, that);
         }
         

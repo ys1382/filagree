@@ -95,7 +95,7 @@ void variable_old(struct variable *v)
 
 void variable_del(struct context *context, struct variable *v)
 {
-    assert_message(v->gc_state == GC_OLD, "killing an orphan");
+    if (v->gc_state != GC_OLD) { DEBUGPRINT("killing an orphan"); }
     //DEBUGPRINT("\n>%" PRIu16 " - variable_del %p %s\n", current_thread_id(), v, var_type_str(v->type));
     switch (v->type) {
         case VAR_CFNC:
@@ -667,6 +667,8 @@ static struct map *variable_map_insert2(struct context *context, struct map* map
 void variable_map_insert(struct context *context, struct variable* v,
                          struct variable *key, struct variable *datum)
 {
+    if (key->type == VAR_NIL)
+        return;
     if (v->type == VAR_LST || v->type == VAR_SRC)
         v->list.map = variable_map_insert2(context, v->list.map, key, datum);
     else if (v->type == VAR_FNC)

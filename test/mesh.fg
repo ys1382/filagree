@@ -20,6 +20,9 @@ Mesh = [
 
     end,
 
+    'subscribe' : function(self, subscriber)
+        self.ctx = self.ctx + [subscriber]
+    end,
 
     'listen' : function(self)
         self.print(' listening on port ' + self.port)
@@ -100,8 +103,11 @@ Mesh = [
             end
 
             if not (response = self.handle_message(socket, msgm4)) then
+
                 for c in self.ctx
+
                     response = c.handle_message(socket, msgm4)
+
                     if response then
                         mm2 = ['from' : self.id, 'seq' : msgm4.seq] + response
                         self.send_to(msgm4.from, mm2)
@@ -109,6 +115,8 @@ Mesh = [
                     end
                 end
             end
+
+            self.print('msg done')
 
         else # forward to recipient
 

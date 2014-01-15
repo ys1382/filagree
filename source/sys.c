@@ -237,7 +237,7 @@ struct variable *sys_move(struct context *context)
     char mvcmd[100];
     sprintf(mvcmd, "mv %s %s", src, dst);
     if (system(mvcmd))
-        DEBUGPRINT("\nCould not mv from %s to %s\n", src, dst);
+        printf("\nCould not mv from %s to %s\n", src, dst);
     return NULL;
 }
 
@@ -581,7 +581,7 @@ struct string_func builtin_funcs[] = {
     {"save",        &sys_save},
     {"load",        &sys_load},
     {"rm",          &sys_rm},
-    {"move",        &sys_move},
+    {"mv",          &sys_move},
     {"mkdir",       &sys_mkdir},
     {"sin",         &sys_sin},
     {"run",         &sys_run},
