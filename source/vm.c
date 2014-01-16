@@ -585,6 +585,8 @@ static void push_kvp(struct context *context, struct byte_array *program)
         return;
     struct variable *val = variable_pop(context);
     struct variable *key = variable_pop(context);
+    key = variable_copy_value(context, key);
+    val = variable_copy_value(context, val);
     struct variable *v   = variable_new_kvp(context, key, val);
 #ifdef DEBUG
     struct byte_array *buf = variable_value(context, v);
@@ -932,8 +934,9 @@ static void list_put(struct context *context, enum Opcode op)
         case VAR_INT:
             switch (recipient->type) {
                 case VAR_LST:
+                    value = variable_copy_value(context, value);
                     array_set(recipient->list.ordered, key->integer, value);
-                    break;
+                break;
                 case VAR_STR:
                 case VAR_BYT:
                     byte_array_set(recipient->str, key->integer, value->integer);

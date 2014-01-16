@@ -55,43 +55,6 @@ Sync = [
 
     end,
 
-    # figure out what changed on local device
-    'reconcile_local' : function(self)
-
-        updates = []
-        files = self.local_snapshot()   # path -> attributes
-
-        for path in files
-
-            file = files[path]          # [modified,dir]
-            fmod = file.modified
-            guid = self.guids[path]
-
-            #self.mesh.print('reconcile_local: ' + path + ' guid=' + guid)
-
-            if not guid then            # new file
-
-                guid = ''+self.guidnum
-                self.files[guid] = (['path':path, 'version':0] + file)
-                self.guids[path] = guid
-                ++self.guidnum
-                updates = updates + guid
-
-            else if fmod != self.files[guid].modified then # offline update
-
-                ++self.files[guid].version
-                updates = updates + guid
-
-            end
-        end
-
-        deletes = [guid for path,guid in self.guids where (not files[path])]
-        #self.mesh.print('guids='+self.guids+', files='+files+', deletes='+deletes)
-
-        return updates, deletes
-    end,
-
-
     'greet' : function(self)
         return ['files' : self.files]
     end,
@@ -161,7 +124,7 @@ Sync = [
         #self.mesh.print('handle_content ' + msgc4)
 
         if last then
-            self.files[msgc4.guid] = ['path':path, 'modified':modified, 'updating':true]
+            self.files[msgc4.guid] = ['path':path, 'modified':modified, 'updating':modified]
             self.guids[path] = guid # todo: check for conflict
             #self.mesh.print('last - self.files['+msgc4.guid+']='+ self.files[msgc4.guid])
             sys.mv(tmppath, self.watched + path)
@@ -180,10 +143,11 @@ Sync = [
         updates,deletes = self.reconcile_local()
 
         for u in updates
-            #self.mesh.print('filed - self.files['+u+']='+ self.files[u])
-            if self.files[u].updating then
-                self.files[u].updating = nil
-                #self.mesh.print('nevermind')
+            file = self.files[u]
+            self.mesh.print('filed - self.files['+u+']='+ file)
+            if file.updating == file.modified then
+                file.updating = nil
+                self.mesh.print('nevermind')
             else
                 self.send_file(u)
             end
@@ -200,12 +164,51 @@ Sync = [
 
     end,
 
+
+    # figure out what changed on local device
+    'reconcile_local' : function(self)
+
+        updates = []
+        files = self.local_snapshot()   # path -> attributes
+
+        for path in files
+
+            file = files[path]          # [modified,dir]
+            fmod = file.modified
+            guid = self.guids[path]
+
+            #self.mesh.print('reconcile_local: ' + path + ' guid=' + guid)
+
+            if not guid then            # new file
+
+                guid = ''+self.guidnum
+                self.files[guid] = (['path':path, 'version':0] + file)
+                self.guids[path] = guid
+                ++self.guidnum
+                updates = updates + guid
+
+            else if fmod != self.files[guid].modified then # offline update
+
+                ++self.files[guid].version
+                updates = updates + guid
+
+            end
+        end
+
+        deletes = [guid for path,guid in self.guids where (not files[path])]
+        self.mesh.print('guids='+self.guids+', files='+files+', deletes='+deletes)
+
+        return updates, deletes
+    end,
+
+
+
     # send a file in chunks
     'send_file' : function(self, guid)
 
         #self.mesh.print('files='+self.files[guid])
         path = self.files[guid].path
-        #self.mesh.print('send ' + path)
+        self.mesh.print('send ' + path)
 
         self.offset[path] = 0
         if self.sending[path] then return end

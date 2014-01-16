@@ -13,9 +13,9 @@ director = [
 
         #self.fiddle()
         
-        self.crud()
+        #self.crud()
         #self.large_file()
-        #self.conflict()
+        self.conflict()
 
     end,
 
@@ -80,7 +80,7 @@ director = [
         self.sync_direct('client1', 'verify', 'tc2', nil, nil, 1)
         self.sync_direct('client2', 'verify', 'tc2', nil, nil, 1)
         self.sync_direct('server1', 'verify', 'tc2', nil, nil, 1)
-*/
+
         # TC 3: Simple Edit – Variation 3
         self.sync_direct('client1', 'update', 'tc3.txt', '123')
         self.sync_direct('client1', 'verify', 'tc3.txt', '123')
@@ -91,7 +91,6 @@ director = [
         self.sync_direct('client1', 'online')
         self.sync_direct('server1', 'verify', 'tc3.txt', '789')
 
-/*
         # TC 4: Conflicted Edit – Variation 1
         self.sync_direct('client1', 'update', 'tc4.txt', '123')
         self.sync_direct('client1', 'offline')

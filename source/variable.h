@@ -5,36 +5,36 @@
 
 enum VarType
 {
-    VAR_NIL,
-    VAR_INT,
-    VAR_FLT,
-    VAR_STR,
-    VAR_FNC,
-    VAR_LST,
-    VAR_KVP,
-    VAR_SRC,
-    VAR_ERR,
-    VAR_BYT,
-    VAR_BOOL,
-    VAR_VOID,
-    VAR_CFNC,
-    VAR_LAST,
+    VAR_NIL,    // nil
+    VAR_INT,    // integer
+    VAR_FLT,    // float
+    VAR_STR,    // string
+    VAR_FNC,    // function
+    VAR_LST,    // list/map
+    VAR_KVP,    // key-value pair
+    VAR_SRC,    // assignment RHS
+    VAR_ERR,    // error
+    VAR_BYT,    // byte array
+    VAR_BOOL,   // boolean
+    VAR_VOID,   // void*
+    VAR_CFNC,   // pointer to c function
+    VAR_LAST,   // end of enums
 };    
 
-enum Visited
+enum Visited // for graph traversal
 {
-    VISITED_NOT,
-    VISITED_ONCE,
-    VISITED_MORE,
-    VISITED_REPEAT,
-    VISITED_LAST
+    VISITED_NOT,    // we did not traverse to this variable yet
+    VISITED_ONCE,   // we visited it once so far
+    VISITED_MORE,   // we visited it more than once
+    VISITED_REPEAT, // we've seen this before in the same structure
+    VISITED_LAST    // end of enums
 };
 
-enum GCsafety
+enum GCsafety // for garbage collection
 {
-    GC_NEW,
-    GC_OLD,
-    GC_SAFE
+    GC_NEW, // this variable was just created
+    GC_OLD, // this variable is in some structure, so safe from GC until no longer needed
+    GC_SAFE // don't GC this variable just because
 };
 
 typedef struct context *context_p; // forward declaration
@@ -112,7 +112,7 @@ void variable_map_insert(struct context *context, struct variable* v,
                          struct variable *key, struct variable *data);
 struct variable *variable_map_get(struct context *context, struct variable* v, struct variable *key);
 bool variable_compare(struct context *context, const struct variable *u, const struct variable *v);
-
+struct variable *variable_copy_value(struct context *context, struct variable *value);
 void variable_mark(struct variable *v);
 void variable_unmark(struct variable *v);
 

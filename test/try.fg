@@ -1,2 +1,7 @@
-a = ['x':3, 'y':4]
-b = [v : k for k,v in [7,8,9]]
+n = 12
+m = n
+a = ['x':n, 'y':n]
+
+n = 13
+
+sys.print(a,m)
