@@ -11,10 +11,9 @@ port = 1999
 
 Sync = [
 
-    'writing' : [],
     'sending' : [],
     'offset'  : [],
-    'guidnum' : 0,
+    'guidnum' : 1,
 
     'init' : function(self, view, dir, mesh)
 
@@ -68,9 +67,11 @@ Sync = [
             fmod = file.modified
             guid = self.guids[path]
 
+            #self.mesh.print('reconcile_local: ' + path + ' guid=' + guid)
+
             if not guid then            # new file
 
-                guid = self.guidnum
+                guid = ''+self.guidnum
                 self.files[guid] = (['path':path, 'version':0] + file)
                 self.guids[path] = guid
                 ++self.guidnum
@@ -84,7 +85,9 @@ Sync = [
             end
         end
 
-        deletes = [guid for guid,v in self.guids where not files[v]]
+        deletes = [guid for path,guid in self.guids where (not files[path])]
+        #self.mesh.print('guids='+self.guids+', files='+files+', deletes='+deletes)
+
         return updates, deletes
     end,
 
@@ -103,7 +106,7 @@ Sync = [
 
     'handle_message' : function(self, socket, msgs4)
 
-        self.mesh.print('handle_message ' + msgs4)
+        # self.mesh.print('handle_message ' + msgs4)
 
         if msgs4.event == 'test' then
             self.handle_test(msgs4)
@@ -131,7 +134,7 @@ Sync = [
 
     'handle_greet' : function(self, msgg)
 
-        sys.print('handle_greet:' + msgg)
+        # sys.print('handle_greet:' + msgg)
         if not msgg.files then return end
 
         give = self.files - msgg.files
@@ -148,16 +151,20 @@ Sync = [
 
     'handle_content' : function(self, msgc4)
     
-        path, content, modified, offset, last = msgc4.path, msgc4.content, msgc4.modified, msgc4.offset, msgc4.last
+        guid, path, content, modified, offset, last = msgc4.guid, msgc4.path, msgc4.content, msgc4.modified, msgc4.offset, msgc4.last
 
         tmppath = self.tmpdir + path
         if (not offset) then sys.rm(tmppath) end
 
         sys.write(tmppath, content, offset)
 
+        #self.mesh.print('handle_content ' + msgc4)
+
         if last then
+            self.files[msgc4.guid] = ['path':path, 'modified':modified, 'updating':true]
+            self.guids[path] = guid # todo: check for conflict
+            #self.mesh.print('last - self.files['+msgc4.guid+']='+ self.files[msgc4.guid])
             sys.mv(tmppath, self.watched + path)
-            self.guids[msgc4.guid] = ['path':path, 'modified':modified]
             self.update_ui()
         end
 
@@ -173,11 +180,18 @@ Sync = [
         updates,deletes = self.reconcile_local()
 
         for u in updates
-            self.send_file(u)
+            #self.mesh.print('filed - self.files['+u+']='+ self.files[u])
+            if self.files[u].updating then
+                self.files[u].updating = nil
+                #self.mesh.print('nevermind')
+            else
+                self.send_file(u)
+            end
         end
 
-        if deletes.keys.length then
-            msg2 = ['event' : 'delete', 'delete' : deletes]
+        if deletes.length then
+            #self.mesh.print('deletes='+deletes)
+            msg2 = ['event' : 'delete', 'deletes' : deletes]
             self.mesh.broadcast(msg2)
         end
 
@@ -228,11 +242,13 @@ Sync = [
 
     'handle_delete' : function(self, deletes)
 
-        sys.print('handle_delete ' + deletes)
+        #self.mesh.print('handle_delete ' + deletes)
 
         # delete removed directories and files
         for guid in deletes
-            path = self.guids[guid]
+            path = self.files[guid].path
+            #self.mesh.print('deletn ' + path + ', self.files='+self.files)
+            self.files[guid].deleting = true
             sys.rm(self.watched + path)
         end
 
@@ -252,16 +268,16 @@ Sync = [
         path = self.watched + msg7.path
         status = 'done'
 
-        if not msg7.retry then
-        self.mesh.print('test ' + msg7.seq  +': '+ msg7)
-        end
+        #if not msg7.retry then
+        #    self.mesh.print('test ' + msg7.seq  +': '+ msg7)
+        #end
 
         if action == 'update' then
             # sys.mkdir(path)
             sys.write(path, msg7.content)
 
         else if action == 'rename' then
-            sys.move(path, self.watched + msg7.path2)
+            sys.mv(path, self.watched + msg7.path2)
 
         else if action == 'delete' then
             sys.rm(path)

@@ -11,10 +11,17 @@ director = [
 
     'run_tests' : function(self)
 
+        #self.fiddle()
+        
         self.crud()
         #self.large_file()
         #self.conflict()
 
+    end,
+
+    'fiddle' : function(self)
+        self.sync_direct('client1', 'update', 'a.txt', '123')
+        self.sync_direct('client1', 'rename', 'a.txt', nil, 'b.txt')
     end,
 
     #
@@ -28,10 +35,12 @@ director = [
         self.sync_direct('client1', 'verify', 'a.txt', '123')
         self.sync_direct('server1', 'verify', 'a.txt', '123')
         self.sync_direct('client2', 'verify', 'a.txt', '123')
-/*
 
         # rename
         self.sync_direct('client1', 'rename', 'a.txt', nil, 'b.txt')
+        self.sync_direct('client1', 'verify', 'a.txt')
+        self.sync_direct('server1', 'verify', 'a.txt')
+        self.sync_direct('client2', 'verify', 'a.txt')
         self.sync_direct('client1', 'verify', 'b.txt', '123')
         self.sync_direct('server1', 'verify', 'b.txt', '123')
         self.sync_direct('client2', 'verify', 'b.txt', '123')
@@ -48,7 +57,7 @@ director = [
         self.sync_direct('client1', 'verify', 'b.txt')
         self.sync_direct('server1', 'verify', 'b.txt')
         self.sync_direct('client2', 'verify', 'b.txt')
-*/
+
     end,
 
     #

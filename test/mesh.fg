@@ -88,15 +88,17 @@ Mesh = [
         end
     end,
 
+
     'print' : function(self, line)
         sys.print(self.id +' -- '+ line)
     end,
+
 
     'messaged' : function(self, socket, msgm4)
 
         if (not msgm4.to) or (msgm4.to == self.id) # por moi
 
-            self.print('message from ' + msgm4.from + ': ' + msgm4)
+            #self.print('message from ' + msgm4.from + ': ' + msgm4)
 
             if msgm4.flood then
                 self.broadcast(msgm4, socket)
@@ -115,8 +117,6 @@ Mesh = [
                     end
                 end
             end
-
-            self.print('msg done')
 
         else # forward to recipient
 
@@ -158,7 +158,7 @@ Mesh = [
 
 
     'send' : function(self, to, msg)
-        sys.print(self.id + ' send to ' + to + ': ' + msg)
+        #sys.print(self.id + ' send to ' + to + ': ' + msg)
         sys.send(to, msg)
     end,
 

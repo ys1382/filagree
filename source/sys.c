@@ -253,7 +253,7 @@ struct variable *sys_rm(struct context *context)
     char rmcmd[100];
     sprintf(rmcmd, "rm -rf %s", path2);
     if (system(rmcmd))
-        DEBUGPRINT("\nCould not rm %s\n", path2);
+        printf("\n\nCould not rm %s\n\n", path2);
     free(path2);
     return NULL;
 }
