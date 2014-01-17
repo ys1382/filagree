@@ -90,7 +90,7 @@ Mesh = [
 
 
     'print' : function(self, line)
-        sys.print(self.id +' -- '+ line)
+        sys.print(' ' + self.id +' -- '+ line)
     end,
 
 

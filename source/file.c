@@ -103,21 +103,25 @@ int write_file(const struct byte_array* path, struct byte_array* bytes, uint32_t
         result = (r<0) || s;
     }
     
-    // set timestamp
-    if (timestamp > 0)
-    {
-        struct utimbuf timestamp2;
-        timestamp2.modtime = timestamp;
-        if (utime(path2, &timestamp2))
-            DEBUGPRINT("could not set timestamp for file %s\n", path2);
-        goto done;
-        result = 0;
-    }
+    file_set_timestamp(path2, timestamp);
     
 done:
     return result;
 }
 
+bool file_set_timestamp(const char *path, long timestamp)
+{
+    if (timestamp > 0)
+    {
+        struct utimbuf timestamp2;
+        timestamp2.modtime = timestamp;
+        if (utime(path, &timestamp2)) {
+            DEBUGPRINT("could not set timestamp for file %s\n", path);
+            return 1;
+        }
+    }
+    return 0;
+}
 
 
 int write_byte_array(struct byte_array* ba, FILE* file) {
@@ -183,7 +187,7 @@ done:
 }
 
 
-long file_modified(const char *path)
+long file_timestamp(const char *path)
 {
     struct stat fst;
     bzero(&fst,sizeof(fst));

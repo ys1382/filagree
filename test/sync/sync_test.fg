@@ -13,7 +13,7 @@ director = [
 
         #self.fiddle()
         
-        #self.crud()
+        self.crud()
         #self.large_file()
         self.conflict()
 
@@ -53,7 +53,7 @@ director = [
 
         #delete
         self.sync_direct('client1', 'delete', 'b.txt')
-        self.wait()                                     # wait for delete to propogate
+        self.wait() # wait for delete to propogate
         self.sync_direct('client1', 'verify', 'b.txt')
         self.sync_direct('server1', 'verify', 'b.txt')
         self.sync_direct('client2', 'verify', 'b.txt')
@@ -72,7 +72,7 @@ director = [
         self.sync_direct('client1', 'update', 'tc1.txt', 'tc1b')
         self.sync_direct('client1', 'verify', 'tc1.txt', 'tc1b')
         self.sync_direct('server1', 'verify', 'tc1.txt', 'tc1b')
-/*
+
         # TC 2: Simple Edit – Variation 2
         self.create_file('client1', 'tc2', 1024)    # create file that take time to upload
         self.wait()                                 # wait for client to detect file, and start uploading
@@ -87,10 +87,10 @@ director = [
         self.sync_direct('server1', 'verify', 'tc3.txt', '123')
         self.sync_direct('client1', 'offline')
         self.create_file('client1', 'tc3.txt', nil, '789')  # overwrite with another file while offline
-        self.wait()                                         # ignore file event
+        self.wait()                                         # catch file event before going back online
         self.sync_direct('client1', 'online')
         self.sync_direct('server1', 'verify', 'tc3.txt', '789')
-
+/*
         # TC 4: Conflicted Edit – Variation 1
         self.sync_direct('client1', 'update', 'tc4.txt', '123')
         self.sync_direct('client1', 'offline')

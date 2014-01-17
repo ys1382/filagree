@@ -124,33 +124,33 @@ Sync = [
         #self.mesh.print('handle_content ' + msgc4)
 
         if last then
+
+            fullpath = self.watched + path
+            self.mesh.print('mv ' + fullpath + ' ' + modified)
+            sys.mv(tmppath, fullpath, modified)
+
             self.files[msgc4.guid] = ['path':path, 'modified':modified, 'updating':modified]
             self.guids[path] = guid # todo: check for conflict
-            #self.mesh.print('last - self.files['+msgc4.guid+']='+ self.files[msgc4.guid])
-            sys.mv(tmppath, self.watched + path)
+            self.mesh.print('last - self.files['+msgc4.guid+']='+ self.files[msgc4.guid])
+
             self.update_ui()
         end
 
     end,
 
-    # called when the OS detects a file change
+    # called when the OS detects a file change, sends out updates/deletes
     'filed' : function(self, dir)
 
         if self.offline then
             return
         end
 
+        self.mesh.print('filed')
+
         updates,deletes = self.reconcile_local()
 
         for u in updates
-            file = self.files[u]
-            self.mesh.print('filed - self.files['+u+']='+ file)
-            if file.updating == file.modified then
-                file.updating = nil
-                self.mesh.print('nevermind')
-            else
-                self.send_file(u)
-            end
+            self.send_file(u)
         end
 
         if deletes.length then
@@ -159,13 +159,12 @@ Sync = [
             self.mesh.broadcast(msg2)
         end
 
-        #self.files = latest
         self.update_ui()
 
     end,
 
 
-    # figure out what changed on local device
+    # figure out what updated/deleted on local device
     'reconcile_local' : function(self)
 
         updates = []
@@ -173,25 +172,29 @@ Sync = [
 
         for path in files
 
-            file = files[path]          # [modified,dir]
-            fmod = file.modified
+            fsfile = files[path]        # [modified,dir]
+            fsmod = fsfile.modified
             guid = self.guids[path]
 
             #self.mesh.print('reconcile_local: ' + path + ' guid=' + guid)
 
             if not guid then            # new file
 
-                guid = ''+self.guidnum
-                self.files[guid] = (['path':path, 'version':0] + file)
+                guid = self.mesh.id +'_'+ path # self.guidnum
+                self.files[guid] = (['path':path, 'version':0] + fsfile)
                 self.guids[path] = guid
                 ++self.guidnum
                 updates = updates + guid
 
-            else if fmod != self.files[guid].modified then # offline update
-
-                ++self.files[guid].version
-                updates = updates + guid
-
+            else 
+            
+                dbfile = self.files[guid]
+                dbmod = dbfile.modified
+                
+                if (fsmod != dbmod) and (fsmod != dbfile.updating) then # offline update
+                    ++self.files[guid].version
+                    updates = updates + guid
+                end
             end
         end
 
@@ -202,13 +205,11 @@ Sync = [
     end,
 
 
-
     # send a file in chunks
     'send_file' : function(self, guid)
 
         #self.mesh.print('files='+self.files[guid])
         path = self.files[guid].path
-        self.mesh.print('send ' + path)
 
         self.offset[path] = 0
         if self.sending[path] then return end
@@ -229,6 +230,8 @@ Sync = [
                 msg7.last = (bytes.length < chunk)
 
                 self.offset[path] = self.offset[path] + bytes.length
+
+                self.mesh.print('send ' + path +' '+ mod)
 
                 self.mesh.broadcast(msg7)
                 
@@ -271,16 +274,15 @@ Sync = [
         path = self.watched + msg7.path
         status = 'done'
 
-        #if not msg7.retry then
-        #    self.mesh.print('test ' + msg7.seq  +': '+ msg7)
-        #end
+        if not msg7.retry then self.mesh.print('test ' + msg7.seq  +': '+ msg7) end
 
         if action == 'update' then
             # sys.mkdir(path)
             sys.write(path, msg7.content)
 
         else if action == 'rename' then
-            sys.mv(path, self.watched + msg7.path2)
+            size,mod = sys.fileattr(path)
+            sys.mv(path, self.watched + msg7.path2, mod)
 
         else if action == 'delete' then
             sys.rm(path)
