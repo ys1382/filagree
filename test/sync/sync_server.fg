@@ -2,7 +2,6 @@
 
 
 import 'sync'                       # shared sync logic
-import '../mesh'                    # shared mesh logic
 
 
 id = 'server1'

@@ -122,7 +122,7 @@ struct variable *sys_fileattr(struct context *context)
 
     const char *path2 = byte_array_to_string(path->str);
     long siz = file_size(path2);
-    long mod = file_modified(path2);
+    long mod = file_timestamp(path2);
     struct variable *siz2 = variable_new_int(context, (int32_t)siz);
     struct variable *mod2 = variable_new_int(context, (int32_t)mod);
     variable_push(context, siz2);
@@ -227,17 +227,24 @@ struct variable *sys_interpret(struct context *context)
 }
 
 // deletes file or folder
-struct variable *sys_move(struct context *context)
+struct variable *sys_mv(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     const char *src = param_str(value, 1);
     const char *dst = param_str(value, 2);
+    long timestamp = param_int(value, 3);
+
     assert_message((strlen(src)>1) && (strlen(dst)>1), "oops");
 
     char mvcmd[100];
     sprintf(mvcmd, "mv %s %s", src, dst);
     if (system(mvcmd))
-        DEBUGPRINT("\nCould not mv from %s to %s\n", src, dst);
+        printf("\nCould not mv from %s to %s\n", src, dst);
+
+    if (timestamp) // to prevent unwanted timestamp updates resulting from the mv
+        file_set_timestamp(dst, timestamp);
+    printf(" mv %s %ld\n", dst, timestamp);
+    
     return NULL;
 }
 
@@ -253,7 +260,7 @@ struct variable *sys_rm(struct context *context)
     char rmcmd[100];
     sprintf(rmcmd, "rm -rf %s", path2);
     if (system(rmcmd))
-        DEBUGPRINT("\nCould not rm %s\n", path2);
+        printf("\n\nCould not rm %s\n\n", path2);
     free(path2);
     return NULL;
 }
@@ -581,7 +588,7 @@ struct string_func builtin_funcs[] = {
     {"save",        &sys_save},
     {"load",        &sys_load},
     {"rm",          &sys_rm},
-    {"move",        &sys_move},
+    {"mv",          &sys_mv},
     {"mkdir",       &sys_mkdir},
     {"sin",         &sys_sin},
     {"run",         &sys_run},

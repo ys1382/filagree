@@ -330,6 +330,7 @@ const struct number_string opcodes[] = {
     {VM_SUB,    "SUB"},
     {VM_MUL,    "MUL"},
     {VM_DIV,    "DIV"},
+    {VM_INC,    "INC"},
     {VM_MOD,    "MOD"},
     {VM_AND,    "AND"},
     {VM_ORR,    "ORR"},
@@ -584,6 +585,8 @@ static void push_kvp(struct context *context, struct byte_array *program)
         return;
     struct variable *val = variable_pop(context);
     struct variable *key = variable_pop(context);
+    key = variable_copy_value(context, key);
+    val = variable_copy_value(context, val);
     struct variable *v   = variable_new_kvp(context, key, val);
 #ifdef DEBUG
     struct byte_array *buf = variable_value(context, v);
@@ -890,6 +893,11 @@ static void set(struct context *context,
 #endif // DEBUG
 
     assert_message(state && name && value, "value2");
+
+    enum VarType vt = value->type;
+    if (vt==VAR_NIL || vt==VAR_INT || vt==VAR_BOOL)
+        value = variable_copy(context, value);
+    
     set_named_variable(context, state, name, value); // set the variable to the value
     byte_array_del(name);
 }
@@ -926,8 +934,9 @@ static void list_put(struct context *context, enum Opcode op)
         case VAR_INT:
             switch (recipient->type) {
                 case VAR_LST:
+                    value = variable_copy_value(context, value);
                     array_set(recipient->list.ordered, key->integer, value);
-                    break;
+                break;
                 case VAR_STR:
                 case VAR_BYT:
                     byte_array_set(recipient->str, key->integer, value->integer);
@@ -1226,26 +1235,34 @@ static void unary_op(struct context *context, enum Opcode op)
         DEBUGSPRINT("%s", NUM_TO_STRING(opcodes, op));
         return;
     }
-
+    
     struct variable *v = (struct variable*)variable_pop(context);
     struct variable *result = NULL;
 
-    switch (v->type) {
+    if (op == VM_INC) {
+        v->type = VAR_INT;
+        result = v;
+    }
+
+    switch (v->type)
+    {
         case VAR_NIL:
         {
             switch (op) {
-                case VM_NEG:    result = variable_new_nil(context);              break;
-                case VM_NOT:    result = variable_new_bool(context, true);       break;
-                default:        vm_exit_message(context, "bad math operator");   break;
+                case VM_NEG:    result = variable_new_nil(context);             break;
+                case VM_NOT:    result = variable_new_bool(context, true);      break;
+                case VM_INC:    v->integer = 1;                                 break;
+                default:        vm_exit_message(context, "bad math operator");  break;
             }
         } break;
         case VAR_INT: {
             int32_t n = v->integer;
             switch (op) {
-                case VM_NEG:    result = variable_new_int(context, -n);          break;
-                case VM_NOT:    result = variable_new_bool(context, !n);         break;
-                case VM_INV:    result = variable_new_int(context, ~n);          break;
-                default:        vm_exit_message(context, "bad math operator");   break;
+                case VM_NEG:    result = variable_new_int(context, -n);         break;
+                case VM_NOT:    result = variable_new_bool(context, !n);        break;
+                case VM_INV:    result = variable_new_int(context, ~n);         break;
+                case VM_INC:    v->integer++;                                   break;
+                default:        vm_exit_message(context, "bad math operator");  break;
             }
         } break;
         case VAR_FLT: {
@@ -1259,7 +1276,9 @@ static void unary_op(struct context *context, enum Opcode op)
         case VAR_BOOL:
             switch (op) {
                 case VM_NOT:    result = variable_new_bool(context, !v->boolean);break;
+                case VM_INC:    v->integer = v->boolean + 1;                     break;
                 default:        vm_exit_message(context, "bad math operator");   break;
+
             }
             break;
         default:
@@ -1287,9 +1306,13 @@ static bool iterate(struct context *context,
 {
     bool returned = false;
 
+    bool two = serial_decode_int(program);
     struct byte_array *who = serial_decode_string(program);
+    struct byte_array *who2 = two ? serial_decode_string(program) : NULL;
     struct byte_array *where = serial_decode_string(program);
     struct byte_array *how = serial_decode_string(program);
+
+    struct variable *what = variable_pop(context);
 
 #ifdef DEBUG
     char *str = byte_array_to_string(who);
@@ -1298,13 +1321,17 @@ static bool iterate(struct context *context,
             NUM_TO_STRING(opcodes, op),
             str);
     free(str);
+    if (two)
+    {
+        str = byte_array_to_string(who2);
+        DEBUGPRINT(",%s", str);
+        free(str);
+    }
     if (!context->runtime) {
         if (where && where->length) {
             DEBUGSPRINT("%s\tWHERE %d", indentation(context), where->length);
-            //display_code(context, where);
         }
         DEBUGSPRINT("%s\tDO %d", indentation(context), how->length);
-        //display_code(context, how);
         goto done;
     }
 #endif
@@ -1312,13 +1339,21 @@ static bool iterate(struct context *context,
     bool comprehending = (op == VM_COM);
     struct variable *result = comprehending ? variable_new_list(context, NULL) : NULL;
 
-    struct variable *what = variable_pop(context);
+    if (what->type == VAR_NIL)
+        goto done2;
+    
     assert_message(what->type == VAR_LST, "iterating over non-list");
     struct array *list = what->list.ordered;
-    if (!list->length && what->list.map)
+
+    bool its_a_map = (!list->length && what->list.map);
+    struct array *vals = NULL;
+    if (its_a_map) {
         list = map_keys(what->list.map);
+        vals = map_vals(what->list.map);
+    }
     uint32_t len = list->length;
 
+    // run through list or map
     for (int i=0; i<len; i++) {
 
         INDENT;
@@ -1327,6 +1362,15 @@ static bool iterate(struct context *context,
             continue;
         set_named_variable(context, state, who, that);
 
+        if (two) // for k,v in map
+        {
+            if (its_a_map)
+                that = (struct variable*)array_get(vals, i);
+            else
+                that = variable_new_nil(context);
+            set_named_variable(context, state, who2, that);
+        }
+        
         byte_array_reset(where);
         byte_array_reset(how);
         if (where && where->length)
@@ -1352,6 +1396,7 @@ static bool iterate(struct context *context,
         UNDENT;
     }
 
+done2:
     if (comprehending)
         variable_push(context,result);
 
@@ -1475,6 +1520,7 @@ bool run(struct context *context,
             case VM_LSF:    binary_op(context, inst);                       break;
             case VM_ORR:
             case VM_AND:    pc_offset = boolean_op(context, program, inst); break;
+            case VM_INC:
             case VM_NEG:
             case VM_NOT:    unary_op(context, inst);                        break;
             case VM_SRC:    src(context, inst, program);                    break;

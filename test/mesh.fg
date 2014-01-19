@@ -20,6 +20,9 @@ Mesh = [
 
     end,
 
+    'subscribe' : function(self, subscriber)
+        self.ctx = self.ctx + [subscriber]
+    end,
 
     'listen' : function(self)
         self.print(' listening on port ' + self.port)
@@ -33,12 +36,23 @@ Mesh = [
 
 
     'send_greet' : function(self, socket)
-        msg1 = ['event' : 'greet', 'from' : self.id]
+        test = (socket.type == 'nil')
+        msg1 = ['event' : 'greet', 'from' : self.id, 'test' : test]
         for c in self.ctx
             msg1 = msg1 + c.greet()
         end
-        self.send(socket, msg1)
+
+        #self.print('socket.type='+socket.type+' test='+test)
+        if test then
+            #self.print('peers='+self.peers)
+            for socket in self.peers.vals
+                self.send(socket, msg1)
+            end
+        else
+            self.send(socket, msg1)
+        end
     end,
+
 
     'connected' : function(self, socket)
         self.send_greet(socket)
@@ -70,23 +84,28 @@ Mesh = [
         end
     end,
 
+
     'print' : function(self, line)
-        sys.print(self.id +' -- '+ line)
+        sys.print(' ' + self.id +' -- '+ line)
     end,
+
 
     'messaged' : function(self, socket, msgm4)
 
         if (not msgm4.to) or (msgm4.to == self.id) # por moi
 
-            self.print('message from ' + msgm4.from + ': ' + msgm4)
+            #self.print('message from ' + msgm4.from + ': ' + msgm4)
 
             if msgm4.flood then
                 self.broadcast(msgm4, socket)
             end
 
             if not (response = self.handle_message(socket, msgm4)) then
+
                 for c in self.ctx
+
                     response = c.handle_message(socket, msgm4)
+
                     if response then
                         mm2 = ['from' : self.id, 'seq' : msgm4.seq] + response
                         self.send_to(msgm4.from, mm2)
@@ -135,7 +154,7 @@ Mesh = [
 
 
     'send' : function(self, to, msg)
-        sys.print(self.id + ' send to ' + to + ': ' + msg)
+        #sys.print(self.id + ' send to ' + to + ': ' + msg)
         sys.send(to, msg)
     end,
 

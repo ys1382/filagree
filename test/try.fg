@@ -1,6 +1,7 @@
-a = []
-b = [4,5,6]
-c = [z for z in b where a.has(z)]
+n = 12
+m = n
+a = ['x':n, 'y':n]
 
+n = 13
 
-sys.print(c)
+sys.print(a,m)

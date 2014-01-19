@@ -1,5 +1,6 @@
 # ui.fg ###################################################################
 
+
 sys.form_saver = function(self, key)
     f = function()(key)
         sys.save_form(key)
@@ -7,17 +8,19 @@ sys.form_saver = function(self, key)
     return f
 end
 
+
 sys.form_get = function(self, form)
 
     result = []
 
-    for key in form.keys
+    for key in form
         result = result + (key : sys.ui_get(form[key]))
     end
 
     return result
 
 end
+
 
 sys.form_set = function(self, form, values)
 
@@ -26,6 +29,7 @@ sys.form_set = function(self, form, values)
     end
 
 end
+
 
 sys.set_size = function(self, item, w, h)
 
@@ -88,6 +92,7 @@ sys.set_size = function(self, item, w, h)
 
 end
 
+
 sys.ui = function(self, uictx, item, parent, x, y)
 
     ui,w,h = sys.ui_create(uictx, item, parent)
@@ -97,6 +102,7 @@ sys.ui = function(self, uictx, item, parent, x, y)
     return ui
 
 end
+
 
 sys.ui_place = function(self, item, x, y)
 
@@ -125,6 +131,7 @@ sys.ui_place = function(self, item, x, y)
     return w,h
 
 end
+
 
 sys.ui_create = function(self, uictx, item, parent)
 

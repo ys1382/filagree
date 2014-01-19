@@ -25,10 +25,11 @@ tester.test('add integers',
     function()
         a = 7
         b = 8
+        ++b
         c = a + b
         return c
     end,
-    15)
+    16)
 
 tester.test('add strings',
     function()
@@ -229,7 +230,7 @@ tester.test('for each',
             sum = sum - n
         end
         y = ['a':7,'b':8]
-        for k in y.keys
+        for k in y
             sum = sum + y[k]
         end
         return sum

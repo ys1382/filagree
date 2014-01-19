@@ -1,12 +1,12 @@
 ####### sync_client.fg
 
 
-import 'sync'
 import '../ui'
-import '../mesh'
+import 'sync'
 
 
 id = 'client' + id
+
 
 client = [
 
@@ -23,7 +23,9 @@ client.ui = sys.ui( client,
                         'w':240, 'h':320
                     ])
 
-mesh = Mesh.init(id, host, port, [client])
+
+
+mesh = Mesh.init(id, host, port)
 client.sync = Sync.init(client, id, mesh)
 
 sys.ui_set(client.ui.files, client.sync.files.keys) # update ui

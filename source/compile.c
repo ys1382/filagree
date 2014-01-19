@@ -44,6 +44,7 @@ static struct context *context;
         LEX_MINUS,
         LEX_TIMES,
         LEX_DIVIDE,
+        LEX_INCR,
         LEX_MODULO,
         LEX_AND,
         LEX_OR,
@@ -104,6 +105,7 @@ struct number_string lexemes[] = {
     {LEX_LEFT_COMMENT,          "/*"},
     {LEX_RIGHT_COMMENT,         "*/"},
     {LEX_LINE_COMMENT,          "#"},
+    {LEX_INCR,                  "++"},
     {LEX_PLUS,                  "+"},
     {LEX_MINUS,                 "-"},
     {LEX_TIMES,                 "*"},
@@ -375,7 +377,7 @@ lexmore:
             return (struct array*)exit_message(ERROR_LEX);
     }
 #ifdef DEBUG
-//    display_lex_list();
+    //display_lex_list();
 #endif
     free(input);
     return lex_list;
@@ -397,7 +399,7 @@ BNF:
                   ( ELSE <statements>)? LEX_END
 <loop> --> WHILE <expression> LEX_DO <statements> LEX_END
 
-<iterator> --> LEX_FOR LEX_IDENTIFIER LEX_IN <expression> ( LEX_WHERE <expression> )?
+<iterator> --> LEX_FOR <variable> (,<variable>) LEX_IN <expression> ( LEX_WHERE <expression> )?
 <iterloop> --> <iterator> LEX_DO <statements> LEX_END
 <comprehension> --> LEX_LEFTSQUARE <expression> <iterator> LEX_RIGHTSQUARE
 
@@ -410,7 +412,7 @@ BNF:
 <exp3> --> <exp4> ( ( LEX_TIMES | LEX_DIVIDE | LEX_MODULO | LEX_AND | LEX_OR
                       LEX_BAND | LEX_BOR | LEX_XOR | LEX_LSHIFT | LEX_RSHIFT) <exp3> )*
 <exp4> --> <exp5> ( LEX_COLON <expression> )?
-<exp5> --> (LEX_NOT | LEX_MINUS | LEX_INVERSE)? <exp6>
+<exp5> --> (LEX_NOT | LEX_MINUS | LEX_INVERSE | LEX_INCR)? <exp6>
 <exp6> --> <exp7> ( <call> | <member> )*
 <exp7> --> ( LEX_LEFTTHESIS <expression> LEX_RIGHTTHESIS ) | <atom>
 <atom> -->  LEX_IDENTIFIER | <float> | <integer> | <boolean> | <nil> | <table> | <comprehension> | <fdecl>
@@ -460,7 +462,7 @@ enum Exp_type {
 struct symbol {
     enum Nonterminal nonterminal;
     struct token *token;
-    struct array* list;
+    struct array *list;
     struct symbol *index, *value, *other;
     float floater;
     bool statement;
@@ -671,6 +673,7 @@ struct token *fetch_lookahead(enum Lexeme lexeme, ...) {
     return t;
 }
 
+// fetches one of the goal lexemes
 struct symbol *symbol_fetch(enum Nonterminal n, enum Lexeme goal, ...)
 {
     if (parse_index >= parse_list->length)
@@ -904,11 +907,11 @@ struct symbol *exp4()
     return f;
 }
 
-// <exp3> --> (LEX_NOT | LEX_NEG | LEX_INVERSE )? <pair>
+// <exp3> --> (LEX_NOT | LEX_NEG | LEX_INVERSE | LEX_INCR )? <pair>
 struct symbol *exp3()
 {
     struct symbol *e;
-    if ((e = symbol_fetch(SYMBOL_EXPRESSION, LEX_MINUS, LEX_NOT, LEX_INVERSE, NULL))) {
+    if ((e = symbol_fetch(SYMBOL_EXPRESSION, LEX_MINUS, LEX_NOT, LEX_INVERSE, LEX_INCR, NULL))) {
         if (e->token->lexeme == LEX_MINUS)
             e->token->lexeme = LEX_NEG;
         return symbol_add(e, exp4());
@@ -1022,14 +1025,14 @@ struct symbol *loop()
     return s;
 }
 
-// <iterator> --> LEX_FOR LEX_IDENTIFIER LEX_IN <expression> ( LEX_WHERE <expression> )?
+// <iterator> --> LEX_FOR <variable> (,<variable>) LEX_IN <expression> ( LEX_WHERE <expression> )?
 struct symbol *iterator()
 {
     FETCH_OR_QUIT(LEX_FOR);
-    struct token *t = fetch(LEX_IDENTIFIER);
     struct symbol *s = symbol_new(SYMBOL_ITERATOR);
-    s->token = t;
-
+    symbol_add(s, variable());
+    if (fetch_lookahead(LEX_COMMA, NULL))
+        symbol_add(s, variable());
     FETCH_OR_ERROR(LEX_IN);
     s->value = expression();
     if (fetch_lookahead(LEX_WHERE, NULL))
@@ -1120,7 +1123,7 @@ struct symbol *parse(struct array *list, uint32_t index)
 {
     if (!list->length)
         return NULL;
-    //DEBUGPRINT("parse:\n");
+    DEBUGPRINT("parse:\n");
     assert_message(list, ERROR_NULL);
     assert_message(index<list->length, ERROR_INDEX);
 
@@ -1129,7 +1132,7 @@ struct symbol *parse(struct array *list, uint32_t index)
 
     struct symbol *p = statements();
 #ifdef DEBUG
-//    display_symbol(p, 1);
+    //display_symbol(p, 1);
 #endif
     return p;
 }
@@ -1347,6 +1350,7 @@ void generate_math(struct byte_array *code, struct symbol *root)
     }
 
     generate_statements(code, root);
+
     switch (lexeme) {
         case LEX_PLUS:      op = VM_ADD;    break;
         case LEX_MINUS:     op = VM_SUB;    break;
@@ -1355,6 +1359,7 @@ void generate_math(struct byte_array *code, struct symbol *root)
         case LEX_MODULO:    op = VM_MOD;    break;
         case LEX_NOT:       op = VM_NOT;    break;
         case LEX_NEG:       op = VM_NEG;    break;
+        case LEX_INCR:      op = VM_INC;    break;
         case LEX_SAME:      op = VM_EQU;    break;
         case LEX_DIFFERENT: op = VM_NEQ;    break;
         case LEX_GREATER:   op = VM_GTN;    break;
@@ -1471,8 +1476,15 @@ void generate_iterator(struct byte_array *code, struct symbol *root, enum Opcode
     struct symbol *ator = root->index;
     generate_code(code, ator->value);                   // IN b
     generate_step(code, 1, op);                         // iterator or comprehension
-    serial_encode_string(code, ator->token->string);    // FOR a
 
+    // FOR a (or k,v)
+    serial_encode_int(code, (ator->list->length > 1));
+    for (int i=0; i<ator->list->length && i<2; i++)
+    {
+        struct symbol *a = array_get(ator->list, i);
+        serial_encode_string(code, a->token->string);
+    }
+    
     if (ator->index) {                                  // WHERE c
         struct byte_array *where = byte_array_new();
         generate_code(where, ator->index);

@@ -95,7 +95,7 @@ void variable_old(struct variable *v)
 
 void variable_del(struct context *context, struct variable *v)
 {
-    assert_message(v->gc_state == GC_OLD, "killing an orphan");
+    if (v->gc_state != GC_OLD) { DEBUGPRINT("killing an orphan"); }
     //DEBUGPRINT("\n>%" PRIu16 " - variable_del %p %s\n", current_thread_id(), v, var_type_str(v->type));
     switch (v->type) {
         case VAR_CFNC:
@@ -649,24 +649,37 @@ struct variable *variable_concatenate(struct context *context, int n, const stru
 }
 
 static struct map *variable_map_insert2(struct context *context, struct map* map,
-                                 struct variable *key, struct variable *datum)
+                                        struct variable *key, struct variable *val)
 {
     if (NULL == map)
         map = map_new(context);
 
     // setting a value to nil means removing the key
-    if (datum->type == VAR_NIL)
+    if (val->type == VAR_NIL)
         map_remove(map, key);
     else
-        map_insert(map, key, datum);
+    {
+        key = variable_copy_value(context, key);
+        val = variable_copy_value(context, val);
+        map_insert(map, key, val);
+    }
 
-    key->gc_state = datum->gc_state = GC_OLD;
+    key->gc_state = val->gc_state = GC_OLD;
     return map;
+}
+
+struct variable *variable_copy_value(struct context *context, struct variable *value)
+{
+    enum VarType vt = value->type;
+    bool is_a_pointer = !(vt==VAR_INT || vt==VAR_FLT || vt==VAR_BOOL || vt==VAR_NIL);
+    return is_a_pointer ? value : variable_copy(context, value);
 }
 
 void variable_map_insert(struct context *context, struct variable* v,
                          struct variable *key, struct variable *datum)
 {
+    if (key->type == VAR_NIL)
+        return;
     if (v->type == VAR_LST || v->type == VAR_SRC)
         v->list.map = variable_map_insert2(context, v->list.map, key, datum);
     else if (v->type == VAR_FNC)
