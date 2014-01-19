@@ -126,12 +126,12 @@ Sync = [
         if last then
 
             fullpath = self.watched + path
-            self.mesh.print('mv ' + fullpath + ' ' + modified)
+            #self.mesh.print('mv ' + fullpath + ' ' + modified)
             sys.mv(tmppath, fullpath, modified)
 
             self.files[msgc4.guid] = ['path':path, 'modified':modified, 'updating':modified]
             self.guids[path] = guid # todo: check for conflict
-            self.mesh.print('last - self.files['+msgc4.guid+']='+ self.files[msgc4.guid])
+            #self.mesh.print('last - self.files['+msgc4.guid+']='+ self.files[msgc4.guid])
 
             self.update_ui()
         end
@@ -145,7 +145,7 @@ Sync = [
             return
         end
 
-        self.mesh.print('filed')
+        #self.mesh.print('filed')
 
         updates,deletes = self.reconcile_local()
 
@@ -199,7 +199,7 @@ Sync = [
         end
 
         deletes = [guid for path,guid in self.guids where (not files[path])]
-        self.mesh.print('guids='+self.guids+', files='+files+', deletes='+deletes)
+        #self.mesh.print('guids='+self.guids+', files='+files+', deletes='+deletes)
 
         return updates, deletes
     end,
@@ -230,9 +230,7 @@ Sync = [
                 msg7.last = (bytes.length < chunk)
 
                 self.offset[path] = self.offset[path] + bytes.length
-
-                self.mesh.print('send ' + path +' '+ mod)
-
+                #self.mesh.print('send ' + path +' '+ mod)
                 self.mesh.broadcast(msg7)
                 
                 if self.slowdown then sys.sleep(500) end # to facilitate TC2

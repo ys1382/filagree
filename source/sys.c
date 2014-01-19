@@ -243,8 +243,7 @@ struct variable *sys_mv(struct context *context)
 
     if (timestamp) // to prevent unwanted timestamp updates resulting from the mv
         file_set_timestamp(dst, timestamp);
-    printf(" mv %s %ld\n", dst, timestamp);
-    
+
     return NULL;
 }
 
