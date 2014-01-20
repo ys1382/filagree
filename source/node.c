@@ -127,7 +127,7 @@ void add_thread(struct node_thread *ta, int sockfd)
 // returns true iff disconnect
 bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
 {
-    //DEBUGPRINT("\nsocket_event\n");
+    //printf("\nsocket_event\n");
 
     ssize_t n;
     uint8_t buf[MAXLINE];
@@ -151,13 +151,18 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
             break;
         }
 
-        struct byte_array *chunk = byte_array_new_data((int32_t)n, buf);
-        byte_array_append(received, chunk);
+        if (n > 0) {
+            struct byte_array *chunk = byte_array_new_data((int32_t)n, buf);
+            byte_array_append(received, chunk);
+        }
     }
     while (n == MAXLINE);
 
     if (!received->length)
-        return false;
+    {
+        byte_array_del(received);
+        return true;
+    }
     
     // process message in another thread
     byte_array_reset(received);
@@ -243,6 +248,7 @@ void *sys_socket_listen2(void *arg)
 
 			if (FD_ISSET(sockfd, &rset))
             {
+                //printf("\nsocket %d:%d closed by client\n", i, sockfd);
                 if (socket_event(ta0, listener, sockfd)) // connection closed by client
                 {
 					FD_CLR(sockfd, &allset);
@@ -315,6 +321,7 @@ void *sys_connect2(void *arg)
         {
             if (socket_event(ta, ta->listener, ta->fd))
                 return NULL;
+            //printf("\n client se loop\n");
         }
     }
 

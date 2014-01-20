@@ -94,7 +94,7 @@ Sync = [
 
     'handle_greet' : function(self, msgg)
 
-        self.mesh.print('\n\nhandle_greet:' + msgg)
+        #self.mesh.print('\n\nhandle_greet:' + msgg)
         if not msgg.files then return end
 
         give = self.files - msgg.files
@@ -107,7 +107,7 @@ Sync = [
             sys.rm(path)
         end
 
-        self.filed()
+        self.filed() # check for offline updates
 
     end,
 
