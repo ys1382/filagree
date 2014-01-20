@@ -89,15 +89,12 @@ Sync = [
 
         else if msgs4.event == 'content' then
             self.handle_content(msgs4)
-
-        else if msgs4.event == 'test' then
-            self.handle_test(msgs4)
         end
     end,
 
     'handle_greet' : function(self, msgg)
 
-        # sys.print('handle_greet:' + msgg)
+        self.mesh.print('\n\nhandle_greet:' + msgg)
         if not msgg.files then return end
 
         give = self.files - msgg.files
@@ -109,6 +106,8 @@ Sync = [
             path = self.guids[j.guid].path
             sys.rm(path)
         end
+
+        self.filed()
 
     end,
 
