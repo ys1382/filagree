@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/time.h>
 
 #include "hal.h"
 #include "interpret.h"
@@ -23,7 +24,7 @@ struct string_func
     callback2func* func;
 };
 
-// system functionsb
+// system functions
 
 struct variable *sys_print(struct context *context)
 {
@@ -170,6 +171,19 @@ struct variable *sys_timer(struct context *context)
     
     hal_timer(context, milliseconds, logic, repeats);
     return NULL;
+}
+
+struct variable *sys_now(struct context *context)
+{
+    stack_pop(context->operand_stack); // sys
+
+    struct timeval tzp;
+    if (gettimeofday(NULL, &tzp))
+    {
+        perror("gettimeofday");
+        return variable_new_int(context, 0);
+    }
+    return variable_new_int(context, tzp.tv_usec);
 }
 
 struct variable *sys_forkexec(struct context *context)
@@ -603,6 +617,7 @@ struct string_func builtin_funcs[] = {
     {"sleep",       &sys_sleep},
     {"timer",       &sys_timer},
     {"forkexec",    &sys_forkexec},
+    {"now",         &sys_now},
 #ifndef NO_UI
     {"window",      &sys_window},
     {"label",       &sys_label},
@@ -810,8 +825,7 @@ static inline struct variable *cfnc_find2(struct context *context, bool has)
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *self = (struct variable*)array_get(args->list.ordered, 0);
     struct variable *sought = (struct variable*)array_get(args->list.ordered, 1);
-    struct variable *start = args->list.ordered->length > 2 ?
-        (struct variable*)array_get(args->list.ordered, 2) : NULL;
+    struct variable *start = args->list.ordered->length > 2 ? (struct variable*)array_get(args->list.ordered, 2) : NULL;
     null_check(self);
     null_check(sought);
 

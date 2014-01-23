@@ -163,7 +163,7 @@ struct variable* variable_new_float(struct context *context, float f)
 
 struct variable *variable_new_str(struct context *context, struct byte_array *str) {
     struct variable *v = variable_new(context, VAR_STR);
-    v->str = byte_array_copy(str);
+    v->str = str ? byte_array_copy(str) : byte_array_new();
     //DEBUGPRINT("variable_new_str %p->%s\n", v, byte_array_to_string(str));
     return v;
 }
@@ -595,12 +595,16 @@ struct variable *variable_part(struct context *context, struct variable *self, u
     struct variable *result = NULL;
     switch (self->type) {
         case VAR_STR: {
+            if (start >= self->str->length)
+                return variable_new_str(context, NULL);
             struct byte_array *str = byte_array_part(self->str, start, length);
             result = variable_new_str(context, str);
             byte_array_del(str);
             break;
         }
         case VAR_LST: {
+            if (start > self->list.ordered->length)
+                return variable_new_list(context, NULL);
             struct array *list = array_part(self->list.ordered, start, length);
             result = variable_new_list(context, list);
             array_del(list);

@@ -14,7 +14,7 @@ director = [
         #self.fiddle()
         
         self.crud()
-        #self.large_file()
+        self.large_file()
         self.conflict()
 
     end,
@@ -90,18 +90,24 @@ director = [
         self.wait()                                         # catch file event before going back online
         self.sync_direct('client1', 'online')
         self.sync_direct('server1', 'verify', 'tc3.txt', '789')
-/*
+
         # TC 4: Conflicted Edit – Variation 1
         self.sync_direct('client1', 'update', 'tc4.txt', '123')
+        self.sync_direct('client1', 'verify', 'tc4.txt', '123')
+        self.sync_direct('server1', 'verify', 'tc4.txt', '123')
+        self.sync_direct('client2', 'verify', 'tc4.txt', '123')
         self.sync_direct('client1', 'offline')
-        self.create_file('client1', 'tc4.txt', nil, '456')  # overwrite with another file while offline
-        self.wait()                                         # ensure different timestamps
-        self.create_file('server1', 'tc4.txt', nil, '789')  # out of band edit
-        self.wait()                                         # ignore file event
+        self.create_file('client1', 'tc4.txt', nil, '456')  # overwrite with another file while offline (client1 v1)
+        self.wait()                                         # wait to ensure different timestamps
+        self.create_file('server1', 'tc4.txt', nil, '789')  # out of band edit, (server v1)
+        self.wait()                                         # wait so that client1 won't get immediate update
         self.sync_direct('client1', 'online')
-        self.sync_direct('server1', 'verify', 'tc3.txt', '789')
-        self.sync_direct('server1', 'verify', 'tc3_conflict.txt', '456')
-*/
+        self.sync_direct('client1', 'verify', 'tc4.txt', '789')
+        self.sync_direct('client1', 'verify', 'tc4.client1_1.txt', '456')
+        self.sync_direct('server1', 'verify', 'tc4.txt', '789')
+        self.sync_direct('server1', 'verify', 'tc4.client1_1.txt', '456')
+        self.sync_direct('client2', 'verify', 'tc4.txt', '789')
+        self.sync_direct('client2', 'verify', 'tc4.client1_1.txt', '456')
 
     end,
 

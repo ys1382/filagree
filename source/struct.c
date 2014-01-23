@@ -324,13 +324,17 @@ int32_t byte_array_find(struct byte_array *within, struct byte_array *sought, in
 
     int32_t ws = within->length;
     int32_t ss = sought->length;
+
+    bool reverse = (start < 0);
+    int32_t not_found = reverse ? (start + ws + 1) : -1;
+
     if ((start + ss) >= (int32_t)within->length)
-        return -1;
+        return not_found;
 
     uint8_t *wd = within->data;
     uint8_t *sd = sought->data;
 
-    if (start >= 0) // forward search
+    if (!reverse) // forward search
     {
         for (int32_t i=start; i<=ws-ss; i++)
             if (!memcmp(wd + i, sd, ss))
@@ -342,7 +346,7 @@ int32_t byte_array_find(struct byte_array *within, struct byte_array *sought, in
             if (!memcmp(wd + i, sd, ss))
                 return i;
     }
-    return -1;
+    return not_found;
 }
 
 struct byte_array *byte_array_replace_all(struct byte_array *original, struct byte_array *a, struct byte_array *b)
