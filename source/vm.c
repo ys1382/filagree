@@ -6,6 +6,10 @@
 #include <pthread.h>
 #include <errno.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <wait.h>
+#endif
+
 #include "util.h"
 #include "serial.h"
 #include "vm.h"
