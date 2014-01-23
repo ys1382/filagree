@@ -485,6 +485,17 @@ struct variable *sys_ui_get(struct context *context)
     return hal_ui_get(context, widget->ptr);
 }
 
+struct variable *sys_alert(struct context *context)
+{
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    const char *title = param_str(args, 1);
+    const char *message = param_str(args, 2);
+    struct variable *callback = param_var(context, args, 3);
+    struct variable *param = variable_new_src(context, args->list.ordered->length - 4);
+    hal_alert(context, title, message, callback, param);
+    return NULL;
+}
+
 struct variable *sys_graphics(struct context *context)
 {
     const struct variable *value = (const struct variable*)stack_pop(context->operand_stack);
@@ -630,6 +641,7 @@ struct string_func builtin_funcs[] = {
     {"ui_get",      &sys_ui_get},
     {"ui_set",      &sys_ui_set},
     {"ui_put",      &sys_ui_put},
+    {"alert",       &sys_alert},
 #endif // NO_UI
 };
 

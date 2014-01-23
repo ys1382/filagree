@@ -24,6 +24,12 @@
 #include "node.h"
 
 
+NSString *byte_array_to_nsstring(const struct byte_array *str)
+{
+    const char *str2 = byte_array_to_string(str);
+    return [NSString stringWithUTF8String:str2];
+}
+
 
 @interface Actionifier  : NSObject
 #ifndef NO_UI
@@ -43,6 +49,7 @@
 -(IBAction)pressed:(id)sender;
 -(void)timerCallback:(NSTimer*)timer;
 -(void)callback;
+-(void)alertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo;
 
 @end
 
@@ -61,6 +68,12 @@
     bp->param = NULL;
     bp->timer = NULL;
     return bp;
+}
+
+- (void) alertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
+{
+    self->param = variable_new_bool(context, returnCode == 1); // 1=ok, 2=cancel
+    [self callback];
 }
 
 -(void)setTimer:(double)interval repeats:(bool)repeats
@@ -143,22 +156,19 @@ objectValueForTableColumn:(NSTableColumn *) aTableColumn
 @end // Actionifier implementation
 
 
-
-
-
-
-
 #ifndef NO_UI
 
 static NSWindow *window = NULL;
 
 @interface WindowController : NSWindowController <NSWindowDelegate>
 
+- (void) alert:(struct context*)context title:(const char*)title messsage:(const char*)message callback:(struct variable*)logic;
+
 @end
 
 @implementation WindowController
 
-- (id)init
+- (id) init
 {
     self = [super initWithWindowNibName:@"MainWindow"];
     if (self) {
@@ -177,9 +187,42 @@ static NSWindow *window = NULL;
 {
     printf("window closed\n");
 }
+/*
+- (void) alert:(struct context*)context
+         title:(const char*)title
+      messsage:(const char*)message
+      callback:(struct variable*)logic
+        params:(struct variable*)params
+{
+    NSString *t2 = [NSString stringWithUTF8String:title];
+    NSString *m2 = [NSString stringWithUTF8String:message];
+
+    NSAlert* a = [NSAlert alertWithMessageText:t2
+                                 defaultButton:@"ok"
+                               alternateButton:@"cancel"
+                                   otherButton:nil
+                     informativeTextWithFormat:@"%@",m2];
+
+    Actionifier *act = [Actionifier fContext:context
+                                   uiContext:NULL
+                                    callback:logic
+                                    userData:params];
+    
+    //Run as a dialog
+    NSInteger returnCode = [a runModal];
+    struct variable *ok = variable_new_bool(context, returnCode == 1);
+
+    //Attach to window
+    [a beginSheetModalForWindow:window
+                  modalDelegate:act
+                 didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:)
+                    contextInfo:NULL];
+
+    
+}
+*/
 
 @end
-
 
 @interface GLView : NSOpenGLView {
     const struct variable *shape;
@@ -684,9 +727,8 @@ void hal_ui_set(void *widget, struct variable *value)
     if ([widget2 isKindOfClass:[NSTextField class]])
     {
         NSTextField *widget3 = (__bridge NSTextField*)widget;
-        const char *value2 = byte_array_to_string(value->str);
-        NSString *value3 = [NSString stringWithUTF8String:value2];
-        [widget3 setStringValue:value3];
+        NSString *value2 = byte_array_to_nsstring(value->str);
+        [widget3 setStringValue:value2];
     }
 
     else if ([widget2 isKindOfClass:[NSTableView class]])
@@ -731,6 +773,14 @@ void *hal_table(struct context *context,
     [tableContainer setHasVerticalScroller:YES];
     [content addSubview:tableContainer];
     return (void *)CFBridgingRetain(tableView);
+}
+
+void hal_alert (struct context *context,
+                const char *title,
+                const char *message,
+                struct variable *callback)
+{
+    [((WindowController*)window) alert:context title:title messsage:message callback:callback];
 }
 
 void *hal_window(struct context *context,

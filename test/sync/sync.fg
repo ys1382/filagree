@@ -123,53 +123,62 @@ Sync = [
         return pre + tag + suf
     end,
 
-    'handle_content' : function(self, f)
 
-        tmppath = self.tmpdir + f.path
-        if (not f.offset) then sys.rm(tmppath) end
+    # check for and handle conflicts between local and incoming files
+    'conflict_resolution' : function(self, local, incoming)
 
-        sys.write(tmppath, f.content, f.offset)
+        if (local.version < self.remote_version[incoming.guid] then return end # no conflict
 
-        #self.mesh.print('handle_content ' + f)
+        size,lmod = sys.fileattr(fullpath)  // local modified time
+        rmod = incoming.modified            // mod time of arriving file
 
-        if f.last then # done receiving bytes, so move from tmp dir
-
-            path = f.path
-            fullpath = self.watched + path
-            local = self.files[f.guid]
-
-            #self.mesh.print('received file ' + f.guid + ' v' + f.version +', local-version='+ self.files[f.guid].version +', remote-version=' + self.remote_version[f.guid])
-
-            if (local.version > self.remote_version[f.guid] then   # conflict, last write wins
-
-                size,lmod = sys.fileattr(fullpath)
-                rmod = f.modified
-
-                #self.mesh.print('conflict: ' + f.guid +' lmod='+lmod+', rmod='+rmod)
-
-                if lmod > rmod then # my change wins
-                    self.mesh.print('my change wins')
-                    shunted = self.shunt(fullpath, f.from)
-                    sys.mv(tmppath, shunted, f.modified) # move from downloading directory to intended destination
-                    self.update_ui()
-                    return
-
-                else # my change loses
-                    self.mesh.print('my change loses')
-                    victim = self.watched + local.path
-                    shunted = self.shunt(victim, f.from)
-                    sys.mv(victim, shunted, local.modified)
-                end
-            end
-
-            self.files[f.guid] = ['path':path, 'modified':f.modified, 'updating':f.modified, 'version':f.version]
-            self.guids[path] = f.guid
-            self.remote_version[f.guid] = f.version
-            #self.mesh.print('last - remote-version='+ self.remote_version[f.guid])
-
-            sys.mv(tmppath, fullpath, f.modified) # move from downloading directory to intended destination
-            self.update_ui()
+        if self.view then
+            sys.alert('Conflict', message, self.resolve, local, incoming)
+        else
+            self.resolve(local, incoming, lmod > rmod)
         end
+    end,
+
+    # shunt either local or incoming aside
+    'resolve' : function(self, local, incoming, mine_wins)
+
+        #self.mesh.print('conflict: ' + incoming.guid +' lmod='+lmod+', rmod='+rmod)
+
+        if mine_wins then
+            self.mesh.print('my change wins')
+            shunted = self.shunt(fullpath, incoming.from)
+            sys.mv(tmppath, shunted, incoming.modified) # move from downloading directory to intended destination
+            self.update_ui()
+            return
+
+        else # my change loses
+            self.mesh.print('my change loses')
+            victim = self.watched + local.path
+            shunted = self.shunt(victim, incoming.from)
+            sys.mv(victim, shunted, local.modified)
+        end
+    end,
+
+    # handle incoming file
+    'handle_content' : function(self, incoming)
+
+        tmppath = self.tmpdir + incoming.path
+        if (not incoming.offset) then sys.rm(tmppath) end
+        sys.write(tmppath, incoming.content, incoming.offset)
+        if not incoming.last then return end # more to come later
+
+        guid,path = incoming.guid,incoming.path
+        fullpath = self.watched + path
+        local = self.files[guid]
+
+        self.conflict_resolution(local, incoming)
+
+        self.files[guid] = ['path':path, 'modified':incoming.modified, 'updating':incoming.modified, 'version':incoming.version]
+        self.guids[path] = guid
+        self.remote_version[guid] = incoming.version
+        sys.mv(tmppath, fullpath, incoming.modified) # move from downloading directory to intended destination
+        self.update_ui()
+
     end,
 
 
