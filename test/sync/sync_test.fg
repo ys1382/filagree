@@ -11,17 +11,10 @@ director = [
 
     'run_tests' : function(self)
 
-        #self.fiddle()
-        
         self.crud()
         self.large_file()
         self.conflict()
 
-    end,
-
-    'fiddle' : function(self)
-        self.sync_direct('client1', 'update', 'a.txt', '123')
-        self.sync_direct('client1', 'rename', 'a.txt', nil, 'b.txt')
     end,
 
     #

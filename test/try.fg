@@ -1,25 +1,2 @@
-ignore = function(path)
-    slash = path.find('/')                      # get last path component
-    sys.print('/='+slash)
-    return (slash >= 0) and (path[slash+1] == '.')  # ignore files that match ".*"
-end
-
-extension = function(path)
-    dot = path.find('.', -1)                    # get last dot
-    pre = path.part(0,dot)
-    suf = path.part(dot+1)
-    return pre,suf
-end
-
-f = ['mmmm/a','/b.c','/.d']
-
-for g in f
-    sys.print(ignore(g))
-end
-
-
-f = ['a', 'bb', 'c.', 'e.f', 'gg.hh.z']
-for g in f
-    x,y = extension(g)
-    sys.print(x +' -- '+ y)
-end
+siz,mod = sys.fileattr('/x.txt')
+sys.print('siz='+siz+', lmod='+mod)

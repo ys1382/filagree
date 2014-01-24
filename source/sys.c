@@ -385,12 +385,11 @@ bool param_bool(const struct variable *value, uint32_t index) {
     return result->boolean;
 }
 
-
-struct variable *param_var(struct context *context, const struct variable *value, uint32_t index) {
+struct variable *param_var(struct context *context, const struct variable *value, uint32_t index)
+{
     if (index >= value->list.ordered->length)
         return NULL;
     struct variable *v = (struct variable*)array_get(value->list.ordered, index);
-
     return v;
 }
 
@@ -490,9 +489,7 @@ struct variable *sys_alert(struct context *context)
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     const char *title = param_str(args, 1);
     const char *message = param_str(args, 2);
-    struct variable *callback = param_var(context, args, 3);
-    struct variable *param = variable_new_src(context, args->list.ordered->length - 4);
-    hal_alert(context, title, message, callback, param);
+    hal_alert(title, message);
     return NULL;
 }
 

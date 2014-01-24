@@ -63,11 +63,7 @@ void *hal_table (struct context *context,
                  struct variable *uictx,
                  struct variable *list,
                  struct variable *logic);
-void hal_alert  (struct context *context,
-                 const char *title,
-                 const char *message,
-                 struct variable *callback
-                 struct variable *params);
+bool hal_alert (const char *title, const char *message);
 
 struct variable *hal_ui_get(struct context *context, void *field);
 void hal_ui_set(void *field, struct variable *value);

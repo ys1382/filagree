@@ -519,7 +519,7 @@ void vm_call(struct context *context, struct variable *func, struct variable *ar
     vm_call_src(context, func);
 }
 
-void func_call(struct context *context, enum Opcode op,
+static void func_call(struct context *context, enum Opcode op,
                struct byte_array *program, struct variable *indexable)
 {
     struct variable *func = context->runtime ? (struct variable*)variable_pop(context): NULL;
@@ -534,8 +534,8 @@ void func_call(struct context *context, enum Opcode op,
     vm_call_src(context, func);
 
     struct variable *result = (struct variable*)stack_peek(context->operand_stack, 0);
-    bool resulted = (result && result->type == VAR_SRC);
-
+    bool resulted = (result && (result->type == VAR_SRC));
+    
     if (!resulted) { // need a result for an expression, so pretend it returned nil
         struct variable *v = variable_new_src(context, 0);
         struct variable *nada = variable_new_nil(context);

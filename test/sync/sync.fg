@@ -123,40 +123,39 @@ Sync = [
         return pre + tag + suf
     end,
 
-
     # check for and handle conflicts between local and incoming files
-    'conflict_resolution' : function(self, local, incoming)
+    'conflict_resolution' : function(self, local, incoming, tmppath, fullpath)
 
-        if (local.version < self.remote_version[incoming.guid] then return end # no conflict
+        prior_remote_version = self.remote_version[incoming.guid]
+        if ((not local) or (local.version <= prior_remote_version)) then return end # no conflict
 
-        size,lmod = sys.fileattr(fullpath)  // local modified time
-        rmod = incoming.modified            // mod time of arriving file
+        size,lmod = sys.fileattr(fullpath)  # local modified time
+        rmod = incoming.modified            # mod time of arriving file
 
-        if self.view then
-            sys.alert('Conflict', message, self.resolve, local, incoming)
+        self.mesh.print('conflict: ' + incoming.guid +'lv='+local.version +',rv='+prior_remote_version +' -- lmod='+lmod+',rmod='+rmod)
+
+        if sys.alert then
+            message = 'There is a conflict for ' + local.path + '. Keep yours?'
+            mine_wins = sys.alert('Conflict', message)
+            self.mesh.print('mine_wins='+mine_wins)
         else
-            self.resolve(local, incoming, lmod > rmod)
+            mine_wins = lmod > rmod
         end
-    end,
-
-    # shunt either local or incoming aside
-    'resolve' : function(self, local, incoming, mine_wins)
-
-        #self.mesh.print('conflict: ' + incoming.guid +' lmod='+lmod+', rmod='+rmod)
 
         if mine_wins then
             self.mesh.print('my change wins')
             shunted = self.shunt(fullpath, incoming.from)
             sys.mv(tmppath, shunted, incoming.modified) # move from downloading directory to intended destination
             self.update_ui()
-            return
-
-        else # my change loses
-            self.mesh.print('my change loses')
-            victim = self.watched + local.path
-            shunted = self.shunt(victim, incoming.from)
-            sys.mv(victim, shunted, local.modified)
+            return true
         end
+
+        self.mesh.print('my change loses')
+        victim = self.watched + local.path
+        shunted = self.shunt(victim, incoming.from)
+        sys.mv(victim, shunted, local.modified)
+        return false
+
     end,
 
     # handle incoming file
@@ -171,7 +170,7 @@ Sync = [
         fullpath = self.watched + path
         local = self.files[guid]
 
-        self.conflict_resolution(local, incoming)
+        if self.conflict_resolution(local, incoming, tmppath, fullpath) then return end
 
         self.files[guid] = ['path':path, 'modified':incoming.modified, 'updating':incoming.modified, 'version':incoming.version]
         self.guids[path] = guid

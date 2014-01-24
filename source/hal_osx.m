@@ -49,7 +49,7 @@ NSString *byte_array_to_nsstring(const struct byte_array *str)
 -(IBAction)pressed:(id)sender;
 -(void)timerCallback:(NSTimer*)timer;
 -(void)callback;
--(void)alertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo;
+//-(void)alertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo;
 
 @end
 
@@ -69,13 +69,13 @@ NSString *byte_array_to_nsstring(const struct byte_array *str)
     bp->timer = NULL;
     return bp;
 }
-
+/*
 - (void) alertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
 {
     self->param = variable_new_bool(context, returnCode == 1); // 1=ok, 2=cancel
     [self callback];
 }
-
+*/
 -(void)setTimer:(double)interval repeats:(bool)repeats
 {
     if (interval >= 1000)
@@ -162,7 +162,7 @@ static NSWindow *window = NULL;
 
 @interface WindowController : NSWindowController <NSWindowDelegate>
 
-- (void) alert:(struct context*)context title:(const char*)title messsage:(const char*)message callback:(struct variable*)logic;
+//- (void) alert:(struct context*)context title:(const char*)title messsage:(const char*)message callback:(struct variable*)logic;
 
 @end
 
@@ -775,12 +775,21 @@ void *hal_table(struct context *context,
     return (void *)CFBridgingRetain(tableView);
 }
 
-void hal_alert (struct context *context,
-                const char *title,
-                const char *message,
-                struct variable *callback)
+bool hal_alert (const char *title, const char *message)
 {
-    [((WindowController*)window) alert:context title:title messsage:message callback:callback];
+    //[((WindowController*)window) alert:context title:title messsage:message callback:callback];
+
+    NSString *t2 = [NSString stringWithUTF8String:title];
+    NSString *m2 = [NSString stringWithUTF8String:message];
+
+    NSAlert* a = [NSAlert alertWithMessageText:t2
+                                 defaultButton:@"ok"
+                               alternateButton:@"cancel"
+                                   otherButton:nil
+                     informativeTextWithFormat:@"%@",m2];
+
+    //Run as a dialog
+    return [a runModal] == 1; // 1=ok, 2=cancel
 }
 
 void *hal_window(struct context *context,
