@@ -312,6 +312,11 @@ void hal_set_content(UIView *view) {
     content = view;
 }
 
+// todo: implement. requires callback.
+bool hal_alert (const char *title, const char *message) {
+    return true;
+}
+
 void *hal_window(struct context *context,
                  struct variable *uictx,
                  int32_t *w, int32_t *h,
