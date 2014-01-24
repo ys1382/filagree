@@ -127,7 +127,9 @@ Sync = [
     'conflict_resolution' : function(self, local, incoming, tmppath, fullpath)
 
         prior_remote_version = self.remote_version[incoming.guid]
-        if ((not local) or (local.version <= prior_remote_version)) then return end # no conflict
+        conflict = local and (local.version <= prior_remote_version)
+        #self.mesh.print('cr ' + conflict + ': local='+local +' prv='+prior_remote_version)
+        if not conflict then return end # no conflict
 
         size,lmod = sys.fileattr(fullpath)  # local modified time
         rmod = incoming.modified            # mod time of arriving file
@@ -224,7 +226,7 @@ Sync = [
             if not guid then            # new file
 
                 guid = self.mesh.id +'_'+ path +'_'+ self.guidnum
-                self.files[guid] = (['path':path, 'version':0] + fsfile)
+                self.files[guid] = (['path':path, 'version':1] + fsfile)
                 self.guids[path] = guid
                 ++self.guidnum
                 updates = updates + guid
@@ -306,7 +308,8 @@ Sync = [
 
     'update_ui' : function(self)
         if self.view then
-            self.view.set_files(self.files.keys)
+            paths = [self.watched + p for p in self.guids.keys]
+            self.view.update_view(paths)
         end
     end,
 

@@ -11,10 +11,14 @@ id = 'client' + id
 client = [
 
     'select' : function(self, row)
-        sys.print('select ' + self.sync.files.keys[row])
-        sys.open(self.sync.watched + self.sync.files.keys[row])
+        sys.print('select ' + self.paths[row])
+        sys.open(self.paths[row])
     end,
 
+    'update_view' : function(self, paths)
+        self.paths = paths
+        sys.ui_set(self.ui.files, paths)
+    end,
 ]
 
 client.ui = sys.ui( client,
@@ -24,11 +28,8 @@ client.ui = sys.ui( client,
                     ])
 
 
-
 mesh = Mesh.init(id, host, port)
 client.sync = Sync.init(client, id, mesh)
-
-sys.ui_set(client.ui.files, client.sync.files.keys) # update ui
 
 mesh.connect()
 sys.loop()
