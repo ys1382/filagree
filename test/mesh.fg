@@ -96,7 +96,7 @@ Mesh = [
 
         if (not msgm4.to) or (msgm4.to == self.id) # por moi
 
-            self.print('message from ' + msgm4.from + ': ' + msgm4)
+            #self.print('message from ' + msgm4.from + ': ' + msgm4)
 
             if msgm4.flood then
                 self.broadcast(msgm4, socket)
