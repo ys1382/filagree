@@ -14,6 +14,8 @@
 #include "hal.h"
 #include "compile.h"
 #include <windows.h>
+#include <unistd.h>
+#include "sys.h"
 
 #ifndef NO_UI
 #include <w32api.h>
@@ -137,7 +139,14 @@ struct variable *hal_load(struct context *context, const struct byte_array *key)
  * hal_sleep
  */
 void hal_sleep(int32_t miliseconds)
-{    
+{
+    struct timespec req={0};
+    time_t sec = (int)(miliseconds/1000);
+    miliseconds = (int32_t)(miliseconds - (sec * 1000));
+    req.tv_sec = sec;
+    req.tv_nsec = miliseconds * 1000000L;
+    while (nanosleep(&req,&req) == -1)
+        continue;    
 }
 
 /* 
@@ -213,7 +222,7 @@ void *thread_file_listen(void *param)
     HANDLE hDir = CreateFile( 
             pathToWatch, /* pointer to the file name */
             FILE_LIST_DIRECTORY,                /* access (read-write) mode */
-            FILE_SHARE_READ|FILE_SHARE_DELETE,  /* share mode */
+            FILE_SHARE_READ|FILE_SHARE_DELETE | FILE_SHARE_WRITE,  /* share mode */
             NULL, /* security descriptor */
             OPEN_EXISTING, /* how to create */
             FILE_FLAG_BACKUP_SEMANTICS, /* file attributes */
@@ -261,7 +270,9 @@ void *thread_file_listen(void *param)
         }
         while (!Buffer[i].NextEntryOffset);
     }
-
+    
+    CloseHandle(hDir);
+    
 	return NULL;    
 }
 
@@ -286,8 +297,7 @@ void hal_file_listen(struct context *context, const char *path, struct variable 
  * hal_loop
  */
 void hal_loop(struct context *context)
-{  
-    
+{   
  #ifdef NO_UI
     gil_unlock(context,"loop");
         MSG msg = {0};
@@ -538,6 +548,12 @@ int w_system(const char* command)
 {
     char szComSpec[MAX_PATH + 1];
     DWORD dwLen = GetEnvironmentVariable(TEXT("COMSPEC"), szComSpec, MAX_PATH);
+    
+    if (dwLen == 0) {
+        strcpy(szComSpec,"C:\\Windows\\system32\\cmd.exe");
+        dwLen = strlen(szComSpec);
+    }
+    
     if ((dwLen == 0) || (dwLen > MAX_PATH))
         return -1;
 
@@ -572,37 +588,54 @@ int w_system(const char* command)
     return (bRet) ? 0 : -1;
 }
 
-/* 
- * sys_mkdir
- */
-struct variable *sys_mkdir(struct context *context)
+// move file or folder
+struct variable *sys_mv(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
-    char *path2 = byte_array_to_string(path->str);
-    path2 = trim_last_commnad_path(path2);
-    char rmcmd[100];
-    sprintf(rmcmd, "md %s", path2);
-    if (w_system(rmcmd)) {        
-        DEBUGPRINT("\nCould not rm %s\n", path2);
-    }
+    const char *src = param_str(value, 1);
+    const char *dst = param_str(value, 2);
+    long timestamp = param_int(value, 3);
+
+    assert_message((strlen(src)>1) && (strlen(dst)>1), "oops");
+
+    char mvcmd[1024];
+    sprintf(mvcmd, "mv \"%s\" \"%s\"", src, dst);
+    if (w_system(mvcmd))
+        printf("\nCould not mv from %s to %s\n", src, dst);
+
+    if (timestamp) // to prevent unwanted timestamp updates resulting from the mv
+        file_set_timestamp(dst, timestamp);
+
     return NULL;
 }
 
-/* 
- * sys_rm
- */
+// deletes file or folder
 struct variable *sys_rm(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
     char *path2 = byte_array_to_string(path->str);
-    path2 = trim_last_commnad_path(path2);
+    assert_message(strlen(path2)>1, "oops");
     char rmcmd[100];
-    sprintf(rmcmd, "rd /S /Q %s", path2);
-    if (w_system(rmcmd)) {        
+    sprintf(rmcmd, "rm -rf \"%s\"", path2);
+    if (w_system(rmcmd))
         DEBUGPRINT("\nCould not rm %s\n", path2);
-    }
+    free(path2);
+    return NULL;
+}
+
+// creates directory
+struct variable *sys_mkdir(struct context *context)
+{
+    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
+    char *path2 = byte_array_to_string(path->str);
+    char mkcmd[100];
+    sprintf(mkcmd, "mkdir \"%s\"", path2);
+    if (w_system(mkcmd))
+        DEBUGPRINT("\nCould not mkdir %s\n", path2);
+
+    free(path2);
     return NULL;
 }
 
@@ -975,7 +1008,7 @@ struct byte_array * ReadbytesFromResource(const char* resourceFile)
 {
     char *scriptPath = ExecuteAppendPath(resourceFile);
     struct byte_array *filename = byte_array_from_string(scriptPath);
-    struct byte_array *bytereads = read_file(filename);
+    struct byte_array *bytereads = read_file(filename,0,0);
     byte_array_del(filename);
     free(scriptPath);
     return bytereads;
