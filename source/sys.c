@@ -7,6 +7,10 @@
 #include <fcntl.h>
 #include <sys/time.h>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <wait.h>
+#endif
+
 #include "hal.h"
 #include "interpret.h"
 #include "serial.h"
@@ -240,6 +244,8 @@ struct variable *sys_interpret(struct context *context)
     return NULL;
 }
 
+#if !(TARGET_OS_IPHONE) && !(_WIN32) && !(_WIN64)
+
 // deletes file or folder
 struct variable *sys_mv(struct context *context)
 {
@@ -260,8 +266,6 @@ struct variable *sys_mv(struct context *context)
 
     return NULL;
 }
-
-#if !(TARGET_OS_IPHONE) && !(_WIN32) && !(_WIN64)
 
 // deletes file or folder
 struct variable *sys_rm(struct context *context)
@@ -295,6 +299,7 @@ struct variable *sys_mkdir(struct context *context)
 }
 
 #else
+struct variable *sys_mv(struct context *context);
 struct variable *sys_mkdir(struct context *context);
 struct variable *sys_rm(struct context *context);
 #endif
