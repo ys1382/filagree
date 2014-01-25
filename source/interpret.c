@@ -71,8 +71,10 @@ void interpret_file(struct byte_array *path,
         program = build_file(path);
     }
 
+    printf("i am here\n");
+    DEBUGPRINT("me too\n");
 #ifdef DEBUG
-    //display_program(program);
+    display_program(program);
 #endif
 
     execute(program);

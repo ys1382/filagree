@@ -39,17 +39,13 @@ struct byte_array *read_resource(const char *path)
     theViewController = self;
     hal_set_content(self.view);
 
-#if 0
-    struct byte_array *script = byte_array_from_string("sys.print('hi')");
-#elif 0
-    struct byte_array *script = read_resource("ui.fg");
-#else
     struct byte_array *ui = read_resource("ui.fg");
     struct byte_array *sync = read_resource("sync.fg");
     struct byte_array *mesh = read_resource("mesh.fg");
-    struct byte_array *im_client = read_resource("sync_client.fg");
-    struct byte_array *script = byte_array_concatenate(4, ui, mesh, sync, im_client);
-#endif
+    struct byte_array *sync_client = read_resource("sync_client.fg");
+    struct byte_array *args = byte_array_from_string("id='A'");
+    struct byte_array *script = byte_array_concatenate(5, ui, mesh, sync, args, sync_client);
+
     struct byte_array *program = build_string(script);
     execute(program);
 }

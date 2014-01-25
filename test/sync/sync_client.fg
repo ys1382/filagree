@@ -1,6 +1,6 @@
 ####### sync_client.fg
 
-sys.print(id)
+sys.print('id='+id)
 
 import '../ui'
 import 'sync'
@@ -27,7 +27,6 @@ client.ui = sys.ui( client,
                         ['table', 'name':'files', 'list':['x','y'], 'logic':client.select],
                         'w':240, 'h':320
                     ])
-
 
 mesh = Mesh.init(id, host, port)
 client.sync = Sync.init(client, id, mesh)

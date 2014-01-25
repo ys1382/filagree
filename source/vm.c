@@ -5,6 +5,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <errno.h>
+#include <sys/wait.h>
 
 #include "util.h"
 #include "serial.h"

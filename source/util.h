@@ -10,7 +10,7 @@
 
 #ifdef __ANDROID__
 #include <android/log.h>
-#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "TAG", __VA_ARGS__);
+#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "filagree", __VA_ARGS__);
 #endif
 
 #if defined(__APPLE__)
@@ -35,7 +35,7 @@ void *exit_message(const char *format, ...);
 void null_check(const void* p);
 
 #ifdef DEBUG
-#define DEBUGPRINT(...)  fprintf (stderr, __VA_ARGS__ );
+#define DEBUGPRINT(...)  printf(__VA_ARGS__);
 #define DEBUGSPRINT(...) byte_array_format(context->pcbuf, true, __VA_ARGS__ );
 #else
 #define DEBUGPRINT(...)  {};
@@ -57,6 +57,9 @@ __typeof__ (b) __b = (b); \
 __a < __b ? __a : __b; })
 #endif
 
+#ifndef WAIT_ANY
+#define WAIT_ANY -1 // for Android
+#endif
 
 struct number_string {
     uint8_t number;

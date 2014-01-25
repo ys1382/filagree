@@ -17,6 +17,7 @@
 #include "util.h"
 #include "node.h"
 #include "file.h"
+#include <sys/wait.h>
 
 struct string_func
 {
@@ -177,13 +178,14 @@ struct variable *sys_now(struct context *context)
 {
     stack_pop(context->operand_stack); // sys
 
-    struct timeval tzp;
-    if (gettimeofday(NULL, &tzp))
+    struct timeval tv;
+    struct timezone tzp;
+    if (gettimeofday(&tv, &tzp))
     {
         perror("gettimeofday");
         return variable_new_int(context, 0);
     }
-    return variable_new_int(context, tzp.tv_usec);
+    return variable_new_int(context, tv.tv_usec);
 }
 
 struct variable *sys_forkexec(struct context *context)

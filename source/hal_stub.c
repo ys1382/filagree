@@ -35,6 +35,7 @@ void *hal_table (struct context *context,
                  struct variable *uictx,
                  struct variable *list,
                  struct variable *logic)                { stub("hal_table"); return NULL; }
+bool hal_alert (const char *title, const char *message) { stub("hal_alert"); return true; }
 
 void hal_sound_url(const char *address)                 { stub("hal_sound_url"); }
 void hal_sound_bytes(const uint8_t *bytes,
