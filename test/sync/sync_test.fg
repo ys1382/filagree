@@ -96,11 +96,11 @@ director = [
         self.wait()                                         # wait so that client1 won't get immediate update
         self.sync_direct('client1', 'online')
         self.sync_direct('client1', 'verify', 'tc4.txt', '789')
-        self.sync_direct('client1', 'verify', 'tc4.client1_1.txt', '456')
+        self.sync_direct('client1', 'verify', 'tc4.client1_v2.txt', '456')
         self.sync_direct('server1', 'verify', 'tc4.txt', '789')
-        self.sync_direct('server1', 'verify', 'tc4.client1_1.txt', '456')
+        self.sync_direct('server1', 'verify', 'tc4.client1_v2.txt', '456')
         self.sync_direct('client2', 'verify', 'tc4.txt', '789')
-        self.sync_direct('client2', 'verify', 'tc4.client1_1.txt', '456')
+        self.sync_direct('client2', 'verify', 'tc4.client1_v2.txt', '456')
 
     end,
 

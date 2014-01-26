@@ -1,6 +1,5 @@
 ####### sync_client.fg
 
-sys.print('id='+id)
 
 import '../ui'
 import 'sync'

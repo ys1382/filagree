@@ -1,2 +1,4 @@
-siz,mod = sys.fileattr('/x.txt')
-sys.print('siz='+siz+', lmod='+mod)
+a = ['x':'hi']
+b = a.x
+a.x = 'bye'
+sys.print(a.x+b)

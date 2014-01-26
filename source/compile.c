@@ -374,7 +374,7 @@ lexmore:
         else if (isspace(c))    i++;
         else if (c=='\'')       i = insert_token_string(LEX_STRING, input, i+1);
         else
-            return (struct array*)exit_message(ERROR_LEX);
+            return (struct array*)exit_message("%s %c (%d) at line %d", ERROR_LEX, c, c, line);
     }
 #ifdef DEBUG
     //display_lex_list();

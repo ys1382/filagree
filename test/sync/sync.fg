@@ -15,7 +15,6 @@ Sync = [
     'offset'  :        [],
     'remote_version' : [],
     'guidnum' :         1,
-    'shuntnum':         1,
 
     'init' : function(self, view, dir, mesh)
 
@@ -100,14 +99,25 @@ Sync = [
         end
     end,
 
+    # returns true if I need to send guid-file to peer
+    'give' : function(self, guid, remote_files)
+    
+        remote = remote_files[guid]
+        if not remote then return false end
+        local = self.files[guid]
+        return (remote.version < local.version) or
+               (remote.by != local.by)
+    end,
+
     'handle_greet' : function(self, msgg)
 
-        #self.mesh.print('handle_greet:' + msgg)
+        self.mesh.print('handle_greet:' + msgg)
         if not msgg.files then return end
 
-        give = self.files - msgg.files
+        give = [guid for guid in self.files where self.give(guid, msgg.files)]
+        self.mesh.print('hg sf='+ self.files +'    give='+ give)
         for i in give
-            self.send_file(i)
+            self.send_file(i, msgg.from)
         end
 
         self.filed() # check for offline updates
@@ -115,26 +125,30 @@ Sync = [
     end,
 
     # test.txt -> text.fred_123.txt
-    'shunt' : function(self, path, from)
+    'shunt' : function(self, path, by, version)
         pre,suf = self.extension(path)
-        tag = '.'+ self.mesh.id +'_'+ self.shuntnum +'.'
-        self.shuntnum = self.shuntnum + 1
-        s#elf.mesh.print('shunt '+ path+','+from+' -- '+pre+','+tag+','+suf+' returns ' + pre+tag+suf)
+        tag = '.'+ by +'_v'+ version +'.'
+        #self.mesh.print('shunt '+ path+','+from+' -- '+pre+','+tag+','+suf+' returns ' + pre+tag+suf)
         return pre + tag + suf
     end,
 
     # check for and handle conflicts between local and incoming files
     'conflict_resolution' : function(self, local, incoming, tmppath, fullpath)
+        if not local then return end
 
+        # there is a conflict if local and remote versions are both currently higher than the last sync
         prior_remote_version = self.remote_version[incoming.guid]
-        conflict = local and (local.version <= prior_remote_version)
-        #self.mesh.print('cr ' + conflict + ': local='+local +' prv='+prior_remote_version)
+        conflict = (local.version > prior_remote_version) or
+                   ((local.version == incoming.version) and (local.by != incoming.by))
+        self.mesh.print('cr ' + conflict +' prv='+prior_remote_version +' iv='+incoming.version + ' local='+local)
         if not conflict then return end # no conflict
 
         size,lmod = sys.fileattr(fullpath)  # local modified time
         rmod = incoming.modified            # mod time of arriving file
 
-        self.mesh.print('conflict: ' + incoming.guid +'lv='+local.version +',rv='+prior_remote_version +' -- lmod='+lmod+',rmod='+rmod)
+        self.mesh.print('conflict: ' + incoming.guid +', rv=' + incoming.modified +
+                        ', prv='+ prior_remote_version +', lv=' + local.version +
+                        ' -- lmod='+ lmod+',rmod='+rmod)
 
         if sys.alert then
             message = 'There is a conflict for ' + local.path + '. Keep yours?'
@@ -146,7 +160,7 @@ Sync = [
 
         if mine_wins then
             self.mesh.print('my change wins')
-            shunted = self.shunt(fullpath, incoming.from)
+            shunted = self.shunt(fullpath, incoming.by, incoming.version)
             sys.mv(tmppath, shunted, incoming.modified) # move from downloading directory to intended destination
             self.update_ui()
             return true
@@ -154,13 +168,13 @@ Sync = [
 
         self.mesh.print('my change loses')
         victim = self.watched + local.path
-        shunted = self.shunt(victim, incoming.from)
+        shunted = self.shunt(victim, self.mesh.id, local.version)
         sys.mv(victim, shunted, local.modified)
         return false
 
     end,
 
-    # handle incoming file
+    # handle incoming file (or piece thereof)
     'handle_content' : function(self, incoming)
 
         tmppath = self.tmpdir + incoming.path
@@ -172,9 +186,10 @@ Sync = [
         fullpath = self.watched + path
         local = self.files[guid]
 
+        self.mesh.print('received ' + path +' v'+ incoming.version +', by '+incoming.by)
         if self.conflict_resolution(local, incoming, tmppath, fullpath) then return end
 
-        self.files[guid] = ['path':path, 'modified':incoming.modified, 'updating':incoming.modified, 'version':incoming.version]
+        self.files[guid] = ['path':path, 'modified':incoming.modified, 'updating':incoming.modified, 'version':incoming.version, 'by':incoming.by]
         self.guids[path] = guid
         self.remote_version[guid] = incoming.version
         sys.mv(tmppath, fullpath, incoming.modified) # move from downloading directory to intended destination
@@ -186,11 +201,15 @@ Sync = [
     # called when the OS detects a file change, sends out updates/deletes
     'filed' : function(self, dir)
 
-        if self.offline then
-            return
-        end
-
         updates,deletes = self.reconcile_local()
+
+        if self.offline then
+            self.meanwhile = ['updates':updates, 'deletes':deletes]
+            return
+        else if self.meanwhile then
+            updates,deletes = self.meanwhile.updates, self.meanwhile.deletes
+            self.meanwhile = nil
+        end
         #self.mesh.print('filed: updates=' + updates)
 
         for u in updates
@@ -230,18 +249,24 @@ Sync = [
                 self.guids[path] = guid
                 ++self.guidnum
                 updates = updates + guid
+                self.files[guid].by = self.mesh.id # most recent author c'est moi
 
             else                        # updated file
 
                 dbfile = self.files[guid] # last known local metadata
                 dbmod = dbfile.modified
 
+                self.mesh.print(path + ' : ' + guid + ' fsmod='+fsmod+', dbmod='+dbmod+', dbfile.updating='+dbfile.updating)
                 if (fsmod != dbmod) and (fsmod != dbfile.updating) then # offline update
+                    self.mesh.print('update '+ guid +' to v'+ self.files[guid].version)
                     ++self.files[guid].version
-                    #self.mesh.print('update '+ guid +' to v'+ self.files[guid].version)
                     updates = updates + guid
+                    self.files[guid].by = self.mesh.id
                 end
+                dbfile.updating = nil
+                dbfile.modified = fsmod
             end
+
         end
 
         deletes = [guid for path,guid in self.guids where (not files[path])]
@@ -252,44 +277,45 @@ Sync = [
 
 
     # send a file in chunks
-    'send_file' : function(self, guid)
+    'send_file' : function(self, guid, to)
 
-        path = self.files[guid].path
+        file = self.files[guid]
+        path, version, by = file.path, file.version, file.by
 
         self.offset[path] = 0
         if self.sending[path] then return end
         self.sending[path] = true
 
-        msg7 = ['event':'content', 'path':path, 'guid':guid]
+        full_local_path = self.watched + path
+        size,mod = sys.fileattr(full_local_path)
+        msg7 = ['event':'content', 'path':path, 'guid':guid, 'version':version, 'by':by, 'modified':mod]
 
         chunk = 10000    # chunk size in number of bytes
-        full_local_path = self.watched + path
 
         while true
 
-            if (bytes = sys.read(full_local_path, self.offset[path], chunk))
-                size,mod = sys.fileattr(full_local_path)
+            if (bytes = sys.read(full_local_path, self.offset[path], chunk)) # non-zero
                 msg7.content = bytes
-                msg7.modified = mod
-                msg7.version = self.files[guid].version
                 msg7.offset = self.offset[path]
-                msg7.last = (bytes.length < chunk)
-
+                msg7.last = (bytes.length < chunk) # eom
                 self.offset[path] = self.offset[path] + bytes.length
-                #self.mesh.print('send ' + path +' '+ mod)
-                self.mesh.broadcast(msg7)
+                if (to) then
+                    self.mesh.send_to(to, msg7)
+                else
+                    self.mesh.broadcast(msg7) # send to everyone
+                end
 
                 if self.slowdown then sys.sleep(500) end # to facilitate TC2
             end
 
-            if bytes.length < chunk then
+            if bytes.length < chunk then # last chunk
+                msg7.last = true
                 self.offset[path] = self.sending[path] = nil
-                #self.mesh.print('sent ' + guid +' v'+ self.files[guid].version)
-                return
+                self.remote_version[guid] = version
+                self.mesh.print('sent ' + guid +' v'+ version +', by '+ by +', to '+(to or 'all'))
+                return # exit from loop
             end
-
         end
-
     end,
 
     'handle_delete' : function(self, deletes)
@@ -350,6 +376,7 @@ Sync = [
         else if action == 'offline' then
             self.offline = true
         else if action == 'online' then
+            sys.print('\n\n')
             self.offline = nil
             self.mesh.connected()
 

@@ -203,7 +203,6 @@ void context_del(struct context *context)
     while (!stack_empty(context->program_stack))
     {
         struct program_state *s = (struct program_state *)stack_pop(context->program_stack);
-        printf("del state %p from %p\n", s, context->program_stack);
         program_state_del(context, s);
     }
 
@@ -1168,7 +1167,7 @@ static struct variable *binary_op_nil(struct context *context,
 static int32_t boolean_op(struct context *context, struct byte_array *program, enum Opcode op)
 {
     null_check(program);
-    int32_t short_circuit = serial_decode_int(program);
+    int32_t short_circuit = serial_decode_int(program); // size of second operand, in program bytes
 
     DEBUGSPRINT("%s %d", NUM_TO_STRING(opcodes, op), short_circuit);
     if (!context->runtime)
@@ -1185,11 +1184,11 @@ static int32_t boolean_op(struct context *context, struct byte_array *program, e
     }
     if (tistrue ^ (op == VM_AND)) {
         variable_push(context,v);
-        return short_circuit;
-    }
+        return short_circuit;   // jump over second operand if done
+    }                           // otherwise, second operand is result
     return 0;
 }
-
+                
 static void binary_op(struct context *context, enum Opcode op)
 {
     if (!context->runtime) {
