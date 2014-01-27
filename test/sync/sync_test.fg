@@ -212,6 +212,6 @@ director = [
 
 ] + test_director
 
-
-mesh = Mesh.init(director.id, host, port, [director])
+port = 1999
+mesh = Mesh.init(director.id, port, [director])
 director.launch(mesh, 2)

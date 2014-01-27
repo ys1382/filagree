@@ -63,14 +63,14 @@ test_director = [
 
         self.num_tests = self.num_tests + 1
         desc = self.descriptions[seq]
-        sys.print('test ' + self.num_tests +': '+ text)
+        sys.print('test ' + self.num_tests +': '+ text +' -- '+ desc)
 
     end,
 
 
     'direct' : function(self, title, whom, action, params)
 
-        self.descriptions[self.seq] = ['title' : title, 'who' : whom]
+        self.descriptions[self.seq] = whom +' '+ title
 
         msg5 = ['event'     : 'test',
                 'action'    : action,

@@ -1576,7 +1576,6 @@ done:
 
 void execute_with(struct context *context, struct byte_array *program, bool in_state)
 {
-    DEBUGPRINT("execute\n");
     if (NULL == context)
         context = context_new(NULL, true, true);
 

@@ -64,7 +64,8 @@ class HalAndroid implements OnClickListener {
 	}
 
 	public Object[] file_list(String path) {
-		return localFile(path).list();
+		String[] result = localFile(path).list();
+		return result;
 	}
 
 	public Object[] rm(String path) {

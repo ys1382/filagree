@@ -7,7 +7,7 @@ import 'sync'                       # shared sync logic
 id = 'server1'
 
 
-mesh = Mesh.init(id, host, port, nil)
+mesh = Mesh.init(id)
 sync = Sync.init(nil, id, mesh)
 
 

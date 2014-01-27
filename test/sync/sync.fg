@@ -5,10 +5,6 @@ import '../ui'
 import '../mesh'
 
 
-host = '127.0.0.1'
-port = 1999
-
-
 Sync = [
 
     'sending' :        [],
@@ -51,7 +47,7 @@ Sync = [
 
     'local_snapshot' : function(self)
 
-        list = sys.file_list(self.watched) - self.watched           # remove root element
+        list = (sys.file_list(self.watched) or []) - self.watched   # remove root element
         return [(path - self.watched):attr for path,attr in list]   # make paths relative
 
     end,
@@ -111,11 +107,11 @@ Sync = [
 
     'handle_greet' : function(self, msgg)
 
-        self.mesh.print('handle_greet:' + msgg)
+        #self.mesh.print('handle_greet:' + msgg)
         if not msgg.files then return end
 
         give = [guid for guid in self.files where self.give(guid, msgg.files)]
-        self.mesh.print('hg sf='+ self.files +'    give='+ give)
+        #self.mesh.print('hg sf='+ self.files +'    give='+ give)
         for i in give
             self.send_file(i, msgg.from)
         end
@@ -140,33 +136,25 @@ Sync = [
         prior_remote_version = self.remote_version[incoming.guid]
         conflict = (local.version > prior_remote_version) or
                    ((local.version == incoming.version) and (local.by != incoming.by))
-        self.mesh.print('cr ' + conflict +' prv='+prior_remote_version +' iv='+incoming.version + ' local='+local)
         if not conflict then return end # no conflict
 
         size,lmod = sys.fileattr(fullpath)  # local modified time
         rmod = incoming.modified            # mod time of arriving file
 
-        self.mesh.print('conflict: ' + incoming.guid +', rv=' + incoming.modified +
-                        ', prv='+ prior_remote_version +', lv=' + local.version +
-                        ' -- lmod='+ lmod+',rmod='+rmod)
-
         if sys.alert then
             message = 'There is a conflict for ' + local.path + '. Keep yours?'
             mine_wins = sys.alert('Conflict', message)
-            self.mesh.print('mine_wins='+mine_wins)
         else
             mine_wins = lmod > rmod
         end
 
         if mine_wins then
-            self.mesh.print('my change wins')
             shunted = self.shunt(fullpath, incoming.by, incoming.version)
             sys.mv(tmppath, shunted, incoming.modified) # move from downloading directory to intended destination
             self.update_ui()
             return true
         end
 
-        self.mesh.print('my change loses')
         victim = self.watched + local.path
         shunted = self.shunt(victim, self.mesh.id, local.version)
         sys.mv(victim, shunted, local.modified)
@@ -256,9 +244,9 @@ Sync = [
                 dbfile = self.files[guid] # last known local metadata
                 dbmod = dbfile.modified
 
-                self.mesh.print(path + ' : ' + guid + ' fsmod='+fsmod+', dbmod='+dbmod+', dbfile.updating='+dbfile.updating)
+                #self.mesh.print(path + ' : ' + guid + ' fsmod='+fsmod+', dbmod='+dbmod+', dbfile.updating='+dbfile.updating)
                 if (fsmod != dbmod) and (fsmod != dbfile.updating) then # offline update
-                    self.mesh.print('update '+ guid +' to v'+ self.files[guid].version)
+                    #self.mesh.print('update '+ guid +' to v'+ self.files[guid].version)
                     ++self.files[guid].version
                     updates = updates + guid
                     self.files[guid].by = self.mesh.id
@@ -347,7 +335,7 @@ Sync = [
         path = self.watched + msg7.path
         status = 'done'
 
-        if not msg7.retry then self.mesh.print('test ' + msg7.seq  +': '+ msg7) end
+        #if not msg7.retry then self.mesh.print('test ' + msg7.seq  +': '+ msg7) end
 
         if action == 'update' then
             # sys.mkdir(path)
@@ -374,9 +362,10 @@ Sync = [
             #self.mesh.print('match=' + match)
 
         else if action == 'offline' then
+            self.mesh.print('offline')
             self.offline = true
         else if action == 'online' then
-            sys.print('\n\n')
+            self.mesh.print('online')
             self.offline = nil
             self.mesh.connected()
 

@@ -1,5 +1,6 @@
 ####### mesh.fg
 
+# default port is 1999  
 
 Mesh = [
 
@@ -9,11 +10,10 @@ Mesh = [
     'seq'   : 0,
 
 
-    'init' : function(self, id, address, port, mesh_subscribers)
+    'init' : function(self, id, port, mesh_subscribers)
 
         self.id = id
-        self.address = address
-        self.port = port
+        self.port = port or 1999
         self.ctx = mesh_subscribers or []
 
         return self
@@ -30,8 +30,8 @@ Mesh = [
     end,
 
 
-    'connect' : function(self)
-        sys.connect(self.address, self.port, self)
+    'connect' : function(self, host)
+        sys.connect(host or '127.0.0.1', self.port, self)
     end,
 
 
@@ -88,7 +88,7 @@ Mesh = [
 
 
     'print' : function(self, line)
-        sys.print(' ' + self.id +' -- '+ line)
+        sys.print('\t' + self.id +' -- '+ line)
     end,
 
 

@@ -93,7 +93,7 @@ void *thread_wrapper(void *param)
     struct context_shared *s = ta->context->singleton;
 
     ta->start_routine(ta);
-    
+
     gil_lock(ta->context, "thread_wrapper b");
     s->num_threads--;
     pthread_cond_signal(&s->thread_cond);
@@ -163,7 +163,7 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
         byte_array_del(received);
         return true;
     }
-    
+
     // process message in another thread
     byte_array_reset(received);
     struct node_thread *ta = thread_new(ta0->context, listener, incoming, fd);
@@ -316,13 +316,7 @@ void *sys_connect2(void *arg)
     {
         ta->event = CONNECTED;
         node_callback(ta);
-
-        for (;;)
-        {
-            if (socket_event(ta, ta->listener, ta->fd))
-                return NULL;
-            //printf("\n client se loop\n");
-        }
+        for (;!socket_event(ta, ta->listener, ta->fd););
     }
 
     return NULL;
@@ -338,6 +332,11 @@ struct variable *sys_connect(struct context *context)
     char *serveraddr = param_str(arguments, 1);
     int serverport = param_int(arguments, 2);
 
+#ifdef __ANDROID__
+    if (!strcmp(serveraddr, "127.0.0.1"))
+        serveraddr = "10.0.2.2"; // emulator's host IP
+#endif
+    
 	// create socket file descriptor
 	ta->fd = socket(AF_INET, SOCK_STREAM, 0);
 
