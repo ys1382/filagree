@@ -18,13 +18,17 @@ Sync = [
         self.mesh = mesh
         mesh.subscribe(self)
 
-        if dir == 'server1' then dir = '/Volumes/homefolders/yusufs' end
+        test_smb = false    
+        if test_smb then
+            if dir == 'server1' then dir = '/Volumes/homefolders/yusufs' end
+        else
+            # clear directory for testing
+            sys.rm(dir)
+            sys.mkdir(dir)
+        end
 
         self.watched = dir + '/'
 
-        # clear directory for testing
-        # sys.rm(self.watched)
-        # sys.mkdir(self.watched)
 
         self.tmpdir = 'tmp/' + self.mesh.id +'/'
         sys.rm(self.tmpdir)

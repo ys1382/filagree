@@ -829,7 +829,6 @@ struct variable *path_var(struct file_thread *thread, const char *path)
     NSString *path2 = [NSString stringWithUTF8String:path];
     path2 = [path2 stringByStandardizingPath];
     NSString *watched = [NSString stringWithUTF8String:thread->watched];
-    NSLog(@"path_var %@ %@", path2, watched);
     path2 = [path2 substringFromIndex:[watched length]];
     return variable_new_str_chars(thread->context, [path2 UTF8String]);
 }
