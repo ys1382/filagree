@@ -18,20 +18,20 @@ Sync = [
         self.mesh = mesh
         mesh.subscribe(self)
 
+        if dir == 'server1' then dir = '/Volumes/homefolders/yusufs' end
+
         self.watched = dir + '/'
 
         # clear directory for testing
-        sys.rm(self.watched)
-        sys.mkdir(self.watched)
+        # sys.rm(self.watched)
+        # sys.mkdir(self.watched)
 
-        self.tmpdir = self.watched +'../tmp/' + self.mesh.id +'/'
+        self.tmpdir = 'tmp/' + self.mesh.id +'/'
         sys.rm(self.tmpdir)
         sys.mkdir(self.tmpdir)
 
         self.load_db(mesh.id)
-
         sys.file_listen(self.watched, self)   # listen for file changes
-
         return self
 
     end,
@@ -97,12 +97,10 @@ Sync = [
 
     # returns true if I need to send guid-file to peer
     'give' : function(self, guid, remote_files)
-    
         remote = remote_files[guid]
         if not remote then return false end
         local = self.files[guid]
-        return (remote.version < local.version) or
-               (remote.by != local.by)
+        return (remote.version < local.version) or (remote.by != local.by)
     end,
 
     'handle_greet' : function(self, msgg)
@@ -124,7 +122,6 @@ Sync = [
     'shunt' : function(self, path, by, version)
         pre,suf = self.extension(path)
         tag = '.'+ by +'_v'+ version +'.'
-        #self.mesh.print('shunt '+ path+','+from+' -- '+pre+','+tag+','+suf+' returns ' + pre+tag+suf)
         return pre + tag + suf
     end,
 
@@ -136,7 +133,7 @@ Sync = [
         prior_remote_version = self.remote_version[incoming.guid]
         conflict = (local.version > prior_remote_version) or
                    ((local.version == incoming.version) and (local.by != incoming.by))
-        if not conflict then return end # no conflict
+        if not conflict then return end
 
         size,lmod = sys.fileattr(fullpath)  # local modified time
         rmod = incoming.modified            # mod time of arriving file
@@ -188,6 +185,8 @@ Sync = [
 
     # called when the OS detects a file change, sends out updates/deletes
     'filed' : function(self, dir)
+
+        #self.mesh.print('filed ' + dir)
 
         updates,deletes = self.reconcile_local()
 

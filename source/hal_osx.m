@@ -69,13 +69,7 @@ NSString *byte_array_to_nsstring(const struct byte_array *str)
     bp->timer = NULL;
     return bp;
 }
-/*
-- (void) alertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
-{
-    self->param = variable_new_bool(context, returnCode == 1); // 1=ok, 2=cancel
-    [self callback];
-}
-*/
+
 -(void)setTimer:(double)interval repeats:(bool)repeats
 {
     if (interval >= 1000)
@@ -833,10 +827,10 @@ struct file_thread {
 struct variable *path_var(struct file_thread *thread, const char *path)
 {
     NSString *path2 = [NSString stringWithUTF8String:path];
+    path2 = [path2 stringByStandardizingPath];
     NSString *watched = [NSString stringWithUTF8String:thread->watched];
+    NSLog(@"path_var %@ %@", path2, watched);
     path2 = [path2 substringFromIndex:[watched length]];
-    if ([path2 hasSuffix:@"/"])
-        path2 = [path2 substringToIndex:[path2 length]-1];
     return variable_new_str_chars(thread->context, [path2 UTF8String]);
 }
 
@@ -847,7 +841,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
                             const FSEventStreamEventFlags eventFlags[],
                             const FSEventStreamEventId eventIds[])
 {
-    DEBUGPRINT("\n>%" PRIu16 " - file_listener_callback\n", current_thread_id());
+    //printf("\n>%" PRIu16 " - file_listener_callback %zu\n", current_thread_id(), numEvents);
 
     char **paths = eventPaths;
     struct file_thread *thread = (struct file_thread*)clientCallBackInfo;
@@ -871,10 +865,8 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
             if ((NULL != method3) && (method3->type != VAR_NIL))
                 vm_call(thread->context, method3, thread->listener, path3, NULL);
 
-        }   @catch (NSException * e) {
-#ifdef DEBUG
+        } @catch (NSException * e) {
             NSLog(@"Exception: %@", e);
-#endif
         }
 }
     gil_unlock(thread->context, "file_listener_callback");
@@ -882,7 +874,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
 
 void hal_file_listen(struct context *context, const char *path, struct variable *listener)
 {
-    DEBUGPRINT("\n>%" PRIu16 " - hal_file_listen %s\n", current_thread_id(), path);
+    // printf("\n>%" PRIu16 " - hal_file_listen %s\n", current_thread_id(), path);
 
     struct file_thread *ft = (struct file_thread*)malloc((sizeof(struct file_thread)));
     ft->context = context;
@@ -893,6 +885,7 @@ void hal_file_listen(struct context *context, const char *path, struct variable 
     NSURL *fileUrl = [NSURL fileURLWithPath:path2];
     NSString *scheme = [[fileUrl scheme] stringByAppendingString:@"://"];
     NSString *watched = [[fileUrl absoluteString] substringFromIndex:[scheme length]];
+    watched = [watched stringByStandardizingPath];
     ft->watched = [watched UTF8String];
 
     CFStringRef path3 = CFStringCreateWithCString(NULL, path, kCFStringEncodingUTF8);

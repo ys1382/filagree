@@ -1,15 +1,11 @@
 ####### sync_server.fg
 
-
-import 'sync'                       # shared sync logic
-
+import 'sync'
 
 id = 'server1'
 
-
 mesh = Mesh.init(id)
 sync = Sync.init(nil, id, mesh)
-
 
 mesh.listen()
 sys.loop()
