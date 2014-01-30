@@ -29,6 +29,13 @@ static UIView *content = NULL;
 static NSString *doc_dir = NULL;
 
 
+NSString *byte_array_to_nsstring(const struct byte_array *str)
+{
+    const char *str2 = byte_array_to_string(str);
+    return [NSString stringWithUTF8String:str2];
+}
+
+
 CGRect whereAmI(int x, int y, int w, int h)
 {
     return CGRectMake(x + MARGIN_X, y + MARGIN_Y, w, h);
@@ -377,6 +384,22 @@ struct variable *sys_mkdir(struct context *context)
         NSLog(@"Create directory error: %@", error);
     }
 
+    return NULL;
+}
+
+struct variable *sys_mv(struct context *context)
+{
+    struct variable *value = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *src = (struct variable*)array_get(value->list.ordered, 1);
+    struct variable *dst = (struct variable*)array_get(value->list.ordered, 2);
+
+    NSString *src2 = doc_path2(src->str);
+    NSString *dst2 = doc_path2(dst->str);
+
+    NSError *error;
+    if (![[NSFileManager defaultManager] moveItemAtPath:src2 toPath:dst2 error:&error])
+        NSLog(@"File move error: %@", error);
+    
     return NULL;
 }
 

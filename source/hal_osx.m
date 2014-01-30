@@ -873,7 +873,7 @@ void file_listener_callback(ConstFSEventStreamRef streamRef,
 
 void hal_file_listen(struct context *context, const char *path, struct variable *listener)
 {
-    // printf("\n>%" PRIu16 " - hal_file_listen %s\n", current_thread_id(), path);
+    printf("\n>%" PRIu16 " - hal_file_listen %s\n", current_thread_id(), path);
 
     struct file_thread *ft = (struct file_thread*)malloc((sizeof(struct file_thread)));
     ft->context = context;

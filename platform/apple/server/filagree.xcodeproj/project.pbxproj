@@ -44,7 +44,6 @@
 		88C62F2F18351E6B00E6E9DC /* im_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_test.fg; sourceTree = "<group>"; };
 		88C62F3018351E6B00E6E9DC /* mesh.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = mesh.fg; sourceTree = "<group>"; };
 		88C62F3118351E6B00E6E9DC /* node.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = node.fg; sourceTree = "<group>"; };
-		88C62F3318351E6B00E6E9DC /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
 		88C62F3718351E6B00E6E9DC /* sync.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync.fg; sourceTree = "<group>"; };
 		88C62F3818351E6B00E6E9DC /* sync_client.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_client.fg; sourceTree = "<group>"; };
 		88C62F3918351E6B00E6E9DC /* sync_server.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_server.fg; sourceTree = "<group>"; };
@@ -155,7 +154,6 @@
 		88C62F3218351E6B00E6E9DC /* sync */ = {
 			isa = PBXGroup;
 			children = (
-				88C62F3318351E6B00E6E9DC /* icon.png */,
 				88C62F3718351E6B00E6E9DC /* sync.fg */,
 				88C62F3818351E6B00E6E9DC /* sync_client.fg */,
 				88C62F3918351E6B00E6E9DC /* sync_server.fg */,

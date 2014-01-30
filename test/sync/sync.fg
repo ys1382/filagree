@@ -11,6 +11,7 @@ Sync = [
     'offset'  :        [],
     'remote_version' : [],
     'guidnum' :         1,
+    'demo'    :        false,
 
     'init' : function(self, view, dir, mesh)
 
@@ -18,9 +19,9 @@ Sync = [
         self.mesh = mesh
         mesh.subscribe(self)
 
-        test_smb = false    
-        if test_smb then
-            if dir == 'server1' then dir = '/Volumes/homefolders/yusufs' end
+        if self.demo and dir == 'server1' then
+            sys.print('test server')
+            dir = '/Volumes/homefolders/yusufs'
         else
             # clear directory for testing
             sys.rm(dir)
@@ -135,8 +136,9 @@ Sync = [
 
         # there is a conflict if local and remote versions are both currently higher than the last sync
         prior_remote_version = self.remote_version[incoming.guid]
-        conflict = (local.version > prior_remote_version) or
-                   ((local.version == incoming.version) and (local.by != incoming.by))
+        conflict = (local.version > prior_remote_version)
+                   or ((local.version == incoming.version) and (local.by != incoming.by))
+                   or self.demo
         if not conflict then return end
 
         size,lmod = sys.fileattr(fullpath)  # local modified time
@@ -190,8 +192,6 @@ Sync = [
     # called when the OS detects a file change, sends out updates/deletes
     'filed' : function(self, dir)
 
-        #self.mesh.print('filed ' + dir)
-
         updates,deletes = self.reconcile_local()
 
         if self.offline then
@@ -201,7 +201,7 @@ Sync = [
             updates,deletes = self.meanwhile.updates, self.meanwhile.deletes
             self.meanwhile = nil
         end
-        #self.mesh.print('filed: updates=' + updates)
+        self.mesh.print('filed: updates=' + updates)
 
         for u in updates
             self.send_file(u)
