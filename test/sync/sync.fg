@@ -9,6 +9,7 @@ Sync = [
 
     'sending' : [],
     'offset'  : [],
+    'writing' : [],
 
     'init' : function(self, view, dir, mesh)
 
@@ -109,7 +110,11 @@ Sync = [
         self.files = files
 
         for u in updates
-            self.send_file(u)
+            if self.writing[u] then
+                self.writing[u] = nil
+            else
+                self.send_file(u)
+            end
         end
 
         if deletes.length then
@@ -172,6 +177,7 @@ Sync = [
 
     'update_ui' : function(self)
         if self.view then
+            self.mesh.print('update_ui ' + self.files)
             paths = self.files.keys
             self.view.update_view(paths)
         end

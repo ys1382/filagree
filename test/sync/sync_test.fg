@@ -42,14 +42,14 @@ director = [
         self.sync_direct('client2', 'verify', 'b.txt', '456')
         self.sync_direct('server1', 'verify', 'b.txt', '456')
         self.sync_direct('client1', 'verify', 'b.txt', '456')
-/*
+
         #delete
         self.sync_direct('client1', 'delete', 'b.txt')
         self.wait() # wait for delete to propogate
         self.sync_direct('client1', 'verify', 'b.txt')
         self.sync_direct('server1', 'verify', 'b.txt')
         self.sync_direct('client2', 'verify', 'b.txt')
-*/
+
     end,
 
     #
