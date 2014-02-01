@@ -25,7 +25,7 @@ Mesh = [
     end,
 
     'listen' : function(self)
-        self.print(' listening on port ' + self.port)
+        self.print('listening on port ' + self.port)
         sys.listen(self.port, self)    # server listens for incoming socket connections
     end,
 
@@ -67,7 +67,7 @@ Mesh = [
         self.handle_disconnect(id)
         self.peers[id] = self.sreep[socket] = nil
 
-        self.print(' disconnected from ' + id)
+        self.print('disconnected from ' + id)
 
         for c in self.ctx
             c.disconnected(self, socket)
@@ -78,7 +78,7 @@ Mesh = [
     'handle_message' : function(self, socket, msg5)
 
         if msg5.event == 'greet' then
-            self.print(' connected to ' + msg5.from)
+            self.print('connected to ' + msg5.from)
             self.peers[msg5.from] = socket
             self.sreep[socket] = msg5.from
             
@@ -162,9 +162,7 @@ Mesh = [
 
 
     'broadcast' : function(self, msg6, except)
-        if self.offline then
-            return
-        end
+        self.print('broadcast ' + except)
         msg6.flood = true
         msg6.from = msg6.from or self.id
         for socket in self.peers.vals where (socket != except)
