@@ -96,7 +96,7 @@ Mesh = [
 
         if (not msgm4.to) or (msgm4.to == self.id) # por moi
 
-            self.print('message from ' + msgm4.from + ': ' + msgm4)
+            #self.print('message from ' + msgm4.from + ': ' + msgm4)
 
             if msgm4.flood then
                 self.broadcast(msgm4, socket)
@@ -156,13 +156,13 @@ Mesh = [
 
 
     'send' : function(self, to, msg)
-        sys.print(self.id + ' send to ' + to + ': ' + msg)
+        #sys.print(self.id + ' send to ' + to + ': ' + msg)
         sys.send(to, msg)
     end,
 
 
     'broadcast' : function(self, msg6, except)
-        self.print('broadcast ' + except)
+        #self.print('broadcast ' + except)
         msg6.flood = true
         msg6.from = msg6.from or self.id
         for socket in self.peers.vals where (socket != except)

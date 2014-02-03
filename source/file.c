@@ -105,14 +105,14 @@ int create_parent_folder_if_needed(const char *path)
     if (NULL == last_slash)
         return 0;
     path = strndup(path, last_slash - path);
-    printf("parent=%s\n", path);
+    //DEBUGPRINT("parent=%s\n", path);
 
     struct stat sb;
     int e = stat(path, &sb);
     if (0 == e)
     {
         if (sb.st_mode & S_IFREG) {
-            printf("parent folder of %s exists as a file.\n", path);
+            DEBUGPRINT("parent folder of %s exists as a file.\n", path);
             return -1;
         }
     }
@@ -138,7 +138,6 @@ static FILE *fopen2(const char *path)
         file = fopen(path, "w"); // creates the file
     if (NULL == file)
     {
-        DEBUGPRINT("could not open file %s\n", path);
         perror("write");
         return NULL;
     }

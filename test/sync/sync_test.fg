@@ -12,8 +12,8 @@ director = [
     'run_tests' : function(self)
 
         self.crud_file()
-        self.large_file()
         self.crud_folder()
+        #self.large_file()
 
     end,
 
@@ -54,33 +54,6 @@ director = [
     end,
 
     #
-    # test to transfer large files
-    #
-
-    # todo: 1) dynamic chunk size in sync.fg, 2) reuse buffer in node.c, 3) staging area in sync.fg 
-
-    'large_file' : function(self)
-
-        test_xfer = function(self, size)
-
-            dir = 'client1'
-            filename = size + 'B'
-            self.create_file(dir, filename, size)
-            self.sync_direct('client1', 'verify', filename, nil, nil, size)
-            self.sync_direct('server1', 'verify', filename, nil, nil, size)
-            self.sync_direct('client2', 'verify', filename, nil, nil, size)
-
-        end
-
-        size = 1024 # bytes
-        #while size <= (1024*1024) # 1MB
-            test_xfer(self, size)
-            size = size * 2
-        #end
-
-    end,
-
-    #
     # test to create, rename, update, delete folders
     #
 
@@ -101,6 +74,34 @@ director = [
         self.sync_direct('client1', 'verify', 'a1/a01/a.txt')
 
     end,
+
+    #
+    # test to transfer large files
+    #
+
+    # todo: 1) dynamic chunk size in sync.fg, 2) reuse buffer in node.c, 3) staging area in sync.fg 
+
+    'large_file' : function(self)
+
+        test_xfer = function(self, size)
+
+            dir = 'client1'
+            filename = size + 'B'
+            self.create_file(dir, filename, size)
+            self.sync_direct('client1', 'verify', filename, nil, nil, size)
+            self.sync_direct('server1', 'verify', filename, nil, nil, size)
+            self.sync_direct('client2', 'verify', filename, nil, nil, size)
+
+        end
+
+        size = 1024 # bytes
+        while size <= (1024*1024) # 1MB
+            test_xfer(self, size)
+            size = size * 2
+        end
+
+    end,
+
 
     # creates local file of random content, size in KB
     'create_file' : function(self, dir, name, size, content)

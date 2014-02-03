@@ -51,7 +51,7 @@ Sync = [
 
     'handle_message' : function(self, socket, msgs4)
 
-        self.mesh.print('handle_message ' + msgs4)
+        #self.mesh.print('handle_message ' + msgs4)
         event = msgs4.event
 
         if event == 'test' then
@@ -74,7 +74,7 @@ Sync = [
 
     'handle_folder' : function(self, msgf)
             path = msgf.path
-            self.mesh.print('handle_folder ' + path)
+            #self.mesh.print('handle_folder ' + path)
             self.writing[path] = true
             sys.mkdir(self.watched + path)
             sys.mkdir(self.tmpdir + path)
@@ -82,7 +82,7 @@ Sync = [
 
     'handle_greet' : function(self, msgg)
 
-        self.mesh.print('handle_greet:' + msgg)
+        #self.mesh.print('handle_greet:' + msgg)
         if not msgg.files then return end
 
         for f in self.files - msgg.files
@@ -100,7 +100,7 @@ Sync = [
         size,mod = sys.file
 
         if (not incoming.offset) then sys.rm(tmppath) end
-        self.mesh.print('write ' + tmppath)
+        #self.mesh.print('write ' + tmppath)
         sys.write(tmppath, incoming.content, incoming.offset)
 
         if not incoming.last then  # more to come later
@@ -109,10 +109,10 @@ Sync = [
 
         fullpath = self.watched + path
 
-        self.mesh.print('moving ' + tmppath +' to '+ fullpath)
+        #self.mesh.print('moving ' + tmppath +' to '+ fullpath)
         self.writing[path] = true
         sys.mv(tmppath, fullpath, incoming.modified) # move from downloading directory to intended destination
-        self.mesh.print('moved')
+        #self.mesh.print('moved')
         self.update_ui()
 
     end,
@@ -122,19 +122,19 @@ Sync = [
     'filed' : function(self, dir)
 
         files = self.local_snapshot()   # map -- path:attributes
+        updates = [path:attr for path,attr in files where (self.files[path].modified != attr.modified)]
+        deletes = [f for f in (self.files - files) where not f.deleting]
+/*
         self.mesh.print('filed files=' + self.files)
         self.mesh.print('filed ls=' + files)
-        updates = [path:attr for path,attr in files where (self.files[path].modified != attr.modified)]
-
         for path,attr in files where (self.files[path].modified != attr.modified)
             self.mesh.print('\t\tpath='+path)
             self.mesh.print('\t\tattr='+attr + ' , '+ self.files[path])
             self.mesh.print('\t\tmod='+attr.modified + ' , '+ self.files[path].modified)
         end
-
         self.mesh.print('filed u=' + files)
-        deletes = [f for f in (self.files - files) where not f.deleting]
         self.mesh.print('filed d=' + deletes)
+*/
         self.files = files
 
         for f,a in updates
@@ -159,7 +159,7 @@ Sync = [
     # send a file in chunks
     'send_file' : function(self, path, attr)
 
-        self.mesh.print('send ' + path +' : '+ attr)
+        #self.mesh.print('send ' + path +' : '+ attr)
 
         if attr.dir then
             msg7 = ['event':'folder', 'path':path] + attr
@@ -196,7 +196,7 @@ Sync = [
 
     'handle_delete' : function(self, deletes)
 
-        self.mesh.print('handle_delete ' + deletes)
+        #self.mesh.print('handle_delete ' + deletes)
 
         # delete removed directories and files
         for path in deletes
@@ -220,7 +220,7 @@ Sync = [
         path = self.watched + msg7.path
         status = 'done'
 
-        if not msg7.retry then self.mesh.print('test ' + msg7.seq  +': '+ msg7) end
+        # if not msg7.retry then self.mesh.print('test ' + msg7.seq  +': '+ msg7) end
 
         if action == 'update' then
             sys.write(path, msg7.content)
@@ -246,7 +246,7 @@ Sync = [
             if match then status='pass' else status='fail' end
             #self.mesh.print('match=' + match)
 
-        else if action = 'folder' then
+        else if action == 'folder' then
             sys.mkdir(self.watched + msg7.path)
             sys.mkdir(self.tmpdir + msg7.path)
 
