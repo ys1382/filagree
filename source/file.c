@@ -19,8 +19,10 @@
 #define INPUT_MAX_LEN    100000
 
 
-long fsize(FILE* file) {
-    if (!fseek(file, 0, SEEK_END)) {
+long fsize(FILE* file)
+{
+    if (!fseek(file, 0, SEEK_END))
+    {
         long size = ftell(file);
         if (size >= 0 && !fseek(file, 0, SEEK_SET))
             return size;
@@ -79,20 +81,84 @@ no_file:
     return NULL;
 }
 
+int file_mkdir(const char *path)
+{
+    char *mkcmd = malloc(strlen(path) + 20);
+    if (NULL == mkcmd)
+    {
+        perror("malloc");
+        return 1;
+    }
+    sprintf(mkcmd, "mkdir -p %s", path);
+    if (system(mkcmd))
+    {
+        printf("\nCould not mkdir %s\n", path);
+        return 2;
+    }
+    free(mkcmd);
+    return 0;
+}
+
+int create_parent_folder_if_needed(const char *path)
+{
+    const char *last_slash = strrchr(path, '/');
+    if (NULL == last_slash)
+        return 0;
+    path = strndup(path, last_slash - path);
+    printf("parent=%s\n", path);
+
+    struct stat sb;
+    int e = stat(path, &sb);
+    if (0 == e)
+    {
+        if (sb.st_mode & S_IFREG) {
+            printf("parent folder of %s exists as a file.\n", path);
+            return -1;
+        }
+    }
+    else
+    {
+        DEBUGPRINT("stat failed.\n");
+        if (errno == ENOENT)
+        {
+            if (file_mkdir(path))
+                return -2;
+        }
+    }
+    return 0;
+}
+
+static FILE *fopen2(const char *path)
+{
+    create_parent_folder_if_needed(path);
+    
+    // open file
+    FILE* file = fopen(path, "r+"); // allows fseek for an existing file
+    if (NULL == file)
+        file = fopen(path, "w"); // creates the file
+    if (NULL == file)
+    {
+        DEBUGPRINT("could not open file %s\n", path);
+        perror("write");
+        return NULL;
+    }
+    return file;
+}
+
 int write_file(const struct byte_array* path, struct byte_array* bytes, uint32_t from, int32_t timestamp)
 {
-    // open file
-    const char *path2 = hal_doc_path(path);
     int result = -1;
-    FILE* file = fopen(path2, "r+"); // allows fseek for an existing file
+    const char *path2 = hal_doc_path(path);
+
+    FILE *file = fopen2(path2);
     if (NULL == file)
-        file = fopen(path2, "w"); // creates the file
-    if (NULL == file) {
-        DEBUGPRINT("could not open file %s\n", path2);
+        goto done;
+
+    if (fseek(file, from, SEEK_SET))
+    {
+        perror("fseek");
         goto done;
     }
-    if (fseek(file, from, SEEK_SET))
-        goto done;
     
     // write bytes
     if (NULL != bytes)
@@ -115,8 +181,10 @@ bool file_set_timestamp(const char *path, long timestamp)
     {
         struct utimbuf timestamp2;
         timestamp2.modtime = timestamp;
-        if (utime(path, &timestamp2)) {
-            DEBUGPRINT("could not set timestamp for file %s\n", path);
+        if (utime(path, &timestamp2))
+        {
+            perror("utime");
+            printf("could not set timestamp for file %s\n", path);
             return 1;
         }
     }
@@ -124,7 +192,8 @@ bool file_set_timestamp(const char *path, long timestamp)
 }
 
 
-int write_byte_array(struct byte_array* ba, FILE* file) {
+int write_byte_array(struct byte_array* ba, FILE* file)
+{
     uint16_t len = ba->length;
     int n = (int)fwrite(ba->data, 1, len, file);
     return len - n;
@@ -151,12 +220,16 @@ int file_list(const char *path, int (*fn)(const char*, bool, long, void*), void 
 	paths[0] = path;
 	paths[1] = NULL;
 	ftsp = fts_open((char * const *)paths, FTS_COMFOLLOW | FTS_NOCHDIR, NULL);
-	if (NULL == ftsp) {
-        printf("cannot fts_open %s: %d\n", path, errno);
+	if (NULL == ftsp)
+    {
+        perror("fts_open");
+        DEBUGPRINT("cannot fts_open %s: %d\n", path, errno);
 		return (-1);
     }
-	while (NULL != (cur = fts_read(ftsp))) {
-		switch (cur->fts_info) {
+	while (NULL != (cur = fts_read(ftsp)))
+    {
+		switch (cur->fts_info)
+        {
             case FTS_DP:
                 continue;       // we only visit in preorder
             case FTS_DC:
@@ -174,7 +247,8 @@ int file_list(const char *path, int (*fn)(const char*, bool, long, void*), void 
 #endif
         struct file_list_context *flc2 = (struct file_list_context *)flc;
 		error = fn(cur->fts_path, dir, mod, flc2);
-		if (error != 0) {
+		if (error != 0)
+        {
             printf("callback failed\n");
 			break;
         }

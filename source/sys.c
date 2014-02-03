@@ -258,10 +258,11 @@ struct variable *sys_mv(struct context *context)
 
     assert_message((strlen(src)>1) && (strlen(dst)>1), "oops");
 
-    char mvcmd[100];
-    sprintf(mvcmd, "mv %s %s", src, dst);
-    if (system(mvcmd))
-        printf("\nCould not mv from %s to %s\n", src, dst);
+    create_parent_folder_if_needed(dst);
+    if (rename(src, dst))
+//    char mvcmd[100];
+//    if (system(mvcmd)) {
+        perror("rename");
 
     if (timestamp) // to prevent unwanted timestamp updates resulting from the mv
         file_set_timestamp(dst, timestamp);
@@ -291,10 +292,7 @@ struct variable *sys_mkdir(struct context *context)
     struct variable *path = (struct variable*)array_get(value->list.ordered, 1);
     char *path2 = byte_array_to_string(path->str);
 
-    char mkcmd[100];
-    sprintf(mkcmd, "mkdir -p %s", path2);
-    if (system(mkcmd))
-        DEBUGPRINT("\nCould not mkdir %s\n", path2);
+    file_mkdir(path2);
 
     free(path2);
     return NULL;

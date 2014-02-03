@@ -155,6 +155,7 @@ test_director = [
                 'from'      : self.id]
 
         self.mesh.broadcast(msgdie)
+        sys.sleep(1000) # wait for 'done'
 
     end,
 

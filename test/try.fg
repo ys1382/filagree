@@ -1,4 +1,1 @@
-a = ['x':'hi']
-b = a.x
-a.x = 'bye'
-sys.print(a.x+b)
+sys.write('folder123/x.txt', 'abc')

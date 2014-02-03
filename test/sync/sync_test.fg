@@ -11,16 +11,17 @@ director = [
 
     'run_tests' : function(self)
 
-        self.crud()
-        #self.large_file()
+        self.crud_file()
+        self.large_file()
+        self.crud_folder()
 
     end,
 
     #
-    # test to create, rename, update, delete
+    # test to create, rename, update, delete files
     #
 
-    'crud' : function(self)
+    'crud_file' : function(self)
 
         # create
         self.sync_direct('client1', 'update', 'a.txt', '123')
@@ -80,39 +81,24 @@ director = [
     end,
 
     #
-    # test to create, rename, update, delete
+    # test to create, rename, update, delete folders
     #
 
-    'crud' : function(self)
+    'crud_folder' : function(self)
 
         # create
-        self.sync_direct('A',      'update', 'a.txt', '123')
-        self.sync_direct('A',      'verify', 'a.txt', '123')
-        self.sync_direct('server', 'verify', 'a.txt', '123')
-        self.sync_direct('B',      'verify', 'a.txt', '123')
+        self.sync_direct('client1', 'folder', 'a0/a00')
+        self.sync_direct('client1', 'folder', 'a0/a01')
+        self.sync_direct('client1', 'update', 'a0/a01/a.txt', '123')
+        self.sync_direct('client1', 'verify', 'a0/a01/a.txt', '123')
 
         # rename
-        self.sync_direct('A',      'rename', 'a.txt', nil, 'b.txt')
-        self.sync_direct('A',      'verify', 'b.txt', '123')
-        self.sync_direct('server', 'verify', 'b.txt', '123')
-        self.sync_direct('B',      'verify', 'b.txt', '123')
-
-        # update
-        self.sync_direct('B',      'update', 'b.txt', '456')
-        self.sync_direct('B',      'verify', 'b.txt', '456')
-        self.sync_direct('server', 'verify', 'b.txt', '456')
-        self.sync_direct('A',      'verify', 'b.txt', '456')
+        self.sync_direct('client1', 'rename', 'a0', nil, 'a1')
+        self.sync_direct('client2', 'verify', 'a1/a01/a.txt', '123')
 
         #delete
-        self.sync_direct('A',      'delete', 'b.txt')
-        self.sync_direct('A',      'verify', 'b.txt')
-        self.sync_direct('server', 'verify', 'b.txt')
-        self.sync_direct('B',      'verify', 'b.txt')
-
-        # tell servers and client to exit
-        self.direct(nil, 'A',      'die')
-        self.direct(nil, 'B',      'die')
-        self.direct(nil, 'server', 'die')
+        self.sync_direct('client2', 'delete', 'a1')
+        self.sync_direct('client1', 'verify', 'a1/a01/a.txt')
 
     end,
 
