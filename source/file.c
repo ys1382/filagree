@@ -52,7 +52,7 @@ struct byte_array *read_file(const struct byte_array *filename_ba, uint32_t offs
         goto no_file;
     available -= offset;
 
-    printf("read_file %s %ld %ld\n", filename_str, size, available);
+    printf("read_file %s size=%ld available=%ld\n", filename_str, size, available);
 
     size = size ? MIN(size, available) : available;
     if (size <= 0)
@@ -168,7 +168,6 @@ int write_file(const struct byte_array* path, struct byte_array* bytes, uint32_t
     {
         int r = (int)fwrite(bytes->data, 1, bytes->length, file);
         int s = fclose(file);
-        printf("\twrote %d bytes to %s\n", r, path2);
         result = (r<0) || s;
     }
     

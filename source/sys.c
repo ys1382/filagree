@@ -258,7 +258,7 @@ struct variable *sys_mv(struct context *context)
 
     assert_message((strlen(src)>1) && (strlen(dst)>1), "oops");
 
-    printf("mv %s to %s\n", src, dst);
+    DEBUGPRINT("mv %s to %s\n", src, dst);
     create_parent_folder_if_needed(dst);
     if (rename(src, dst))
         perror("rename");

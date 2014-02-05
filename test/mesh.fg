@@ -94,7 +94,7 @@ Mesh = [
 
     'messaged' : function(self, socket, msgm4)
 
-                self.print('message from ' + msgm4.from + ': ' + msgm4)
+        #self.print('message from ' + msgm4.from + ': ' + msgm4)
 
         if (not msgm4.to) or (msgm4.to == self.id) # por moi
 
@@ -115,7 +115,6 @@ Mesh = [
                     for c in self.ctx
 
                         response = c.handle_message(socket, msgm4)
-                        self.print('handled')
 
                         if response then
                             mm2 = ['from' : self.id, 'seq' : msgm4.seq] + response
@@ -124,9 +123,10 @@ Mesh = [
                         end
                     end
                 end
-                self.print('loop0 ' + self.queue)
                 msgm4 = self.dequeue(from)
-                self.print('loop ' + msgm4)
+                if msgm4 then
+                    self.print('loop ' + msgm4)
+                end
             end
             self.queue[from] = nil
 
@@ -134,8 +134,9 @@ Mesh = [
 
             to = self.peers[msgm4.to] # id -> socket
             if not to then
-                sys.print('no peer ' + msgm4.to)
+                self.print('no peer ' + msgm4.to)
             else
+                self.print('forward to ' + msgm4.to)
                 self.send(to, msgm4)
             end
         end
@@ -173,7 +174,7 @@ Mesh = [
 
 
     'send' : function(self, to, msg)
-        sys.print(self.id + ' send to ' + to + ': ' + msg)
+        #sys.print(self.id + ' send to ' + to + ': ' + msg)
         sys.send(to, msg)
     end,
 

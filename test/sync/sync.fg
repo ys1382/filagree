@@ -51,7 +51,7 @@ Sync = [
 
     'handle_message' : function(self, socket, msgs4)
 
-        self.mesh.print('sync handle_message ' + msgs4)
+        #self.mesh.print('sync handle_message ' + msgs4)
         event = msgs4.event
 
         if event == 'test' then
@@ -135,7 +135,7 @@ Sync = [
         end
         self.mesh.print('filed d=' + deletes)
 */
-        self.mesh.print('filed u=' + files)
+        self.mesh.print('filed u=' + updates)
 
         self.files = files
 
@@ -147,11 +147,15 @@ Sync = [
             end
         end
 
+        self.mesh.print('filed 2')
+
         if deletes.length then
             #self.mesh.print('deletes='+deletes)
             msg2 = ['event' : 'delete', 'deletes' : deletes]
             self.mesh.broadcast(msg2)
         end
+
+        self.mesh.print('filed 3')
 
         self.update_ui()
 
@@ -166,6 +170,7 @@ Sync = [
         if attr.dir then
             msg7 = ['event':'folder', 'path':path] + attr
             self.mesh.broadcast(msg7) # send to everyone
+            return
         end
 
         full_local_path = self.watched + path
@@ -179,12 +184,14 @@ Sync = [
 
         while true
 
+            self.mesh.print('read ' + full_local_path +' @'+ self.offset[path])
+
             if (bytes = sys.read(full_local_path, self.offset[path], chunk)) # non-zero
                 msg7.content = bytes
                 msg7.offset = self.offset[path]
                 msg7.last = (bytes.length < chunk) # eom
                 self.offset[path] = self.offset[path] + bytes.length
-                if msg7.last then last=' last '+bytes.length else last='' end
+                if msg7.last then last=' last '+bytes.length+'B' else last='' end
                 self.mesh.print('send ' + path +' @'+ msg7.offset + last)
                 self.mesh.broadcast(msg7) # send to everyone
             end
@@ -236,7 +243,7 @@ Sync = [
             sys.rm(self.tmpdir + msg7.path)
 
         else if action == 'verify' then
-            #self.mesh.print('verify ' + path)
+            self.mesh.print('verify ' + path)
             if msg7.size then
                 match = msg7.size == sys.fileattr(path)
                 #self.mesh.print('size match ' + sys.fileattr(path) +' => '+ match)
