@@ -1,1 +1,11 @@
-sys.write('folder123/x.txt', 'abc')
+f = function()
+    try
+        throw 2
+        return 3
+    catch x
+        return x
+    end
+    return 4
+end
+
+g = f()

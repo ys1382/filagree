@@ -51,6 +51,9 @@ struct byte_array *read_file(const struct byte_array *filename_ba, uint32_t offs
     if ((available = fsize(file)) < 0)
         goto no_file;
     available -= offset;
+
+    printf("read_file %s %ld %ld\n", filename_str, size, available);
+
     size = size ? MIN(size, available) : available;
     if (size <= 0)
         goto no_file;
@@ -74,6 +77,7 @@ struct byte_array *read_file(const struct byte_array *filename_ba, uint32_t offs
     memcpy(ba->data, str, size);
     //free(filename_str);
     free(str);
+    
     return ba;
 no_file:
     //free(filename_str);
@@ -138,7 +142,7 @@ static FILE *fopen2(const char *path)
         file = fopen(path, "w"); // creates the file
     if (NULL == file)
     {
-        perror("write");
+        perror("fopen");
         return NULL;
     }
     return file;
@@ -163,8 +167,8 @@ int write_file(const struct byte_array* path, struct byte_array* bytes, uint32_t
     if (NULL != bytes)
     {
         int r = (int)fwrite(bytes->data, 1, bytes->length, file);
-        DEBUGPRINT("\twrote %d bytes to %s\n", r, path2);
         int s = fclose(file);
+        printf("\twrote %d bytes to %s\n", r, path2);
         result = (r<0) || s;
     }
     

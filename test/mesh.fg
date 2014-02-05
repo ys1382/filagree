@@ -8,7 +8,7 @@ Mesh = [
     'peers' : [], # maps id : socket
     'sreep' : [], # maps socket: id
     'seq'   : 0,
-
+    'queue' : [],
 
     'init' : function(self, id, port, mesh_subscribers)
 
@@ -94,27 +94,41 @@ Mesh = [
 
     'messaged' : function(self, socket, msgm4)
 
+                self.print('message from ' + msgm4.from + ': ' + msgm4)
+
         if (not msgm4.to) or (msgm4.to == self.id) # por moi
 
-            #self.print('message from ' + msgm4.from + ': ' + msgm4)
-
-            if msgm4.flood then
-                self.broadcast(msgm4, socket)
+            # handle all messages from each sender in sequence
+            from = msgm4.from
+            if self.queue[from] then
+                self.queue[from] = self.queue[from] + [msgm4]
+                return
             end
 
-            if not (response = self.handle_message(socket, msgm4)) then
+            while (msgm4)
 
-                for c in self.ctx
+                if msgm4.flood then
+                    self.broadcast(msgm4, socket)
+                end
 
-                    response = c.handle_message(socket, msgm4)
+                if not (response = self.handle_message(socket, msgm4)) then
+                    for c in self.ctx
 
-                    if response then
-                        mm2 = ['from' : self.id, 'seq' : msgm4.seq] + response
-                        self.send_to(msgm4.from, mm2)
-                        return
+                        response = c.handle_message(socket, msgm4)
+                        self.print('handled')
+
+                        if response then
+                            mm2 = ['from' : self.id, 'seq' : msgm4.seq] + response
+                            self.send_to(from, mm2)
+                            return
+                        end
                     end
                 end
+                self.print('loop0')
+                msgm4 = self.queue[from].remove()[0]
+                self.print('loop ' + msgm4)
             end
+            self.queue[from] = nil
 
         else # forward to recipient
 
@@ -156,7 +170,7 @@ Mesh = [
 
 
     'send' : function(self, to, msg)
-        #sys.print(self.id + ' send to ' + to + ': ' + msg)
+        sys.print(self.id + ' send to ' + to + ': ' + msg)
         sys.send(to, msg)
     end,
 

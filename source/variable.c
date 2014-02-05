@@ -594,6 +594,8 @@ struct variable *variable_part(struct context *context, struct variable *self, u
 
     struct variable *result = NULL;
     switch (self->type) {
+        case VAR_NIL:
+            return variable_new_nil(context);
         case VAR_STR: {
             if (start >= self->str->length)
                 return variable_new_str(context, NULL);
@@ -620,7 +622,10 @@ struct variable *variable_part(struct context *context, struct variable *self, u
 void variable_remove(struct variable *self, uint32_t start, int32_t length)
 {
     null_check(self);
-    switch (self->type) {
+    switch (self->type)
+    {
+        case VAR_NIL:
+            break;
         case VAR_STR:
             byte_array_remove(self->str, start, length);
             break;

@@ -281,7 +281,7 @@ int insert_token_string(enum Lexeme lexeme, const char* input, int i)
     struct token *token = token_new(lexeme, line);
     token->string = string;
     array_add(lex_list, token);
-    //display_token(token, 0);
+    display_token(token, 0);
     return end;
 }
 
@@ -640,6 +640,7 @@ struct token *fetch(enum Lexeme lexeme)
 
     line = token->at_line;
     parse_index++;
+    display_token(token, 0);
     return token;
 }
 
@@ -670,6 +671,8 @@ struct token *fetch_lookahead(enum Lexeme lexeme, ...) {
         }
     }
     va_end(argp);
+    if (t)
+        display_token(t, 0);
     return t;
 }
 
@@ -840,16 +843,23 @@ struct symbol *atom()
 }
 
 // <assignment> --> <destination>, ( LEX_SET <source>, )+
-struct symbol *assignment()
+struct symbol *assignment2(enum Exp_type exp)
 {
     struct symbol *s = symbol_new(SYMBOL_ASSIGNMENT);
     s->index = repeated(SYMBOL_DESTINATION, &destination);
-    s->index->exp = LHS;
-//    FETCH_OR_QUIT(LEX_SET);
+    s->index->exp = exp;
     if (fetch(LEX_SET) && ((s->value = repeated(SYMBOL_SOURCE, &expression))))
         return s;
     symbol_del(s);
     return NULL;
+}
+
+struct symbol *assignment() {
+    return assignment2(LHS);
+}
+
+struct symbol *assignment_expression() {
+    return assignment2(BHS);
 }
 
 // <exp5> --> ( LEX_LEFTTHESIS <expression> LEX_RIGHTTHESIS ) | <atom>
@@ -907,7 +917,7 @@ struct symbol *exp4()
     return f;
 }
 
-// <exp3> --> (LEX_NOT | LEX_NEG | LEX_INVERSE | LEX_INCR )? <pair>
+// <exp3> --> (LEX_NOT | LEX_NEG | LEX_INVERSE | LEX_INCR )? <exp4>
 struct symbol *exp3()
 {
     struct symbol *e;
@@ -919,7 +929,7 @@ struct symbol *exp3()
     return exp4();
 }
 
-// <pair> --> <exp4> ( LEX_COLON <expression> )?
+// <pair> --> <exp3> ( LEX_COLON <expression> )?
 struct symbol *pair()
 {
     struct symbol *e = exp3();
@@ -946,7 +956,7 @@ struct symbol *expTwo()
     return e;
 }
 
-// <exp1> --> <exp2> ( ( LET_SET | LEX_SAME | LEX_DIFFERENT | LEX_GREATER | LEX_GREAQAL | LEX_LEQUAL | LEX_LESSER ) <exp2> )?
+// <exp1> --> <exp2> ( ( LEX_SAME | LEX_DIFFERENT | LEX_GREATER | LEX_GREAQAL | LEX_LEQUAL | LEX_LESSER ) <exp2> )?
 struct symbol *exp1()
 {
     struct symbol *f, *e = expTwo();
@@ -958,11 +968,10 @@ struct symbol *exp1()
 // <expression> --> <assignment> | <exp1>
 struct symbol *expression()
 {
-    struct symbol *s = one_of(&assignment, &exp1, NULL);
-    if (s && s->nonterminal == SYMBOL_ASSIGNMENT)
-        s->exp = BHS;
+    struct symbol *s = one_of(&assignment_expression, &exp1, NULL);
     return s;
 }
+
 
 // <destination> --> <variable> | ( <expression> <member>+ )
 struct symbol *destination()
@@ -1112,9 +1121,9 @@ struct symbol *statements()
 {
     struct symbol *s = symbol_new(SYMBOL_STATEMENTS);
     struct symbol *t;
-    while ((t = one_of(&expression, &ifthenelse, &loop, &rejoinder, &iterloop, &trycatch, &thrower, NULL))) {
+    while ((t = one_of(&assignment, &expression, &ifthenelse, &loop, &rejoinder, &iterloop, &trycatch, &thrower, NULL))) {
         symbol_add(s, t);
-        t->exp = LHS; // so clear the operand stack
+//      t->exp = LHS; // so clear the operand stack
     }
     return s;
 }
@@ -1132,7 +1141,7 @@ struct symbol *parse(struct array *list, uint32_t index)
 
     struct symbol *p = statements();
 #ifdef DEBUG
-    //display_symbol(p, 1);
+    display_symbol(p, 1);
 #endif
     return p;
 }

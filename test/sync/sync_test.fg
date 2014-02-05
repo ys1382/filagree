@@ -11,9 +11,9 @@ director = [
 
     'run_tests' : function(self)
 
-        self.crud_file()
-        self.crud_folder()
-        #self.large_file()
+        #self.crud_file()
+        #self.crud_folder()
+        self.large_file()
 
     end,
 
@@ -86,7 +86,7 @@ director = [
         test_xfer = function(self, size)
 
             dir = 'client1'
-            filename = size + 'B'
+            filename = (size/1000) + ' KB' # OSX doesn't divide by 1024
             self.create_file(dir, filename, size)
             self.sync_direct('client1', 'verify', filename, nil, nil, size)
             self.sync_direct('server1', 'verify', filename, nil, nil, size)
@@ -94,8 +94,8 @@ director = [
 
         end
 
-        size = 1024 # bytes
-        while size <= (1024*1024) # 1MB
+        size = 1000 # bytes
+        while size <= (1024*1000) # 1MB
             test_xfer(self, size)
             size = size * 2
         end

@@ -51,7 +51,7 @@ Sync = [
 
     'handle_message' : function(self, socket, msgs4)
 
-        #self.mesh.print('handle_message ' + msgs4)
+        self.mesh.print('sync handle_message ' + msgs4)
         event = msgs4.event
 
         if event == 'test' then
@@ -100,7 +100,8 @@ Sync = [
         size,mod = sys.file
 
         if (not incoming.offset) then sys.rm(tmppath) end
-        #self.mesh.print('write ' + tmppath)
+        if incoming.last then last = ' last' else last = '' end
+        self.mesh.print('write ' + path +' @'+ incoming.offset + last)
         sys.write(tmppath, incoming.content, incoming.offset)
 
         if not incoming.last then  # more to come later
@@ -132,9 +133,10 @@ Sync = [
             self.mesh.print('\t\tattr='+attr + ' , '+ self.files[path])
             self.mesh.print('\t\tmod='+attr.modified + ' , '+ self.files[path].modified)
         end
-        self.mesh.print('filed u=' + files)
         self.mesh.print('filed d=' + deletes)
 */
+        self.mesh.print('filed u=' + files)
+
         self.files = files
 
         for f,a in updates
@@ -159,7 +161,7 @@ Sync = [
     # send a file in chunks
     'send_file' : function(self, path, attr)
 
-        #self.mesh.print('send ' + path +' : '+ attr)
+        self.mesh.print('send ' + path +' : '+ attr)
 
         if attr.dir then
             msg7 = ['event':'folder', 'path':path] + attr
@@ -173,7 +175,7 @@ Sync = [
 
         msg7 = ['event':'content', 'path':path] + attr
 
-        chunk = 10000    # chunk size in number of bytes
+        chunk = 10000 # chunk size in number of bytes
 
         while true
 
@@ -182,12 +184,12 @@ Sync = [
                 msg7.offset = self.offset[path]
                 msg7.last = (bytes.length < chunk) # eom
                 self.offset[path] = self.offset[path] + bytes.length
+                if msg7.last then last=' last '+bytes.length else last='' end
+                self.mesh.print('send ' + path +' @'+ msg7.offset + last)
                 self.mesh.broadcast(msg7) # send to everyone
-
             end
 
-            if bytes.length < chunk then # last chunk
-                msg7.last = true
+            if msg7.last then # last chunk
                 self.offset[path] = self.sending[path] = nil
                 return # exit from loop
             end

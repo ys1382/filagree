@@ -1501,10 +1501,10 @@ bool run(struct context *context,
 
         switch (inst) {
             case VM_COM:
-            case VM_ITR:    if (iterate(context, inst, state, program)) goto done;  break;
-            case VM_RET:    if (ret(context, program))                  goto done;  break;
-            case VM_TRO:    if (tro(context))                           goto done;  break;
-            case VM_TRY:    if (vm_trycatch(context, program))          goto done;  break;
+            case VM_ITR:    if (iterate(context, inst, state, program))     goto done;  break;
+            case VM_RET:    if (ret(context, program))                      goto done;  break;
+            case VM_TRO:    if (tro(context))                               goto done;  break;
+            case VM_TRY:    if (vm_trycatch(context, program)) inst=VM_RET; goto done;  break;
             case VM_MUL:
             case VM_EQU:
             case VM_DIV:
@@ -1562,12 +1562,15 @@ bool run(struct context *context,
     if (!context->runtime)
         return false;
 done:
-    if (!in_state) {
+    if (!in_state)
+    {
         struct program_state *s = stack_pop(context->program_stack);
         //DEBUGPRINT("\n>%" PRIu16 " - pop state %p from %p\n", current_thread_id(), s, context->program_stack);
         assert_message(s == state, "not same");
         program_state_del(context, state);
     }
+    else if (inst != VM_RET)
+        dst(context);
     if (NULL != program)
         byte_array_del(program);
     garbage_collect(context);
