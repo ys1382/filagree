@@ -1,11 +1,4 @@
-f = function()
-    try
-        throw 2
-        return 3
-    catch x
-        return x
-    end
-    return 4
-end
-
-g = f()
+a = [[3,4,5]]
+b = [7,8,9]
+a.insert(b)
+c = a.remove()[0]

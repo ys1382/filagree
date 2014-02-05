@@ -261,8 +261,6 @@ struct variable *sys_mv(struct context *context)
     printf("mv %s to %s\n", src, dst);
     create_parent_folder_if_needed(dst);
     if (rename(src, dst))
-//    char mvcmd[100];
-//    if (system(mvcmd)) {
         perror("rename");
 
     if (timestamp) // to prevent unwanted timestamp updates resulting from the mv
@@ -827,10 +825,12 @@ static inline struct variable *cfnc_chop(struct context *context, bool snip)
     return result;
 }
 
+// returns list of items, indexed by optional start (default 0) and duration (1)
 static inline  struct variable *cfnc_part(struct context *context) {
     return cfnc_chop(context, false);
 }
 
+// removes and returns list of items, indexed by optional start (default 0) and duration (1)
 static inline struct variable *cfnc_remove(struct context *context) {
     return cfnc_chop(context, true);
 }

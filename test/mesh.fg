@@ -124,8 +124,8 @@ Mesh = [
                         end
                     end
                 end
-                self.print('loop0')
-                msgm4 = self.queue[from].remove()[0]
+                self.print('loop0 ' + self.queue)
+                msgm4 = self.dequeue(from)
                 self.print('loop ' + msgm4)
             end
             self.queue[from] = nil
@@ -141,6 +141,9 @@ Mesh = [
         end
     end,
 
+    'dequeue' : function(self, from)
+        return self.queue[from].remove()[0]
+    end,
 
     'request' : function(self, to, msg)
         msg.seq = self.seq

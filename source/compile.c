@@ -281,7 +281,7 @@ int insert_token_string(enum Lexeme lexeme, const char* input, int i)
     struct token *token = token_new(lexeme, line);
     token->string = string;
     array_add(lex_list, token);
-    display_token(token, 0);
+    //display_token(token, 0);
     return end;
 }
 
@@ -640,7 +640,7 @@ struct token *fetch(enum Lexeme lexeme)
 
     line = token->at_line;
     parse_index++;
-    display_token(token, 0);
+    //display_token(token, 0);
     return token;
 }
 
@@ -671,8 +671,7 @@ struct token *fetch_lookahead(enum Lexeme lexeme, ...) {
         }
     }
     va_end(argp);
-    if (t)
-        display_token(t, 0);
+    //if (t) display_token(t, 0);
     return t;
 }
 
@@ -1121,9 +1120,10 @@ struct symbol *statements()
 {
     struct symbol *s = symbol_new(SYMBOL_STATEMENTS);
     struct symbol *t;
-    while ((t = one_of(&assignment, &expression, &ifthenelse, &loop, &rejoinder, &iterloop, &trycatch, &thrower, NULL))) {
+    while ((t = one_of(&assignment, &expression, &ifthenelse, &loop, &rejoinder, &iterloop, &trycatch, &thrower, NULL)))
+    {
         symbol_add(s, t);
-//      t->exp = LHS; // so clear the operand stack
+        t->exp = LHS; // so clear the operand stack. Adds a DST to the end of each statement
     }
     return s;
 }

@@ -625,6 +625,8 @@ struct variable *lookup(struct context *context, struct variable *indexable, str
                 if ((NULL == item) && (NULL != indexable->list.map))
                     item = map_get(indexable->list.map, index);
                 break;
+            case VAR_NIL:
+                return variable_new_nil(context);
             default:
                 exit_message("bad lookup type");
                 return NULL;
@@ -1594,8 +1596,14 @@ void execute_with(struct context *context, struct byte_array *program, bool in_s
 
     if (context->error)
         DEBUGPRINT("error: %s\n", context->error->str->data);
+#ifdef DEBUG
     if (!stack_empty(context->operand_stack))
-        DEBUGPRINT("warning: operand stack not empty\n");
+    {
+        struct variable *residue = stack_peek(context->operand_stack, 0);
+        const char *str = variable_value_str(context, residue);
+        DEBUGPRINT("warning: operand stack not empty: %s\n", str);
+    }
+#endif
     gil_unlock(context, "execute");
     byte_array_del(program);
 }

@@ -12,8 +12,8 @@ director = [
     'run_tests' : function(self)
 
         #self.crud_file()
-        #self.crud_folder()
-        self.large_file()
+        self.crud_folder()
+        #self.large_file()
 
     end,
 
