@@ -605,7 +605,8 @@ struct variable *variable_part(struct context *context, struct variable *self, u
             break;
         }
         case VAR_LST: {
-            if (start > self->list.ordered->length)
+            uint32_t len = self->list.ordered->length;
+            if ((0 == len) || (start > len))
                 return variable_new_list(context, NULL);
             struct array *list = array_part(self->list.ordered, start, length);
             result = variable_new_list(context, list);
@@ -627,10 +628,12 @@ void variable_remove(struct variable *self, uint32_t start, int32_t length)
         case VAR_NIL:
             break;
         case VAR_STR:
-            byte_array_remove(self->str, start, length);
+            if (self->str->length > 0)
+                byte_array_remove(self->str, start, length);
             break;
         case VAR_LST:
-            array_remove(self->list.ordered, start, length);
+            if (self->list.ordered->length > 0)
+                array_remove(self->list.ordered, start, length);
             break;
         default:
             exit_message("bad remove type");

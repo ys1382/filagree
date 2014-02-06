@@ -101,7 +101,7 @@ Sync = [
 
         if (not incoming.offset) then sys.rm(tmppath) end
         if incoming.last then last = ' last' else last = '' end
-        self.mesh.print('write ' + path +' @'+ incoming.offset + last)
+        self.mesh.print('write ' + path +' @'+ incoming.offset +':'+ incoming.content.length + last)
         sys.write(tmppath, incoming.content, incoming.offset)
 
         if not incoming.last then  # more to come later
@@ -134,8 +134,8 @@ Sync = [
             self.mesh.print('\t\tmod='+attr.modified + ' , '+ self.files[path].modified)
         end
         self.mesh.print('filed d=' + deletes)
-*/
         self.mesh.print('filed u=' + updates)
+*/
 
         self.files = files
 
@@ -147,15 +147,11 @@ Sync = [
             end
         end
 
-        self.mesh.print('filed 2')
-
         if deletes.length then
             #self.mesh.print('deletes='+deletes)
             msg2 = ['event' : 'delete', 'deletes' : deletes]
             self.mesh.broadcast(msg2)
         end
-
-        self.mesh.print('filed 3')
 
         self.update_ui()
 

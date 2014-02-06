@@ -1,4 +1,1 @@
-a = [[3,4,5]]
-b = [7,8,9]
-a.insert(b)
-c = a.remove()[0]
+sys.print('hi' + 0)

@@ -8,7 +8,6 @@ Mesh = [
     'peers' : [], # maps id : socket
     'sreep' : [], # maps socket: id
     'seq'   : 0,
-    'queue' : [],
 
     'init' : function(self, id, port, mesh_subscribers)
 
@@ -78,10 +77,11 @@ Mesh = [
     'handle_message' : function(self, socket, msg5)
 
         if msg5.event == 'greet' then
-            self.print('connected to ' + msg5.from)
-            self.peers[msg5.from] = socket
-            self.sreep[socket] = msg5.from
-            
+            from = msg5.from
+            self.print('connected to ' + from)
+            self.peers[from] = socket
+            self.sreep[socket] = from
+
             if msg5.test then self.connected(socket) end
         end
     end,
@@ -94,41 +94,27 @@ Mesh = [
 
     'messaged' : function(self, socket, msgm4)
 
-        #self.print('message from ' + msgm4.from + ': ' + msgm4)
+        from = msgm4.from
+        self.print('message from ' + from + ' to ' + msgm4.to +': ' + msgm4.event +' '+msgm4.path +'@'+ msgm4.offset)
 
         if (not msgm4.to) or (msgm4.to == self.id) # por moi
 
-            # handle all messages from each sender in sequence
-            from = msgm4.from
-            if self.queue[from] then
-                self.queue[from] = self.queue[from] + [msgm4]
-                return
+            if msgm4.flood then
+                self.broadcast(msgm4, socket)
             end
 
-            while (msgm4)
+            if not (response = self.handle_message(socket, msgm4)) then
+                for c in self.ctx
 
-                if msgm4.flood then
-                    self.broadcast(msgm4, socket)
-                end
+                    response = c.handle_message(socket, msgm4)
 
-                if not (response = self.handle_message(socket, msgm4)) then
-                    for c in self.ctx
-
-                        response = c.handle_message(socket, msgm4)
-
-                        if response then
-                            mm2 = ['from' : self.id, 'seq' : msgm4.seq] + response
-                            self.send_to(from, mm2)
-                            return
-                        end
+                    if response then
+                        mm2 = ['from' : self.id, 'seq' : msgm4.seq] + response
+                        self.send_to(from, mm2)
+                        return
                     end
                 end
-                msgm4 = self.dequeue(from)
-                if msgm4 then
-                    self.print('loop ' + msgm4)
-                end
             end
-            self.queue[from] = nil
 
         else # forward to recipient
 
@@ -136,15 +122,12 @@ Mesh = [
             if not to then
                 self.print('no peer ' + msgm4.to)
             else
-                self.print('forward to ' + msgm4.to)
+                #self.print('forward to ' + msgm4.to)
                 self.send(to, msgm4)
             end
         end
     end,
 
-    'dequeue' : function(self, from)
-        return self.queue[from].remove()[0]
-    end,
 
     'request' : function(self, to, msg)
         msg.seq = self.seq
@@ -174,13 +157,13 @@ Mesh = [
 
 
     'send' : function(self, to, msg)
-        #sys.print(self.id + ' send to ' + to + ': ' + msg)
+        #sys.print(self.id + ' send to ' + to + ': ' + msg.event +' '+msg.path+' '+msg.offset)
         sys.send(to, msg)
     end,
 
 
     'broadcast' : function(self, msg6, except)
-        #self.print('broadcast ' + except)
+        #self.print('broadcast ' + msg6.event +' (except '+ except+')')
         msg6.flood = true
         msg6.from = msg6.from or self.id
         for socket in self.peers.vals where (socket != except)

@@ -166,7 +166,7 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
 
     // process message in another thread
     byte_array_reset(received);
-    struct node_thread *ta = thread_new(ta0->context, listener, incoming, fd);
+    struct node_thread *ta = thread_new(ta0->context, listener, incoming, fd); todo
     ta->buf = received;
     ta->event = MESSAGED;
     DEBUGPRINT("\n>%" PRIu16 " - msgd %d\n", current_thread_id(), received->length);
