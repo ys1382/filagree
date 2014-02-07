@@ -137,6 +137,7 @@ struct context *context_new(struct context *parent, // parent context
         singleton->num_threads = 0;
         singleton->keepalive = false;
         singleton->contexts = array_new();
+        singleton->threads = array_new();
         context->singleton = singleton;
         context->singleton->sys = sys_funcs ? sys_new(context) : NULL;
     } else {

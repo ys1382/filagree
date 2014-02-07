@@ -20,6 +20,7 @@ struct context_shared
     struct variable *callback;          // for calling back into C
     struct variable *sys;               // sys calls (print, save, etc.)
     struct array *contexts;             // list of all contexts
+    struct array *threads;              // list of socket handler threads
     bool keepalive;                     // to not delete context when UI is active
 };
 

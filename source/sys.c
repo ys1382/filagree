@@ -49,8 +49,8 @@ struct variable *sys_print(struct context *context)
 struct variable *sys_save(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *v = param_var(context, args, 1);
-    struct variable *path = param_var(context, args, 2);
+    struct variable *v = param_var(args, 1);
+    struct variable *path = param_var(args, 2);
     struct byte_array *bytes = byte_array_new();
     variable_serialize(context, bytes, v);
     int w = write_file(path->str, bytes, 0, -1);
@@ -73,8 +73,8 @@ struct variable *sys_load(struct context *context)
 struct variable *sys_write(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *path = param_var(context, args, 1);
-    struct variable *v = param_var(context, args, 2);
+    struct variable *path = param_var(args, 1);
+    struct variable *v = param_var(args, 2);
     uint32_t from = param_int(args, 3);
     uint32_t timestamp = param_int(args, 4);
     
@@ -85,7 +85,7 @@ struct variable *sys_write(struct context *context)
 struct variable *sys_open(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *path = param_var(context, args, 1);
+    struct variable *path = param_var(args, 1);
     char *path2 = byte_array_to_string(path->str);
 
     bool result = hal_open(path2);
@@ -100,7 +100,7 @@ struct variable *sys_open(struct context *context)
 struct variable *sys_read(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *path = param_var(context, args, 1);
+    struct variable *path = param_var(args, 1);
     uint32_t offset = param_int(args, 2);
     uint32_t length = param_int(args, 3);
 
@@ -124,7 +124,7 @@ struct variable *sys_read(struct context *context)
 struct variable *sys_fileattr(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *path = param_var(context, args, 1);
+    struct variable *path = param_var(args, 1);
 
     const char *path2 = byte_array_to_string(path->str);
     long siz = file_size(path2);
@@ -166,7 +166,7 @@ struct variable *sys_timer(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     int32_t milliseconds = param_int(args, 1);
-    struct variable *logic = param_var(context, args, 2);
+    struct variable *logic = param_var(args, 2);
     bool repeats = false;
     if (args->list.ordered->length > 3)
     {
@@ -389,7 +389,7 @@ bool param_bool(const struct variable *value, uint32_t index) {
     return result->boolean;
 }
 
-struct variable *param_var(struct context *context, const struct variable *value, uint32_t index)
+struct variable *param_var(const struct variable *value, uint32_t index)
 {
     if (index >= value->list.ordered->length)
         return NULL;
@@ -436,7 +436,7 @@ struct variable *sys_button(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *uictx = (struct variable*)array_get(value->list.ordered, 1);
-    struct variable *logic = param_var(context, value, 2);
+    struct variable *logic = param_var(value, 2);
     char *text = param_str(value, 3);
     char *image = param_str(value, 4);
 
@@ -449,8 +449,8 @@ struct variable *sys_table(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
     struct variable *uictx = (struct variable*)array_get(value->list.ordered, 1);
-    struct variable *list = param_var(context, value, 2);
-    struct variable *logic = param_var(context, value, 3);
+    struct variable *list = param_var(value, 2);
+    struct variable *logic = param_var(value, 3);
 
     void *table = hal_table(context, uictx, list, logic);
 
@@ -530,8 +530,8 @@ struct variable *sys_window(struct context *context)
         h = param_int(value, 2);
     }
 
-    struct variable *uictx = param_var(context, value, 2);
-    struct variable *logic = param_var(context, value, 3);
+    struct variable *uictx = param_var(value, 2);
+    struct variable *logic = param_var(value, 3);
 
     context->singleton->keepalive = true; // so that context_del isn't called when UI is active
     hal_window(context, uictx, &w, &h, logic);
@@ -547,7 +547,7 @@ struct variable *sys_file_listen(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     const char *path = param_str(arguments, 1);
-    struct variable *listener = param_var(context, arguments, 2);
+    struct variable *listener = param_var(arguments, 2);
     gil_unlock(context, "sys_file_listen");
     hal_file_listen(context, path, listener);
     return NULL;

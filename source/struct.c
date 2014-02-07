@@ -83,13 +83,15 @@ void array_insert(struct array *a, uint32_t index, void *datum)
     a->length++;
 }
 
-void* array_get(const struct array *a, uint32_t index) {
+void* array_get(const struct array *a, uint32_t index)
+{
     assert_message(a && index < a->length, ERROR_INDEX);
     //DEBUGPRINT("array_get %d = %x\n", index, a->data[index]);
     return a->data[index];
 }
 
-void array_set(struct array *a, uint32_t index, void* datum) {
+void array_set(struct array *a, uint32_t index, void* datum)
+{
     null_check(a);
     null_check(datum);
     uint32_t minlen = index + 1;
@@ -111,13 +113,15 @@ void list_remove(void *data, uint32_t *end, uint32_t start, int32_t length, size
     *end -= (uint32_t)length;
 }
 
-void array_remove(struct array *a, uint32_t start, int32_t length) {
+void array_remove(struct array *a, uint32_t start, int32_t length)
+{
     list_remove(a->data, &a->length, start, length, sizeof(void*));
     array_resize(a, a->length);
     //DEBUGPRINT("array_remove %p->%p\n", a, a->data);
 }
 
-struct array *array_copy(const struct array* original) {
+struct array *array_copy(const struct array* original)
+{
     if (original == NULL)
         return NULL;
     struct array* copy = array_new_size(original->size); // (struct array*)malloc(sizeof(struct array));
