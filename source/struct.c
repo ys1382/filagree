@@ -1,4 +1,4 @@
-    /* struct.c
+/* struct.c
  *
  * implements array, byte_array, lifo and map
  */
