@@ -78,38 +78,38 @@ void *node_callback(void *arg)
     return NULL;
 }
 
-// thread for socket handler (one for send, one for receive)
-struct node_thread *thread_for_socket(struct context *context, int sockfd, enum THREAD_USE use, struct variable *listener, void *(*start_routine)(void *))
+// gets or creates thread for socket handler
+// there is one thread_list per socket, each thread_list has one send and one recv thread
+static struct node_thread *thread_for_socket(struct context *context, int sockfd, enum THREAD_USE use, struct variable *listener, void *(*start_routine)(void *))
 {
-    struct node_thread *ta = NULL;
     struct array *threads = context->singleton->threads;
-    if (threads->length >= sockfd)
-    ta = array_get(threads, sockfd);
-    if (NULL == ta)
+    
+    // get thread_list
+    struct array *thread_list;
+    if ((threads->length <= sockfd) || (NULL == (thread_list = array_get(threads, sockfd))))
     {
-        ta = thread_new(context, listener, start_routine, sockfd);
-        array_set(threads, sockfd, ta);
+        thread_list = array_new_size(THREAD_NUM_USES);
+        array_set(threads, sockfd, thread_list);
     }
-    else
-        ta = array_get(context->singleton->threads, sockfd);
-    return ta;
+    
+    // get thread
+    struct node_thread *thread = NULL;
+    if ((thread_list->length <= use) || (NULL == (thread = array_get(thread_list, use))))
+    {
+        thread = thread_new(context, listener, start_routine, sockfd);
+        thread->bufs = array_new_size(THREAD_NUM_USES);
+        for (int i=0; i<THREAD_NUM_USES; i++)
+            array_set(thread->bufs, i, array_new());
+        thread->bufs->length = THREAD_NUM_USES;
+        array_set(thread_list, use, thread);
+    }
+
+    return thread;
 }
 
-// get the list of byte_arrays incoming or outgoing on the socket
-struct array *socket_bufs(struct node_thread *ta, enum THREAD_USE use)
-{
-    if (NULL == ta->bufs)
-    {
-        ta->bufs = array_new_size(THREAD_NUM_USES);
-        ta->bufs->length = THREAD_NUM_USES;
-    }
-    struct array *bufs = array_get(ta->bufs, use);
-    if (NULL == bufs)
-    {
-        bufs = array_new_size(1);
-        array_set(ta->bufs, use, bufs);
-    }
-    return bufs;
+// each thread has an array of byte_array messages, to be sent/received in order
+static inline struct array *socket_buf(struct node_thread *thread, enum THREAD_USE use) {
+    return array_get(thread->bufs, use);
 }
 
 // store message that arrived on socket sockfd
@@ -117,7 +117,7 @@ struct array *socket_bufs(struct node_thread *ta, enum THREAD_USE use)
 struct node_thread *enqueue(struct context *context, int sockfd, enum THREAD_USE use, struct byte_array *bytes, struct variable *listener, void *(*start_routine)(void *))
 {
     struct node_thread *ta = thread_for_socket(context, sockfd, use, listener, start_routine);
-    struct array *bufs = socket_bufs(ta, use);
+    struct array *bufs = socket_buf(ta, use);
     array_add(bufs, bytes);
     return ta;
 }
@@ -126,7 +126,7 @@ struct node_thread *enqueue(struct context *context, int sockfd, enum THREAD_USE
 // get next message that arrived on socket sockfd, or NULL if there are none
 struct byte_array *dequeue(struct node_thread *ta, enum THREAD_USE use)
 {
-    struct array *bufs = socket_bufs(ta, use);
+    struct array *bufs = socket_buf(ta, use);
     if (0 == bufs->length)
         return NULL;
     struct byte_array *buf = array_get(bufs, 0);
@@ -134,6 +134,12 @@ struct byte_array *dequeue(struct node_thread *ta, enum THREAD_USE use)
     return buf;
 }
 
+// remove thread from list of threads
+void thread_del(struct node_thread *thread, enum THREAD_USE use)
+{
+    struct array *thread_list = array_get(thread->context->singleton->threads, thread->fd);
+    array_set(thread_list, use, NULL);
+}
 
 // callback to client or server when message arrives on socket
 void *incoming(void *arg)
@@ -152,6 +158,7 @@ void *incoming(void *arg)
 
     gil_unlock(ta->context, "ncoming");
 
+    thread_del(ta, THREAD_RECV);
     return NULL;
 }
 
@@ -233,13 +240,15 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
     // process message in another thread
     byte_array_reset(received);
 
-    struct node_thread *ta = thread_new(ta0->context, listener, incoming, fd);
+    //struct node_thread *ta = thread_new(ta0->context, listener, incoming, fd);
+    //ta->event = MESSAGED;
+    //DEBUGPRINT("\n>%" PRIu16 " - msgd %d\n", current_thread_id(), received->length);
+
+    gil_lock(ta0->context, "socket_event");
+    struct node_thread *ta = enqueue(ta0->context, fd, THREAD_RECV, received, listener, &incoming);
     ta->event = MESSAGED;
     DEBUGPRINT("\n>%" PRIu16 " - msgd %d\n", current_thread_id(), received->length);
-
-    gil_lock(ta->context, "socket_event");
-    enqueue(ta->context, fd, THREAD_RECV, received, listener, &incoming);
-    gil_unlock(ta->context, "socket_event");
+    gil_unlock(ta0->context, "socket_event");
     start_thread(ta);
 
     return false;
@@ -426,13 +435,14 @@ void *sys_send2(void *arg)
     struct node_thread *ta = (struct node_thread *)arg;
 
     struct byte_array *buf;
-    while ((buf = dequeue(ta, THREAD_SEND))) // service all incoming messages
+    while ((buf = dequeue(ta, THREAD_SEND))) // send all outgoing messages for this socket
     {
         if (write(ta->fd, buf->data, buf->length) != buf->length)
             perror("write");
         else
             DEBUGPRINT("sent to %d\n", ta->fd);
     }
+    thread_del(ta, THREAD_SEND);
     return NULL;
 }
 
