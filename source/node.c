@@ -83,7 +83,7 @@ void *node_callback(void *arg)
 static struct node_thread *thread_for_socket(struct context *context, int sockfd, enum THREAD_USE use, struct variable *listener, void *(*start_routine)(void *))
 {
     struct array *threads = context->singleton->threads;
-    
+
     // get thread_list
     struct array *thread_list;
     if ((threads->length <= sockfd) || (NULL == (thread_list = array_get(threads, sockfd))))
@@ -91,7 +91,7 @@ static struct node_thread *thread_for_socket(struct context *context, int sockfd
         thread_list = array_new_size(THREAD_NUM_USES);
         array_set(threads, sockfd, thread_list);
     }
-    
+
     // get thread
     struct node_thread *thread = NULL;
     if ((thread_list->length <= use) || (NULL == (thread = array_get(thread_list, use))))
@@ -119,6 +119,7 @@ struct node_thread *enqueue(struct context *context, int sockfd, enum THREAD_USE
     struct node_thread *ta = thread_for_socket(context, sockfd, use, listener, start_routine);
     struct array *bufs = socket_buf(ta, use);
     array_add(bufs, bytes);
+
     return ta;
 }
 
@@ -131,6 +132,7 @@ struct byte_array *dequeue(struct node_thread *ta, enum THREAD_USE use)
         return NULL;
     struct byte_array *buf = array_get(bufs, 0);
     array_remove(bufs, 0, 1);
+    
     return buf;
 }
 
@@ -145,7 +147,6 @@ void thread_del(struct node_thread *thread, enum THREAD_USE use)
 void *incoming(void *arg)
 {
     struct node_thread *ta = (struct node_thread *)arg;
-
     gil_lock(ta->context, "ncoming");
 
     struct byte_array *buf;
@@ -153,12 +154,13 @@ void *incoming(void *arg)
     {
         ta->message = variable_deserialize(ta->context, buf);
         DEBUGPRINT("received %s\n", variable_value_str(ta->context, ta->message));
+        gil_unlock(ta->context, "ncoming");
         node_callback(ta);
+        gil_lock(ta->context, "ncoming");
     }
 
-    gil_unlock(ta->context, "ncoming");
-
     thread_del(ta, THREAD_RECV);
+    gil_unlock(ta->context, "ncoming");
     return NULL;
 }
 
@@ -415,7 +417,7 @@ struct variable *sys_connect(struct context *context)
     if (!strcmp(serveraddr, "127.0.0.1"))
         serveraddr = "10.0.2.2"; // emulator's host IP
 #endif
-    
+
 	// create socket file descriptor
 	ta->fd = socket(AF_INET, SOCK_STREAM, 0);
 

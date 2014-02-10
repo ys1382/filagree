@@ -30,6 +30,8 @@ struct array *array_new_size(uint32_t size) {
     a->data = a->current = (void**)malloc(size * sizeof(void**));
     a->length = 0;
     a->size = size;
+    for (int i=0; i<size; i++)
+            a->data[i] = NULL;
     return a;
 }
 
@@ -93,7 +95,6 @@ void* array_get(const struct array *a, uint32_t index)
 void array_set(struct array *a, uint32_t index, void* datum)
 {
     null_check(a);
-    null_check(datum);
     uint32_t minlen = index + 1;
     array_resize(a, minlen);
     //DEBUGPRINT("array_set %d %x\n", index, datum);
