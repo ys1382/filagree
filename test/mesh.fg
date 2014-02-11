@@ -37,8 +37,8 @@ Mesh = [
     'send_greet' : function(self, socket)
         test = (socket.type == 'nil')
         msg1 = ['event' : 'greet', 'from' : self.id, 'test' : test]
-        for c in self.ctx
-            msg1 = msg1 + c.greet()
+        for c1 in self.ctx
+            msg1 = msg1 + c1.greet()
         end
 
         #self.print('socket.type='+socket.type+' test='+test)
@@ -55,8 +55,8 @@ Mesh = [
 
     'connected' : function(self, socket)
         self.send_greet(socket)
-        for c in self.ctx
-            c.connected(self, socket)
+        for c2 in self.ctx
+            c2.connected(self, socket)
         end
     end,
 
@@ -68,8 +68,8 @@ Mesh = [
 
         self.print('disconnected from ' + id)
 
-        for c in self.ctx
-            c.disconnected(self, socket)
+        for c3 in self.ctx
+            c3.disconnected(self, socket)
         end
     end,
 
@@ -95,7 +95,7 @@ Mesh = [
     'messaged' : function(self, socket, msgm4)
 
         from = msgm4.from
-        self.print('message from ' + from + ' to ' + msgm4.to +': ' + msgm4.event +' '+msgm4.path +'@'+ msgm4.offset)
+        #self.print('message from ' + from + ' to ' + msgm4.to +': ' + msgm4.event +' '+msgm4.path +'@'+ msgm4.offset)
 
         if (not msgm4.to) or (msgm4.to == self.id) # por moi
 
@@ -104,9 +104,9 @@ Mesh = [
             end
 
             if not (response = self.handle_message(socket, msgm4)) then
-                for c in self.ctx
+                for c4 in self.ctx
 
-                    response = c.handle_message(socket, msgm4)
+                    response = c4.handle_message(socket, msgm4)
 
                     if response then
                         mm2 = ['from' : self.id, 'seq' : msgm4.seq] + response

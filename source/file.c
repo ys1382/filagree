@@ -21,12 +21,16 @@
 
 long fsize(FILE* file)
 {
+    const char *pe = "fseek";
     if (!fseek(file, 0, SEEK_END))
     {
         long size = ftell(file);
-        if (size >= 0 && !fseek(file, 0, SEEK_SET))
+        if (size < 0)
+            pe = "ftell";
+        else if (!fseek(file, 0, SEEK_SET))
             return size;
     }
+    perror(pe);
     return -1;
 }
 
@@ -52,7 +56,7 @@ struct byte_array *read_file(const struct byte_array *filename_ba, uint32_t offs
         goto no_file;
     available -= offset;
 
-    printf("read_file %s size=%ld available=%ld\n", filename_str, size, available);
+    //printf("read_file %s @%d size=%ld available=%ld\n", filename_str, offset, size, available);
 
     size = size ? MIN(size, available) : available;
     if (size <= 0)

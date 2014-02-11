@@ -1,1 +1,13 @@
-sys.print('hi' + 0)
+a = 7
+b = [8]
+c = '9'
+
+d = a.serialize()
+e = b.serialize()
+f = c.serialize()
+
+g = d+e+f
+
+h = g.deserialize()
+i = g.deserialize()
+j = g.deserialize()

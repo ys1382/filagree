@@ -258,7 +258,7 @@ struct variable *sys_mv(struct context *context)
 
     assert_message((strlen(src)>1) && (strlen(dst)>1), "oops");
 
-    printf("mv %s to %s\n", src, dst);
+    //printf("mv %s to %s\n", src, dst);
     create_parent_folder_if_needed(dst);
     if (rename(src, dst))
         perror("rename");
@@ -570,8 +570,9 @@ int file_list_callback(const char *path, bool dir, long mod, void *fl_context)
 {
     // -> /
     path = remove_substring(path, "//");
-    path = remove_substring(path, hal_doc_path(NULL));
     //printf("file_list_callback %s\n", path);
+    size_t size = file_size(path);
+    path = remove_substring(path, hal_doc_path(NULL));
 
     struct file_list_context *flc = (struct file_list_context*)fl_context;
     struct variable *path3 = variable_new_str_chars(flc->context, path);
@@ -583,6 +584,11 @@ int file_list_callback(const char *path, bool dir, long mod, void *fl_context)
 
     key2 = variable_new_str_chars(flc->context, RESERVED_MODIFIED);
     value = variable_new_int(flc->context, (int32_t)mod);
+    variable_map_insert(flc->context, metadata, key2, value);
+    variable_map_insert(flc->context, flc->result, path3, metadata);
+
+    key2 = variable_new_str_chars(flc->context, RESERVED_SIZE);
+    value = variable_new_int(flc->context, (int32_t)size);
     variable_map_insert(flc->context, metadata, key2, value);
     variable_map_insert(flc->context, flc->result, path3, metadata);
 
@@ -926,7 +932,7 @@ static inline struct variable *cfnc_deserialize(struct context *context)
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *indexable = (struct variable*)array_get(args->list.ordered, 0);
     struct byte_array *bits = indexable->str;
-    byte_array_reset(bits);
+    //byte_array_reset(bits);
     return variable_deserialize(context, bits);
 }
 

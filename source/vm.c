@@ -102,9 +102,7 @@ struct program_state *program_state_new(struct context *context, struct map *env
     state->named_variables = env ? map_copy(context, env) : map_new(context);
     state->args = NULL;
     stack_push(context->program_stack, state);
-    //DEBUGPRINT("push state %p onto %p\n", state, context->program_stack);
-    //printf("\n>%" PRIu16 " - push state %p onto %p->%p\n", current_thread_id(),
-    //       state, context, context->program_stack);
+    //printf("\n>%" PRIu16 " - push state %p onto %p->%p\n", current_thread_id(), state, context, context->program_stack);
 
     return state;
 }
@@ -200,6 +198,8 @@ void context_del(struct context *context)
     }
 
     gil_unlock(context, "context_del c");
+
+    //printf("\n>%" PRIu16 " - context_del %p - %p\n", current_thread_id(), context, context->program_stack);
 
     while (!stack_empty(context->program_stack))
     {
@@ -428,13 +428,13 @@ void display_code(struct context *context, struct byte_array *code) {}
 void gil_lock(struct context *context, const char *who)
 {
     pthread_mutex_lock(&context->singleton->gil);
-    printf("\n%s>%" PRIu16 " lock %s\n", indentation(context), current_thread_id(), who);
+    //printf("\n%s>%" PRIu16 " lock %s\n", indentation(context), current_thread_id(), who);
 }
 
 void gil_unlock(struct context *context, const char *who)
 {
     pthread_mutex_unlock(&context->singleton->gil);
-    printf("\n%s>%" PRIu16 " unlock %s\n", indentation(context), current_thread_id(), who);
+    //printf("\n%s>%" PRIu16 " unlock %s\n", indentation(context), current_thread_id(), who);
 }
 
 // instruction implementations /////////////////////////////////////////////
@@ -752,7 +752,7 @@ struct variable *find_var(struct context *context, struct variable *key)
     if ((NULL == v) && context->singleton->callback)
         v = variable_map_get(context, context->singleton->callback, key);
 
-    assert_message(v, "\n>%" PRIu16 " - could not find %s in %p from %p",
+    assert_message(v, "\n>%" PRIu16 " - could not find %s in state %p from program stack %p",
                    current_thread_id(), byte_array_to_string(key->str), state, context->program_stack);
 
     //DEBUGPRINT("\n>%" PRIu16 " - found %s in %p from %p", current_thread_id(), byte_array_to_string(key->str), state, context->program_stack);
@@ -1568,8 +1568,8 @@ done:
     if (!in_state)
     {
         struct program_state *s = stack_pop(context->program_stack);
-        //DEBUGPRINT("\n>%" PRIu16 " - pop state %p from %p\n", current_thread_id(), s, context->program_stack);
-        assert_message(s == state, "not same");
+        //printf("\n>%" PRIu16 " - pop state %p from program stack %p\n", current_thread_id(), s, context->program_stack);
+        assert_message(s == state, "state variable doesn't match");
         program_state_del(context, state);
     }
     else if (inst != VM_RET)

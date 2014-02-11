@@ -11,8 +11,8 @@ director = [
 
     'run_tests' : function(self)
 
-        #self.crud_file()
-        #self.crud_folder()
+        self.crud_file()
+        self.crud_folder()
         self.large_file()
 
     end,
@@ -39,7 +39,7 @@ director = [
         self.sync_direct('client2', 'verify', 'b.txt', '123')
 
         # update
-        self.sync_direct('client2', 'update', 'b.txt', '456')
+        self.sync_direct('client2', 'update', 'b.txt', '456')d
         self.sync_direct('client2', 'verify', 'b.txt', '456')
         self.sync_direct('server1', 'verify', 'b.txt', '456')
         self.sync_direct('client1', 'verify', 'b.txt', '456')
@@ -86,7 +86,7 @@ director = [
         test_xfer = function(self, size)
 
             dir = 'client1'
-            filename = (size/1000) + ' KB' # OSX doesn't divide by 1024
+            filename = (size/1000) + 'KB' # OSX doesn't divide by 1024
             self.create_file(dir, filename, size)
             self.sync_direct('client1', 'verify', filename, nil, nil, size)
             self.sync_direct('server1', 'verify', filename, nil, nil, size)
@@ -94,8 +94,8 @@ director = [
 
         end
 
-        size = 1000 # bytes
-        while size <= (64*1000) # 1MB
+        size = 32000 # bytes
+        while size <= (1024*1000) # 1MB
             test_xfer(self, size)
             size = size * 2
         end
@@ -106,7 +106,7 @@ director = [
     # creates local file of random content, size in KB
     'create_file' : function(self, dir, name, size, content)
         if size then
-            self.local_step('fork', true, '/bin/dd', 'if=/dev/urandom', 'bs=1', 'count=' + size, 'of=' + dir +'/'+ name)
+            self.local_step('fork', true, '/bin/dd', 'if=/dev/urandom', 'bs='+size, 'count=1', 'of=' + dir + '/' + name)
         else if dir and name then
             self.local_step('write', dir +'/'+ name, content)
         else

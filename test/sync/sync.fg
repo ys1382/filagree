@@ -101,7 +101,7 @@ Sync = [
 
         if (not incoming.offset) then sys.rm(tmppath) end
         if incoming.last then last = ' last' else last = '' end
-        self.mesh.print('write ' + path +' @'+ incoming.offset +':'+ incoming.content.length + last)
+        #self.mesh.print('write ' + path +' @'+ incoming.offset +':'+ incoming.content.length + last)
         sys.write(tmppath, incoming.content, incoming.offset)
 
         if not incoming.last then  # more to come later
@@ -123,6 +123,7 @@ Sync = [
     'filed' : function(self, dir)
 
         files = self.local_snapshot()   # map -- path:attributes
+
         updates = [path:attr for path,attr in files where (self.files[path].modified != attr.modified)]
         deletes = [f for f in (self.files - files) where not f.deleting]
 /*
@@ -161,7 +162,7 @@ Sync = [
     # send a file in chunks
     'send_file' : function(self, path, attr)
 
-        self.mesh.print('send ' + path +' : '+ attr)
+        #self.mesh.print('send ' + path +' : '+ attr)
 
         if attr.dir then
             msg7 = ['event':'folder', 'path':path] + attr
@@ -176,11 +177,11 @@ Sync = [
 
         msg7 = ['event':'content', 'path':path] + attr
 
-        chunk = 10000 # chunk size in number of bytes
+        chunk = 100000 # chunk size in number of bytes
 
         while true
 
-            self.mesh.print('read ' + full_local_path +' @'+ self.offset[path])
+            #self.mesh.print('read ' + full_local_path +' @'+ self.offset[path])
 
             if (bytes = sys.read(full_local_path, self.offset[path], chunk)) # non-zero
                 msg7.content = bytes
@@ -188,7 +189,7 @@ Sync = [
                 msg7.last = (bytes.length < chunk) # eom
                 self.offset[path] = self.offset[path] + bytes.length
                 if msg7.last then last=' last '+bytes.length+'B' else last='' end
-                self.mesh.print('send ' + path +' @'+ msg7.offset + last)
+                #self.mesh.print('send ' + path +' @'+ msg7.offset + last)
                 self.mesh.broadcast(msg7) # send to everyone
             end
 
