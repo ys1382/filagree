@@ -56,6 +56,11 @@ Sync = [
 
         if event == 'test' then
             self.handle_test(msgs4)
+            return
+
+        else if self.offline then
+            self.mesh.print('(offline)')
+            return
 
         else if event == 'greet' then
             self.handle_greet(msgs4)
@@ -88,6 +93,8 @@ Sync = [
         for f in self.files - msgg.files
             self.send_file(f, msgg.from)
         end
+
+        self.filed() # check for offline updates
 
     end,
 
@@ -255,6 +262,12 @@ Sync = [
         else if action == 'folder' then
             sys.mkdir(self.watched + msg7.path)
             sys.mkdir(self.tmpdir + msg7.path)
+
+        else if action == 'offline' then
+            self.offline = true
+        else if action == 'online' then
+            self.offline = nil
+            self.mesh.connected()
 
         else if action == 'die' then
             sys.sleep(1000) # wait for broadcast to go out
