@@ -109,29 +109,90 @@ director = [
     'conflict' : function(self)
 
         # TC 1: Simple Edit – Variation 1
-        self.sync_direct('server1', 'update', 'tc1.txt', 'tc1a')
-        self.sync_direct('client1', 'verify', 'tc1.txt', 'tc1a')
-        self.sync_direct('client1', 'update', 'tc1.txt', 'tc1b')
-        self.sync_direct('client1', 'verify', 'tc1.txt', 'tc1b')
-        self.sync_direct('server1', 'verify', 'tc1.txt', 'tc1b')
+        self.sync_direct('server1', 'update', 'tc01.txt', 'tc1a')
+        self.sync_direct('client1', 'verify', 'tc01.txt', 'tc1a')
+        self.sync_direct('client1', 'update', 'tc01.txt', 'tc1b')
+        self.sync_direct('client1', 'verify', 'tc01.txt', 'tc1b')
+        self.sync_direct('server1', 'verify', 'tc01.txt', 'tc1b')
 
         # TC 2: Simple Edit – Variation 2
-        self.create_file('client1', 'tc2', 1024)    # create file that take time to upload
-        self.wait()                                 # wait for client to detect file, and start uploading
-        self.create_file('client1', 'tc2', 1)       # overwrite with another file
-        self.sync_direct('client1', 'verify', 'tc2', nil, nil, 1)
-        self.sync_direct('client2', 'verify', 'tc2', nil, nil, 1)
-        self.sync_direct('server1', 'verify', 'tc2', nil, nil, 1)
+        self.create_file('client1', 'tc2', 1024)            # create file that take time to upload
+        self.wait()                                         # wait for client to detect file, and start uploading
+        self.create_file('client1', 'tc02', 1)              # overwrite with another file
+        self.sync_direct('client1', 'verify', 'tc02', nil, nil, 1)
+        self.sync_direct('client2', 'verify', 'tc02', nil, nil, 1)
+        self.sync_direct('server1', 'verify', 'tc02', nil, nil, 1)
 
         # TC 3: Simple Edit – Variation 3
-        self.sync_direct('client1', 'update', 'tc3.txt', '123')
-        self.sync_direct('client1', 'verify', 'tc3.txt', '123')
-        self.sync_direct('server1', 'verify', 'tc3.txt', '123')
+        self.sync_direct('client1', 'update', 'tc03.txt', '123')
+        self.sync_direct('client1', 'verify', 'tc03.txt', '123')
+        self.sync_direct('server1', 'verify', 'tc03.txt', '123')
         self.sync_direct('client1', 'offline')
-        self.create_file('client1', 'tc3.txt', nil, '789')  # overwrite with another file while offline
-        self.wait()                                         # catch file event before going back online
+        self.create_file('client1', 'tc3.txt', nil, '789') # overwrite with another file while offline
+        self.wait()                                        # catch file event before going back online
         self.sync_direct('client1', 'online')
-        self.sync_direct('server1', 'verify', 'tc3.txt', '789')
+        self.sync_direct('server1', 'verify', 'tc03.txt', '789')
+
+        # TC 6: Simple Delete – Variation 1
+        self.sync_direct('client1', 'update', 'tc06.txt', '123')
+        self.sync_direct('client1', 'verify', 'tc06.txt', '123')
+        self.sync_direct('client2', 'verify', 'tc06.txt', '123')
+        self.sync_direct('server1', 'verify', 'tc06.txt', '123')
+        self.sync_direct('client1', 'delete', 'tc06.txt')
+        self.wait()                                        # wait for delete to propogate
+        self.sync_direct('client1', 'verify', 'tc06.txt')
+        self.sync_direct('server1', 'verify', 'tc06.txt')
+        self.sync_direct('client2', 'verify', 'tc06.txt')
+
+        # TC 8: Simple Delete – Variation 3
+        self.sync_direct('client1', 'update', 'tc08.txt', '123')
+        self.sync_direct('client1', 'verify', 'tc08.txt', '123')
+        self.sync_direct('client2', 'verify', 'tc08.txt', '123')
+        self.sync_direct('server1', 'verify', 'tc08.txt', '123')
+        self.sync_direct('client1', 'offline')
+        self.sync_direct('client1', 'delete', 'tc08.txt')
+        self.wait()                                        # catch file event before going back online
+        self.sync_direct('client1', 'online')
+        self.sync_direct('client1', 'verify', 'tc08.txt')
+        self.sync_direct('server1', 'verify', 'tc08.txt')
+        self.sync_direct('client2', 'verify', 'tc08.txt')
+
+        # TC 14: Simple Rename – Variation 1
+        self.sync_direct('client1', 'update', 'tc14.txt', '123')
+        self.sync_direct('client1', 'rename', 'tc14.txt', nil, 'tc14b.txt')
+        self.sync_direct('client1', 'verify', 'tc14.txt')
+        self.sync_direct('server1', 'verify', 'tc14.txt')
+        self.sync_direct('client2', 'verify', 'tc14.txt')
+        self.sync_direct('client1', 'verify', 'tc14b.txt', '123')
+        self.sync_direct('server1', 'verify', 'tc14b.txt', '123')
+        self.sync_direct('client2', 'verify', 'tc14b.txt', '123')
+
+        # TC 16: Simple Rename – Variation 3
+        self.sync_direct('client1', 'update', 'tc16.txt', '123')
+        self.sync_direct('client1', 'verify', 'tc16.txt', '123')
+        self.sync_direct('client2', 'verify', 'tc16.txt', '123')
+        self.sync_direct('server1', 'verify', 'tc16.txt', '123')
+        self.sync_direct('client1', 'offline')
+        self.sync_direct('client1', 'rename', 'tc16.txt', nil, 'tc16b.txt')
+        self.wait()                                        # catch file event before going back online
+        self.sync_direct('client1', 'online')
+        self.sync_direct('client1', 'verify', 'tc16b.txt')
+        self.sync_direct('server1', 'verify', 'tc16b.txt')
+        self.sync_direct('client2', 'verify', 'tc16b.txt')
+
+        # TC 18: Simple Rename – Variation 5
+        self.sync_direct('client1', 'folder', 'a0/a00')
+        self.sync_direct('client1', 'update', 'a0/a01/a.txt', '123')
+        self.sync_direct('client1', 'verify', 'a0/a01/a.txt', '123')
+        self.sync_direct('client2', 'verify', 'a0/a01/a.txt', '123')
+        self.sync_direct('server1', 'verify', 'a0/a01/a.txt', '123')
+        self.sync_direct('client1', 'offline')
+        self.sync_direct('client1', 'rename', 'a0', nil, 'a1')
+        self.wait()                                        # catch file event before going back online
+        self.sync_direct('client1', 'verify', 'a1/a01/a.txt', '123')
+        self.sync_direct('server1', 'verify', 'a1/a01/a.txt', '123')
+        self.sync_direct('client2', 'verify', 'a1/a01/a.txt', '123')
+
 
     end,
 
