@@ -96,6 +96,7 @@ Mesh = [
 
         from = msgm4.from
         #self.print('message from ' + from + ' to ' + msgm4.to +': ' + msgm4.event +' '+msgm4.path +'@'+ msgm4.offset)
+        self.print('messaged: ' + msgm4)
 
         if (not msgm4.to) or (msgm4.to == self.id) # por moi
 

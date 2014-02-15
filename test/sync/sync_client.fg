@@ -23,7 +23,7 @@ client = [
 
 client.ui = sys.ui( client,
                     ['vertical',
-                        ['table', 'name':'files', 'list':['x','y'], 'logic':client.select],
+                        ['table', 'name':'files', 'list':[], 'logic':client.select],
                         'w':240, 'h':320
                     ])
 

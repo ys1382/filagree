@@ -10,7 +10,7 @@ port = 9999
 im = [
 
     'id' : id,
-    'clients' : [],
+    'clients' : (sys.load('logins') or []),
     'friends' : [],
 
     'handle_disconnect' : function(self, socket, id)
@@ -42,6 +42,7 @@ im = [
     'handle_signup' : function(self, ms2)
         if (not self.clients[ms2.from]) then
             self.clients[ms2.from] = ms2.password
+            sys.save(self.clients, 'logins')
             return ['event' : 'signup', 'result' : true]
         else
             return ['event' : 'signup', 'result' : false]
@@ -60,8 +61,9 @@ im = [
 
 ]
 
+sys.print('logins='+im.clients)
 
-mesh = Mesh.init(id, host, port, [im])
+mesh = Mesh.init(id, 1999, [im])
 
 mesh.listen()
 sys.loop()

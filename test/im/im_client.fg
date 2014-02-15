@@ -1,9 +1,6 @@
 import '../ui'
 import '../mesh'
-import '../sync/sync'
 
-
-id = 'client'
 port = 9999
 
 
@@ -14,6 +11,7 @@ client = [
     'w':('w':240), 'h':('h':320),
     'friends' : (sys.load('friends') or []),
     'roster' : [],
+    'mesh' : Mesh,
 
     'handle_message' : function(self, socket, mc1)
         if (mc1.event == 'greet') then
@@ -28,10 +26,6 @@ client = [
         end
     end,
 
-    'greet' : function(self)
-        return self.sync.greet(self)
-    end,
-
     'handle_online' : function(self, online)
         self.roster = online or self.roster
         #sys.ui_set(self.ui.roster, online)
@@ -43,14 +37,12 @@ client = [
             self.roster = mc3.online or self.roster
             self.main()
         else
-            sys.ui_set(self.ui.error, error = mc2.error)
+            sys.ui_set(self.ui.error, mc3.error)
         end
     end
 
 ]
 
-#client.sync = Sync.init(client, id)
-client.mesh = Mesh.init(id, host, port, [client])
 
 
 ####### ui
@@ -127,7 +119,8 @@ end
 
 client.signin = function(self, entrance)
     self.entrance = entrance or 'signin'
-#    self.id = sys.form_get(self.ui).username
+    id = sys.form_get(self.ui).username
+    self.mesh = self.mesh.init(id, self.port, [self])
     self.mesh.connect()
 end
 
@@ -135,19 +128,16 @@ client.signup = function(self)
     self.signin('signup')
 end
 
-client.ui_login = function()
-    client.ui = sys.ui(client, ['vertical',
-
-                             ['form', 'username', 'password'],
-
-                             ['horizontal',
-                                 ['button', 'text':'signin', 'logic':client.signin],
-                                 ['button', 'text':'signup', 'logic':client.signup],
-                             ],
-
-                             client.w, client.h
-                 ])
+client.ui_login = function(self)
+    self.ui = sys.ui(self, ['vertical',
+                                 ['form', 'username', 'password'],
+                                 ['horizontal',
+                                     ['button', 'text':'signin', 'logic':self.signin],
+                                     ['button', 'text':'signup', 'logic':self.signup],
+                                 ],
+                                 self.w, self.h
+                            ])
 end
 
-client.listfiles()
-client.mesh.connect()
+client.ui_login()
+sys.loop()
