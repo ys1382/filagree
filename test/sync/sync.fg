@@ -90,10 +90,6 @@ Sync = [
         #self.mesh.print('handle_greet:' + msgg)
         if not msgg.files then return end
 
-#        for f in self.files - msgg.files
-#            self.send_file(f, msgg.from)
-#        end
-
         local = self.files
         remote = msgg.files
         for path,attr in local where (not remote[path]) or (attr.modified > remote[path].modified)
@@ -114,7 +110,7 @@ Sync = [
 
         if (not incoming.offset) then sys.rm(tmppath) end
         if incoming.last then last = ' last' else last = '' end
-        #self.mesh.print('write ' + path +' @'+ incoming.offset +':'+ incoming.content.length + last)
+        self.mesh.print('write ' + path +' @'+ incoming.offset +':'+ incoming.content.length + last)
         sys.write(tmppath, incoming.content, incoming.offset)
 
         if not incoming.last then  # more to come later
@@ -139,8 +135,9 @@ Sync = [
 
         updates = [path:attr for path,attr in files where (self.files[path].modified != attr.modified)]
         deletes = [f for f in (self.files - files) where not f.deleting]
+
+        self.mesh.print('filed: files=' + self.files)
 /*
-        self.mesh.print('filed files=' + self.files)
         self.mesh.print('filed ls=' + files)
         for path,attr in files where (self.files[path].modified != attr.modified)
             self.mesh.print('\t\tpath='+path)
@@ -227,6 +224,7 @@ Sync = [
     'update_ui' : function(self)
         if self.view then
             paths = self.files.keys
+            self.mesh.print('update_ui: ' + self.files)
             self.view.update_view(paths)
         end
     end,

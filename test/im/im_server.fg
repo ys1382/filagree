@@ -11,7 +11,7 @@ im = [
 
     'id' : id,
     'clients' : (sys.load('logins') or []),
-    'friends' : [],
+    'friends' : (sys.load('friends') or []),
 
     'handle_disconnect' : function(self, socket, id)
         mc3 = ['event' : 'offline', 'from' : id]
@@ -31,12 +31,13 @@ im = [
 
     'handle_friends' : function(self, msf)
         self.friends[msf.from] = msf.friends
+        sys.save(self.friends, 'friends')
         return self.online(msf.from)
     end,
 
     'online' : function(self, to)
-        online = [p for p in self.friends[to] where self.peers[p]]
-        self.send_to(to, ['online' : online])
+        online = self.friends[to] # [p for p in self.friends[to] where self.peers[p]]
+        return ['friends' : online]
     end,
 
     'handle_signup' : function(self, ms2)
@@ -61,9 +62,10 @@ im = [
 
 ]
 
-sys.print('logins='+im.clients)
+sys.print('logins='+im.clients +' '+ im.friends)
 
 mesh = Mesh.init(id, 1999, [im])
+im.mesh = mesh
 
 mesh.listen()
 sys.loop()

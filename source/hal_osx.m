@@ -64,7 +64,7 @@ NSString *byte_array_to_nsstring(const struct byte_array *str)
     bp->logic = c;
     bp->context = f;
     bp->uictx = u;
-    bp->data = NULL; //d;
+    bp->data = d;
     bp->param = NULL;
     bp->timer = NULL;
     return bp;

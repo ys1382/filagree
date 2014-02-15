@@ -26,15 +26,10 @@ client = [
         end
     end,
 
-    'handle_online' : function(self, online)
-        self.roster = online or self.roster
-        #sys.ui_set(self.ui.roster, online)
-        self.main()
-    end,
 
     'handle_signin' : function(self, socket, mc3)
         if mc3.result then
-            self.roster = mc3.online or self.roster
+            self.roster = mc3.friends
             self.main()
         else
             sys.ui_set(self.ui.error, mc3.error)
@@ -80,7 +75,9 @@ end
 
 client.main = function(self)
 
-    sys.ui(self, ['vertical',
+    self.mesh.print('roster=' + self.roster)
+
+    self.ui = sys.ui(self, ['vertical',
 
                     ['horizontal',
                         ['button', 'text':'add',      'logic':self.add],
@@ -112,9 +109,8 @@ client.added = function(self)
     friend = sys.form_get(self.ui).username
     self.friends = self.friends + friend
     sys.print('fz ' + friend + ' -- ' + self.friends)
-    #sys.save(self.friends, 'friends')
     mc4 = ['event' : 'friends', 'friends' : self.friends]
-    self.send_to('server', mc4)
+    self.mesh.send_to('server', mc4)
 end
 
 client.signin = function(self, entrance)

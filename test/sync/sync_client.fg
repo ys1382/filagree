@@ -16,6 +16,7 @@ client = [
     end,
 
     'update_view' : function(self, paths)
+        self.mesh.print('update_view ' + self.ui + ' , ' + paths)
         self.paths = paths
         sys.ui_set(self.ui.files, paths)
     end,

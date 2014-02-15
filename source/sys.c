@@ -460,9 +460,9 @@ struct variable *sys_table(struct context *context)
 // set the text in the UI control
 struct variable *sys_ui_set(struct context *context)
 {
-    struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    struct variable *widget    = (struct variable*)array_get(arguments->list.ordered, 1);
-    struct variable *value     = (struct variable*)array_get(arguments->list.ordered, 2);
+    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+    struct variable *widget    = param_var(args, 1);//, <#uint32_t index#>) (struct variable*)array_get(arguments->list.ordered, 1);
+    struct variable *value     = param_var(args, 2);//, <#uint32_t index#>)(struct variable*)array_get(arguments->list.ordered, 2);
     if (widget->type != VAR_NIL)
         hal_ui_set(widget->ptr, value);
     return NULL;
