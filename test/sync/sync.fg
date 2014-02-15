@@ -90,10 +90,16 @@ Sync = [
         #self.mesh.print('handle_greet:' + msgg)
         if not msgg.files then return end
 
-        for f in self.files - msgg.files
+#        for f in self.files - msgg.files
+#            self.send_file(f, msgg.from)
+#        end
+
+        local = self.files
+        remote = msgg.files
+        for path,attr in local where (not remote[path]) or (attr.modified > remote[path].modified)
             self.send_file(f, msgg.from)
         end
-
+        
         self.filed() # check for offline updates
 
     end,

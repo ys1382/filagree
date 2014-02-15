@@ -128,8 +128,8 @@ director = [
         self.sync_direct('client1', 'verify', 'tc03.txt', '123')
         self.sync_direct('server1', 'verify', 'tc03.txt', '123')
         self.sync_direct('client1', 'offline')
-        self.create_file('client1', 'tc3.txt', nil, '789') # overwrite with another file while offline
-        self.wait()                                        # catch file event before going back online
+        self.create_file('client1', 'tc03.txt', nil, '789') # overwrite with another file while offline
+        self.wait()                                         # catch file event before going back online
         self.sync_direct('client1', 'online')
         self.sync_direct('server1', 'verify', 'tc03.txt', '789')
 
@@ -176,9 +176,12 @@ director = [
         self.sync_direct('client1', 'rename', 'tc16.txt', nil, 'tc16b.txt')
         self.wait()                                        # catch file event before going back online
         self.sync_direct('client1', 'online')
-        self.sync_direct('client1', 'verify', 'tc16b.txt')
-        self.sync_direct('server1', 'verify', 'tc16b.txt')
-        self.sync_direct('client2', 'verify', 'tc16b.txt')
+        self.sync_direct('client1', 'verify', 'tc16.txt')
+        self.sync_direct('server1', 'verify', 'tc16.txt')
+        self.sync_direct('client2', 'verify', 'tc16.txt')
+        self.sync_direct('client1', 'verify', 'tc16b.txt', '123')
+        self.sync_direct('server1', 'verify', 'tc16b.txt', '123')
+        self.sync_direct('client2', 'verify', 'tc16b.txt', '123')
 
         # TC 18: Simple Rename – Variation 5
         self.sync_direct('client1', 'folder', 'a0/a00')
