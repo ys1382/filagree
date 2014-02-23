@@ -16,11 +16,4 @@
    <FileRef
       location = "group:OSXcocoa/OSXcocoa.xcodeproj">
    </FileRef>
-   <Group
-      location = "container:"
-      name = "shared">
-      <FileRef
-         location = "group:../polarssl/polarssl.xcodeproj">
-      </FileRef>
-   </Group>
 </Workspace>

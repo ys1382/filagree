@@ -3,7 +3,6 @@ import '../mesh'
 
 port = 9999
 
-
 ####### net
 
 client = [
@@ -11,6 +10,7 @@ client = [
     'w':('w':240), 'h':('h':320),
     'friends' : (sys.load('friends') or []),
     'roster' : [],
+    'unread' : [],
     'mesh' : Mesh,
 
     'handle_message' : function(self, socket, mc1)
@@ -19,11 +19,18 @@ client = [
             return ['event' : self.entrance] + creds
         else if (mc1.event == 'signup') or (mc1.event == 'signin') then
             self.handle_signin(socket, mc1)
-        else if (mc1.event == 'online') then
+        else if mc1.event == 'online' then
             self.handle_online(mc1.online)
+        else if mc1.event == 'chat' then
+            self.handle_chat(mc1.chat, mc1.from)
         else
             self.sync.handle_message(socket, mc1)
         end
+    end,
+
+    'connected' : function(self, socket)
+        self.mesh.print('connected ' + socket)
+        self.server = socket
     end,
 
 
@@ -39,19 +46,63 @@ client = [
 ]
 
 
-
 ####### ui
 
-client.select = function(client)
-    sys.print('select ' + sys.args()[1])
+client.select = function(self)
+
+    self.transcript = ''
+    row = sys.args()[1]
+    peer = self.roster[row]
+    send = function(self)(peer)
+        text = sys.form_get(self.ui).sezme
+        msgtext = ['from':self.mesh.id, 'to':peer, 'event':'chat', 'chat':text]
+        self.update_transcript('you', text)
+        self.mesh.send(self.server, msgtext)
+    end
+
+    self.ui = sys.ui(self, ['horizontal',
+
+                                ['vertical',
+                                    ['table', 'name':'roster', 'list':self.roster, 'logic':self.select],
+                                ],
+
+                                ['vertical',
+                                    ['input', 'name':'transcript', 'readonly':true, 'hfill':true],
+                                    ['input', 'name':'sezme'],
+                                    ['button', 'text':'send', 'logic':send],
+                                ],
+                            self.w, self.h
+                        ])
+    self.peer = peer
+
 end
 
-client.listfiles = function(client)
-    client.ui = sys.ui( client,
-                        ['vertical',
-                            ['table', 'name':'files', 'list':[], 'logic':client.select],
-                            'w':240, 'h':320
-                        ])
+client.update_transcript = function(self, from, text)
+    if self.transcript.length then
+        self.transcript = self.transcript + '\n'
+    end
+    self.transcript = self.transcript + from +':'+ text
+    sys.ui_set(self.ui.transcript, self.transcript)
+end
+
+client.handle_chat = function(self, chat, from)
+
+    if from == self.peer then
+        self.update_transcript(from, chat)
+    else
+        self.unread[from] = self.unread + [chat]
+        roster = [r+ '(' + self.unread[r].length + ')' for r in self.roster]
+        sys.ui_set(self.ui.roster, roster)
+    end
+
+end
+
+client.send = function(self, other)
+
+    text = sys.form_get(self.ui).sezme
+    msgtext = ['event':'text', 'text':text]
+    self.mesh.send_to(peer, msgtext)
+
 end
 
 client.settings = function(client)
@@ -105,12 +156,14 @@ client.add = function(self)
                     ])
 end
 
+
 client.added = function(self)
     friend = sys.form_get(self.ui).username
     self.friends = self.friends + friend
     sys.print('fz ' + friend + ' -- ' + self.friends)
     mc4 = ['event' : 'friends', 'friends' : self.friends]
     self.mesh.send_to('server', mc4)
+    self.main()
 end
 
 client.signin = function(self, entrance)
@@ -137,3 +190,4 @@ end
 
 client.ui_login()
 sys.loop()
+
