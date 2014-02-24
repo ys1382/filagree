@@ -640,6 +640,16 @@ void *hal_label(struct variable *uictx,
     return (void *)CFBridgingRetain(textField);
 }
 
+void setKeyView(NSView *view)
+{
+    static NSView *keyView = NULL;
+    if (NULL == [window initialFirstResponder])
+        [window setInitialFirstResponder:view];
+    else
+        [keyView setNextKeyView:view];
+    keyView = view;
+}
+
 void *hal_button(struct context *context,
                  struct variable *uictx,
                  int32_t *w, int32_t *h,
@@ -671,6 +681,7 @@ void *hal_button(struct context *context,
     [my setButtonType:NSMomentaryLightButton];
     [my setBezelStyle:NSTexturedSquareBezelStyle];
     resize(my, w, h);
+    setKeyView(my);
     return (void *)CFBridgingRetain(my);
 }
 
@@ -685,20 +696,45 @@ void *hal_input(struct variable *uictx,
     *h = 20;
     NSRect rect = whereAmI(0,0, *w,*h);
     NSString *string = hint ? [NSString stringWithUTF8String:hint] : NULL;
+    
+    if (multiline)
+    {
+        NSScrollView *scrollview = [[NSScrollView alloc] initWithFrame:rect];
+        NSSize contentSize = [scrollview contentSize];
+        [scrollview setBorderType:NSBezelBorder];
+        [scrollview setHasVerticalScroller:YES];
+        [scrollview setHasHorizontalScroller:NO];
+        [scrollview setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
-    NSView *textField;
-    if (multiline) {
-        textField = [[NSTextView alloc] initWithFrame:rect];
-        [(NSTextView*)textField setEditable:!readonly];
-    } else {
-        textField = [[NSTextField alloc] initWithFrame:rect];
-        [(NSTextField*)textField setEditable:!readonly];
+        NSTextView *theTextView = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+        [theTextView setMinSize:NSMakeSize(0.0, contentSize.height)];
+        [theTextView setMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
+        [theTextView setVerticallyResizable:YES];
+        [theTextView setHorizontallyResizable:NO];
+        [theTextView setAutoresizingMask:NSViewWidthSizable];
+        [[theTextView textContainer] setContainerSize:NSMakeSize(contentSize.width, FLT_MAX)];
+        [[theTextView textContainer] setWidthTracksTextView:YES];
+        [theTextView setEditable:!readonly];
+        CFRetain((__bridge CFTypeRef)(theTextView));
+        setKeyView(theTextView);
+        
+        [scrollview setDocumentView:theTextView];
+        [content addSubview:scrollview];
+        return (void *)CFBridgingRetain(scrollview);
+
+//      textField = [[NSTextView alloc] initWithFrame:rect];
+//      [(NSTextView*)textField setEditable:!readonly];
     }
-    if (NULL != string)
-        [textField insertText:string];
-
-    [content addSubview:textField];
-    return (void *)CFBridgingRetain(textField);
+    else // single line
+    {
+        NSTextField *textField = [[NSTextField alloc] initWithFrame:rect];
+        [textField setEditable:!readonly];
+        if (NULL != string)
+            [[textField cell] setPlaceholderString:string];
+        [content addSubview:textField];
+        setKeyView(textField);
+        return (void *)CFBridgingRetain(textField);
+    }
 }
 
 struct variable *hal_ui_get(struct context *context, void *widget)
@@ -724,7 +760,15 @@ void hal_ui_set(void *widget, struct variable *value)
         NSString *value2 = byte_array_to_nsstring(value->str);
         [widget3 setStringValue:value2];
     }
-
+    else if ([widget2 isKindOfClass:[NSScrollView class]])
+    {
+        NSScrollView *scrollView = (__bridge NSScrollView*)widget;
+        NSTextView *textView = [scrollView documentView];
+        NSString *string = byte_array_to_nsstring(value->str);
+        [textView setString:string];
+        NSRange range = NSMakeRange ([string length], 0);
+        [textView scrollRangeToVisible: range]; // scroll to end
+    }
     else if ([widget2 isKindOfClass:[NSTableView class]])
     {
         NSTableView *widget3 = (__bridge NSTableView*)widget;
@@ -746,9 +790,9 @@ void *hal_table(struct context *context,
         list = variable_new_list(context, NULL);
 
     NSView *content = [window contentView];
-    NSScrollView * tableContainer = [[NSScrollView alloc] init];
+    NSScrollView *tableContainer = [[NSScrollView alloc] init];
     NSTableView *tableView = [[NSTableView alloc] init];
-    NSTableColumn * column1 = [[NSTableColumn alloc] initWithIdentifier:@"Col1"];
+    NSTableColumn *column1 = [[NSTableColumn alloc] initWithIdentifier:@"Col1"];
     [tableView setHeaderView:nil];
     [tableView addTableColumn:column1];
 

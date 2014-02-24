@@ -67,7 +67,7 @@ client.select = function(self)
                                 ],
 
                                 ['vertical',
-                                    ['input', 'name':'transcript', 'readonly':true, 'hfill':true],
+                                    ['input', 'name':'transcript', 'multiline':true, 'readonly':true, 'hfill':true],
                                     ['input', 'name':'sezme'],
                                     ['button', 'text':'send', 'logic':send],
                                 ],
