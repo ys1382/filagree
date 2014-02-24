@@ -1001,15 +1001,9 @@ static struct variable *binary_op_flt(struct context *context,
                                       const struct variable *u,
                                       const struct variable *v)
 {
-    float m = u->floater;
-    float n;
-    switch (v->type) {
-        case VAR_FLT:   n = v->floater;         break;
-        case VAR_INT:   n = (float)v->integer;  break;
-        default:
-            exit_message("can't compare with float");
-	    return NULL;
-    }
+    float m = variable_value_flt(u);
+    float n = variable_value_flt(v);
+
     float f = 0;
     switch (op) {
         case VM_MUL:    f = m * n;                                  break;

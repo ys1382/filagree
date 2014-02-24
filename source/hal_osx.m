@@ -721,9 +721,6 @@ void *hal_input(struct variable *uictx,
         [scrollview setDocumentView:theTextView];
         [content addSubview:scrollview];
         return (void *)CFBridgingRetain(scrollview);
-
-//      textField = [[NSTextView alloc] initWithFrame:rect];
-//      [(NSTextView*)textField setEditable:!readonly];
     }
     else // single line
     {
@@ -843,12 +840,14 @@ void *hal_window(struct context *context,
     [subviews makeObjectsPerformSelector:@selector(removeFromSuperviewWithoutNeedingDisplay)];
     [content setNeedsDisplay:YES];
 
-    //[inputs removeAllObjects];
-    NSSize size = [content frame].size;
-    *w = size.width;
-    *h = size.height;
+    if (!(w && *w && h && *h))
+    {
+        NSSize size = [content frame].size;
+        *w = size.width;
+        *h = size.height;
+    }
     return (__bridge void *)(window);
-
+/*
     Actionifier *a = [Actionifier fContext:context
                                  uiContext:uictx
                                   callback:logic
@@ -856,6 +855,7 @@ void *hal_window(struct context *context,
     [window setDelegate:a];
 
     return (void *)CFBridgingRetain(window);
+*/
 }
 
 

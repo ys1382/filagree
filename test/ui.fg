@@ -43,11 +43,26 @@ sys.set_size = function(self, item, w, h)
 
     if (type == 'horizontal') then
 
+        sys.print('horiz w = ' + w)
+
         if not kids.length then return end
 
-        f = w / kids.length
+        for k in kids where (k.width < 1)
+            sys.print('k.width='+k.width +' * '+ w +' = ' + (w * k.width))
+            k.width = w * k.width
+        end
+        int widthed = 0
+        sys.print('kids='+kids)
+        for k in kids where k.width
+            sys.print('kw = ' + k.width)
+            widthed = widthed + 1
+            w = w - k.width
+        end
+
+        f = w / (kids.length - widthed)
+        sys.print('f='+w+'/'+kids.length+'-'+widthed+' = '+f)
         for k in kids
-            self.set_size(k, f, h)
+            self.set_size(k, k.width or f, h)
         end
 
         item.h = h
@@ -124,6 +139,7 @@ sys.ui_place = function(self, item, x, y)
             if b > h then h = b end
         end
     else
+        sys.print('ui_put ' + type +' '+ item.w)
         sys.ui_put(item.widget, x + item.dx, y, item.w - item.dx, item.h)
         return item.w, item.h
     end
@@ -154,10 +170,7 @@ sys.ui_create = function(self, uictx, item, parent)
         item.remove(0,item.length)
         item.insert('vertical')
         for name in kids
-            field = ['horizontal',
-                ['label', 'text':name, 'align':'right'],
-                ['input', 'hint':name, 'name':name],
-            ]
+            field = ['input', 'hint':name, 'name':name]
             item.insert(field)
         end
         names = sys.ui_create(uictx, item, parent)
@@ -175,7 +188,10 @@ sys.ui_create = function(self, uictx, item, parent)
         o,w,h = sys.table(uictx, item.list, item.logic)
     end
 
-    item.widget, item.w, item.h = o,w,h
+    item.widget = o
+    item.w = item.width or w
+    item.h = item.height or h
+    sys.print('ui_create ' + item[0] +' '+item.w)
 
     if not names then
         names = []

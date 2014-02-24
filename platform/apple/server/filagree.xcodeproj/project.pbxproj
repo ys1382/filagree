@@ -330,10 +330,6 @@
 		88C62B5A18351D7400E6E9DC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/yusuf/make/filagree/source/polarssl/library,
-				);
 				OTHER_CFLAGS = (
 					"-DNO_UI",
 					"-DFG_MAIN",
@@ -349,10 +345,6 @@
 		88C62B5B18351D7400E6E9DC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/yusuf/make/filagree/source/polarssl/library,
-				);
 				"OTHER_CFLAGS[arch=*]" = (
 					"-DNO_UI",
 					"-DFG_MAIN",

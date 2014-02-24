@@ -364,10 +364,15 @@ int32_t param_int(const struct variable *value, uint32_t index) {
     if (index >= value->list.ordered->length)
         return 0;
     struct variable *result = (struct variable*)array_get(value->list.ordered, index);
-    if (result->type == VAR_NIL)
-        return 0;
-    assert_message(result->type == VAR_INT, "not an int");
-    return result->integer;
+    switch (result->type)
+    {
+        case VAR_INT: return result->integer;
+        case VAR_FLT: return (int32_t)result->floater;
+        case VAR_NIL: return 0;
+        default:
+            exit_message("not an int");
+            return 0;
+    }
 }
 
 bool param_bool(const struct variable *value, uint32_t index) {
@@ -454,7 +459,7 @@ struct variable *sys_table(struct context *context)
 
     void *table = hal_table(context, uictx, list, logic);
 
-    return ui_result(context, table, 0,0);
+    return ui_result(context, table, 0, 0);
 }
 
 // set the text in the UI control

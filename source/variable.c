@@ -731,10 +731,21 @@ static bool variable_compare_maps(struct context *context, const struct map *uma
     return result;
 }
 
+float variable_value_flt(const struct variable *v)
+{
+    switch (v->type) {
+        case VAR_FLT:   return v->floater;
+        case VAR_INT:   return v->integer;
+        case VAR_BOOL:  return  v->boolean;
+        default: return 0;
+    }
+}
+
 int32_t variable_value_int(const struct variable *v)
 {
     switch (v->type) {
         case VAR_INT:   return v->integer;
+        case VAR_FLT:   return v->floater;
         case VAR_BOOL:  return  v->boolean;
         default: return 0;
     }

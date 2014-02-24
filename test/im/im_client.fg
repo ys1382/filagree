@@ -7,7 +7,6 @@ port = 9999
 
 client = [
 
-    'w':('w':240), 'h':('h':320),
     'friends' : (sys.load('friends') or []),
     'roster' : [],
     'unread' : [],
@@ -60,19 +59,16 @@ client.select = function(self)
         self.mesh.send(self.server, msgtext)
     end
 
-    self.ui = sys.ui(self, ['horizontal',
+    self.ui = sys.ui(self,
+                    ['horizontal',
 
-                                ['vertical',
-                                    ['table', 'name':'roster', 'list':self.roster, 'logic':self.select],
-                                ],
-
-                                ['vertical',
-                                    ['input', 'name':'transcript', 'multiline':true, 'readonly':true, 'hfill':true],
-                                    ['input', 'name':'sezme'],
-                                    ['button', 'text':'send', 'logic':send],
-                                ],
-                            self.w, self.h
-                        ])
+                        ['table', 'name':'roster', 'list':self.roster, 'logic':self.select, 'hfill':true, 'width':0.25],
+                        ['vertical',
+                            ['input', 'name':'transcript', 'multiline':true, 'readonly':true, 'hfill':true],
+                            ['input', 'name':'sezme'],
+                            ['button', 'text':'send', 'logic':send],
+                        ]
+                    ])
     self.peer = peer
 
 end
@@ -143,7 +139,9 @@ end
 
 client.add = function(self)
 
-    self.ui = sys.ui(self, ['vertical',
+    self.ui = sys.ui(self,
+
+                    ['vertical',
 
                         ['form', 'username'],
 
