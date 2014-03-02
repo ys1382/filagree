@@ -529,16 +529,12 @@ struct variable *sys_sound(struct context *context)
 struct variable *sys_window(struct context *context)
 {
     struct variable *value = (struct variable*)stack_pop(context->operand_stack);
-    int w=0, h=0;
-    if (value->list.ordered->length > 2) {
-        w = param_int(value, 1);
-        h = param_int(value, 2);
-    }
 
-    struct variable *uictx = param_var(value, 2);
-    struct variable *logic = param_var(value, 3);
+    struct variable *uictx = param_var(value, 1);
+    struct variable *logic = param_var(value, 2);
 
     context->singleton->keepalive = true; // so that context_del isn't called when UI is active
+    int32_t w=0, h=0;
     hal_window(context, uictx, &w, &h, logic);
     variable_push(context, variable_new_int(context, w));
     variable_push(context, variable_new_int(context, h));

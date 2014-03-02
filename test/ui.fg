@@ -148,11 +148,14 @@ sys.ui_place = function(self, item, x, y)
 
 end
 
+sys.ui_resized = function(uictx)
+    sys.print('resized ' + uictx)
+end
 
 sys.ui_create = function(self, uictx, item, parent)
 
     if not parent then
-        w,h = sys.window(item.w, item.h)
+        w,h = sys.window(item, self.ui_resized)
         parent = ['w':w, 'h':h]
         return sys.ui_create(uictx, item, parent, 0, 0), w,h
     end
