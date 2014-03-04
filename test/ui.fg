@@ -139,7 +139,7 @@ sys.ui_place = function(self, item, x, y)
             if b > h then h = b end
         end
     else
-        sys.print('ui_put ' + type +' '+ item.w)
+        #sys.print('ui_put ' + type +' '+ item.w)
         sys.ui_put(item.widget, x + item.dx, y, item.w - item.dx, item.h)
         return item.w, item.h
     end
@@ -194,7 +194,7 @@ sys.ui_create = function(self, uictx, item, parent)
     item.widget = o
     item.w = item.width or w
     item.h = item.height or h
-    sys.print('ui_create ' + item[0] +' '+item.w)
+    #sys.print('ui_create ' + item[0] +' '+item.w)
 
     if not names then
         names = []

@@ -13,8 +13,8 @@ director = [
 
         self.crud_file()
         self.crud_folder()
-        self.large_file()
-        self.conflict()
+#        self.large_file()
+#        self.conflict()
 
     end,
 
@@ -23,6 +23,8 @@ director = [
     #
 
     'crud_file' : function(self)
+
+        self.test_title('crud_file')
 
         # create
         self.sync_direct('client1', 'update', 'a.txt', '123')
@@ -60,6 +62,8 @@ director = [
 
     'crud_folder' : function(self)
 
+        self.test_title('crud_folder')
+
         # create
         self.sync_direct('client1', 'folder', 'a0/a00')
         self.sync_direct('client1', 'folder', 'a0/a01')
@@ -81,6 +85,8 @@ director = [
     #
 
     'large_file' : function(self)
+
+        self.test_title('large_file')
 
         test_xfer = function(self, size)
 
@@ -108,14 +114,14 @@ director = [
 
     'conflict' : function(self)
 
-        # TC 1: Simple Edit – Variation 1
+        self.test_title('TC 1: Simple Edit – Variation 1')
         self.sync_direct('server1', 'update', 'tc01.txt', 'tc1a')
         self.sync_direct('client1', 'verify', 'tc01.txt', 'tc1a')
         self.sync_direct('client1', 'update', 'tc01.txt', 'tc1b')
         self.sync_direct('client1', 'verify', 'tc01.txt', 'tc1b')
         self.sync_direct('server1', 'verify', 'tc01.txt', 'tc1b')
 
-        # TC 2: Simple Edit – Variation 2
+        self.test_title('TC 2: Simple Edit – Variation 2')
         self.create_file('client1', 'tc2', 1024)            # create file that take time to upload
         self.wait()                                         # wait for client to detect file, and start uploading
         self.create_file('client1', 'tc02', 1)              # overwrite with another file
@@ -123,7 +129,7 @@ director = [
         self.sync_direct('client2', 'verify', 'tc02', nil, nil, 1)
         self.sync_direct('server1', 'verify', 'tc02', nil, nil, 1)
 
-        # TC 3: Simple Edit – Variation 3
+        self.test_title('TC 3: Simple Edit – Variation 3')
         self.sync_direct('client1', 'update', 'tc03.txt', '123')
         self.sync_direct('client1', 'verify', 'tc03.txt', '123')
         self.sync_direct('server1', 'verify', 'tc03.txt', '123')
@@ -133,7 +139,7 @@ director = [
         self.sync_direct('client1', 'online')
         self.sync_direct('server1', 'verify', 'tc03.txt', '789')
 
-        # TC 6: Simple Delete – Variation 1
+        self.test_title('TC 6: Simple Delete – Variation 1')
         self.sync_direct('client1', 'update', 'tc06.txt', '123')
         self.sync_direct('client1', 'verify', 'tc06.txt', '123')
         self.sync_direct('client2', 'verify', 'tc06.txt', '123')
@@ -144,7 +150,7 @@ director = [
         self.sync_direct('server1', 'verify', 'tc06.txt')
         self.sync_direct('client2', 'verify', 'tc06.txt')
 
-        # TC 8: Simple Delete – Variation 3
+        self.test_title('TC 8: Simple Delete – Variation 3')
         self.sync_direct('client1', 'update', 'tc08.txt', '123')
         self.sync_direct('client1', 'verify', 'tc08.txt', '123')
         self.sync_direct('client2', 'verify', 'tc08.txt', '123')
@@ -157,7 +163,7 @@ director = [
         self.sync_direct('server1', 'verify', 'tc08.txt')
         self.sync_direct('client2', 'verify', 'tc08.txt')
 
-        # TC 14: Simple Rename – Variation 1
+        self.test_title('TC 14: Simple Rename – Variation 1')
         self.sync_direct('client1', 'update', 'tc14.txt', '123')
         self.sync_direct('client1', 'rename', 'tc14.txt', nil, 'tc14b.txt')
         self.sync_direct('client1', 'verify', 'tc14.txt')
@@ -167,7 +173,7 @@ director = [
         self.sync_direct('server1', 'verify', 'tc14b.txt', '123')
         self.sync_direct('client2', 'verify', 'tc14b.txt', '123')
 
-        # TC 16: Simple Rename – Variation 3
+        self.test_title('TC 16: Simple Rename – Variation 3')
         self.sync_direct('client1', 'update', 'tc16.txt', '123')
         self.sync_direct('client1', 'verify', 'tc16.txt', '123')
         self.sync_direct('client2', 'verify', 'tc16.txt', '123')
@@ -183,7 +189,7 @@ director = [
         self.sync_direct('server1', 'verify', 'tc16b.txt', '123')
         self.sync_direct('client2', 'verify', 'tc16b.txt', '123')
 
-        # TC 18: Simple Rename – Variation 5
+        self.test_title('TC 18: Simple Rename – Variation 5')
         self.sync_direct('client1', 'folder', 'a0/a00')
         self.sync_direct('client1', 'update', 'a0/a01/a.txt', '123')
         self.sync_direct('client1', 'verify', 'a0/a01/a.txt', '123')
@@ -246,4 +252,4 @@ director = [
 
 port = 1999
 mesh = Mesh.init(director.id, port, [director])
-director.launch(mesh, 2)
+director.launch(mesh, '../../source/filagree', 'sync_server.fg', 2, 'sync_client.fg')

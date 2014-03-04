@@ -136,8 +136,8 @@ Sync = [
         updates = [path:attr for path,attr in files where (self.files[path].modified != attr.modified)]
         deletes = [f for f in (self.files - files) where not f.deleting]
 
-        self.mesh.print('filed: files=' + self.files)
 /*
+        self.mesh.print('filed: files=' + self.files)
         self.mesh.print('filed ls=' + files)
         for path,attr in files where (self.files[path].modified != attr.modified)
             self.mesh.print('\t\tpath='+path)
@@ -224,7 +224,7 @@ Sync = [
     'update_ui' : function(self)
         if self.view then
             paths = self.files.keys
-            self.mesh.print('update_ui: ' + self.files)
+            #self.mesh.print('update_ui: ' + self.files)
             self.view.update_view(paths)
         end
     end,

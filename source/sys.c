@@ -923,6 +923,7 @@ static inline struct variable *cfnc_serialize(struct context *context)
     struct variable *indexable = (struct variable*)array_get(args->list.ordered, 0);
 
     struct byte_array *bits = variable_serialize(context, NULL, indexable);
+    byte_array_reset(bits);
     struct variable *result = variable_new_str(context, bits);
     byte_array_del(bits);
     return result;
