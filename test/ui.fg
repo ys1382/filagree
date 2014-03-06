@@ -155,12 +155,19 @@ end
 sys.ui_create = function(self, uictx, item, parent)
 
     if not parent then
-        w,h = sys.window(item, self.ui_resized)
+    
+        resizer = function(uictx, w, h)(uictx, item)
+            sys.print('resizer ' + item)
+            sys.ui(uictx, item)
+        end
+
+        w,h = sys.window(item, resizer)
         parent = ['w':w, 'h':h]
         return sys.ui_create(uictx, item, parent, 0, 0), w,h
     end
 
-    names = o = w = h = nil
+    names = w = h = nil
+    o = item.widget
     type = item[0]
     kids = item.part(1)
 
@@ -179,16 +186,16 @@ sys.ui_create = function(self, uictx, item, parent)
         names = sys.ui_create(uictx, item, parent)
 
     else if type == 'input' then
-        o,w,h = sys.input(uictx, item.hint, item.multiline, item.readonly)
+        o,w,h = sys.input(uictx, item.hint, item.multiline, item.readonly, o)
 
     else if type == 'label' then
-        o,w,h = sys.label(uictx, item.text)
+        o,w,h = sys.label(uictx, item.text, o)
 
     else if type == 'button' then
-        o,w,h = sys.button(uictx, item.logic, item.text, item.image)
+        o,w,h = sys.button(uictx, item.logic, item.text, item.image, o)
 
     else if type == 'table' then
-        o,w,h = sys.table(uictx, item.list, item.logic)
+        o,w,h = sys.table(uictx, item.list, item.logic, o)
     end
 
     item.widget = o

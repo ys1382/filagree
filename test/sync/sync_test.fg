@@ -13,8 +13,8 @@ director = [
 
         self.crud_file()
         self.crud_folder()
-#        self.large_file()
-#        self.conflict()
+        self.large_file()
+        self.conflict()
 
     end,
 
@@ -42,7 +42,7 @@ director = [
         self.sync_direct('client2', 'verify', 'b.txt', '123')
 
         # update
-        self.sync_direct('client2', 'update', 'b.txt', '456')d
+        self.sync_direct('client2', 'update', 'b.txt', '456')
         self.sync_direct('client2', 'verify', 'b.txt', '456')
         self.sync_direct('server1', 'verify', 'b.txt', '456')
         self.sync_direct('client1', 'verify', 'b.txt', '456')

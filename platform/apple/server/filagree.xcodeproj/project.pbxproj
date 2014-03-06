@@ -37,8 +37,6 @@
 		8869B94118623D9E00907FA2 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		88C62B5018351D7400E6E9DC /* filagree */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = filagree; sourceTree = BUILT_PRODUCTS_DIR; };
 		88C62F2818351E6B00E6E9DC /* filagree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = filagree.png; sourceTree = "<group>"; };
-		88C62F2B18351E6B00E6E9DC /* x copy.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "x copy.txt"; sourceTree = "<group>"; };
-		88C62F2C18351E6B00E6E9DC /* x.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = x.txt; sourceTree = "<group>"; };
 		88C62F2D18351E6B00E6E9DC /* im_client.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_client.fg; sourceTree = "<group>"; };
 		88C62F2E18351E6B00E6E9DC /* im_server.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_server.fg; sourceTree = "<group>"; };
 		88C62F2F18351E6B00E6E9DC /* im_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_test.fg; sourceTree = "<group>"; };
@@ -134,21 +132,11 @@
 		88C62F2918351E6B00E6E9DC /* im */ = {
 			isa = PBXGroup;
 			children = (
-				88C62F2A18351E6B00E6E9DC /* client */,
 				88C62F2D18351E6B00E6E9DC /* im_client.fg */,
 				88C62F2E18351E6B00E6E9DC /* im_server.fg */,
 				88C62F2F18351E6B00E6E9DC /* im_test.fg */,
 			);
 			path = im;
-			sourceTree = "<group>";
-		};
-		88C62F2A18351E6B00E6E9DC /* client */ = {
-			isa = PBXGroup;
-			children = (
-				88C62F2B18351E6B00E6E9DC /* x copy.txt */,
-				88C62F2C18351E6B00E6E9DC /* x.txt */,
-			);
-			path = client;
 			sourceTree = "<group>";
 		};
 		88C62F3218351E6B00E6E9DC /* sync */ = {

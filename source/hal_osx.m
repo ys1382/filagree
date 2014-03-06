@@ -166,6 +166,31 @@ static NSWindow *window = NULL;
 
 @implementation WindowController
 
++ (WindowController*) getSingleton:(struct context *)context uictx:(struct variable *)uictx logic:(struct variable *)logic
+{
+    static WindowController *singleton = NULL;
+
+    if (NULL == singleton)
+    {
+        singleton = [[WindowController alloc] init];
+        window = [singleton window];
+
+        NSView *content = [window contentView];
+        NSArray *subviews = [NSArray arrayWithArray:[content subviews]];
+        [subviews makeObjectsPerformSelector:@selector(removeFromSuperviewWithoutNeedingDisplay)];
+        [content setNeedsDisplay:YES];
+
+        Actionifier *a = [Actionifier fContext:context
+                                     uiContext:uictx
+                                      callback:logic
+                                      userData:NULL];
+        CFRetain((__bridge CFTypeRef)(a));
+        [window setDelegate:a];
+    }
+
+    return singleton;
+}
+
 - (id) init
 {
     self = [super initWithWindowNibName:@"MainWindow"];
@@ -627,10 +652,11 @@ void hal_ui_put(void *widget, int32_t x, int32_t y, int32_t w, int32_t h)
 
 void *hal_label(struct variable *uictx,
                 int32_t *w, int32_t *h,
-                const char *str)
+                const char *str,
+                void *label)
 {
     NSRect rect = whereAmI(0,0, *w,*h);
-    NSTextField *textField = [[NSTextField alloc] initWithFrame:rect];
+    NSTextField *textField = (NULL != label) ? (__bridge NSTextField*)label : [[NSTextField alloc] initWithFrame:rect];
     NSString *string = [NSString stringWithUTF8String:str];
     [textField setStringValue:string];
     [textField setBezeled:NO];
@@ -658,12 +684,13 @@ void *hal_button(struct context *context,
                  struct variable *uictx,
                  int32_t *w, int32_t *h,
                  struct variable *logic,
-                 const char *str, const char *img)
+                 const char *str, const char *img,
+                 void *button)
 {
     NSView *content = [window contentView];
     NSRect rect = whereAmI(0,0, *w,*h);
 
-    NSButton *my = [[NSButton alloc] initWithFrame:rect];
+    NSButton *my = NULL != button ? (__bridge NSButton*)button : [[NSButton alloc] initWithFrame:rect];
     [content addSubview: my];
     NSString *string = [NSString stringWithUTF8String:str];
     [my setTitle:string];
@@ -693,17 +720,24 @@ void *hal_input(struct variable *uictx,
                 int32_t *w, int32_t *h,
                 const char *hint,
                 bool multiline,
-                bool readonly)
+                bool readonly,
+                void *input)
 {
     NSView *content = [window contentView];
     *w = [content frame].size.width / 2;
     *h = 20;
     NSRect rect = whereAmI(0,0, *w,*h);
     NSString *string = hint ? [NSString stringWithUTF8String:hint] : NULL;
+
+    if (NULL != input)
+    {
+        [(__bridge NSView*)input setFrame:rect];
+        return input;
+    }
     
     if (multiline)
     {
-        NSScrollView *scrollview = [[NSScrollView alloc] initWithFrame:rect];
+        NSScrollView *scrollview = NULL != input ? (__bridge NSScrollView*)input : [[NSScrollView alloc] initWithFrame:rect];
         NSSize contentSize = [scrollview contentSize];
         [scrollview setBorderType:NSBezelBorder];
         [scrollview setHasVerticalScroller:YES];
@@ -721,7 +755,7 @@ void *hal_input(struct variable *uictx,
         [theTextView setEditable:!readonly];
         CFRetain((__bridge CFTypeRef)(theTextView));
         setKeyView(theTextView);
-        
+    
         [scrollview setDocumentView:theTextView];
         [content addSubview:scrollview];
         return (void *)CFBridgingRetain(scrollview);
@@ -784,8 +818,12 @@ void hal_ui_set(void *widget, struct variable *value)
 void *hal_table(struct context *context,
                 struct variable *uictx,
                 struct variable *list,
-                struct variable *logic)
+                struct variable *logic,
+                void *table)
 {
+    if (NULL != table)
+        return table;
+
     assert_message(list && ((list->type == VAR_LST) || (list->type == VAR_NIL)), "not a list");
     if (list->type == VAR_NIL)
         list = variable_new_list(context, NULL);
@@ -832,33 +870,21 @@ bool hal_alert (const char *title, const char *message)
 }
 
 void *hal_window(struct context *context,
-                        struct variable *uictx,
-                        int32_t *w, int32_t *h,
-                        struct variable *logic)
+                 struct variable *uictx,
+                 int32_t *w, int32_t *h,
+                 struct variable *logic)
 {
-    WindowController *wc = [[WindowController alloc] init];
+    WindowController *wc = [WindowController getSingleton:context uictx:uictx logic:logic];
     window = [wc window];
-
-    NSView *content = [window contentView];
-    NSArray *subviews = [NSArray arrayWithArray:[content subviews]];
-    [subviews makeObjectsPerformSelector:@selector(removeFromSuperviewWithoutNeedingDisplay)];
-    [content setNeedsDisplay:YES];
 
     if (w && h)
     {
+        NSView *content = [window contentView];
         NSSize size = [content frame].size;
         *w = size.width;
         *h = size.height;
     }
 
-    Actionifier *a = [Actionifier fContext:context
-                                 uiContext:uictx
-                                  callback:logic
-                                  userData:NULL];
-    CFRetain((__bridge CFTypeRef)(a));
-    [window setDelegate:a];
-
-//  return (void *)CFBridgingRetain(window);
     return (__bridge void *)(window);
 
 }

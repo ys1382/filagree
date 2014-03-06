@@ -360,10 +360,11 @@ char *param_str(const struct variable *value, uint32_t index)
     return str;
 }
 
-int32_t param_int(const struct variable *value, uint32_t index) {
-    if (index >= value->list.ordered->length)
+int32_t param_int(const struct variable *value, uint32_t index)
+{
+    struct variable *result = param_var(value, index);
+    if (NULL == result)
         return 0;
-    struct variable *result = (struct variable*)array_get(value->list.ordered, index);
     switch (result->type)
     {
         case VAR_INT: return result->integer;
@@ -375,10 +376,11 @@ int32_t param_int(const struct variable *value, uint32_t index) {
     }
 }
 
-bool param_bool(const struct variable *value, uint32_t index) {
-    if (index >= value->list.ordered->length)
-        return false;
-    struct variable *result = (struct variable*)array_get(value->list.ordered, index);
+bool param_bool(const struct variable *value, uint32_t index)
+{
+    struct variable *result = param_var(value, index);
+    if (NULL == result)
+        return NULL;
     enum VarType type = result->type;
     switch (type) {
         case VAR_BOOL:  return result->boolean;
@@ -388,18 +390,26 @@ bool param_bool(const struct variable *value, uint32_t index) {
             default:
             return true;
     }
-    if ((type == VAR_NIL) || ((type == VAR_INT) && !result->integer))
-        return false;
-    assert_message(type == VAR_BOOL, "not a bool");
-    return result->boolean;
 }
 
 struct variable *param_var(const struct variable *value, uint32_t index)
 {
     if (index >= value->list.ordered->length)
         return NULL;
-    struct variable *v = (struct variable*)array_get(value->list.ordered, index);
-    return v;
+    return (struct variable*)array_get(value->list.ordered, index);
+}
+
+void *param_void(const struct variable *value, uint32_t index)
+{
+    struct variable *v = param_var(value, index);
+    if (NULL == v)
+        return NULL;
+    switch (v->type) {
+        case VAR_NIL:   return NULL;
+        case VAR_VOID:  return v->ptr;
+        default:
+            return exit_message("expected void or nil");
+    }
 }
 
 #ifndef NO_UI
@@ -418,9 +428,10 @@ struct variable *sys_label(struct context *context)
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     struct variable *uictx = (struct variable*)array_get(arguments->list.ordered, 1);
     const char *str = param_str(arguments, 2);
+    void *widget = param_void(arguments, 3);
 
     int32_t w=0,h=0;
-    void *label = hal_label(uictx, &w, &h, str);
+    void *label = hal_label(uictx, &w, &h, str, widget);
     return ui_result(context, label, w, h);
 }
 
@@ -431,9 +442,10 @@ struct variable *sys_input(struct context *context)
     const char *hint = param_str(arguments, 2);
     bool multiline = param_bool(arguments, 3);
     bool readonly = param_bool(arguments, 4);
+    void *widget = param_void(arguments, 5);
 
     int32_t w=0, h=0;
-    void *input = hal_input(uictx, &w, &h, hint, multiline, readonly);
+    void *input = hal_input(uictx, &w, &h, hint, multiline, readonly, widget);
     return ui_result(context, input, w, h);
 }
 
@@ -444,9 +456,10 @@ struct variable *sys_button(struct context *context)
     struct variable *logic = param_var(value, 2);
     char *text = param_str(value, 3);
     char *image = param_str(value, 4);
+    void *widget = param_void(value, 5);
 
     int32_t w=0,h=0;
-    void *button = hal_button(context, uictx, &w, &h, logic, text, image);
+    void *button = hal_button(context, uictx, &w, &h, logic, text, image, widget);
     return ui_result(context, button, w, h);
 }
 
@@ -456,8 +469,9 @@ struct variable *sys_table(struct context *context)
     struct variable *uictx = (struct variable*)array_get(value->list.ordered, 1);
     struct variable *list = param_var(value, 2);
     struct variable *logic = param_var(value, 3);
+    void *widget = param_void(value, 4);
 
-    void *table = hal_table(context, uictx, list, logic);
+    void *table = hal_table(context, uictx, list, logic, widget);
 
     return ui_result(context, table, 0, 0);
 }
@@ -812,6 +826,11 @@ static inline struct variable *cfnc_chop(struct context *context, bool snip)
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *self = (struct variable*)array_get(args->list.ordered, 0);
 
+    enum VarType type = self->type;
+    if (type == VAR_NIL)
+        return variable_new_nil(context);
+    assert_message(self->type == VAR_LST || self->type == VAR_STR, "can't chop");
+    
     if (args->list.ordered->length > 1) {
         struct variable *start = (struct variable*)array_get(args->list.ordered, 1);
         assert_message(start->type == VAR_INT, "non-integer index");

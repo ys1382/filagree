@@ -11,8 +11,6 @@ test_director = [
     'queue' :       [],
     'active':       [],
     'descriptions': [],
-    'score' :       0,
-    'num_tests':    0,
 
 
     'handle_message' : function(self, socket, msg4)

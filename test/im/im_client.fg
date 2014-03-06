@@ -126,15 +126,15 @@ client.main = function(self)
 
     self.ui = sys.ui(self, ['vertical',
 
-                    ['horizontal',
-                        ['button', 'text':'add',      'logic':self.add],
-                        ['button', 'text':'settings', 'logic':self.settings],
-                    ],
+                                ['horizontal',
+                                    ['button', 'text':'add',      'logic':self.add],
+                                    ['button', 'text':'settings', 'logic':self.settings],
+                                ],
 
-                    ['table', 'name':'roster', 'list':self.roster, 'logic':self.select],
+                                ['table', 'name':'roster', 'list':self.roster, 'logic':self.select],
 
-                    self.w, self.h
-                ])
+                                self.w, self.h
+                            ])
 end
 
 client.add = function(self)

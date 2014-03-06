@@ -48,21 +48,25 @@ void *hal_window(struct context *context,
                  struct variable *logic);
 void *hal_label (struct variable *uictx,
                  int32_t *w, int32_t *h,
-                 const char *str);
+                 const char *str,
+                 void *label);
 void *hal_input (struct variable *uictx,
                  int32_t *w, int32_t *h,
                  const char *hint,
                  bool multiline,
-                 bool readonly);
+                 bool readonly,
+                 void *input);
 void *hal_button(struct context *context,
                  struct variable *uictx,
                  int32_t *w, int32_t *h,
                  struct variable *logic,
-                 const char *str, const char *img);
+                 const char *str, const char *img,
+                 void *input);
 void *hal_table (struct context *context,
                  struct variable *uictx,
                  struct variable *list,
-                 struct variable *logic);
+                 struct variable *logic,
+                 void *table);
 bool hal_alert (const char *title, const char *message);
 
 struct variable *hal_ui_get(struct context *context, void *field);
