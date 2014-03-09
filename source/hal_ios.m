@@ -19,7 +19,9 @@
 #include "struct.h"
 #include "file.h"
 #include "sys.h"
+#include "compile.h"
 #include "ViewController.h"
+
 
 #define MARGIN_X 10
 #define MARGIN_Y 30
@@ -36,6 +38,29 @@ NSString *byte_array_to_nsstring(const struct byte_array *str)
 }
 
 
+
+struct byte_array *read_resource(const char *path)
+{
+    NSString *path2 = [NSString stringWithUTF8String:path];
+    NSString *resource = [path2 stringByDeletingPathExtension];
+    NSString *type = [path2 pathExtension];
+    NSString* path3 = [[NSBundle mainBundle] pathForResource:resource ofType:type inDirectory:@""];
+    if (!path3) {
+        NSLog(@"can't load file");
+        return NULL;
+    }
+    NSError *error = nil;
+    NSString* contents = [NSString stringWithContentsOfFile:path3 encoding:NSUTF8StringEncoding error:&error];
+    if (error) {
+        NSLog(@"%@", [error localizedDescription]);
+        return NULL;
+    }
+    
+    const char *contents2 = [contents UTF8String];
+    return byte_array_from_string(contents2);
+}
+
+
 CGRect whereAmI(int x, int y, int w, int h)
 {
     return CGRectMake(x + MARGIN_X, y + MARGIN_Y, w, h);
@@ -47,7 +72,7 @@ void resize(UIView *control,
     if (*w && *h)
         return;
     [control sizeToFit];
-    CGSize size = control.frame.size;
+    CGSize size = control.bounds.size;
     *w = size.width;
     *h = size.height;
     CGRect rect = whereAmI(0,0, *w,*h);
@@ -63,8 +88,10 @@ void hal_ui_put(void *widget, int32_t x, int32_t y, int32_t w, int32_t h)
 
 void *hal_label(struct variable *uictx,
                 int32_t *w, int32_t *h,
-                const char *str)
+                const char *str,
+                void *widget)
 {
+    if (widget) return widget;
     CGRect rect = whereAmI(0,0, *w,*h);
     UILabel* label = [[UILabel alloc] initWithFrame: rect];
     NSString *string = [NSString stringWithUTF8String:str];
@@ -75,6 +102,8 @@ void *hal_label(struct variable *uictx,
     resize(label, w, h);
     return (void *)CFBridgingRetain(label);
 }
+
+/////// Actionifier - delegate for handling events
 
 @interface Actionifier  : NSObject <UITableViewDataSource, UITableViewDelegate>
 {
@@ -91,6 +120,7 @@ void *hal_label(struct variable *uictx,
 -(IBAction)pressed:(id)sender;
 -(void)timerCallback:(NSTimer*)timer;
 -(void)callback;
+-(void)resized;
 
 @end
 
@@ -190,37 +220,112 @@ void *hal_label(struct variable *uictx,
     }
 }
 
+-(void)resized
+{
+    gil_lock(self->context, "resize");
+    vm_call(self->context, self->logic, self->uictx, self->param, NULL);
+    gil_unlock(self->context, "resize");
+}
+
 @end // Actionifier implementation
+
+/////// ViewController
+
+@interface ViewController : UIViewController
+{
+    Actionifier *actionifier;
+}
+
++ (ViewController *)sharedViewController;
+
+@end
+
+static ViewController *theViewController = NULL;
+
+@implementation ViewController
+
++ (ViewController *)sharedViewController {
+    return theViewController;
+}
+
+-(void) setDelegate:(struct context *)context uictx:(struct variable *)uictx logic:(struct variable *)logic
+{
+    Actionifier *a = [Actionifier fContext:context
+                                 uiContext:uictx
+                                  callback:logic
+                                  userData:NULL];
+    CFRetain((__bridge CFTypeRef)(a));
+    self->actionifier = a;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    theViewController = self;
+    content = self.view;
+    
+    struct byte_array *ui = read_resource("ui.fg");
+    struct byte_array *mesh = read_resource("mesh.fg");
+    struct byte_array *client = read_resource("im_client.fg");
+    struct byte_array *args = byte_array_from_string("id='IOS'");
+    struct byte_array *script = byte_array_concatenate(4, ui, mesh, args, client);
+    
+    struct byte_array *program = build_string(script);
+    execute(program);
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+	CGFloat w = content.bounds.size.width;
+	CGFloat h = content.bounds.size.height;
+    NSLog(@"resized to %f,%f", w, h);
+
+    [self->actionifier resized];
+}
+
+@end // ViewController implementation
+
 
 void *hal_button(struct context *context,
                  struct variable *uictx,
                  int32_t *w, int32_t *h,
                  struct variable *logic,
-                 const char *str, const char *img)
+                 const char *str, const char *img,
+                 void *button)
 {
-    CGRect rect = whereAmI(0,0, *w,*h);
-
-    UIButton *my = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    [my setFrame:rect];
-
-    [content addSubview: my];
-    NSString *string = [NSString stringWithUTF8String:str];
-    [my setTitle:string forState: UIControlStateNormal];
-
-    if (img)
+    UIButton *my;
+    if (NULL == button)
     {
-        string = [NSString stringWithUTF8String:img];
-        NSURL* url = [NSURL fileURLWithPath:string];
-        UIImage *image = [UIImage imageWithData:[NSData dataWithContentsOfURL:url]];
-        [my setImage:image forState:UIControlStateNormal];
-    }
+        CGRect rect = whereAmI(0,0, *w,*h);
+        my = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+        [my setFrame:rect];
 
-    Actionifier *act = [Actionifier fContext:context
-                                   uiContext:uictx
-                                    callback:logic
-                                    userData:NULL];
-    CFRetain((__bridge CFTypeRef)(act));
-    [my addTarget:act action:@selector(pressed:) forControlEvents:UIControlEventTouchUpInside];
+        [content addSubview: my];
+        NSString *string = [NSString stringWithUTF8String:str];
+        [my setTitle:string forState: UIControlStateNormal];
+
+        if (img)
+        {
+            string = [NSString stringWithUTF8String:img];
+            NSURL* url = [NSURL fileURLWithPath:string];
+            UIImage *image = [UIImage imageWithData:[NSData dataWithContentsOfURL:url]];
+            [my setImage:image forState:UIControlStateNormal];
+        }
+
+        Actionifier *act = [Actionifier fContext:context
+                                       uiContext:uictx
+                                        callback:logic
+                                        userData:NULL];
+        CFRetain((__bridge CFTypeRef)(act));
+        [my addTarget:act action:@selector(pressed:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    else my = (__bridge UIButton *)(button);
     resize(my, w, h);
     return (void *)CFBridgingRetain(my);
 }
@@ -229,14 +334,22 @@ void *hal_input(struct variable *uictx,
                 int32_t *w, int32_t *h,
                 const char *hint,
                 bool multiline,
-                bool readonly)
+                bool readonly,
+                void *input)
 {
-    *w = [content frame].size.width / 2;
+    *w = content.bounds.size.width / 2;
     *h = 20;
     CGRect rect = whereAmI(0,0, *w,*h);
-    NSString *string = hint ? [NSString stringWithUTF8String:hint] : NULL;
-
     UIView *textField;
+    if (NULL != input)
+    {
+        textField = (__bridge UIView *)(input);
+        [textField setFrame:rect];
+        return input;
+    }
+
+    //NSString *string = hint ? [NSString stringWithUTF8String:hint] : NULL;
+
     if (multiline)
     {
         textField = [[UITextView alloc] initWithFrame:rect];
@@ -250,8 +363,8 @@ void *hal_input(struct variable *uictx,
         [(UITextField*)textField setEnabled:!readonly];
         [(UITextField*)textField setBorderStyle:UITextBorderStyleBezel];
     }
-    if (NULL != string)
-        ((UITextView*)textField).text = string;
+//    if (NULL != string)
+//        ((UITextView*)textField).text = string;
 
     [content addSubview:textField];
     return (void *)CFBridgingRetain(textField);
@@ -273,13 +386,14 @@ struct variable *hal_ui_get(struct context *context, void *widget)
 void hal_ui_set(void *widget, struct variable *value)
 {
     NSObject *widget2 = (__bridge NSObject*)widget;
-
-    if ([widget2 isKindOfClass:[UITextField class]])
+    if ([widget2 isKindOfClass:[UITextField class]] || [widget2 isKindOfClass:[UITextView class]])
     {
         UITextField *widget3 = (__bridge UITextField*)widget;
         const char *value2 = byte_array_to_string(value->str);
         NSString *value3 = [NSString stringWithUTF8String:value2];
-        widget3.text = value3;
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
+            widget3.text = value3;
+        }];
     }
 
     else if ([widget2 isKindOfClass:[UITableView class]])
@@ -297,9 +411,15 @@ void hal_ui_set(void *widget, struct variable *value)
 void *hal_table(struct context *context,
                 struct variable *uictx,
                 struct variable *list,
-                struct variable *logic)
+                struct variable *logic,
+                void *table)
 {
-    assert_message(list && list->type == VAR_LST, "not a list");
+    if (NULL != table)
+        return table;
+
+    assert_message(list && ((list->type == VAR_LST) || (list->type == VAR_NIL)), "not a list");
+    if (list->type == VAR_NIL)
+        list = variable_new_list(context, NULL);
 
     UITableView *tableView = [[UITableView alloc] init];
 
@@ -315,10 +435,6 @@ void *hal_table(struct context *context,
     return (void *)CFBridgingRetain(tableView);
 }
 
-void hal_set_content(UIView *view) {
-    content = view;
-}
-
 // todo: implement. requires callback.
 bool hal_alert (const char *title, const char *message) {
     return true;
@@ -329,11 +445,15 @@ void *hal_window(struct context *context,
                  int32_t *w, int32_t *h,
                  struct variable *logic)
 {
+    [[ViewController sharedViewController] setDelegate:context uictx:uictx logic:logic];
+
     NSArray *subviews = [NSArray arrayWithArray:[content subviews]];
-    [subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
+        [subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    }];
     [content setNeedsDisplay];
 
-    CGSize size = [content frame].size;
+    CGSize size = content.bounds.size;
     *w = size.width  - MARGIN_X*2;
     *h = size.height - MARGIN_Y*2;
 
@@ -478,7 +598,7 @@ void hal_loop() {}
 
 void hal_image()
 {
-    CGRect rect = [content frame];
+    CGRect rect = content.bounds;
     rect.origin.x = rect.size.width/2;
     UIImageView *iv = [[UIImageView alloc] initWithFrame:rect];
 

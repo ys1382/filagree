@@ -2,58 +2,6 @@
 #import "interpret.h"
 #import "compile.h"
 
-void hal_set_content();
+//void hal_set_content();
 
-static ViewController *theViewController = NULL;
 
-struct byte_array *read_resource(const char *path)
-{
-    NSString *path2 = [NSString stringWithUTF8String:path];
-    NSString *resource = [path2 stringByDeletingPathExtension];
-    NSString *type = [path2 pathExtension];
-    NSString* path3 = [[NSBundle mainBundle] pathForResource:resource ofType:type inDirectory:@""];
-    if (!path3) {
-        NSLog(@"can't load file");
-        return NULL;
-    }
-    NSError *error = nil;
-    NSString* contents = [NSString stringWithContentsOfFile:path3 encoding:NSUTF8StringEncoding error:&error];
-    if (error) {
-        NSLog(@"%@", [error localizedDescription]);
-        return NULL;
-    }
-
-    const char *contents2 = [contents UTF8String];
-    return byte_array_from_string(contents2);
-}
-
-@implementation ViewController
-
-+ (ViewController *)sharedViewController {
-    return theViewController;
-}
-
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-    theViewController = self;
-    hal_set_content(self.view);
-
-    struct byte_array *ui = read_resource("ui.fg");
-    struct byte_array *sync = read_resource("sync.fg");
-    struct byte_array *mesh = read_resource("mesh.fg");
-    struct byte_array *sync_client = read_resource("sync_client.fg");
-    struct byte_array *args = byte_array_from_string("id='IOS'");
-    struct byte_array *script = byte_array_concatenate(5, ui, mesh, sync, args, sync_client);
-
-    struct byte_array *program = build_string(script);
-    execute(program);
-}
-
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
-@end

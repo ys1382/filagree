@@ -689,30 +689,34 @@ void *hal_button(struct context *context,
 {
     NSView *content = [window contentView];
     NSRect rect = whereAmI(0,0, *w,*h);
+    NSButton *my;
+    if (NULL == button)
+    {
+        my = [[NSButton alloc] initWithFrame:rect];
+        [content addSubview: my];
+        NSString *string = [NSString stringWithUTF8String:str];
+        [my setTitle:string];
 
-    NSButton *my = NULL != button ? (__bridge NSButton*)button : [[NSButton alloc] initWithFrame:rect];
-    [content addSubview: my];
-    NSString *string = [NSString stringWithUTF8String:str];
-    [my setTitle:string];
+        if (img) {
+            string = [NSString stringWithUTF8String:img];
+            NSURL* url = [NSURL fileURLWithPath:string];
+            NSImage *image = [[NSImage alloc] initWithContentsOfURL: url];
+            [my setImage:image];
+        }
 
-    if (img) {
-        string = [NSString stringWithUTF8String:img];
-        NSURL* url = [NSURL fileURLWithPath:string];
-        NSImage *image = [[NSImage alloc] initWithContentsOfURL: url];
-        [my setImage:image];
+        Actionifier *act = [Actionifier fContext:context
+                                       uiContext:uictx
+                                        callback:logic
+                                        userData:NULL];
+        CFRetain((__bridge CFTypeRef)(act));
+        [my setTarget:act];
+        [my setAction:@selector(pressed:)];
+        [my setButtonType:NSMomentaryLightButton];
+        [my setBezelStyle:NSTexturedSquareBezelStyle];
+        setKeyView(my);
     }
-
-    Actionifier *act = [Actionifier fContext:context
-                                   uiContext:uictx
-                                    callback:logic
-                                    userData:NULL];
-    CFRetain((__bridge CFTypeRef)(act));
-    [my setTarget:act];
-    [my setAction:@selector(pressed:)];
-    [my setButtonType:NSMomentaryLightButton];
-    [my setBezelStyle:NSTexturedSquareBezelStyle];
+    else my = (__bridge NSButton *)(button);
     resize(my, w, h);
-    setKeyView(my);
     return (void *)CFBridgingRetain(my);
 }
 
@@ -876,17 +880,23 @@ void *hal_window(struct context *context,
 {
     WindowController *wc = [WindowController getSingleton:context uictx:uictx logic:logic];
     window = [wc window];
+    NSView *content = [window contentView];
+
+    NSArray *subviews = [NSArray arrayWithArray:[content subviews]];
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
+        [subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    }];
+    //[content setNeedsDisplay];
+
 
     if (w && h)
     {
-        NSView *content = [window contentView];
         NSSize size = [content frame].size;
         *w = size.width;
         *h = size.height;
     }
 
     return (__bridge void *)(window);
-
 }
 
 
