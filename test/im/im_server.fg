@@ -13,9 +13,10 @@ im = [
     'clients' : (sys.load('logins') or []),
     'friends' : (sys.load('friends') or []),
 
-    'handle_disconnect' : function(self, socket, id)
+    'disconnected' : function(self, socket, id)
+        #self.mesh.print('handle_disconnect ' + id)
         mc3 = ['event' : 'offline', 'from' : id]
-        self.broadcast(mc3)
+        self.mesh.broadcast(mc3)
     end,
 
     'handle_message' : function(self, socket, ms1)
@@ -36,27 +37,36 @@ im = [
     end,
 
     'online' : function(self, to)
-        online = self.friends[to] # [p for p in self.friends[to] where self.peers[p]]
+
+        self.mesh.print('online for ' + to +': '+ self.friends[to] +', '+ self.mesh.peers)
+        online = [p for p in self.friends[to] where self.mesh.peers[p]]
         return ['friends' : online]
     end,
 
     'handle_signup' : function(self, ms2)
-        if (not self.clients[ms2.from]) then
+        if (self.clients[ms2.from]) then
             self.clients[ms2.from] = ms2.password
-            sys.save(self.clients, 'logins')
-            return ['event' : 'signup', 'result' : true]
-        else
             return ['event' : 'signup', 'result' : false]
         end
+
+        sys.save(self.clients, 'logins')
+        return ['event' : 'signup', 'result' : true]
     end,
 
+
     'handle_signin' : function(self, ms3)
-        result = (self.clients[ms3.from] == ms3.password)
+
+        from = ms3.from
+        result = (self.clients[from] == ms3.password)
         if result then
-            online = self.online(ms3.from)
+            online = self.online(from)
         else
             online = []
         end
+
+        ms3b = ['event' : 'online', 'from' : from]
+        self.mesh.broadcast(ms3b, nil, from)
+
         return ['event' : 'signin', 'result' : result] + online
     end,
 

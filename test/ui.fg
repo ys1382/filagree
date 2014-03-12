@@ -43,16 +43,16 @@ sys.set_size = function(self, item, w, h)
 
     if (type == 'horizontal') then
 
-        sys.print('horiz w = ' + w)
+        #sys.print('horiz w = ' + w)
 
         if not kids.length then return end
 
         for k in kids where (k.width < 1)
-            sys.print('k.width='+k.width +' * '+ w +' = ' + (w * k.width))
+            #sys.print('k.width='+k.width +' * '+ w +' = ' + (w * k.width))
             k.width = w * k.width
         end
         int widthed = 0
-        sys.print('kids='+kids)
+        #sys.print('kids='+kids)
         for k in kids where k.width
             sys.print('kw = ' + k.width)
             widthed = widthed + 1
@@ -60,7 +60,7 @@ sys.set_size = function(self, item, w, h)
         end
 
         f = w / (kids.length - widthed)
-        sys.print('f='+w+'/'+kids.length+'-'+widthed+' = '+f)
+        #sys.print('f='+w+'/'+kids.length+'-'+widthed+' = '+f)
         for k in kids
             self.set_size(k, k.width or f, h)
         end
@@ -139,7 +139,7 @@ sys.ui_place = function(self, item, x, y)
             if b > h then h = b end
         end
     else
-        sys.print('ui_put ' + type +' '+ x+item.dx +', '+ y)
+        #sys.print('ui_put ' + type +' '+ x+item.dx +', '+ y)
         sys.ui_put(item.widget, x + item.dx, y, item.w - item.dx, item.h)
         return item.w, item.h
     end

@@ -63,18 +63,19 @@ Mesh = [
 
     'disconnected' : function(self, socket)
         id = self.sreep[socket]
-        self.handle_disconnect(id)
         self.peers[id] = self.sreep[socket] = nil
 
         self.print('disconnected from ' + id)
 
         for c3 in self.ctx
-            c3.disconnected(self, socket)
+            c3.disconnected(socket, id)
         end
     end,
 
 
     'handle_message' : function(self, socket, msg5)
+
+        sys.print('recv ' + msg5)
 
         if msg5.event == 'greet' then
             from = msg5.from
@@ -159,20 +160,23 @@ Mesh = [
 
     'send' : function(self, to, msg)
         #sys.print(self.id + ' send to ' + to + ': ' + msg.event +' '+msg.path+' '+msg.offset)
-        #self.print('send to ' + to + ': ' + msg)
+        self.print('send to ' + to + ': ' + msg)
         sys.send(to, msg)
     end,
 
 
-    'broadcast' : function(self, msg6, except)
+    'broadcast' : function(self, msg6, except_socket, except_id)
         if self.offline then
             return
         end
-        #self.print('broadcast ' + msg6.event +' (except '+ except+')')
+
         msg6.flood = true
         msg6.from = msg6.from or self.id
-        for socket in self.peers.vals where (socket != except)
-            self.send(socket, msg6)
+
+        for socket in self.peers.vals where (socket != except_socket)
+            if self.sreep[socket] != except_id then
+                self.send(socket, msg6)
+            end
         end
     end,
 ]

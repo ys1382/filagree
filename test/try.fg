@@ -1,4 +1,5 @@
 a = [2,3,4]
-#a.x = 7
-b = a.serialize()
-c = b.deserialize()
+
+a = a + 7
+a = a - 3
+sys.print(a)

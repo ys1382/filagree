@@ -221,7 +221,7 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
     {
         n = read(fd, buf, MAXLINE); // read bytes from socket (blocking)
 
-        if (n < 0)  // disconnected
+        if (n <= 0)  // disconnected
         {
             struct node_thread *ta = thread_new(ta0->context, listener, node_callback, fd);
             printf("disconnected\n");

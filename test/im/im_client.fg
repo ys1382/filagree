@@ -13,15 +13,18 @@ client = [
     'mesh' : Mesh,
 
     'handle_message' : function(self, socket, mc1)
-        if (mc1.event == 'greet') then
+        e = mc1.event
+        if (e == 'greet') then
             creds = sys.form_get(self.ui)
             return ['event' : self.entrance] + creds
-        else if (mc1.event == 'signup') or (mc1.event == 'signin') then
+        else if (e == 'signup') or (mc1.event == 'signin') then
             self.handle_signin(socket, mc1)
-        else if mc1.event == 'online' then
-            self.handle_online(mc1.online)
-        else if mc1.event == 'chat' then
+        else if e == 'chat' then
             self.handle_chat(mc1.chat, mc1.from)
+        else if e == 'online' then
+            self.handle_online(mc1.from)
+        else if e == 'offline' then
+            self.handle_offline(mc1.from)
         else
             self.sync.handle_message(socket, mc1)
         end
@@ -32,6 +35,18 @@ client = [
         self.server = socket
     end,
 
+    'handle_online' : function(self, from)
+        self.mesh.print('handle_online ' + from)
+        self.mesh.print('\troster = ' + self.roster)
+        self.roster = self.roster + from
+        sys.ui_set(self.ui.roster, self.roster)
+    end,
+
+    'handle_offline' : function(self, from)
+        self.mesh.print('handle_offline ' + from)
+        self.roster = self.roster - from
+        sys.ui_set(self.ui.roster, self.roster)
+    end,
 
     'handle_signin' : function(self, socket, mc3)
         if mc3.result then
@@ -157,7 +172,7 @@ end
 
 client.added = function(self)
     friend = sys.form_get(self.ui).username
-    self.friends = self.friends + friend
+    self.roster = self.friends = self.friends + friend
     sys.print('fz ' + friend + ' -- ' + self.friends)
     mc4 = ['event' : 'friends', 'friends' : self.friends]
     self.mesh.send_to('server', mc4)
