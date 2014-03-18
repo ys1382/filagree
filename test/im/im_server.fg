@@ -10,12 +10,11 @@ port = 9999
 im = [
 
     'id' : id,
-    'clients' : (sys.load('logins') or []),
-    'friends' : (sys.load('friends') or []),
+    'accounts' : (sys.load('accounts') or []), # id:[ password, name ]
 
     'disconnected' : function(self, socket, id)
         #self.mesh.print('handle_disconnect ' + id)
-        mc3 = ['event' : 'offline', 'from' : id]
+        mc3 = ['event' : 'online', 'from' : id, 'online':false]
         self.mesh.broadcast(mc3)
     end,
 
@@ -25,54 +24,65 @@ im = [
             return self.handle_signup(ms1)
         else if ms1.event == 'signin' then
             return self.handle_signin(ms1)
-        else if ms1.event == 'friends' then
-            return self.handle_friends(ms1)
+        else if ms1.event == 'contacts' then
+            return self.handle_contacts(ms1)
         end
     end,
 
-    'handle_friends' : function(self, msf)
-        self.friends[msf.from] = msf.friends
-        sys.save(self.friends, 'friends')
-        return self.online(msf.from)
+    'handle_contacts' : function(self, msf)
+        sys.print('handle_contacts ' + msf)
+        self.accounts[msf.from].contacts = msf.contacts
+        sys.save(self.accounts, 'accounts')
+        return self.roster(msf.from)
     end,
 
-    'online' : function(self, to)
+    # contacts plus online status
+    'roster' : function(self, to)
 
-        self.mesh.print('online for ' + to +': '+ self.friends[to] +', '+ self.mesh.peers)
-        online = [p for p in self.friends[to] where self.mesh.peers[p]]
-        return ['friends' : online]
+        contacts = self.accounts[to].contacts
+        self.mesh.print('online for ' + to +': '+ contacts +', '+ self.mesh.peers)
+        roster = []
+        for p in contacts
+            if self.mesh.peers[p] then online = true else online = nil end
+            roster[p] = contacts[p] + ['online':online]
+        end
+        return ['contacts':roster]
     end,
 
     'handle_signup' : function(self, ms2)
-        if (self.clients[ms2.from]) then
-            self.clients[ms2.from] = ms2.password
-            return ['event' : 'signup', 'result' : false]
+        if (self.accounts[ms2.from]) then
+            return ['event' : 'signin', 'result' : false]
+        else
+            self.accounts[ms2.from] = ['password' : ms2.password ]
         end
 
-        sys.save(self.clients, 'logins')
-        return ['event' : 'signup', 'result' : true]
+        sys.save(self.accounts, 'accounts')
+        return ['event' : 'signin', 'result' : true]
     end,
 
 
     'handle_signin' : function(self, ms3)
 
         from = ms3.from
-        result = (self.clients[from] == ms3.password)
+        result = (self.accounts[from].password == ms3.password)
         if result then
-            online = self.online(from)
+            roster = self.roster(from) # contacts with online status
         else
-            online = []
+            roster = []
         end
 
-        ms3b = ['event' : 'online', 'from' : from]
+        ms3b = ['event' : 'online', 'from' : from, 'online':true]
         self.mesh.broadcast(ms3b, nil, from)
 
-        return ['event' : 'signin', 'result' : result] + online
+        return ['event' : 'signin', 'result' : result] + roster
     end,
 
 ]
 
-sys.print('logins='+im.clients +' '+ im.friends)
+
+sys.print('accounts='+sys.load('accounts'))
+
+sys.print('logins='+im.accounts)
 
 mesh = Mesh.init(id, 1999, [im])
 im.mesh = mesh

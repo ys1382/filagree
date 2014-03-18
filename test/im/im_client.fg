@@ -7,7 +7,7 @@ port = 9999
 
 client = [
 
-    'friends' : (sys.load('friends') or []),
+    'contacts' : (sys.load('contacts') or []),
     'roster' : [],
     'unread' : [],
     'mesh' : Mesh,
@@ -17,14 +17,14 @@ client = [
         if (e == 'greet') then
             creds = sys.form_get(self.ui)
             return ['event' : self.entrance] + creds
-        else if (e == 'signup') or (mc1.event == 'signin') then
+        else if e == 'signin' then
             self.handle_signin(socket, mc1)
         else if e == 'chat' then
             self.handle_chat(mc1.chat, mc1.from)
+        else if e == 'contacts' then
+            self.handle_contacts(mc1.contacts)
         else if e == 'online' then
-            self.handle_online(mc1.from)
-        else if e == 'offline' then
-            self.handle_offline(mc1.from)
+            self.handle_online(mc1.from, mc1.online)
         else
             self.sync.handle_message(socket, mc1)
         end
@@ -35,28 +35,35 @@ client = [
         self.server = socket
     end,
 
-    'handle_online' : function(self, from)
-        self.mesh.print('handle_online ' + from)
-        self.mesh.print('\troster = ' + self.roster)
-        self.roster = self.roster + from
-        sys.ui_set(self.ui.roster, self.roster)
+    'handle_contacts' : function(self, contacts)
+        self.mesh.print('handle_contacts ' + contacts)
+        self.contacts = contacts
+        self.update_roster()
     end,
 
-    'handle_offline' : function(self, from)
-        self.mesh.print('handle_offline ' + from)
-        self.roster = self.roster - from
-        sys.ui_set(self.ui.roster, self.roster)
+    'handle_online' : function(self, from, state)
+        self.contacts[from].online = state
+        self.mesh.print('handle_online ' + self.contacts)
+        self.update_roster()
+    end,
+
+    'available_contacts' : function(self)
+        self.roster = [k for k,v in self.contacts where v.online]
+        return self.roster
+    end,
+
+    'update_roster' : function(self)
+        sys.ui_set(self.ui.roster, self.available_contacts())
     end,
 
     'handle_signin' : function(self, socket, mc3)
         if mc3.result then
-            self.roster = mc3.friends
+            self.contacts = mc3.contacts
             self.main()
         else
             sys.ui_set(self.ui.error, mc3.error)
         end
     end
-
 ]
 
 
@@ -77,7 +84,7 @@ client.select = function(self)
     self.ui = sys.ui(self,
                     ['horizontal',
 
-                        ['table', 'name':'roster', 'list':self.roster, 'logic':self.select, 'hfill':true, 'width':0.25],
+                        ['table', 'name':'roster', 'list':self.available_contacts(), 'logic':self.select, 'hfill':true, 'width':0.25],
                         ['vertical',
                             ['input', 'name':'transcript', 'multiline':true, 'readonly':true, 'hfill':true],
                             ['input', 'name':'sezme'],
@@ -102,7 +109,7 @@ client.handle_chat = function(self, chat, from)
         self.update_transcript(from, chat)
     else
         self.unread[from] = self.unread + [chat]
-        roster = [r+ '(' + self.unread[r].length + ')' for r in self.roster]
+        roster = [r+ '(' + self.unread[r].length + ')' for r in self.contacts where r.online]
         sys.ui_set(self.ui.roster, roster)
     end
 
@@ -116,11 +123,49 @@ client.send = function(self, other)
 
 end
 
+client.showContacts = function(self)
+
+    self.ui = sys.ui(self, ['vertical',
+                        ['table', 'name':'contacts', 'list':self.contacts.keys, 'logic':self.selectContact],
+                        ['button', 'text':'back to settings', 'logic':self.settings],
+                        self.w, self.h
+                    ])
+end
+
+client.selectContact = function(self)
+
+    row = sys.args()[1]
+    self.peer = self.contacts.keys[row]
+
+    sys.print('sp='+self.peer)
+
+    self.ui = sys.ui(self, ['vertical',
+                        ['label', 'text':self.peer],
+                        ['form', 'name'],
+                        ['button', 'text':'delete', 'logic':self.deleteContact],
+                        self.w, self.h
+                    ])
+
+    sys.form_set(['name':self.peer])
+
+end
+
+client.deleteContact = function(self)
+
+    self.contacts = self.contacts - self.peer
+    mc4 = ['event' : 'contacts', 'contacts' : self.contacts]
+    self.mesh.send_to('server', mc4)
+    self.settings()
+
+end
+
 client.settings = function(client)
 
     client.ui = sys.ui(client, ['vertical',
 
-                        ['form', 'display name', 'username', 'password'],
+                        ['form', 'server', 'display name', 'id', 'password'],
+
+                        ['button', 'text':'contacts', 'logic':client.showContacts],
 
                         ['horizontal',
                             ['button', 'text':'save',   'logic':sys.save(sys.form_get(client.ui), 'settings')],
@@ -137,8 +182,6 @@ end
 
 client.main = function(self)
 
-    self.mesh.print('roster=' + self.roster)
-
     self.ui = sys.ui(self, ['vertical',
 
                                 ['horizontal',
@@ -146,7 +189,7 @@ client.main = function(self)
                                     ['button', 'text':'settings', 'logic':self.settings],
                                 ],
 
-                                ['table', 'name':'roster', 'list':self.roster, 'logic':self.select],
+                                ['table', 'name':'roster', 'list':self.available_contacts(), 'logic':self.select],
 
                                 self.w, self.h
                             ])
@@ -158,7 +201,7 @@ client.add = function(self)
 
                     ['vertical',
 
-                        ['form', 'username'],
+                        ['form', 'id'],
 
                         ['horizontal',
                             ['button', 'text':'add',       'logic':self.added],
@@ -171,17 +214,17 @@ end
 
 
 client.added = function(self)
-    friend = sys.form_get(self.ui).username
-    self.roster = self.friends = self.friends + friend
-    sys.print('fz ' + friend + ' -- ' + self.friends)
-    mc4 = ['event' : 'friends', 'friends' : self.friends]
+    friend = sys.form_get(self.ui).id
+    self.contacts = self.contacts + [friend:[]]
+    sys.print('fz ' + friend + ' -- ' + self.contacts)
+    mc4 = ['event' : 'contacts', 'contacts' : self.contacts]
     self.mesh.send_to('server', mc4)
     self.main()
 end
 
 client.signin = function(self, entrance)
     self.entrance = entrance or 'signin'
-    id = sys.form_get(self.ui).username
+    id = sys.form_get(self.ui).id
     self.mesh = self.mesh.init(id, self.port, [self])
     self.mesh.connect()
 end
@@ -192,7 +235,7 @@ end
 
 client.ui_login = function(self)
     self.ui = sys.ui(self, ['vertical',
-                                 ['form', 'username', 'password'],
+                                 ['form', 'server', 'id', 'password'],
                                  ['horizontal',
                                      ['button', 'text':'signin', 'logic':self.signin],
                                      ['button', 'text':'signup', 'logic':self.signup],
