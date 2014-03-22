@@ -36,7 +36,7 @@ void repl()
         }
 
         struct byte_array *input = byte_array_from_string(str);
-        struct byte_array *program = build_string(input);
+        struct byte_array *program = build_string(input, NULL);
         if (!setjmp(trying))
             run(context, program, NULL, true);
         byte_array_del(input);
@@ -48,7 +48,7 @@ void repl()
 
 void interpret_string(struct context *context, struct byte_array *script)
 {
-    struct byte_array *program = build_string(script);
+    struct byte_array *program = build_string(script, NULL);
     execute_with(context, program, true);
     byte_array_del(program);
 }
@@ -64,7 +64,7 @@ void interpret_file(struct byte_array *path,
         if (NULL == source)            
             return;
         byte_array_append(args, source);
-        program = build_string(args);
+        program = build_string(args, path);
     }
     else
     {

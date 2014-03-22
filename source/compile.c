@@ -97,6 +97,7 @@ struct token {
     enum Lexeme lexeme;
     uint32_t number;
     struct byte_array *string;
+    const struct byte_array *path;
     uint32_t at_line;
 };
 
@@ -210,14 +211,16 @@ void display_lex_list() {
 
 // lex /////////////////////////////////////////////////////////////////////
 
-struct array* lex(struct byte_array *binput);
+struct array* lex(struct byte_array *binput, const struct byte_array *path);
 
-struct token *token_new(enum Lexeme lexeme, int at_line) {
+struct token *token_new(enum Lexeme lexeme, int at_line, const struct byte_array *path)
+{
     struct token *t = (struct token*)malloc(sizeof(struct token));
     t->lexeme = lexeme;
     t->string = NULL;
     t->number = 0;
     t->at_line = line;
+    t->path = path;
     return t;
 }
 
@@ -230,22 +233,23 @@ void token_del(struct token *t)
     free(t);
 }
 
-struct token *insert_token(enum Lexeme lexeme) {
-    struct token *token = token_new(lexeme, line);
+struct token *insert_token(enum Lexeme lexeme, const struct byte_array *path)
+{
+    struct token *token = token_new(lexeme, line, path);
     array_add(lex_list, token);
     return token;
 }
 
-int insert_token_number(const char *input, int i) {
-    struct token *token = insert_token(LEX_INTEGER);
+int insert_token_number(const char *input, int i, const struct byte_array *path)
+{
+    struct token *token = insert_token(LEX_INTEGER, path);
     token->number = atoi(&input[i]);
     //while (isdigit(input[i++]));
     for (; isdigit(input[i]); i++);
     return i;
 }
 
-bool isiden(char c)
-{
+bool isiden(char c) {
     return isalnum(c) || (c=='_');
 }
 
@@ -257,7 +261,7 @@ bool isKeyword(int n)
     return true;
 }
 
-int insert_token_string(enum Lexeme lexeme, const char* input, int i)
+int insert_token_string(enum Lexeme lexeme, const char* input, int i, const struct byte_array *path)
 {
     struct byte_array *string = byte_array_new();
     while ((lexeme==LEX_IDENTIFIER && isiden(input[i])) ||
@@ -278,16 +282,17 @@ int insert_token_string(enum Lexeme lexeme, const char* input, int i)
     }
 
     int end = i + (lexeme==LEX_STRING);
-    struct token *token = token_new(lexeme, line);
+    struct token *token = token_new(lexeme, line, path);
     token->string = string;
     array_add(lex_list, token);
     //display_token(token, 0);
     return end;
 }
 
-int insert_lexeme(int index) {
+int insert_lexeme(int index, const struct byte_array *path)
+{
     struct number_string sn = lexemes[index];
-    insert_token((enum Lexeme)sn.number);
+    insert_token((enum Lexeme)sn.number, path);
     return (int)strlen(sn.chars);
 }
 
@@ -310,7 +315,7 @@ int import(const char* input, int i)
         struct byte_array *imported = read_file(path, 0, 0);
         if (NULL != imported)
         {
-            lex(imported);
+            lex(imported, path);
             byte_array_del(imported);
         }
     }
@@ -320,7 +325,7 @@ int import(const char* input, int i)
     return i+1;
 }
 
-struct array* lex(struct byte_array *binput)
+struct array* lex(struct byte_array *binput, const struct byte_array *path)
 {
     int i=0,j;
     char c;
@@ -360,7 +365,7 @@ lexmore:
                     i = import(input, i);
                 else {
                     //DEBUGPRINT("lexeme=%d\n",lexeme);
-                    i += insert_lexeme(j);
+                    i += insert_lexeme(j, path);
                 }
                 goto lexmore;
             }
@@ -368,13 +373,13 @@ lexmore:
 
         c = input[i];
 
-        if (isdigit(c))         i = insert_token_number(input,i);
-        else if (isiden(c))     i = insert_token_string(LEX_IDENTIFIER, input, i);
+        if (isdigit(c))         i = insert_token_number(input,i, path);
+        else if (isiden(c))     i = insert_token_string(LEX_IDENTIFIER, input, i, path);
         else if (c == '\n')     { line++; i++; }
         else if (isspace(c))    i++;
-        else if (c=='\'')       i = insert_token_string(LEX_STRING, input, i+1);
+        else if (c=='\'')       i = insert_token_string(LEX_STRING, input, i+1, path);
         else
-            return (struct array*)exit_message("%s %c (%d) at line %d", ERROR_LEX, c, c, line);
+            return (struct array*)exit_message("%s %c (%d) at %s, line %d", ERROR_LEX, c, c, byte_array_to_string(path), line);
     }
 #ifdef DEBUG
     //display_lex_list();
@@ -1595,7 +1600,8 @@ struct byte_array *generate_program(struct symbol *root)
 
 // build ///////////////////////////////////////////////////////////////////
 
-struct byte_array *build_string(const struct byte_array *input) {
+struct byte_array *build_string(const struct byte_array *input, const struct byte_array *path)
+{
     null_check(input);
     struct byte_array *input_copy = byte_array_copy(input);
     // DEBUGPRINT("lex %d:\n", input_copy->length);
@@ -1604,11 +1610,12 @@ struct byte_array *build_string(const struct byte_array *input) {
     context = context_new(NULL, false, false);
     imports = map_new(context);
 
-    struct array* list = lex(input_copy);
+    struct array* list = lex(input_copy, path);
     struct symbol *tree = parse(list, 0);
     struct byte_array *result = generate_program(tree);
 
-    for (int i=0; i<lex_list->length; i++) {
+    for (int i=0; i<lex_list->length; i++)
+    {
         struct token *t = (struct token *)array_get(lex_list, i);
         token_del(t);
     }
@@ -1621,12 +1628,12 @@ struct byte_array *build_string(const struct byte_array *input) {
     return result;
 }
 
-struct byte_array *build_file(const struct byte_array* filename)
+struct byte_array *build_file(const struct byte_array* path)
 {
-    struct byte_array *input = read_file(filename, 0, 0);
+    struct byte_array *input = read_file(path, 0, 0);
     if (NULL == input)
         return byte_array_new();
-    struct byte_array *result = build_string(input);
+    struct byte_array *result = build_string(input, path);
     byte_array_del(input);
     return result;
 }

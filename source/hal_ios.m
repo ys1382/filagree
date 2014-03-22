@@ -286,7 +286,7 @@ static ViewController *theViewController = NULL;
     struct byte_array *args = byte_array_from_string("id='IOS'");
     struct byte_array *script = byte_array_concatenate(4, ui, mesh, args, client);
     
-    struct byte_array *program = build_string(script);
+    struct byte_array *program = build_string(script, NULL);
     execute(program);
 }
 
