@@ -231,10 +231,15 @@ void *hal_label(struct variable *uictx,
 
 /////// ViewController
 
-@interface ViewController : UIViewController
+@interface ViewController : UIViewController <UITextFieldDelegate>
 {
     Actionifier *actionifier;
+    IBOutlet UIScrollView *theScrollView;
+    UITextField *activeTextField;
 }
+
+
+- (IBAction)dismissKeyboard:(id)sender;
 
 + (ViewController *)sharedViewController;
 
@@ -243,6 +248,7 @@ void *hal_label(struct variable *uictx,
 static ViewController *theViewController = NULL;
 
 @implementation ViewController
+
 
 + (ViewController *)sharedViewController {
     return theViewController;
@@ -263,7 +269,17 @@ static ViewController *theViewController = NULL;
     [super viewDidLoad];
     theViewController = self;
     content = self.view;
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWasShown:)
+                                                 name:UIKeyboardDidShowNotification
+                                               object:nil];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillHide:)
+                                                 name:UIKeyboardWillHideNotification
+                                               object:nil];
+
     struct byte_array *ui = read_resource("ui.fg");
     struct byte_array *mesh = read_resource("mesh.fg");
     struct byte_array *client = read_resource("im_client.fg");
@@ -274,12 +290,6 @@ static ViewController *theViewController = NULL;
     execute(program);
 }
 
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
 	CGFloat w = content.bounds.size.width;
@@ -287,6 +297,49 @@ static ViewController *theViewController = NULL;
     NSLog(@"resized to %f,%f", w, h);
 
     [self->actionifier resized];
+}
+
+/////// handle keyboard appearing
+
+- (void)keyboardWasShown:(NSNotification *)notification
+{
+    
+    // Step 1: Get the size of the keyboard.
+    CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
+    
+    
+    // Step 2: Adjust the bottom content inset of your scroll view by the keyboard height.
+    UIEdgeInsets contentInsets = UIEdgeInsetsMake(0.0, 0.0, keyboardSize.height, 0.0);
+    theScrollView.contentInset = contentInsets;
+    theScrollView.scrollIndicatorInsets = contentInsets;
+    
+    
+    // Step 3: Scroll the target text field into view.
+    CGRect aRect = self.view.frame;
+    aRect.size.height -= keyboardSize.height;
+    if (!CGRectContainsPoint(aRect, activeTextField.frame.origin) ) {
+        CGPoint scrollPoint = CGPointMake(0.0, activeTextField.frame.origin.y - (keyboardSize.height-15));
+        [theScrollView setContentOffset:scrollPoint animated:YES];
+    }
+}
+
+- (void) keyboardWillHide:(NSNotification *)notification
+{
+    UIEdgeInsets contentInsets = UIEdgeInsetsZero;
+    theScrollView.contentInset = contentInsets;
+    theScrollView.scrollIndicatorInsets = contentInsets;
+}
+
+- (void)textFieldDidBeginEditing:(UITextField *)textField {
+    self->activeTextField = textField;
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField {
+    self->activeTextField = nil;
+}
+
+- (IBAction)dismissKeyboard:(id)sender {
+    [activeTextField resignFirstResponder];
 }
 
 @end // ViewController implementation
@@ -362,10 +415,12 @@ void *hal_input(struct variable *uictx,
         textField = [[UITextField alloc] initWithFrame:rect];
         [(UITextField*)textField setEnabled:!readonly];
         [(UITextField*)textField setBorderStyle:UITextBorderStyleBezel];
+        [(UITextField*)textField setDelegate:theViewController];
     }
 //    if (NULL != string)
 //        ((UITextView*)textField).text = string;
 
+    
     [content addSubview:textField];
     return (void *)CFBridgingRetain(textField);
 }

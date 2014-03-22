@@ -244,6 +244,8 @@ client.ui_login = function(self)
                             ])
 end
 
-client.ui_login()
+#client.ui_login()
+client.select()
+
 sys.loop()
 
