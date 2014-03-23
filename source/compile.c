@@ -27,6 +27,7 @@
 #define ESCAPED_QUOTE    '\''
 
 uint32_t line;
+const struct byte_array *current_path;
 struct array* lex_list;
 struct map *imports = NULL;
 //struct byte_array *read_file(const struct byte_array *filename);
@@ -620,7 +621,7 @@ void display_symbol(const struct symbol *symbol, int depth)
 
 #define LOOKAHEAD (lookahead(0))
 #define FETCH_OR_QUIT(x) if (!fetch(x)) return NULL;
-#define OR_ERROR(x) { exit_message("missing %s at line %d", NUM_TO_STRING(lexemes, x), line); return NULL; }
+#define OR_ERROR(x) { exit_message("missing %s in %s at line %d", NUM_TO_STRING(lexemes, x), byte_array_to_string(current_path), line); return NULL; }
 #define FETCH_OR_ERROR(x) if (!fetch(x)) OR_ERROR(x);
 
 
@@ -639,6 +640,7 @@ struct token *fetch(enum Lexeme lexeme)
         return NULL;
 
     struct token *token = (struct token*)parse_list->data[parse_index];
+    current_path = token->path;
     if (token->lexeme != lexeme) {
         return NULL;
     }
