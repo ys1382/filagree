@@ -27,9 +27,10 @@
 #define ESCAPED_QUOTE    '\''
 
 uint32_t line;
-const struct byte_array *current_path;
-struct array* lex_list;
-struct map *imports = NULL;
+//const struct byte_array *current_path;
+static struct token *current_token;
+static struct array* lex_list;
+static struct map *imports = NULL;
 //struct byte_array *read_file(const struct byte_array *filename);
 
 static struct context *context;
@@ -621,7 +622,7 @@ void display_symbol(const struct symbol *symbol, int depth)
 
 #define LOOKAHEAD (lookahead(0))
 #define FETCH_OR_QUIT(x) if (!fetch(x)) return NULL;
-#define OR_ERROR(x) { exit_message("missing %s in %s at line %d", NUM_TO_STRING(lexemes, x), byte_array_to_string(current_path), line); return NULL; }
+#define OR_ERROR(x) { exit_message("missing %s in %s at line %d", NUM_TO_STRING(lexemes, x), byte_array_to_string(current_token->path), line); return NULL; }
 #define FETCH_OR_ERROR(x) if (!fetch(x)) OR_ERROR(x);
 
 
@@ -640,14 +641,15 @@ struct token *fetch(enum Lexeme lexeme)
         return NULL;
 
     struct token *token = (struct token*)parse_list->data[parse_index];
-    current_path = token->path;
+//    current_path = token->path;
     if (token->lexeme != lexeme) {
         return NULL;
     }
 
-    line = token->at_line;
+    //line = token->at_line;
     parse_index++;
     //display_token(token, 0);
+    current_token = token;
     return token;
 }
 
@@ -690,7 +692,8 @@ struct symbol *symbol_fetch(enum Nonterminal n, enum Lexeme goal, ...)
     struct token *token = (struct token*)parse_list->data[parse_index];
     assert_message(token!=0, ERROR_NULL);
     enum Lexeme lexeme = token->lexeme;
-    line = token->at_line;
+    //line = token->at_line;
+    current_token = token;
 
     struct symbol *symbol = NULL;
 
@@ -1548,6 +1551,27 @@ void generate_throw(struct byte_array *code, struct symbol *root)
     generate_step(code, 1, VM_TRO);
 }
 
+void generate_stack_trace(struct byte_array *code, const struct token *token)
+{
+    static struct byte_array *path = NULL;
+    if (NULL == token)
+        return;
+
+    if (!byte_array_equals(path, token->path))
+    {
+        path = byte_array_copy(token->path);
+        generate_step(code, 1, VM_FIL);
+        serial_encode_string(code, token->path);
+        line = -1;
+    }
+    if (line != token->at_line)
+    {
+        line = token->at_line;
+        generate_step(code, 1, VM_LIN);
+        serial_encode_int(code, token->at_line);
+    }
+}
+
 typedef void(generator)(struct byte_array*, struct symbol*);
 
 struct byte_array *generate_code(struct byte_array *code, struct symbol *root)
@@ -1557,6 +1581,9 @@ struct byte_array *generate_code(struct byte_array *code, struct symbol *root)
     generator *g = NULL;
 
     //DEBUGPRINT("generate_code %s\n", nonterminals[root->nonterminal]);
+
+    generate_stack_trace(code, root->token);
+    
     switch(root->nonterminal) {
         case SYMBOL_NIL:            g = generate_nil;           break;
         case SYMBOL_PAIR:           g = generate_pair;          break;

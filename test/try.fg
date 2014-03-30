@@ -1,9 +1,3 @@
-a = [2,3,4]
-
-a = a + 7
-
-import 'try2'
-import 'try3'
-
-a = a - 3
-sys.print(a)
+x = 7
+y = 8
+z = w

@@ -75,6 +75,16 @@ void *vm_exit_message(struct context *context, const char *format, ...)
     return NULL;
 }
 
+
+void print_stack_trace(struct context *context)
+{
+    struct program_state *state;
+    for (int i=0; (state = (struct program_state*)stack_peek(context->program_stack, i)); i++)
+        if (NULL != state->current_path)
+            printf("\tat %s line %d\n", byte_array_to_string(state->current_path), state->current_line);
+}
+
+
 void vm_assert(struct context *context, bool assertion, const char *format, ...)
 {
     if (!assertion) {
@@ -85,6 +95,8 @@ void vm_assert(struct context *context, bool assertion, const char *format, ...)
         set_error(context, format, list);
         va_end(list);
 
+        print_stack_trace(context);
+        
         vm_exit();
     }
 }
@@ -101,6 +113,8 @@ struct program_state *program_state_new(struct context *context, struct map *env
     struct program_state *state = (struct program_state*)malloc(sizeof(struct program_state));
     state->named_variables = env ? map_copy(context, env) : map_new(context);
     state->args = NULL;
+    state->current_path = NULL;
+    state->current_line = -1;
     stack_push(context->program_stack, state);
     //printf("\n>%" PRIu16 " - push state %p onto %p->%p\n", current_thread_id(), state, context, context->program_stack);
 
@@ -355,6 +369,11 @@ const struct number_string opcodes[] = {
     {VM_ITR,    "ITR"},
     {VM_COM,    "COM"},
     {VM_TRY,    "TRY"},
+    {VM_TRO,    "TRO"},
+    {VM_STX,    "STX"},
+    {VM_PTX,    "PTX"},
+    {VM_FIL,    "FIL"},
+    {VM_LIN,    "LIN"},
 };
 
 const char* indentation(struct context *context)
@@ -561,6 +580,20 @@ static void method(struct context *context, struct byte_array *program)
     func_call(context, VM_MET, program, indexable);
 }
 
+static void source_file(struct context *context, struct byte_array *program)
+{
+    struct program_state *state = (struct program_state*)stack_peek(context->program_stack, 0);
+    state->current_path = serial_decode_string(program);
+    DEBUGSPRINT("FIL %s", byte_array_to_string(state->current_path));
+}
+                
+static void source_line(struct context *context, struct byte_array *program)
+{
+    struct program_state *state = (struct program_state*)stack_peek(context->program_stack, 0);
+    state->current_line = serial_decode_int(program);
+    DEBUGSPRINT("LIN %d", state->current_line);
+}
+                
 static void push_list(struct context *context, struct byte_array *program)
 {
     int32_t num_items = serial_decode_int(program);
@@ -752,8 +785,8 @@ struct variable *find_var(struct context *context, struct variable *key)
     if ((NULL == v) && context->singleton->callback)
         v = variable_map_get(context, context->singleton->callback, key);
 
-    assert_message(v, "\n>%" PRIu16 " - could not find %s in state %p from program stack %p",
-                   current_thread_id(), byte_array_to_string(key->str), state, context->program_stack);
+    vm_assert(context, v, "\n>%" PRIu16 " - could not find %s ", //in state %p from program stack %p",
+              current_thread_id(), byte_array_to_string(key->str));//, state, context->program_stack);
 
     //DEBUGPRINT("\n>%" PRIu16 " - found %s in %p from %p", current_thread_id(), byte_array_to_string(key->str), state, context->program_stack);
 
@@ -1544,6 +1577,8 @@ bool run(struct context *context,
             case VM_PTX:
             case VM_PUT:    list_put(context, inst);                        break;
             case VM_MET:    method(context, program);                       break;
+            case VM_FIL:    source_file(context, program);                  break;
+            case VM_LIN:    source_line(context, program);                  break;
             default:
                 vm_exit_message(context, ERROR_OPCODE);
                 break;

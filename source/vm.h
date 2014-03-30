@@ -45,6 +45,8 @@ struct program_state
     struct variable *args;              // function arguments
     struct map *named_variables;        // variables in scope
     uint32_t pc;                        // program counter
+    struct byte_array *current_path;
+    int32_t current_line;               // for stack trace;
 };
 
 enum Opcode {
@@ -95,6 +97,8 @@ enum Opcode {
     VM_TRO, // throw
     VM_STX, // assignment in expression
     VM_PTX, // put in expression
+    VM_FIL, // source file name
+    VM_LIN, // source line number
 };
 
 #define ERROR_OPCODE "unknown opcode"
