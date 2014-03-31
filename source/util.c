@@ -22,7 +22,7 @@
 
 #define MESSAGE_MAX 100
 
-const char *make_message(const char *format, va_list ap)
+char *make_message(const char *format, va_list ap)
 {
     static char message[MESSAGE_MAX];
     vsnprintf(message, MESSAGE_MAX, format, ap);

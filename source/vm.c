@@ -58,8 +58,16 @@ void set_error(struct context *context, const char *format, va_list list)
         return;
     }
     null_check(format);
-    const char *message = make_message(format, list);
-    printf("\n>%" PRIu16 " - vm_error: %s\n", current_thread_id(), message);
+    char *message = make_message(format, list);
+    strcat(message, "\n");
+
+    struct program_state *state;
+    for (int i=0; (state = (struct program_state*)stack_peek(context->program_stack, i)); i++)
+        if (NULL != state->current_path)
+            sprintf(message + strlen(message), "\tat %s line %d\n", byte_array_to_string(state->current_path), state->current_line);
+
+    
+    //printf("\n>%" PRIu16 " - vm_error: %s\n", current_thread_id(), message);
     context->error = variable_new_err(context, message);
 }
 
@@ -75,16 +83,6 @@ void *vm_exit_message(struct context *context, const char *format, ...)
     return NULL;
 }
 
-
-void print_stack_trace(struct context *context)
-{
-    struct program_state *state;
-    for (int i=0; (state = (struct program_state*)stack_peek(context->program_stack, i)); i++)
-        if (NULL != state->current_path)
-            printf("\tat %s line %d\n", byte_array_to_string(state->current_path), state->current_line);
-}
-
-
 void vm_assert(struct context *context, bool assertion, const char *format, ...)
 {
     if (!assertion) {
@@ -94,9 +92,6 @@ void vm_assert(struct context *context, bool assertion, const char *format, ...)
         va_start(list, format);
         set_error(context, format, list);
         va_end(list);
-
-        print_stack_trace(context);
-        
         vm_exit();
     }
 }
@@ -116,7 +111,7 @@ struct program_state *program_state_new(struct context *context, struct map *env
     state->current_path = NULL;
     state->current_line = -1;
     stack_push(context->program_stack, state);
-    //printf("\n>%" PRIu16 " - push state %p onto %p->%p\n", current_thread_id(), state, context, context->program_stack);
+    printf("\n>%" PRIu16 " - push state %p onto %p->%p\n", current_thread_id(), state, context, context->program_stack);
 
     return state;
 }
@@ -584,7 +579,7 @@ static void source_file(struct context *context, struct byte_array *program)
 {
     struct program_state *state = (struct program_state*)stack_peek(context->program_stack, 0);
     state->current_path = serial_decode_string(program);
-    DEBUGSPRINT("FIL %s", byte_array_to_string(state->current_path));
+    DEBUGSPRINT("FIL %s for %p", byte_array_to_string(state->current_path), state);
 }
                 
 static void source_line(struct context *context, struct byte_array *program)
@@ -786,7 +781,7 @@ struct variable *find_var(struct context *context, struct variable *key)
         v = variable_map_get(context, context->singleton->callback, key);
 
     vm_assert(context, v, "\n>%" PRIu16 " - could not find %s ", //in state %p from program stack %p",
-              current_thread_id(), byte_array_to_string(key->str));//, state, context->program_stack);
+              current_thread_id(), byte_array_to_string(key->str));
 
     //DEBUGPRINT("\n>%" PRIu16 " - found %s in %p from %p", current_thread_id(), byte_array_to_string(key->str), state, context->program_stack);
 
@@ -1597,7 +1592,7 @@ done:
     if (!in_state)
     {
         struct program_state *s = stack_pop(context->program_stack);
-        //printf("\n>%" PRIu16 " - pop state %p from program stack %p\n", current_thread_id(), s, context->program_stack);
+        printf("\n>%" PRIu16 " - pop state %p from program stack %p\n", current_thread_id(), s, context->program_stack);
         assert_message(s == state, "state variable doesn't match");
         program_state_del(context, state);
     }

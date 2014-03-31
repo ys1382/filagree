@@ -29,7 +29,7 @@
 #define ITOA_LEN    19 // enough for 64-bit integer
 
 extern jmp_buf trying;
-const char *make_message(const char *fmt, va_list ap);
+char *make_message(const char *fmt, va_list ap);
 void assert_message(bool assertion, const char *format, ...);
 void *exit_message(const char *format, ...);
 void null_check(const void* p);
