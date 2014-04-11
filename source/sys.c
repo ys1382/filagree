@@ -149,7 +149,7 @@ struct variable *sys_exit(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     int32_t ret = param_int(args, 1);
-    DEBUGPRINT("\nexit %d\n", ret);
+    printf("\nexit %d\n", ret);
     exit(ret);
     return NULL;
 }
@@ -215,6 +215,7 @@ struct variable *sys_forkexec(struct context *context)
     {
         if (execv(app, argv) < 0)
             perror("execv");
+        printf("fork child exit\n");
         exit(0);
     }
     else if (wait) // parent waits for child to finish

@@ -50,6 +50,15 @@ static void vm_exit() {
     longjmp(trying, 1);
 }
 
+void print_stack_trace(struct context *context)
+{
+    struct program_state *state;
+    for (int i=0; (state = (struct program_state*)stack_peek(context->program_stack, i)); i++)
+        if (NULL != state->current_path)
+            printf("\tat %s line %d\n", byte_array_to_string(state->current_path), state->current_line);
+}
+
+
 void set_error(struct context *context, const char *format, va_list list)
 {
     if (NULL == context)
@@ -61,6 +70,8 @@ void set_error(struct context *context, const char *format, va_list list)
     const char *message = make_message(format, list);
     printf("\n>%" PRIu16 " - vm_error: %s\n", current_thread_id(), message);
     context->error = variable_new_err(context, message);
+    
+    print_stack_trace(context);
 }
 
 void *vm_exit_message(struct context *context, const char *format, ...)
@@ -76,15 +87,6 @@ void *vm_exit_message(struct context *context, const char *format, ...)
 }
 
 
-void print_stack_trace(struct context *context)
-{
-    struct program_state *state;
-    for (int i=0; (state = (struct program_state*)stack_peek(context->program_stack, i)); i++)
-        if (NULL != state->current_path)
-            printf("\tat %s line %d\n", byte_array_to_string(state->current_path), state->current_line);
-}
-
-
 void vm_assert(struct context *context, bool assertion, const char *format, ...)
 {
     if (!assertion) {
@@ -94,8 +96,6 @@ void vm_assert(struct context *context, bool assertion, const char *format, ...)
         va_start(list, format);
         set_error(context, format, list);
         va_end(list);
-
-        print_stack_trace(context);
         
         vm_exit();
     }

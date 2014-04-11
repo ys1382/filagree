@@ -20,21 +20,25 @@ void *hal_window(struct context *context,
                  struct variable *logic)                { stub("hal_window"); return NULL; }
 void *hal_label (struct variable *uictx,
                  int32_t *w, int32_t *h,
-                 const char *str)                       { stub("hal_label"); return NULL; }
+                 const char *str,
+                 void *label)                           { stub("hal_label"); return NULL; }
 void *hal_input (struct variable *uictx,
                  int32_t *w, int32_t *h,
                  const char *hint,
                  bool multiline,
-                 bool readonly)                        { stub("hal_input"); return NULL; }
+                 bool readonly,
+                 void *input)                           { stub("hal_input"); return NULL; }
 void *hal_button(struct context *context,
                  struct variable *uictx,
                  int32_t *w, int32_t *h,
                  struct variable *logic,
-                 const char *str, const char *img)      { stub("hal_button"); return NULL; }
+                 const char *str, const char *img,
+                 void *button)                          { stub("hal_button"); return NULL; }
 void *hal_table (struct context *context,
                  struct variable *uictx,
                  struct variable *list,
-                 struct variable *logic)                { stub("hal_table"); return NULL; }
+                 struct variable *logic,
+                 void *table)                           { stub("hal_table"); return NULL; }
 bool hal_alert (const char *title, const char *message) { stub("hal_alert"); return true; }
 
 void hal_sound_url(const char *address)                 { stub("hal_sound_url"); }

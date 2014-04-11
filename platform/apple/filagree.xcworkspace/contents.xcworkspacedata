@@ -11,9 +11,6 @@
       location = "group:iOSfgui/iOSfgui.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:iOSchat/iOSchat.xcodeproj">
-   </FileRef>
-   <FileRef
       location = "group:OSXcocoa/OSXcocoa.xcodeproj">
    </FileRef>
 </Workspace>

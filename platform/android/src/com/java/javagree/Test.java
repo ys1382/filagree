@@ -28,8 +28,10 @@ public class Test {
 	void test3(Javagree jg, HalAndroid sys) {
 		String s1 = sys.read("mesh.fg");
 		String s2 = sys.read("ui.fg");
-		String s3 = sys.read("sync/sync.fg");
-		String s4 = sys.read("sync/sync_client.fg");
+//		String s3 = sys.read("sync/sync.fg");
+//		String s4 = sys.read("sync/sync_client.fg");
+		String s3 = "";
+		String s4 = sys.read("im/im_client.fg");
 		String source = s1 + s2 + s3 +"id='Android' host='10.0.2.2'" + s4;
 		jg.eval(source);
 	}

@@ -587,7 +587,7 @@ JNIEXPORT jint JNICALL Java_Javagree_evalSource(
 {
     // compile source to bytecode
     struct byte_array *program2 = byte_array_from_jstring(env, program);
-    struct byte_array *program3 = build_string(program2);
+    struct byte_array *program3 = build_string(program2, NULL);
 
     return eval(env, caller, callback, name, program3, sys, jargs);
 }
