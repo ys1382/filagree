@@ -1,0 +1,220 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXFileReference section */
+		88A0BEF918F7B64F005302C7 /* .DS_Store */ = {isa = PBXFileReference; lastKnownFileType = file; path = .DS_Store; sourceTree = "<group>"; };
+		88A0BEFA18F7B64F005302C7 /* compile.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = compile.c; sourceTree = "<group>"; };
+		88A0BEFB18F7B64F005302C7 /* compile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = compile.h; sourceTree = "<group>"; };
+		88A0BEFC18F7B64F005302C7 /* compile.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = compile.o; sourceTree = "<group>"; };
+		88A0BEFD18F7B64F005302C7 /* filagree */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = filagree; sourceTree = "<group>"; };
+		88A0BEFE18F7B64F005302C7 /* file.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = file.c; sourceTree = "<group>"; };
+		88A0BEFF18F7B64F005302C7 /* file.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = file.h; sourceTree = "<group>"; };
+		88A0BF0018F7B64F005302C7 /* file.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = file.o; sourceTree = "<group>"; };
+		88A0BF0118F7B64F005302C7 /* hal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hal.h; sourceTree = "<group>"; };
+		88A0BF0218F7B64F005302C7 /* hal_ios.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = hal_ios.m; sourceTree = "<group>"; };
+		88A0BF0318F7B64F005302C7 /* hal_linux.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = hal_linux.c; sourceTree = "<group>"; };
+		88A0BF0418F7B64F005302C7 /* hal_osx.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = hal_osx.m; sourceTree = "<group>"; };
+		88A0BF0518F7B64F005302C7 /* hal_osx.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = hal_osx.o; sourceTree = "<group>"; };
+		88A0BF0618F7B64F005302C7 /* hal_stub.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = hal_stub.c; sourceTree = "<group>"; };
+		88A0BF0718F7B64F005302C7 /* hal_windows.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = hal_windows.c; sourceTree = "<group>"; };
+		88A0BF0818F7B64F005302C7 /* interpret.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = interpret.c; sourceTree = "<group>"; };
+		88A0BF0918F7B64F005302C7 /* interpret.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = interpret.h; sourceTree = "<group>"; };
+		88A0BF0A18F7B64F005302C7 /* interpret.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = interpret.o; sourceTree = "<group>"; };
+		88A0BF0B18F7B64F005302C7 /* javagree.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = javagree.c; sourceTree = "<group>"; };
+		88A0BF0C18F7B64F005302C7 /* Javagree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Javagree.h; sourceTree = "<group>"; };
+		88A0BF0D18F7B64F005302C7 /* Javagree.java */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.java; path = Javagree.java; sourceTree = "<group>"; };
+		88A0BF0E18F7B64F005302C7 /* makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = makefile; sourceTree = "<group>"; };
+		88A0BF0F18F7B64F005302C7 /* node.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = node.c; sourceTree = "<group>"; };
+		88A0BF1018F7B64F005302C7 /* node.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = node.h; sourceTree = "<group>"; };
+		88A0BF1118F7B64F005302C7 /* node.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = node.o; sourceTree = "<group>"; };
+		88A0BF1218F7B64F005302C7 /* serial.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = serial.c; sourceTree = "<group>"; };
+		88A0BF1318F7B64F005302C7 /* serial.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = serial.h; sourceTree = "<group>"; };
+		88A0BF1418F7B64F005302C7 /* serial.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = serial.o; sourceTree = "<group>"; };
+		88A0BF1518F7B64F005302C7 /* struct.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = struct.c; sourceTree = "<group>"; };
+		88A0BF1618F7B64F005302C7 /* struct.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = struct.h; sourceTree = "<group>"; };
+		88A0BF1718F7B64F005302C7 /* struct.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = struct.o; sourceTree = "<group>"; };
+		88A0BF1818F7B64F005302C7 /* sys.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sys.c; sourceTree = "<group>"; };
+		88A0BF1918F7B64F005302C7 /* sys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sys.h; sourceTree = "<group>"; };
+		88A0BF1A18F7B64F005302C7 /* sys.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = sys.o; sourceTree = "<group>"; };
+		88A0BF1B18F7B64F005302C7 /* util.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = util.c; sourceTree = "<group>"; };
+		88A0BF1C18F7B64F005302C7 /* util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
+		88A0BF1D18F7B64F005302C7 /* util.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = util.o; sourceTree = "<group>"; };
+		88A0BF1E18F7B64F005302C7 /* variable.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = variable.c; sourceTree = "<group>"; };
+		88A0BF1F18F7B64F005302C7 /* variable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = variable.h; sourceTree = "<group>"; };
+		88A0BF2018F7B64F005302C7 /* variable.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = variable.o; sourceTree = "<group>"; };
+		88A0BF2118F7B64F005302C7 /* vm.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = vm.c; sourceTree = "<group>"; };
+		88A0BF2218F7B64F005302C7 /* vm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vm.h; sourceTree = "<group>"; };
+		88A0BF2318F7B64F005302C7 /* vm.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = vm.o; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		88A0BEF318F7B64F005302C7 = {
+			isa = PBXGroup;
+			children = (
+				88A0BEF918F7B64F005302C7 /* .DS_Store */,
+				88A0BEFA18F7B64F005302C7 /* compile.c */,
+				88A0BEFB18F7B64F005302C7 /* compile.h */,
+				88A0BEFC18F7B64F005302C7 /* compile.o */,
+				88A0BEFD18F7B64F005302C7 /* filagree */,
+				88A0BEFE18F7B64F005302C7 /* file.c */,
+				88A0BEFF18F7B64F005302C7 /* file.h */,
+				88A0BF0018F7B64F005302C7 /* file.o */,
+				88A0BF0118F7B64F005302C7 /* hal.h */,
+				88A0BF0218F7B64F005302C7 /* hal_ios.m */,
+				88A0BF0318F7B64F005302C7 /* hal_linux.c */,
+				88A0BF0418F7B64F005302C7 /* hal_osx.m */,
+				88A0BF0518F7B64F005302C7 /* hal_osx.o */,
+				88A0BF0618F7B64F005302C7 /* hal_stub.c */,
+				88A0BF0718F7B64F005302C7 /* hal_windows.c */,
+				88A0BF0818F7B64F005302C7 /* interpret.c */,
+				88A0BF0918F7B64F005302C7 /* interpret.h */,
+				88A0BF0A18F7B64F005302C7 /* interpret.o */,
+				88A0BF0B18F7B64F005302C7 /* javagree.c */,
+				88A0BF0C18F7B64F005302C7 /* Javagree.h */,
+				88A0BF0D18F7B64F005302C7 /* Javagree.java */,
+				88A0BF0E18F7B64F005302C7 /* makefile */,
+				88A0BF0F18F7B64F005302C7 /* node.c */,
+				88A0BF1018F7B64F005302C7 /* node.h */,
+				88A0BF1118F7B64F005302C7 /* node.o */,
+				88A0BF1218F7B64F005302C7 /* serial.c */,
+				88A0BF1318F7B64F005302C7 /* serial.h */,
+				88A0BF1418F7B64F005302C7 /* serial.o */,
+				88A0BF1518F7B64F005302C7 /* struct.c */,
+				88A0BF1618F7B64F005302C7 /* struct.h */,
+				88A0BF1718F7B64F005302C7 /* struct.o */,
+				88A0BF1818F7B64F005302C7 /* sys.c */,
+				88A0BF1918F7B64F005302C7 /* sys.h */,
+				88A0BF1A18F7B64F005302C7 /* sys.o */,
+				88A0BF1B18F7B64F005302C7 /* util.c */,
+				88A0BF1C18F7B64F005302C7 /* util.h */,
+				88A0BF1D18F7B64F005302C7 /* util.o */,
+				88A0BF1E18F7B64F005302C7 /* variable.c */,
+				88A0BF1F18F7B64F005302C7 /* variable.h */,
+				88A0BF2018F7B64F005302C7 /* variable.o */,
+				88A0BF2118F7B64F005302C7 /* vm.c */,
+				88A0BF2218F7B64F005302C7 /* vm.h */,
+				88A0BF2318F7B64F005302C7 /* vm.o */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		88A0BEF818F7B64F005302C7 /* source */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 88A0BF2418F7B64F005302C7 /* Build configuration list for PBXLegacyTarget "source" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = /Users/yusuf/make/filagree/source;
+			dependencies = (
+			);
+			name = source;
+			passBuildSettingsInEnvironment = 1;
+			productName = source;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		88A0BEF418F7B64F005302C7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+			};
+			buildConfigurationList = 88A0BEF718F7B64F005302C7 /* Build configuration list for PBXProject "source" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 88A0BEF318F7B64F005302C7;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				88A0BEF818F7B64F005302C7 /* source */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		88A0BEF518F7B64F005302C7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx10.6;
+			};
+			name = Debug;
+		};
+		88A0BEF618F7B64F005302C7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SDKROOT = macosx10.6;
+			};
+			name = Release;
+		};
+		88A0BF2518F7B64F005302C7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = source;
+			};
+			name = Debug;
+		};
+		88A0BF2618F7B64F005302C7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = source;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		88A0BEF718F7B64F005302C7 /* Build configuration list for PBXProject "source" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				88A0BEF518F7B64F005302C7 /* Debug */,
+				88A0BEF618F7B64F005302C7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		88A0BF2418F7B64F005302C7 /* Build configuration list for PBXLegacyTarget "source" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				88A0BF2518F7B64F005302C7 /* Debug */,
+				88A0BF2618F7B64F005302C7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 88A0BEF418F7B64F005302C7 /* Project object */;
+}
