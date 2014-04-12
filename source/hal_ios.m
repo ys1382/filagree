@@ -1,5 +1,4 @@
 #import <Foundation/Foundation.h>
-#import <objc/objc-class.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,8 +19,6 @@
 #include "file.h"
 #include "sys.h"
 #include "compile.h"
-#include "ViewController.h"
-
 
 #define MARGIN_X 10
 #define MARGIN_Y 30
