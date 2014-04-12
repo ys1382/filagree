@@ -4,7 +4,6 @@
 //
 
 #import "MasterViewController.h"
-
 #import "DetailViewController.h"
 
 @interface MasterViewController () {
@@ -27,14 +26,17 @@
 {
     [super viewDidLoad];
     self.navigationItem.leftBarButtonItem = self.editButtonItem;
-    [self notEditing];
     self.detailViewController = (DetailViewController *)[[self.splitViewController.viewControllers lastObject] topViewController];
+    [self setEditing:false];
 }
 
-- (void)notEditing {
-    NSLog(@"not editing");
-    UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(insertNewObject:)];
-    self.navigationItem.rightBarButtonItem = addButton;
+- (void)setEditing:(BOOL)editing animated:(BOOL)animated {
+    NSLog(@"Editing %i", editing);
+    if (editing)
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Signout" style:UIBarButtonItemStylePlain target:self action:@selector(signout:)];
+    else
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(insertNewObject:)];
+    [super setEditing:editing animated:animated];
 }
 
 - (void)insertNewObject:(id)sender
@@ -61,23 +63,7 @@
     [self.navigationController popViewControllerAnimated:TRUE];
 }
 
-- (void)toggleEdit:(UITableView *)tableView {
-    static BOOL editing = false;
-    if (tableView.editing == editing)
-        return;
-
-    if (tableView.editing) {
-        NSLog(@"editing");
-        UIBarButtonItem *exitButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemTrash target:self action:@selector(signout:)];
-        self.navigationItem.rightBarButtonItem = exitButton;
-    } else {
-        [self notEditing];
-    }
-    editing = tableView.editing;
-}
-
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-   // [self toggleEdit:tableView];
     return YES;
 }
 
