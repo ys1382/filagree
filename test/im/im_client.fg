@@ -222,17 +222,19 @@ client.added = function(self)
     self.main()
 end
 
-client.signin = function(self, entrance)
+client.signin = function(self, id, password, entrance)
     self.entrance = entrance or 'signin'
-    id = sys.form_get(self.ui).id
+    if (not id) and (not password) then
+        id = sys.form_get(self.ui).id
+    end
     self.mesh = self.mesh.init(id, self.port, [self])
     self.mesh.connect()
 end
 
-client.signup = function(self)
-    self.signin('signup')
+client.signup = function(self, username, password)
+    self.signin(username, password, 'signup')
 end
-
+/*
 client.ui_login = function(self)
     self.ui = sys.ui(self, ['vertical',
                                  ['form', 'server', 'id', 'password'],
@@ -244,8 +246,9 @@ client.ui_login = function(self)
                             ])
 end
 
-#client.ui_login()
+client.ui_login()
 client.select()
+*/
 
 sys.loop()
 

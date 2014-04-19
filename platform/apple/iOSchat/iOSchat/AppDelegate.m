@@ -2,13 +2,11 @@
 //  AppDelegate.m
 //  iOSchat
 //
-//  Created by Yusuf on 4/10/14.
-//  Copyright (c) 2014 fisil. All rights reserved.
-//
 
 #import "AppDelegate.h"
 
 @implementation AppDelegate
+
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -16,7 +14,7 @@
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
         UISplitViewController *splitViewController = (UISplitViewController *)self.window.rootViewController;
         UINavigationController *navigationController = [splitViewController.viewControllers lastObject];
-        splitViewController.delegate = (id)navigationController.topViewController;
+        splitViewController.delegate = (id)navigationController.topViewController;    
     }
     return YES;
 }

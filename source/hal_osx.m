@@ -22,13 +22,7 @@
 #include "struct.h"
 #include "file.h"
 #include "node.h"
-
-
-NSString *byte_array_to_nsstring(const struct byte_array *str)
-{
-    const char *str2 = byte_array_to_string(str);
-    return [NSString stringWithUTF8String:str2];
-}
+#include "hal_apple.h"
 
 
 @interface Actionifier  : NSObject

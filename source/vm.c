@@ -1504,6 +1504,8 @@ bool run(struct context *context,
         {
             if (state == NULL)
                 state = (struct program_state*)stack_peek(context->program_stack, 0);
+            if (state == NULL)
+                state = program_state_new(context, env);
             env = state->named_variables; // use the caller's variable set in the new state
         }
         else // new state on program stack

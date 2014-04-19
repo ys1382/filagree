@@ -12,6 +12,29 @@
 #define FG_MAX_INPUT   256
 #define ERROR_USAGE    "usage: filagree [file]"
 
+
+// run a file, using the same context
+struct context *interpret_file_with(struct context *context, struct byte_array *path)
+{
+    if (NULL == context)
+        context = context_new(NULL, true, true);
+    
+    struct byte_array *script = read_file(path, 0, 0);
+    assert_message(NULL != script, "file not found: %s\n", byte_array_to_string(path));
+    interpret_string(context, script);
+    return context;
+}
+
+// run a script, using the same context
+struct context *interpret_string_with(struct context *context, struct byte_array *script)
+{
+    if (NULL == context)
+        context = context_new(NULL, true, true);
+    
+    interpret_string(context, script);
+    return context;
+}
+
 bool run(struct context *context,
          struct byte_array *program,
          struct map *env,

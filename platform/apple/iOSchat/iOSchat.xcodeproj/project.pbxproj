@@ -7,6 +7,24 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8824748218FB850B00D314C9 /* LoginViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 8824748118FB850B00D314C9 /* LoginViewController.m */; };
+		8824748518FB879200D314C9 /* IMclient.m in Sources */ = {isa = PBXBuildFile; fileRef = 8824748418FB879200D314C9 /* IMclient.m */; };
+		882761951900B39400237A20 /* filagree.png in Resources */ = {isa = PBXBuildFile; fileRef = 8827614A1900B39400237A20 /* filagree.png */; };
+		882761971900B39400237A20 /* im_client.fg in Resources */ = {isa = PBXBuildFile; fileRef = 8827614D1900B39400237A20 /* im_client.fg */; };
+		882761981900B39400237A20 /* im_server.fg in Resources */ = {isa = PBXBuildFile; fileRef = 8827614E1900B39400237A20 /* im_server.fg */; };
+		882761991900B39400237A20 /* im_test.fg in Resources */ = {isa = PBXBuildFile; fileRef = 8827614F1900B39400237A20 /* im_test.fg */; };
+		8827619B1900B39400237A20 /* mesh.fg in Resources */ = {isa = PBXBuildFile; fileRef = 882761511900B39400237A20 /* mesh.fg */; };
+		8827619C1900B39400237A20 /* node.fg in Resources */ = {isa = PBXBuildFile; fileRef = 882761521900B39400237A20 /* node.fg */; };
+		882761B91900B39400237A20 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 8827617A1900B39400237A20 /* icon.png */; };
+		882761BA1900B39400237A20 /* sync.fg in Resources */ = {isa = PBXBuildFile; fileRef = 8827617C1900B39400237A20 /* sync.fg */; };
+		882761BB1900B39400237A20 /* sync_client.fg in Resources */ = {isa = PBXBuildFile; fileRef = 8827617D1900B39400237A20 /* sync_client.fg */; };
+		882761BC1900B39400237A20 /* sync_server.fg in Resources */ = {isa = PBXBuildFile; fileRef = 8827617E1900B39400237A20 /* sync_server.fg */; };
+		882761BD1900B39400237A20 /* sync_test.fg in Resources */ = {isa = PBXBuildFile; fileRef = 8827617F1900B39400237A20 /* sync_test.fg */; };
+		882761BE1900B39400237A20 /* test_director.fg in Resources */ = {isa = PBXBuildFile; fileRef = 8827618F1900B39400237A20 /* test_director.fg */; };
+		882761BF1900B39400237A20 /* test_syntax.fg in Resources */ = {isa = PBXBuildFile; fileRef = 882761901900B39400237A20 /* test_syntax.fg */; };
+		882761C01900B39400237A20 /* try.fg in Resources */ = {isa = PBXBuildFile; fileRef = 882761911900B39400237A20 /* try.fg */; };
+		882761C31900B39400237A20 /* ui.fg in Resources */ = {isa = PBXBuildFile; fileRef = 882761941900B39400237A20 /* ui.fg */; };
+		889C148B19008C27004A8EA3 /* hal_apple.m in Sources */ = {isa = PBXBuildFile; fileRef = 889C148A19008C27004A8EA3 /* hal_apple.m */; };
 		88A0BF7F18F7B6BB005302C7 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88A0BF7E18F7B6BB005302C7 /* Foundation.framework */; };
 		88A0BF8118F7B6BB005302C7 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88A0BF8018F7B6BB005302C7 /* CoreGraphics.framework */; };
 		88A0BF8318F7B6BB005302C7 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88A0BF8218F7B6BB005302C7 /* UIKit.framework */; };
@@ -47,6 +65,27 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		8824748018FB850B00D314C9 /* LoginViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoginViewController.h; sourceTree = "<group>"; };
+		8824748118FB850B00D314C9 /* LoginViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoginViewController.m; sourceTree = "<group>"; };
+		8824748318FB879200D314C9 /* IMclient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMclient.h; sourceTree = "<group>"; };
+		8824748418FB879200D314C9 /* IMclient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IMclient.m; sourceTree = "<group>"; };
+		8827614A1900B39400237A20 /* filagree.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = filagree.png; path = ../../../test/filagree.png; sourceTree = "<group>"; };
+		8827614D1900B39400237A20 /* im_client.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_client.fg; sourceTree = "<group>"; };
+		8827614E1900B39400237A20 /* im_server.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_server.fg; sourceTree = "<group>"; };
+		8827614F1900B39400237A20 /* im_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im_test.fg; sourceTree = "<group>"; };
+		882761511900B39400237A20 /* mesh.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = mesh.fg; path = ../../../test/mesh.fg; sourceTree = "<group>"; };
+		882761521900B39400237A20 /* node.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = node.fg; path = ../../../test/node.fg; sourceTree = "<group>"; };
+		8827617A1900B39400237A20 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
+		8827617C1900B39400237A20 /* sync.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync.fg; sourceTree = "<group>"; };
+		8827617D1900B39400237A20 /* sync_client.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_client.fg; sourceTree = "<group>"; };
+		8827617E1900B39400237A20 /* sync_server.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_server.fg; sourceTree = "<group>"; };
+		8827617F1900B39400237A20 /* sync_test.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sync_test.fg; sourceTree = "<group>"; };
+		8827618F1900B39400237A20 /* test_director.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = test_director.fg; path = ../../../test/test_director.fg; sourceTree = "<group>"; };
+		882761901900B39400237A20 /* test_syntax.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = test_syntax.fg; path = ../../../test/test_syntax.fg; sourceTree = "<group>"; };
+		882761911900B39400237A20 /* try.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = try.fg; path = ../../../test/try.fg; sourceTree = "<group>"; };
+		882761941900B39400237A20 /* ui.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = ui.fg; path = ../../../test/ui.fg; sourceTree = "<group>"; };
+		8855F01718FE0A1F003CF4F1 /* hal_apple.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = hal_apple.h; path = ../../../source/hal_apple.h; sourceTree = "<group>"; };
+		889C148A19008C27004A8EA3 /* hal_apple.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = hal_apple.m; path = ../../../source/hal_apple.m; sourceTree = "<group>"; };
 		88A0BF7B18F7B6BB005302C7 /* iOSchat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iOSchat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		88A0BF7E18F7B6BB005302C7 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		88A0BF8018F7B6BB005302C7 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -117,12 +156,37 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8827614B1900B39400237A20 /* im */ = {
+			isa = PBXGroup;
+			children = (
+				8827614D1900B39400237A20 /* im_client.fg */,
+				8827614E1900B39400237A20 /* im_server.fg */,
+				8827614F1900B39400237A20 /* im_test.fg */,
+			);
+			name = im;
+			path = ../../../test/im;
+			sourceTree = "<group>";
+		};
+		882761531900B39400237A20 /* sync */ = {
+			isa = PBXGroup;
+			children = (
+				8827617A1900B39400237A20 /* icon.png */,
+				8827617C1900B39400237A20 /* sync.fg */,
+				8827617D1900B39400237A20 /* sync_client.fg */,
+				8827617E1900B39400237A20 /* sync_server.fg */,
+				8827617F1900B39400237A20 /* sync_test.fg */,
+			);
+			name = sync;
+			path = ../../../test/sync;
+			sourceTree = "<group>";
+		};
 		88A0BF7218F7B6BB005302C7 = {
 			isa = PBXGroup;
 			children = (
 				88A0C08218F7B812005302C7 /* filagree */,
 				88A0BF8418F7B6BB005302C7 /* iOSchat */,
 				88A0BFA918F7B6BB005302C7 /* iOSchatTests */,
+				88B784F21900B2F400389C01 /* Resources */,
 				88A0BF7D18F7B6BB005302C7 /* Frameworks */,
 				88A0BF7C18F7B6BB005302C7 /* Products */,
 			);
@@ -153,6 +217,10 @@
 			children = (
 				88A0BF8D18F7B6BB005302C7 /* AppDelegate.h */,
 				88A0BF8E18F7B6BB005302C7 /* AppDelegate.m */,
+				8824748318FB879200D314C9 /* IMclient.h */,
+				8824748418FB879200D314C9 /* IMclient.m */,
+				8824748018FB850B00D314C9 /* LoginViewController.h */,
+				8824748118FB850B00D314C9 /* LoginViewController.m */,
 				88A0BF9018F7B6BB005302C7 /* Main_iPhone.storyboard */,
 				88A0BF9318F7B6BB005302C7 /* Main_iPad.storyboard */,
 				88A0BF9618F7B6BB005302C7 /* MasterViewController.h */,
@@ -198,7 +266,6 @@
 			isa = PBXGroup;
 			children = (
 				88A0C08318F7B81D005302C7 /* source */,
-				88A0C08418F7B827005302C7 /* test */,
 			);
 			name = filagree;
 			sourceTree = "<group>";
@@ -209,6 +276,7 @@
 				88A0C08518F7B85F005302C7 /* compile.h */,
 				88A0C08618F7B85F005302C7 /* file.h */,
 				88A0C08718F7B85F005302C7 /* hal.h */,
+				8855F01718FE0A1F003CF4F1 /* hal_apple.h */,
 				88A0C08818F7B85F005302C7 /* interpret.h */,
 				88A0C08918F7B85F005302C7 /* node.h */,
 				88A0C08A18F7B85F005302C7 /* serial.h */,
@@ -227,6 +295,7 @@
 				88A0C09718F7B85F005302C7 /* util.c */,
 				88A0C09818F7B85F005302C7 /* variable.c */,
 				88A0C09918F7B85F005302C7 /* vm.c */,
+				889C148A19008C27004A8EA3 /* hal_apple.m */,
 				88A0C09A18F7B85F005302C7 /* hal_ios.m */,
 			);
 			name = source;
@@ -235,8 +304,25 @@
 		88A0C08418F7B827005302C7 /* test */ = {
 			isa = PBXGroup;
 			children = (
+				8827614A1900B39400237A20 /* filagree.png */,
+				8827614B1900B39400237A20 /* im */,
+				882761511900B39400237A20 /* mesh.fg */,
+				882761521900B39400237A20 /* node.fg */,
+				882761531900B39400237A20 /* sync */,
+				8827618F1900B39400237A20 /* test_director.fg */,
+				882761901900B39400237A20 /* test_syntax.fg */,
+				882761911900B39400237A20 /* try.fg */,
+				882761941900B39400237A20 /* ui.fg */,
 			);
 			name = test;
+			sourceTree = "<group>";
+		};
+		88B784F21900B2F400389C01 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				88A0C08418F7B827005302C7 /* test */,
+			);
+			name = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -315,8 +401,23 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				882761B91900B39400237A20 /* icon.png in Resources */,
+				882761BF1900B39400237A20 /* test_syntax.fg in Resources */,
+				8827619C1900B39400237A20 /* node.fg in Resources */,
+				882761BA1900B39400237A20 /* sync.fg in Resources */,
+				882761951900B39400237A20 /* filagree.png in Resources */,
+				882761C01900B39400237A20 /* try.fg in Resources */,
 				88A0BF9518F7B6BB005302C7 /* Main_iPad.storyboard in Resources */,
+				882761BD1900B39400237A20 /* sync_test.fg in Resources */,
+				8827619B1900B39400237A20 /* mesh.fg in Resources */,
+				882761BB1900B39400237A20 /* sync_client.fg in Resources */,
+				882761981900B39400237A20 /* im_server.fg in Resources */,
+				882761BE1900B39400237A20 /* test_director.fg in Resources */,
+				882761C31900B39400237A20 /* ui.fg in Resources */,
 				88A0BF9D18F7B6BB005302C7 /* Images.xcassets in Resources */,
+				882761BC1900B39400237A20 /* sync_server.fg in Resources */,
+				882761991900B39400237A20 /* im_test.fg in Resources */,
+				882761971900B39400237A20 /* im_client.fg in Resources */,
 				88A0BF9218F7B6BB005302C7 /* Main_iPhone.storyboard in Resources */,
 				88A0BF8918F7B6BB005302C7 /* InfoPlist.strings in Resources */,
 			);
@@ -343,12 +444,15 @@
 				88A0C0A018F7B85F005302C7 /* struct.c in Sources */,
 				88A0C09D18F7B85F005302C7 /* interpret.c in Sources */,
 				88A0C0A518F7B85F005302C7 /* hal_ios.m in Sources */,
+				8824748218FB850B00D314C9 /* LoginViewController.m in Sources */,
 				88A0C0A318F7B85F005302C7 /* variable.c in Sources */,
 				88A0C0A418F7B85F005302C7 /* vm.c in Sources */,
 				88A0C0A218F7B85F005302C7 /* util.c in Sources */,
 				88A0C09F18F7B85F005302C7 /* serial.c in Sources */,
+				8824748518FB879200D314C9 /* IMclient.m in Sources */,
 				88A0BF9818F7B6BB005302C7 /* MasterViewController.m in Sources */,
 				88A0BF8B18F7B6BB005302C7 /* main.m in Sources */,
+				889C148B19008C27004A8EA3 /* hal_apple.m in Sources */,
 				88A0C09E18F7B85F005302C7 /* node.c in Sources */,
 				88A0BF9B18F7B6BB005302C7 /* DetailViewController.m in Sources */,
 				88A0C09C18F7B85F005302C7 /* file.c in Sources */,
@@ -566,6 +670,7 @@
 				88A0BFB518F7B6BB005302C7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		88A0BFB618F7B6BB005302C7 /* Build configuration list for PBXNativeTarget "iOSchatTests" */ = {
 			isa = XCConfigurationList;
@@ -574,6 +679,7 @@
 				88A0BFB818F7B6BB005302C7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

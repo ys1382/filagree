@@ -31,7 +31,7 @@ struct array *array_new();
 void array_del(struct array *a);
 struct array *array_new_size(uint32_t size);
 uint32_t array_add(struct array *a , void *datum);
-void array_insert(struct array *a, uint32_t index, void *datam);
+void array_insert(struct array *a, uint32_t index, void *datum);
 void* array_get(const struct array *a, uint32_t index);
 void array_set(struct array *a, uint32_t index, void *datum);
 void array_remove(struct array *a, uint32_t start, int32_t length);
