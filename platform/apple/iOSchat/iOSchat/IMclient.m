@@ -3,6 +3,7 @@
 //  
 
 #import "IMclient.h"
+#import "LoginViewController.h"
 
 #include "interpret.h"
 #include "hal_apple.h"
@@ -14,6 +15,36 @@
 static struct context *context = NULL;
 static struct variable *filagree_object = NULL;
 static IMclient *imc = NULL;
+static struct variable *callback = NULL;
+
+
+struct variable *roster_ui(struct context *context)
+{
+//    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
+//    int32_t milliseconds = param_int(args, 1);
+
+
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
+
+        UIStoryboard *mainStoryboard;
+        if ([[UIDevice currentDevice] userInterfaceIdiom] ==UIUserInterfaceIdiomPad) {
+            mainStoryboard = [UIStoryboard storyboardWithName:@"Main_iPhone" bundle:nil];//TODO: for iPad
+        } else {
+            mainStoryboard = [UIStoryboard storyboardWithName:@"Main_iPhone" bundle:nil];
+        }
+        UIViewController *toViewController = [mainStoryboard instantiateViewControllerWithIdentifier:@"RosterScene"];
+        
+        LoginViewController *lvc = [LoginViewController shared];
+        [lvc presentViewController:toViewController animated:NO completion:nil];
+
+        //Your code goes in here
+        NSLog(@"Main Thread Code");
+        
+    }];
+
+    return NULL;
+}
+
 
 
 + (id)shared
@@ -22,14 +53,25 @@ static IMclient *imc = NULL;
         return imc;
     imc = [IMclient alloc];
 
+    
     struct byte_array *ui = read_resource("ui.fg");
     struct byte_array *mesh = read_resource("mesh.fg");
     struct byte_array *client = read_resource("im_client.fg");
     struct byte_array *args = byte_array_from_string("id='IOS'");
-    struct byte_array *script = byte_array_concatenate(4, ui, mesh, args, client);
+    struct byte_array *native = byte_array_from_string("client.main = roster_ui");
+    struct byte_array *script = byte_array_concatenate(5, ui, mesh, args, client, native);
     
     struct byte_array *program = build_string(script, NULL);
     context = context_new(NULL, true, true);
+
+    callback = variable_new_list(context, NULL);
+    struct byte_array *key = byte_array_from_string("roster_ui");
+    struct variable *key2 = variable_new_str(context, key);
+    struct variable *val = variable_new_cfnc(context, &roster_ui);
+    variable_map_insert(context, callback, key2, val);
+
+    
+    context->singleton->callback = callback;
     execute_with(context, program, true);
 
     return imc;
