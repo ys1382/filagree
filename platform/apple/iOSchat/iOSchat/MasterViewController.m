@@ -16,7 +16,7 @@
 - (void)awakeFromNib
 {
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-        self.clearsSelectionOnViewWillAppear = NO;
+        //self.clearsSelectionOnViewWillAppear = NO;
         self.preferredContentSize = CGSizeMake(320.0, 600.0);
     }
     [super awakeFromNib];
@@ -25,9 +25,11 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    [self.navigationController setToolbarHidden:NO];
     self.navigationItem.leftBarButtonItem = self.editButtonItem;
     self.detailViewController = (DetailViewController *)[[self.splitViewController.viewControllers lastObject] topViewController];
     [self setEditing:false];
+    [self.tableView setDelegate:self];
 }
 
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated {

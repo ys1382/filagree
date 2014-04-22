@@ -7,8 +7,9 @@
 
 @class DetailViewController;
 
-@interface MasterViewController : UITableViewController
+@interface MasterViewController : UIViewController <UITableViewDelegate>
 
 @property (strong, nonatomic) DetailViewController *detailViewController;
+@property (strong, nonatomic) IBOutlet UITableView *tableView;
 
 @end

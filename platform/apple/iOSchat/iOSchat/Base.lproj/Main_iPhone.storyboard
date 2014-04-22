@@ -16,7 +16,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="B0D-gy-3Yd">
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="password" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="B0D-gy-3Yd">
                                 <rect key="frame" x="20" y="138" width="280" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
@@ -42,7 +42,7 @@
                                     <action selector="signuped:" destination="b1s-qW-BEp" eventType="touchUpInside" id="yau-fU-2PN"/>
                                 </connections>
                             </button>
-                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="NwJ-9Z-Aj6">
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="username" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="NwJ-9Z-Aj6">
                                 <rect key="frame" x="20" y="91" width="280" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
@@ -77,14 +77,14 @@
         <!--Master View Controller - Master-->
         <scene sceneID="VgW-fR-Quf">
             <objects>
-                <tableViewController storyboardIdentifier="RosterScene" title="Master" useStoryboardIdentifierAsRestorationIdentifier="YES" id="pGg-6v-bdr" customClass="MasterViewController" sceneMemberID="viewController">
+                <tableViewController title="Master" id="pGg-6v-bdr" customClass="MasterViewController" sceneMemberID="viewController">
                     <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" showsHorizontalScrollIndicator="NO" dataMode="prototypes" style="plain" separatorStyle="default" allowsSelectionDuringEditing="YES" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="mLL-gJ-YKr">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <prototypes>
                             <tableViewCell contentMode="scaleToFill" selectionStyle="blue" accessoryType="disclosureIndicator" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="Cell" textLabel="2pz-XF-uhl" style="IBUITableViewCellStyleDefault" id="m0d-ak-lc9">
-                                <rect key="frame" x="0.0" y="22" width="320" height="44"/>
+                                <rect key="frame" x="0.0" y="86" width="320" height="44"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="m0d-ak-lc9" id="d3P-M7-ByW">
                                     <rect key="frame" x="0.0" y="0.0" width="287" height="43"/>
@@ -114,10 +114,13 @@
                     <toolbarItems/>
                     <navigationItem key="navigationItem" title="Master" id="tQt-TN-PWz"/>
                     <nil key="simulatedBottomBarMetrics"/>
+                    <connections>
+                        <outlet property="tableView" destination="mLL-gJ-YKr" id="CX1-Ar-MwQ"/>
+                    </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="6Cn-md-YlS" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="619" y="-236"/>
+            <point key="canvasLocation" x="60" y="540"/>
         </scene>
         <!--Detail View Controller - Detail-->
         <scene sceneID="Cn3-H9-jdl">
@@ -137,7 +140,7 @@
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" misplaced="YES" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RFo-p2-THe">
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RFo-p2-THe">
                                 <rect key="frame" x="20" y="77" width="280" height="433"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
@@ -148,20 +151,20 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="RFo-p2-THe" firstAttribute="leading" secondItem="gRb-3N-haq" secondAttribute="leading" id="Ebb-hW-xRg"/>
-                            <constraint firstAttribute="trailing" secondItem="RFo-p2-THe" secondAttribute="trailing" constant="20" symbolic="YES" id="MuT-7q-Skq"/>
-                            <constraint firstItem="gRb-3N-haq" firstAttribute="top" secondItem="RFo-p2-THe" secondAttribute="bottom" constant="8" symbolic="YES" id="U4S-mc-8if"/>
-                            <constraint firstItem="gRb-3N-haq" firstAttribute="trailing" secondItem="RFo-p2-THe" secondAttribute="trailing" id="ad5-Y9-zQm"/>
-                            <constraint firstItem="RFo-p2-THe" firstAttribute="leading" secondItem="MMQ-IT-qOo" secondAttribute="leading" constant="20" symbolic="YES" id="gXY-yE-rBY"/>
-                            <constraint firstAttribute="bottom" secondItem="gRb-3N-haq" secondAttribute="bottom" constant="20" symbolic="YES" id="hfA-Fa-Isy"/>
-                            <constraint firstItem="RFo-p2-THe" firstAttribute="top" secondItem="cIm-e0-J51" secondAttribute="bottom" constant="13" id="j9V-CN-xbm"/>
+                            <constraint firstItem="RFo-p2-THe" firstAttribute="leading" secondItem="MMQ-IT-qOo" secondAttribute="leading" constant="20" symbolic="YES" id="DL6-xv-d3e"/>
+                            <constraint firstItem="RFo-p2-THe" firstAttribute="top" secondItem="cIm-e0-J51" secondAttribute="bottom" constant="57" id="Le4-u9-iFd"/>
+                            <constraint firstItem="gRb-3N-haq" firstAttribute="trailing" secondItem="RFo-p2-THe" secondAttribute="trailing" id="NWV-wr-W90"/>
+                            <constraint firstAttribute="bottom" secondItem="gRb-3N-haq" secondAttribute="bottom" constant="20" symbolic="YES" id="TWV-4h-ih1"/>
+                            <constraint firstAttribute="trailing" secondItem="RFo-p2-THe" secondAttribute="trailing" constant="20" symbolic="YES" id="UtU-Jf-Cpy"/>
+                            <constraint firstItem="RFo-p2-THe" firstAttribute="leading" secondItem="gRb-3N-haq" secondAttribute="leading" id="aaa-cA-eTh"/>
+                            <constraint firstItem="gRb-3N-haq" firstAttribute="top" secondItem="RFo-p2-THe" secondAttribute="bottom" constant="8" symbolic="YES" id="gVn-N1-eXc"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Detail" id="cra-N8-TIN"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="lrm-kH-fPn" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1062" y="-236"/>
+            <point key="canvasLocation" x="503" y="540"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="0Vd-k0-b2P">
@@ -180,6 +183,24 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Hvi-wl-yxq" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-466" y="-236"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="uXX-iH-dx4">
+            <objects>
+                <navigationController storyboardIdentifier="RosterScene" automaticallyAdjustsScrollViewInsets="NO" useStoryboardIdentifierAsRestorationIdentifier="YES" id="ipq-at-c3D" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="tPn-lb-xfI">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <nil name="viewControllers"/>
+                    <connections>
+                        <segue destination="pGg-6v-bdr" kind="relationship" relationship="rootViewController" id="oPi-dX-ank"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="2fx-ly-BBa" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-466" y="540"/>
         </scene>
     </scenes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">

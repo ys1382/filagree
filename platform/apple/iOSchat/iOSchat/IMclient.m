@@ -23,29 +23,20 @@ struct variable *roster_ui(struct context *context)
 //    struct variable *args = (struct variable*)stack_pop(context->operand_stack);
 //    int32_t milliseconds = param_int(args, 1);
 
-
     [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
 
         UIStoryboard *mainStoryboard;
-        if ([[UIDevice currentDevice] userInterfaceIdiom] ==UIUserInterfaceIdiomPad) {
-            mainStoryboard = [UIStoryboard storyboardWithName:@"Main_iPhone" bundle:nil];//TODO: for iPad
-        } else {
+        if ([[UIDevice currentDevice] userInterfaceIdiom] ==UIUserInterfaceIdiomPad)
+            mainStoryboard = [UIStoryboard storyboardWithName:@"Main_iPad" bundle:nil];
+        else
             mainStoryboard = [UIStoryboard storyboardWithName:@"Main_iPhone" bundle:nil];
-        }
         UIViewController *toViewController = [mainStoryboard instantiateViewControllerWithIdentifier:@"RosterScene"];
-        
         LoginViewController *lvc = [LoginViewController shared];
         [lvc presentViewController:toViewController animated:NO completion:nil];
-
-        //Your code goes in here
-        NSLog(@"Main Thread Code");
-        
     }];
 
     return NULL;
 }
-
-
 
 + (id)shared
 {
