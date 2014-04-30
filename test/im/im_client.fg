@@ -215,11 +215,15 @@ end
 
 client.added = function(self)
     friend = sys.form_get(self.ui).id
+    self.add_contact(friend)
+    self.main()
+end
+
+client.add_contact = function(self, friend)
     self.contacts = self.contacts + [friend:[]]
     sys.print('fz ' + friend + ' -- ' + self.contacts)
     mc4 = ['event' : 'contacts', 'contacts' : self.contacts]
     self.mesh.send_to('server', mc4)
-    self.main()
 end
 
 client.signin = function(self, id, password, entrance)

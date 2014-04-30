@@ -9,5 +9,6 @@
 + (IMclient*)shared;
 - (void)signup:(NSString*)username withPassword:(NSString*)password;
 - (void)signin:(NSString*)username withPassword:(NSString*)password;
+- (void)addContact:(NSString*)username;
 
 @end
