@@ -33,7 +33,7 @@ im = [
         sys.print('handle_contacts ' + msf)
         self.accounts[msf.from].contacts = msf.contacts
         sys.save(self.accounts, 'accounts')
-        return self.roster(msf.from)
+        return self.roster(msf.from) + ['event':'contacts']
     end,
 
     # contacts plus online status

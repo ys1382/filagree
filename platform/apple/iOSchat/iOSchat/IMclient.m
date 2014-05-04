@@ -49,6 +49,14 @@ struct variable *roster_update(struct context *context)
     return NULL;
 }
 
+void add_callback(const char *key, void *fnc)
+{
+    struct byte_array *key2 = byte_array_from_string(key);
+    struct variable *key3 = variable_new_str(context, key2);
+    struct variable *val = variable_new_cfnc(context, fnc);
+    variable_map_insert(context, callback, key3, val);
+}
+
 + (id)shared
 {
     if (NULL != imc)
@@ -67,11 +75,8 @@ struct variable *roster_update(struct context *context)
     context = context_new(NULL, true, true);
 
     callback = variable_new_list(context, NULL);
-    struct byte_array *key = byte_array_from_string("roster_ui");
-    struct variable *key2 = variable_new_str(context, key);
-    struct variable *val = variable_new_cfnc(context, &roster_ui);
-    variable_map_insert(context, callback, key2, val);
-
+    add_callback("roster_ui", &roster_ui);
+    add_callback("roster_update", &roster_update);
     
     context->singleton->callback = callback;
     execute_with(context, program, true);
@@ -81,7 +86,10 @@ struct variable *roster_update(struct context *context)
 
 - (void)addContact:(NSString*)username
 {
-    NSString *code = [NSString stringWithFormat:@"client.addContact('%@')", username];
+    struct byte_array *code0 = byte_array_from_string("sys.print('client = ' + client)");
+    interpret_string(context, code0);
+    
+    NSString *code = [NSString stringWithFormat:@"client.add_contact('%@')", username];
     interpret_string_with(context, nsstring_to_byte_array(code));
 }
 

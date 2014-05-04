@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		883B8F4D182589D200EF482A /* Window.xib in Resources */ = {isa = PBXBuildFile; fileRef = 883B8F4C182589D200EF482A /* Window.xib */; };
+		883D35E81916293200DD8397 /* hal_apple.m in Sources */ = {isa = PBXBuildFile; fileRef = 883D35E71916293200DD8397 /* hal_apple.m */; };
 		886CC5811823389E00DB6074 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 886CC5801823389E00DB6074 /* Cocoa.framework */; };
 		886CC58B1823389E00DB6074 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 886CC5891823389E00DB6074 /* InfoPlist.strings */; };
 		886CC58D1823389E00DB6074 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 886CC58C1823389E00DB6074 /* main.m */; };
@@ -62,6 +63,8 @@
 
 /* Begin PBXFileReference section */
 		883B8F4C182589D200EF482A /* Window.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Window.xib; sourceTree = "<group>"; };
+		883D35E71916293200DD8397 /* hal_apple.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = hal_apple.m; path = ../../../source/hal_apple.m; sourceTree = "<group>"; };
+		883D35E91916293A00DD8397 /* hal_apple.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = hal_apple.h; path = ../../../source/hal_apple.h; sourceTree = "<group>"; };
 		886CC57D1823389E00DB6074 /* OSXfgui.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OSXfgui.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		886CC5801823389E00DB6074 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		886CC5831823389E00DB6074 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -247,6 +250,7 @@
 				886CC6491823395200DB6074 /* compile.h */,
 				886CC64A1823395200DB6074 /* file.h */,
 				886CC64B1823395200DB6074 /* hal.h */,
+				883D35E91916293A00DD8397 /* hal_apple.h */,
 				886CC64C1823395200DB6074 /* interpret.h */,
 				886CC64D1823395200DB6074 /* node.h */,
 				886CC64E1823395200DB6074 /* serial.h */,
@@ -265,6 +269,7 @@
 				886CC63A1823393E00DB6074 /* util.c */,
 				886CC63B1823393E00DB6074 /* variable.c */,
 				886CC63C1823393E00DB6074 /* vm.c */,
+				883D35E71916293200DD8397 /* hal_apple.m */,
 				886CC63D1823393E00DB6074 /* hal_osx.m */,
 			);
 			name = source;
@@ -432,6 +437,7 @@
 				886CC6421823393E00DB6074 /* serial.c in Sources */,
 				886CC6451823393E00DB6074 /* util.c in Sources */,
 				886CC6481823393E00DB6074 /* hal_osx.m in Sources */,
+				883D35E81916293200DD8397 /* hal_apple.m in Sources */,
 				886CC58D1823389E00DB6074 /* main.m in Sources */,
 				886CC63F1823393E00DB6074 /* file.c in Sources */,
 				886CC6461823393E00DB6074 /* variable.c in Sources */,
