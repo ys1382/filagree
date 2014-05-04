@@ -97,13 +97,6 @@ struct variable *o2f(struct context *context, NSObject *o)
 
 /////// NSFList: ObjC representation of filagree list
 
-@interface NSFList : NSObject
-
-@property (strong, nonatomic) NSMutableArray *ordered;
-@property (strong, nonatomic) NSMutableDictionary *map;
-
-@end
-
 @implementation NSFList
 
 @synthesize ordered, map;
@@ -114,25 +107,31 @@ struct variable *o2f(struct context *context, NSObject *o)
     flist.ordered = [NSMutableArray arrayWithCapacity:f->list.ordered->length];
     
     // ordered
-    for (int i=0; i<f->list.ordered->length; i++)
+    if (NULL != f->list.ordered)
     {
-        struct variable *fi = array_get(f->list.ordered, i);
-        NSObject *o = f2o(context, fi);
-        [flist.ordered addObject:o];
+        for (int i=0; i<f->list.ordered->length; i++)
+        {
+            struct variable *fi = array_get(f->list.ordered, i);
+            NSObject *o = f2o(context, fi);
+            [flist.ordered addObject:o];
+        }
     }
 
     //map
-    struct array *keys = map_keys(f->list.map);
-    struct array *vals = map_vals(f->list.map);
-    flist.map = [NSMutableDictionary dictionaryWithCapacity:keys->length];
-    for (int i=0; i<keys->length; i++)
+    if (NULL != f->list.map)
     {
-        struct variable *key = array_get(keys, i);
-        struct variable *val = array_get(vals, i);
-        vm_assert(context, VAR_STR == key->type, "non-string key");
-        NSString *key2 = (NSString*)f2o(context, key);
-        NSObject *val2 = f2o(context, val);
-        [flist.map setObject:val2 forKey:key2];
+        struct array *keys = map_keys(f->list.map);
+        struct array *vals = map_vals(f->list.map);
+        flist.map = [NSMutableDictionary dictionaryWithCapacity:keys->length];
+        for (int i=0; i<keys->length; i++)
+        {
+            struct variable *key = array_get(keys, i);
+            struct variable *val = array_get(vals, i);
+            vm_assert(context, VAR_STR == key->type, "non-string key");
+            NSString *key2 = (NSString*)f2o(context, key);
+            NSObject *val2 = f2o(context, val);
+            [flist.map setObject:val2 forKey:key2];
+        }
     }
     return flist;
 }
@@ -141,7 +140,7 @@ struct variable *o2f(struct context *context, NSObject *o)
 
 NSObject *f2o(struct context *context, struct variable *f)
 {
-    if (NULL != f)
+    if (NULL == f)
         return NULL;
 
     switch ((f->type)) {

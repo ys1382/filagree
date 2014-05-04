@@ -38,13 +38,15 @@ client = [
     'handle_contacts' : function(self, contacts)
         self.mesh.print('handle_contacts ' + contacts)
         self.contacts = contacts
-        self.update_roster(self.available_contacts())
+        onlines = self.available_contacts()
+        self.update_roster(onlines)
     end,
 
     'handle_online' : function(self, from, state)
         self.contacts[from].online = state
         self.mesh.print('handle_online ' + self.contacts)
-        self.update_roster(self.available_contacts())
+        onlines = self.available_contacts()
+        self.update_roster(onlines)
     end,
 
     'available_contacts' : function(self)

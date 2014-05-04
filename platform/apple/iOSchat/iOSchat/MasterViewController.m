@@ -37,6 +37,7 @@ static MasterViewController *theMVC = NULL;
     self.detailViewController = (DetailViewController *)[[self.splitViewController.viewControllers lastObject] topViewController];
     [self setEditing:false];
     [self.tableView setDelegate:self];
+    theMVC = self;
 }
 
 - (void)addContact:(id)sender
@@ -55,7 +56,8 @@ static MasterViewController *theMVC = NULL;
     [alert show];
 }
 
-- (void)setContacts:(NSArray*)latest {
+- (void)setContacts:(NSMutableArray*)latest {
+    contacts = latest;
     [self.tableView reloadData];
 }
 

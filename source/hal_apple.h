@@ -7,4 +7,11 @@ struct byte_array *read_resource(const char *path);
 struct variable *o2f(struct context *context, NSObject *o);
 NSObject *f2o(struct context *context, struct variable *f);
 
+@interface NSFList : NSObject
+
+@property (strong, nonatomic) NSMutableArray *ordered;
+@property (strong, nonatomic) NSMutableDictionary *map;
+
+@end
+
 #endif

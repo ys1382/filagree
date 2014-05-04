@@ -10,7 +10,7 @@
 #include "hal_apple.h"
 #include "compile.h"
 #include "sys.h"
-
+#include "hal_apple.h"
 
 @implementation IMclient
 
@@ -44,7 +44,10 @@ struct variable *roster_update(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     struct variable *latest = param_var(args, 1);
-    [[MasterViewController shared] setContacts:(NSArray*)f2o(context, latest)];
+    NSFList *list2 = (NSFList*)f2o(context, latest);
+    NSArray *list3 = list2.ordered;
+    MasterViewController *mvc = [MasterViewController shared];
+    [mvc setContacts:list3];
 
     return NULL;
 }
@@ -67,7 +70,7 @@ void add_callback(const char *key, void *fnc)
     struct byte_array *client = read_resource("im_client.fg");
     struct byte_array *args = byte_array_from_string("id='IOS'");
     struct byte_array *native1 = byte_array_from_string("client.main = roster_ui ");
-    struct byte_array *native2 = byte_array_from_string("client.update_roster = roster_update");
+    struct byte_array *native2 = byte_array_from_string("client.update_roster = update_roster");
     struct byte_array *script = byte_array_concatenate(5, mesh, args, client, native1, native2);
     
     struct byte_array *program = build_string(script, NULL);
@@ -75,7 +78,7 @@ void add_callback(const char *key, void *fnc)
 
     callback = variable_new_list(context, NULL);
     add_callback("roster_ui", &roster_ui);
-    add_callback("roster_update", &roster_update);
+    add_callback("update_roster", &roster_update);
     
     context->singleton->callback = callback;
     execute_with(context, program, true);
