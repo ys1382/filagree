@@ -63,13 +63,12 @@ void add_callback(const char *key, void *fnc)
         return imc;
     imc = [IMclient alloc];
 
-    struct byte_array *ui = read_resource("ui.fg");
     struct byte_array *mesh = read_resource("mesh.fg");
     struct byte_array *client = read_resource("im_client.fg");
     struct byte_array *args = byte_array_from_string("id='IOS'");
     struct byte_array *native1 = byte_array_from_string("client.main = roster_ui ");
     struct byte_array *native2 = byte_array_from_string("client.update_roster = roster_update");
-    struct byte_array *script = byte_array_concatenate(6, ui, mesh, args, client, native1, native2);
+    struct byte_array *script = byte_array_concatenate(5, mesh, args, client, native1, native2);
     
     struct byte_array *program = build_string(script, NULL);
     context = context_new(NULL, true, true);
