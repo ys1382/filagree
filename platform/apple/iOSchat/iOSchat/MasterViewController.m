@@ -119,7 +119,7 @@ static MasterViewController *theMVC = NULL;
 {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
 
-    NSDate *object = contacts[indexPath.row];
+    NSString *object = contacts[indexPath.row];
     cell.textLabel.text = [object description];
     return cell;
 }
@@ -144,7 +144,7 @@ static MasterViewController *theMVC = NULL;
 {
     if ([[segue identifier] isEqualToString:@"showDetail"]) {
         NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
-        NSDate *object = contacts[indexPath.row];
+        NSString *object = contacts[indexPath.row];
         [[segue destinationViewController] setDetailItem:object];
     }
 }

@@ -13,7 +13,7 @@
                         <viewControllerLayoutGuide type="bottom" id="jTo-PE-n9I"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="Ykf-cW-b5m">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="password" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="B0D-gy-3Yd">
@@ -79,7 +79,7 @@
             <objects>
                 <tableViewController title="Master" id="pGg-6v-bdr" customClass="MasterViewController" sceneMemberID="viewController">
                     <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" showsHorizontalScrollIndicator="NO" dataMode="prototypes" style="plain" separatorStyle="default" allowsSelectionDuringEditing="YES" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="mLL-gJ-YKr">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <prototypes>
@@ -130,18 +130,21 @@
                         <viewControllerLayoutGuide type="top" id="cIm-e0-J51"/>
                         <viewControllerLayoutGuide type="bottom" id="a0L-h9-sNL"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="MMQ-IT-qOo">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                    <view key="view" contentMode="scaleToFill" id="MMQ-IT-qOo" customClass="UIScrollView">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="gRb-3N-haq">
-                                <rect key="frame" x="20" y="518" width="280" height="30"/>
+                                <rect key="frame" x="20" y="430" width="280" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
+                                <connections>
+                                    <outlet property="delegate" destination="Ah7-4n-0Wa" id="hpJ-rS-OZp"/>
+                                </connections>
                             </textField>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" misplaced="YES" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RFo-p2-THe">
-                                <rect key="frame" x="20" y="77" width="280" height="433"/>
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="RFo-p2-THe">
+                                <rect key="frame" x="20" y="77" width="280" height="345"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
@@ -150,15 +153,16 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="RFo-p2-THe" firstAttribute="leading" secondItem="MMQ-IT-qOo" secondAttribute="leading" constant="20" symbolic="YES" id="DL6-xv-d3e"/>
-                            <constraint firstItem="RFo-p2-THe" firstAttribute="top" secondItem="cIm-e0-J51" secondAttribute="bottom" constant="57" id="Le4-u9-iFd"/>
-                            <constraint firstItem="gRb-3N-haq" firstAttribute="trailing" secondItem="RFo-p2-THe" secondAttribute="trailing" id="NWV-wr-W90"/>
-                            <constraint firstAttribute="bottom" secondItem="gRb-3N-haq" secondAttribute="bottom" constant="20" symbolic="YES" id="TWV-4h-ih1"/>
-                            <constraint firstAttribute="trailing" secondItem="RFo-p2-THe" secondAttribute="trailing" constant="20" symbolic="YES" id="UtU-Jf-Cpy"/>
-                            <constraint firstItem="RFo-p2-THe" firstAttribute="leading" secondItem="gRb-3N-haq" secondAttribute="leading" id="aaa-cA-eTh"/>
-                            <constraint firstItem="gRb-3N-haq" firstAttribute="top" secondItem="RFo-p2-THe" secondAttribute="bottom" constant="8" symbolic="YES" id="gVn-N1-eXc"/>
+                            <constraint firstAttribute="trailing" secondItem="RFo-p2-THe" secondAttribute="trailing" constant="20" symbolic="YES" id="2RD-ey-Nbs"/>
+                            <constraint firstItem="gRb-3N-haq" firstAttribute="leading" secondItem="RFo-p2-THe" secondAttribute="leading" id="Kog-vI-tWI"/>
+                            <constraint firstItem="gRb-3N-haq" firstAttribute="top" secondItem="RFo-p2-THe" secondAttribute="bottom" constant="8" symbolic="YES" id="RKi-0q-0DB"/>
+                            <constraint firstItem="RFo-p2-THe" firstAttribute="leading" secondItem="MMQ-IT-qOo" secondAttribute="leading" constant="20" symbolic="YES" id="T7J-TF-N66"/>
+                            <constraint firstItem="RFo-p2-THe" firstAttribute="top" secondItem="cIm-e0-J51" secondAttribute="bottom" constant="13" id="YOQ-hm-CBW"/>
+                            <constraint firstAttribute="bottom" secondItem="gRb-3N-haq" secondAttribute="bottom" constant="20" symbolic="YES" id="gx8-kW-Td7"/>
+                            <constraint firstItem="gRb-3N-haq" firstAttribute="trailing" secondItem="RFo-p2-THe" secondAttribute="trailing" id="iZt-Qq-BhF"/>
                         </constraints>
                     </view>
+                    <extendedEdge key="edgesForExtendedLayout" top="YES"/>
                     <navigationItem key="navigationItem" title="Detail" id="cra-N8-TIN"/>
                     <connections>
                         <outlet property="input" destination="gRb-3N-haq" id="pVE-Xy-UQ6"/>
@@ -209,6 +213,6 @@
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>
-        <simulatedScreenMetrics key="destination" type="retina4"/>
+        <simulatedScreenMetrics key="destination"/>
     </simulatedMetricsContainer>
 </document>
