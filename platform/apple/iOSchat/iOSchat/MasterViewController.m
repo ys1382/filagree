@@ -5,6 +5,7 @@
 
 #import "MasterViewController.h"
 #import "DetailViewController.h"
+#import "LoginViewController.h"
 #import "IMclient.h"
 
 @interface MasterViewController () {
@@ -38,6 +39,9 @@ static MasterViewController *theMVC = NULL;
     [self setEditing:false];
     [self.tableView setDelegate:self];
     theMVC = self;
+
+    NSString *title = [[LoginViewController shared] username].text;
+    [self setTitle:title];
 }
 
 - (void)addContact:(id)sender
