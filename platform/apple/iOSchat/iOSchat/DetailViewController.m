@@ -74,16 +74,15 @@
     CGSize kbSize = [[info objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
     
     UIEdgeInsets contentInsets = UIEdgeInsetsMake(0.0, 0.0, kbSize.height, 0.0);
-    UIScrollView *scrollView = (UIScrollView*)self.view;
-    scrollView.contentInset = contentInsets;
-    scrollView.scrollIndicatorInsets = contentInsets;
+    [self scrollview].contentInset = contentInsets;
+    [self scrollview].scrollIndicatorInsets = contentInsets;
     
     // If active text field is hidden by keyboard, scroll it so it's visible
     // Your app might not need or want this behavior.
     CGRect aRect = self.view.frame;
     aRect.size.height -= kbSize.height;
     if (!CGRectContainsPoint(aRect, self.input.frame.origin) ) {
-        [scrollView scrollRectToVisible:self.input.frame animated:YES];
+        [[self scrollview] scrollRectToVisible:self.input.frame animated:YES];
     }
 }
 
@@ -91,9 +90,8 @@
 - (void)keyboardWillBeHidden:(NSNotification*)aNotification
 {
     UIEdgeInsets contentInsets = UIEdgeInsetsZero;
-    UIScrollView *scrollView = (UIScrollView*)self.view;
-    scrollView.contentInset = contentInsets;
-    scrollView.scrollIndicatorInsets = contentInsets;
+    [self scrollview].contentInset = contentInsets;
+    [self scrollview].scrollIndicatorInsets = contentInsets;
 }
 
 #pragma mark - Split view

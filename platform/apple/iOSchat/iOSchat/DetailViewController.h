@@ -6,6 +6,7 @@
 #import <UIKit/UIKit.h>
 
 @interface DetailViewController : UIViewController <UISplitViewControllerDelegate>
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollview;
 
 @property (weak, nonatomic) IBOutlet UITextView *transcript;
 @property (weak, nonatomic) IBOutlet UITextField *input;
