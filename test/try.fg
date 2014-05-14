@@ -1,3 +1,6 @@
+import 'try2'
 x = 7
 y = 8
-z = w
+f1()
+z = 9
+a = b

@@ -149,7 +149,7 @@ struct variable *sys_exit(struct context *context)
 {
     struct variable *args = (struct variable*)stack_pop(context->operand_stack);
     int32_t ret = param_int(args, 1);
-    printf("\nexit %d\n", ret);
+    //printf("\nexit %d\n", ret);
     exit(ret);
     return NULL;
 }

@@ -34,6 +34,8 @@ static struct map *imports = NULL;
 //struct byte_array *read_file(const struct byte_array *filename);
 
 static struct context *context;
+static struct byte_array *current_path = NULL;
+
 
 // token ///////////////////////////////////////////////////////////////////
 
@@ -321,7 +323,7 @@ int import(const char* input, int i)
             byte_array_del(imported);
         }
     }
-    byte_array_del(path);
+//    byte_array_del(path);
     line = line2;
 
     return i+1;
@@ -1142,7 +1144,7 @@ struct symbol *parse(struct array *list, uint32_t index)
 {
     if (!list->length)
         return NULL;
-    DEBUGPRINT("parse:\n");
+    //DEBUGPRINT("parse:\n");
     assert_message(list, ERROR_NULL);
     assert_message(index<list->length, ERROR_INDEX);
 
@@ -1261,7 +1263,7 @@ void generate_assignment(struct byte_array *code, struct symbol *root)
     generate_code(code, root->index);
 }
 
-void generate_variable(struct byte_array *code, struct symbol *root)
+static void generate_variable(struct byte_array *code, struct symbol *root)
 {
     enum Opcode op = -1;
     switch (root->exp) {
@@ -1274,7 +1276,7 @@ void generate_variable(struct byte_array *code, struct symbol *root)
     serial_encode_string(code, root->token->string);
 }
 
-void generate_boolean(struct byte_array *code, struct symbol *root) {
+static void generate_boolean(struct byte_array *code, struct symbol *root) {
     uint32_t value = 0;
     switch (root->token->lexeme) {
         case        LEX_TRUE:  value = 1;               break;
@@ -1285,7 +1287,14 @@ void generate_boolean(struct byte_array *code, struct symbol *root) {
     serial_encode_int(code, value);
 }
 
-void generate_fdecl(struct byte_array *code, struct symbol *root)
+static struct byte_array *generate_source_path(struct byte_array *code, const struct byte_array *path)
+{
+    generate_step(code, 1, VM_FIL);
+    serial_encode_string(code, path);
+    return byte_array_copy(path);
+}
+
+static void generate_fdecl(struct byte_array *code, struct symbol *root)
 {
     generate_step(code, 1, VM_FNC);
 
@@ -1302,12 +1311,15 @@ void generate_fdecl(struct byte_array *code, struct symbol *root)
 
     struct byte_array *f = byte_array_new();
     generate_code(f, root->index); // params
+
+    generate_source_path(f, current_path);
+
     generate_code(f, root->value); // statements
     serial_encode_string(code, f);
     byte_array_del(f);
 }
 
-void generate_pair(struct byte_array *code, struct symbol *root)
+static void generate_pair(struct byte_array *code, struct symbol *root)
 {
     generate_code(code, root->index);
     generate_code(code, root->value);
@@ -1553,15 +1565,12 @@ void generate_throw(struct byte_array *code, struct symbol *root)
 
 void generate_stack_trace(struct byte_array *code, const struct token *token)
 {
-    static struct byte_array *path = NULL;
     if (NULL == token)
         return;
 
-    if (!byte_array_equals(path, token->path))
+    if (!byte_array_equals(current_path, token->path))
     {
-        path = byte_array_copy(token->path);
-        generate_step(code, 1, VM_FIL);
-        serial_encode_string(code, token->path);
+        current_path = generate_source_path(code, token->path);
         line = -1;
     }
     if (line != token->at_line)

@@ -75,7 +75,7 @@ Mesh = [
 
     'handle_message' : function(self, socket, msg5)
 
-        sys.print('recv ' + msg5)
+        #sys.print('recv ' + msg5)
 
         if msg5.event == 'greet' then
             from = msg5.from
@@ -160,7 +160,7 @@ Mesh = [
 
     'send' : function(self, to, msg)
         #sys.print(self.id + ' send to ' + to + ': ' + msg.event +' '+msg.path+' '+msg.offset)
-        self.print('send to ' + to + ': ' + msg)
+        #self.print('send to ' + to + ': ' + msg)
         sys.send(to, msg)
     end,
 
