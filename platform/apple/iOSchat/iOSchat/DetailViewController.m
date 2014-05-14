@@ -3,56 +3,77 @@
 //  iOSchat
 //
 
+
 #import "DetailViewController.h"
+#import "IMclient.h"
+
 
 @interface DetailViewController ()
+
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
+
 - (void)configureView;
++ (NSMutableArray *) chatFor:(NSString *)from;
+
 @end
 
+
+static DetailViewController *theDVC = NULL;
+static NSMutableDictionary *chats = NULL;
+static NSString *current = NULL;
+
+
 @implementation DetailViewController
+
 
 #pragma mark - Managing the detail item
 
 - (void)setDetailItem:(id)newDetailItem
 {
-    if (_detailItem != newDetailItem) {
+    if (_detailItem != newDetailItem)
+    {
         _detailItem = newDetailItem;
-
-        // Update the view.
         [self configureView];
     }
 
-    if (self.masterPopoverController != nil) {
+    if (self.masterPopoverController != nil)
         [self.masterPopoverController dismissPopoverAnimated:YES];
-    }        
 }
 
 - (void)configureView
 {
-    if (self.detailItem)
-        self.title = self.detailItem;
+    if (NULL == self.detailItem)
+        return;
+    self.title = self.detailItem;
+
+    NSArray *record = [chats objectForKey:current];
+    NSString *record2 = @"";
+    for (NSString *line in record)
+        record2 = [record2 stringByAppendingFormat:@"%@\n", line];
+    self.transcript.text = record2;
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view, typically from a nib.
+    theDVC = self;
+    current = self.detailItem;
+
+    if (NULL == chats)
+        chats = [[NSMutableDictionary alloc] init];
+
     [self configureView];
     [self registerForKeyboardNotifications];
 }
 
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
+/*
+// hide the keyboard when you hit return
 - (BOOL)textFieldShouldReturn:(UITextField *)textField
 {
     [textField resignFirstResponder];
     return NO;
 }
+*/
 
 // Call this method somewhere in your view controller setup code.
 - (void)registerForKeyboardNotifications
@@ -64,7 +85,6 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(keyboardWillBeHidden:)
                                                  name:UIKeyboardWillHideNotification object:nil];
-    
 }
 
 // Called when the UIKeyboardDidShowNotification is sent.
@@ -81,9 +101,9 @@
     // Your app might not need or want this behavior.
     CGRect aRect = self.view.frame;
     aRect.size.height -= kbSize.height;
-    if (!CGRectContainsPoint(aRect, self.input.frame.origin) ) {
+
+    if (!CGRectContainsPoint(aRect, self.input.frame.origin) )
         [[self scrollview] scrollRectToVisible:self.input.frame animated:YES];
-    }
 }
 
 // Called when the UIKeyboardWillHideNotification is sent
@@ -92,6 +112,39 @@
     UIEdgeInsets contentInsets = UIEdgeInsetsZero;
     [self scrollview].contentInset = contentInsets;
     [self scrollview].scrollIndicatorInsets = contentInsets;
+}
+
+- (IBAction)sent:(id)sender
+{
+    NSString *recipient = self.detailItem;
+    NSString *message = self.input.text;
+
+    [[IMclient shared] send:recipient message:message];
+    
+    NSMutableArray *record = [DetailViewController chatFor:recipient];
+    message = [NSString stringWithFormat:@"You: %@", message];
+    [record addObject:message];
+}
+
++ (NSMutableArray *) chatFor:(NSString *)from
+{
+    NSMutableArray *record = [chats objectForKey:from];
+    if (NULL == record)
+    {
+        record = [NSMutableArray array];
+        [chats setObject:record forKey:from];
+    }
+    return record;
+}
+
++ (void)handleChat:(NSString *)from message:(NSString *)message
+{
+    NSMutableArray *record = [DetailViewController chatFor:from];
+    message = [NSString stringWithFormat:@"%@: %@", from, message];
+    [record addObject:message];
+
+    if ([from isEqualToString:current])
+        [theDVC configureView];
 }
 
 #pragma mark - Split view

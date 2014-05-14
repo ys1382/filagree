@@ -6,11 +6,13 @@
 #import <UIKit/UIKit.h>
 
 @interface DetailViewController : UIViewController <UISplitViewControllerDelegate>
-@property (weak, nonatomic) IBOutlet UIScrollView *scrollview;
 
++ (void)handleChat:(NSString*)from message:(NSString*)message;
+
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollview;
 @property (weak, nonatomic) IBOutlet UITextView *transcript;
 @property (weak, nonatomic) IBOutlet UITextField *input;
+@property (weak, nonatomic) IBOutlet UIButton *send;
 @property (strong, nonatomic) id detailItem;
 
-//@property (weak, nonatomic) IBOutlet UILabel *detailDescriptionLabel;
 @end

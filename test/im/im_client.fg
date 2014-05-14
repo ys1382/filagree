@@ -117,11 +117,12 @@ client.handle_chat = function(self, chat, from)
 
 end
 
-client.send = function(self, other)
+client.send = function(self, other, text)
 
-    text = sys.form_get(self.ui).sezme
+    text = text or sys.form_get(self.ui).sezme
     msgtext = ['event':'text', 'text':text]
-    self.mesh.send_to(peer, msgtext)
+    other = other or peer
+    self.mesh.send_to(other, msgtext)
 
 end
 
