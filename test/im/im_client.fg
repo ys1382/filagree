@@ -61,6 +61,8 @@ client = [
     'handle_signin' : function(self, socket, mc3)
         if mc3.result then
             self.contacts = mc3.contacts
+            creds = sys.form_get(self.ui)
+            sys.save('creds', creds)
             self.main()
         else
             sys.ui_set(self.ui.error, mc3.error)
@@ -253,7 +255,12 @@ client.ui_login = function(self)
                             ])
 end
 
-client.ui_login()
+client.login() = function(self)
+    if creds = sys.load('creds') then
+        client.signin(creds.id, creds.password)
+    end
+
+client.login()
 
 
 sys.loop()

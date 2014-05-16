@@ -118,6 +118,7 @@ static NSString *current = NULL;
 {
     NSString *recipient = self.detailItem;
     NSString *message = self.input.text;
+    [self.input resignFirstResponder]; // hide keyboard
 
     [[IMclient shared] send:recipient message:message];
     
