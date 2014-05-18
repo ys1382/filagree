@@ -43,7 +43,7 @@ im = [
         self.mesh.print('online for ' + to +': '+ contacts +', '+ self.mesh.peers)
         roster = []
         for p in contacts
-            if self.mesh.peers[p] then online = true else online = nil end
+            if self.mesh.peers[p] then online = true else online = false end
             roster[p] = contacts[p] + ['online':online]
         end
         return ['contacts':roster]
@@ -57,6 +57,9 @@ im = [
         end
 
         sys.save(self.accounts, 'accounts')
+
+        self.inform_others(ms2.from)
+
         return ['event' : 'signin', 'result' : true]
     end,
 
@@ -71,10 +74,17 @@ im = [
             roster = []
         end
 
+        self.inform_others(from)
+
+        return ['event' : 'signin', 'result' : result] + roster
+    end,
+
+    # tell everyone this guy came online
+    'inform_others' : function(self, from)
+
         ms3b = ['event' : 'online', 'from' : from, 'online':true]
         self.mesh.broadcast(ms3b, nil, from)
 
-        return ['event' : 'signin', 'result' : result] + roster
     end,
 
 ]

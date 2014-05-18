@@ -49,7 +49,9 @@ client = [
     end,
 
     'available_contacts' : function(self)
+        sys.print('ac : ' + self.contacts)
         self.roster = [k for k,v in self.contacts where v.online]
+        sys.print('roster : ' + self.roster)
         return self.roster
     end,
 
@@ -233,7 +235,7 @@ end
 
 client.signin = function(self, id, pw, entrance)
     sys.print('signin ' + self.creds)
-    self.creds = self.creds or ['id':id, 'password':pw] or sys.form_get(self.ui)
+    self.creds = self.creds or sys.form_get(self.ui) or ['id':id, 'password':pw]
     self.entrance = entrance or 'signin'
     self.mesh = self.mesh.init(self.creds.id, self.port, [self])
     self.mesh.connect()
@@ -255,6 +257,8 @@ client.ui_login = function(self)
 end
 
 client.login = function(self)
+
+    # todo -- make autologin work
     #if self.creds = sys.load('creds') then
     #    self.signin()
     #else
