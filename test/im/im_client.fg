@@ -15,8 +15,7 @@ client = [
     'handle_message' : function(self, socket, mc1)
         e = mc1.event
         if (e == 'greet') then
-            creds = sys.form_get(self.ui)
-            return ['event' : self.entrance] + creds
+            return ['event' : self.entrance] + self.creds
         else if e == 'signin' then
             self.handle_signin(socket, mc1)
         else if e == 'chat' then
@@ -61,10 +60,10 @@ client = [
     'handle_signin' : function(self, socket, mc3)
         if mc3.result then
             self.contacts = mc3.contacts
-            creds = sys.form_get(self.ui)
-            sys.save('creds', creds)
+            sys.save(self.creds, 'creds')
             self.main()
         else
+            self.creds = nil
             sys.ui_set(self.ui.error, mc3.error)
         end
     end
@@ -198,6 +197,7 @@ client.main = function(self)
 
                                 self.w, self.h
                             ])
+
 end
 
 client.add = function(self)
@@ -231,17 +231,16 @@ client.add_contact = function(self, friend)
     self.mesh.send_to('server', mc4)
 end
 
-client.signin = function(self, id, password, entrance)
+client.signin = function(self, id, pw, entrance)
+    sys.print('signin ' + self.creds)
+    self.creds = self.creds or ['id':id, 'password':pw] or sys.form_get(self.ui)
     self.entrance = entrance or 'signin'
-    if (not id) and (not password) then
-        id = sys.form_get(self.ui).id
-    end
-    self.mesh = self.mesh.init(id, self.port, [self])
+    self.mesh = self.mesh.init(self.creds.id, self.port, [self])
     self.mesh.connect()
 end
 
-client.signup = function(self, username, password)
-    self.signin(username, password, 'signup')
+client.signup = function(self, id, pw)
+    self.signin(id, pw, 'signup')
 end
 
 client.ui_login = function(self)
@@ -255,13 +254,15 @@ client.ui_login = function(self)
                             ])
 end
 
-client.login() = function(self)
-    if creds = sys.load('creds') then
-        client.signin(creds.id, creds.password)
-    end
+client.login = function(self)
+    #if self.creds = sys.load('creds') then
+    #    self.signin()
+    #else
+        self.ui_login()
+        sys.loop()
+    #end
+end
 
 client.login()
 
-
 sys.loop()
-

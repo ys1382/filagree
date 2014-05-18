@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		883B8F4D182589D200EF482A /* Window.xib in Resources */ = {isa = PBXBuildFile; fileRef = 883B8F4C182589D200EF482A /* Window.xib */; };
 		883D35E81916293200DD8397 /* hal_apple.m in Sources */ = {isa = PBXBuildFile; fileRef = 883D35E71916293200DD8397 /* hal_apple.m */; };
 		886CC5811823389E00DB6074 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 886CC5801823389E00DB6074 /* Cocoa.framework */; };
 		886CC58B1823389E00DB6074 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 886CC5891823389E00DB6074 /* InfoPlist.strings */; };
@@ -62,7 +61,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		883B8F4C182589D200EF482A /* Window.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Window.xib; sourceTree = "<group>"; };
 		883D35E71916293200DD8397 /* hal_apple.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = hal_apple.m; path = ../../../source/hal_apple.m; sourceTree = "<group>"; };
 		883D35E91916293A00DD8397 /* hal_apple.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = hal_apple.h; path = ../../../source/hal_apple.h; sourceTree = "<group>"; };
 		886CC57D1823389E00DB6074 /* OSXfgui.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OSXfgui.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -200,7 +198,6 @@
 				88B03FF0182593A600F63771 /* MainWindow.xib */,
 				886CC5981823389E00DB6074 /* Images.xcassets */,
 				886CC5871823389E00DB6074 /* Supporting Files */,
-				883B8F4C182589D200EF482A /* Window.xib */,
 			);
 			path = OSXfgui;
 			sourceTree = "<group>";
@@ -401,7 +398,6 @@
 				886CC6291823392600DB6074 /* node.fg in Resources */,
 				886CC6301823392600DB6074 /* test_syntax.fg in Resources */,
 				886CC5991823389E00DB6074 /* Images.xcassets in Resources */,
-				883B8F4D182589D200EF482A /* Window.xib in Resources */,
 				886CC62D1823392600DB6074 /* sync_server.fg in Resources */,
 				886CC6321823392600DB6074 /* ui.fg in Resources */,
 				88B03FF1182593A600F63771 /* MainWindow.xib in Resources */,

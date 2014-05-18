@@ -204,6 +204,7 @@ static NSWindow *window = NULL;
 {
     printf("window closed\n");
 }
+
 /*
 - (void) alert:(struct context*)context
          title:(const char*)title
@@ -877,9 +878,9 @@ void *hal_window(struct context *context,
     NSView *content = [window contentView];
 
     NSArray *subviews = [NSArray arrayWithArray:[content subviews]];
-    [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
+   // [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
         [subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-    }];
+   // }];
     //[content setNeedsDisplay];
 
 
