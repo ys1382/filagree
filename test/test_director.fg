@@ -46,7 +46,6 @@ test_director = [
                 self.scythe()
                 sys.exit()
             end
-
         end
     end,
 

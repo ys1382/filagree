@@ -68,7 +68,7 @@ client = [
             self.creds = nil
             sys.ui_set(self.ui.error, mc3.error)
         end
-    end
+    end,
 
 
 ####### ui
@@ -263,7 +263,7 @@ client = [
             self.ui_login()
             sys.loop()
         #end
-    end
+    end,
 
     ####### test
 
@@ -299,7 +299,7 @@ client = [
         self.mesh.send_to(msg7.from, msg8)
 
     end
-
+]
 
 
 client.login()

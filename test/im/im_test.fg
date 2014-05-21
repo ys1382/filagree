@@ -2,6 +2,7 @@
 
 # to run, launch server and two clients, 'client1' and 'client2'
 
+import '../mesh'
 import '../test_director'
 
 director = [

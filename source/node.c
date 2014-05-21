@@ -371,7 +371,12 @@ struct variable *sys_socket_listen(struct context *context)
 	servaddr.sin_port        = htons(serverport);
 
     int reuse = 1;
-    setsockopt(ta->fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
+    if (!setsockopt(ta->fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)))
+    {
+        printf("error on socket %d\n", ta->fd);
+        perror("setsockopt");
+        return NULL;
+    }
 	if (bind(ta->fd, (struct sockaddr*)&servaddr, sizeof(servaddr)))
     {
         perror("bind");
