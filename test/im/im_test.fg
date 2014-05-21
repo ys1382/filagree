@@ -1,144 +1,34 @@
-port = 9996
+####### test_sync.fg
 
-####### net
+# to run, launch server and two clients, 'client1' and 'client2'
 
-server = [
+import '../test_director'
 
-    'users' : sys.load('users') or [],
+director = [
 
-    'connected' : function(self, id)
-        sys.print('server: connected ' + id)
+    'run_tests' : function(self)
+
+        self.login()
+        self.presence()
+        self.chat()
+
     end,
 
-    'messaged' : function(self, id, msg)
-        sys.print('server: message from ' + id + ': ' + msg)
-        self[msg.action](id, msg.data)
+    #
+    # test to create, rename, update, delete files
+    #
+
+    'login' : function(self)
+
+        self.test_title('login')
+
+        # signup
+        self.sync_direct('client1', 'signup', 'a', 'a')
+
     end,
 
-    'signup' : function(self, id, data)
-        self.users = self.users + data
-        sys.save(self.users, 'users')
-    end,
+] + test_director
 
-    'signin' : function(self, id, data)
-        if self.users(data.username) == data.password then
-            sys.send(id, 'ok')
-        else
-            sys.send(id, 'no')
-        end
-    end,
-]
-
-client = [
-
-    'connected' : function(self, id)
-        self.server_id = id
-        sys.print('client: connected ' + id)
-        sys.send(id, 'hi', self)
-    end,
-
-    'messaged' : function(self, id, msg)
-        sys.print('client: message from ' + id + ': ' + msg)
-    end,
-
-    'sent' : function(self, id)
-        sys.print('client: sent to ' + id)
-    end
-]
-
-
-####### ui
-
-import 'ui'
-
-ctx = ['w':('w':240), 'h':('h':320),
-       'client' : client,
-       'port' : port,
-       'friends' : (sys.load('friends') or []),
-      ]
-
-ctx.select = function(ctx)
-    sys.print('select ' + sys.args()[1])
-end
-
-ctx.settings = function(ctx)
-
-    ctx.ui = sys.ui(ctx, ['vertical',
-
-                        ['form', 'display name', 'username', 'password'],
-
-                        ['horizontal',
-                            ['button', 'text':'save',   'logic':sys.save(sys.form_get(ctx.ui), 'settings')],
-                            ['button', 'text':'cancel', 'logic':ctx.main],
-                            ['button', 'text':'logout', 'logic':ctx.main],
-                        ],
-
-                        ctx.w, ctx.h
-                    ])
-
-    f = sys.load('settings')
-    sys.form_set(f)
-end
-
-ctx.main = function(ctx)
-
-    sys.ui(ctx, ['vertical',
-
-                    ['horizontal',
-                        ['button', 'text':'add',      'logic':ctx.add],
-                        ['button', 'text':'settings', 'logic':ctx.settings],
-                    ],
-
-                    ['table', 'list':ctx.friends, 'logic':ctx.select],
-
-                    ctx.w, ctx.h
-                ])
-end
-
-ctx.add = function(ctx)
-
-    ctx.ui = sys.ui(ctx, ['vertical',
-
-                        ['form', 'username'],
-
-                        ['horizontal',
-                            ['button', 'text':'add',       'logic':ctx.added],
-                            ['button', 'text':'nevermind', 'logic':ctx.main],
-                        ],
-
-                        ctx.w, ctx.h
-                    ])
-end
-
-ctx.added = function(ctx)
-    friend = sys.form_get(ctx.ui).username
-    ctx.friends = ctx.friends + friend
-    sys.print('fz ' + friend + ' -- ' + ctx.friends)
-    sys.save(ctx.friends, 'friends')
-    ctx.main()
-end
-
-ctx.signup = function(ctx)
-    msg = ['action' : 'signup', 'data' : sys.form_get(ctx.ui)]
-    sys.send(ctx.client.server_id, msg)
-    ctx.main()
-end
-
-sys.ui(ctx, ['vertical',
-
-                 ['form', 'username', 'password'],
-
-                 ['horizontal',
-                     ['button', 'text':'signin', 'logic':ctx.main],
-                     ['button', 'text':'signup', 'logic':ctx.signup],
-                 ],
-
-                 ctx.w, ctx.h
-             ])
-
-####### main
-
-sys.listen(port, server)
-sys.connect('127.0.0.1', port, client)
-
-sys.loop()
+port = 1999
+mesh = Mesh.init(director.id, port, [director])
+director.launch(mesh, '../../source/filagree', 'im_server.fg', 2, 'im_client.fg')

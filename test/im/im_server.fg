@@ -2,15 +2,25 @@ import '../mesh'    # shared mesh logic
 import '../sync/sync'    # shared sync logic
 
 
-host = '127.0.0.1'
 id = 'server'
-port = 9999
+port = 1999
 
 
-im = [
+ImClient = [
 
     'id' : id,
-    'accounts' : (sys.load('accounts') or []), # id:[ password, name ]
+
+    'init' : function(self, id, port, Mesh) # set online to false for all contacts at first
+
+        self.accounts = sys.load('accounts') or []
+        sys.print('accounts=' + self.accounts)
+
+        mesh = Mesh.init(id, port, [self])
+        self.mesh = mesh
+        mesh.listen()
+        sys.loop()
+
+    end,
 
     'disconnected' : function(self, socket, id)
         #self.mesh.print('handle_disconnect ' + id)
@@ -32,21 +42,16 @@ im = [
     'handle_contacts' : function(self, msf)
         sys.print('handle_contacts ' + msf)
         self.accounts[msf.from].contacts = msf.contacts
-        sys.save(self.accounts, 'accounts')
+        self.save_accounts()
         return self.roster(msf.from) + ['event':'contacts']
     end,
 
     # contacts plus online status
     'roster' : function(self, to)
-
         contacts = self.accounts[to].contacts
-        self.mesh.print('online for ' + to +': '+ contacts +', '+ self.mesh.peers)
-        roster = []
-        for p in contacts
-            if self.mesh.peers[p] then online = true else online = false end
-            roster[p] = contacts[p] + ['online':online]
-        end
-        return ['contacts':roster]
+        online = self.mesh.peers
+        online_contacts = [c for c in contacts where online[c]]
+        return ['contacts':contacts, 'online':online_contacts]
     end,
 
     'handle_signup' : function(self, ms2)
@@ -56,13 +61,17 @@ im = [
             self.accounts[ms2.from] = ['password' : ms2.password ]
         end
 
-        sys.save(self.accounts, 'accounts')
+        self.save_accounts()
 
         self.inform_others(ms2.from)
 
         return ['event' : 'signin', 'result' : true]
     end,
 
+    # save username, passwords, contacts, but don't save who's online
+    'save_accounts' : function(self)
+        sys.save(self.accounts, 'accounts')
+    end,
 
     'handle_signin' : function(self, ms3)
 
@@ -89,13 +98,4 @@ im = [
 
 ]
 
-
-sys.print('accounts='+sys.load('accounts'))
-
-sys.print('logins='+im.accounts)
-
-mesh = Mesh.init(id, 1999, [im])
-im.mesh = mesh
-
-mesh.listen()
-sys.loop()
+im = ImClient.init(id, port, Mesh)
