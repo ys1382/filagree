@@ -72,6 +72,7 @@
 		88C6305A1835221700E6E9DC /* util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../../../source/util.h; sourceTree = "<group>"; };
 		88C6305B1835221700E6E9DC /* variable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = variable.h; path = ../../../source/variable.h; sourceTree = "<group>"; };
 		88C6305C1835221700E6E9DC /* vm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = vm.h; path = ../../../source/vm.h; sourceTree = "<group>"; };
+		88EC96E9192FD52C0093681C /* im.fg */ = {isa = PBXFileReference; lastKnownFileType = text; path = im.fg; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -132,6 +133,7 @@
 		88C62F2918351E6B00E6E9DC /* im */ = {
 			isa = PBXGroup;
 			children = (
+				88EC96E9192FD52C0093681C /* im.fg */,
 				88C62F2D18351E6B00E6E9DC /* im_client.fg */,
 				88C62F2E18351E6B00E6E9DC /* im_server.fg */,
 				88C62F2F18351E6B00E6E9DC /* im_test.fg */,

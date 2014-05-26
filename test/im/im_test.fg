@@ -4,6 +4,8 @@
 
 import '../mesh'
 import '../test_director'
+import 'im' # for port
+
 
 director = [
 
@@ -24,12 +26,20 @@ director = [
         self.test_title('login')
 
         # signup
-        self.sync_direct('client1', 'signup', 'a', 'a')
+        self.im_direct('client1', 'signup', 'a', 'a')
 
     end,
 
+    'im_direct' : function(self, whom, action, id, pw)
+
+        title = action +' '+ id +','+ pw
+        self.direct(title, whom, action, ['id':id, 'password':pw])
+
+    end,
+
+
 ] + test_director
 
-port = 1999
+sys.print('test port ' + port)
 mesh = Mesh.init(director.id, port, [director])
 director.launch(mesh, '../../source/filagree', 'im_server.fg', 2, 'im_client.fg')

@@ -1,9 +1,9 @@
 import '../mesh'    # shared mesh logic
 import '../sync/sync'    # shared sync logic
+import 'im'
 
 
 id = 'server'
-port = 1999
 
 
 ImClient = [

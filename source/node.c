@@ -356,6 +356,7 @@ struct variable *sys_socket_listen(struct context *context)
     struct variable *listener = param_var(arguments, 2);
     struct node_thread *ta = thread_new(context, listener, &sys_socket_listen2, 0);
     int serverport = param_int(arguments, 1);
+    printf("sys_socket_listen on port %d\n", serverport);
 
 	struct sockaddr_in servaddr;
 
@@ -371,7 +372,7 @@ struct variable *sys_socket_listen(struct context *context)
 	servaddr.sin_port        = htons(serverport);
 
     int reuse = 1;
-    if (!setsockopt(ta->fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)))
+    if (setsockopt(ta->fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)))
     {
         printf("error on socket %d\n", ta->fd);
         perror("setsockopt");
@@ -422,6 +423,7 @@ struct variable *sys_connect(struct context *context)
     struct node_thread *ta = thread_new(context, listener, &sys_connect2, 0);
     char *serveraddr = param_str(arguments, 1);
     int serverport = param_int(arguments, 2);
+    printf("sys_connect to port %d\n", serverport);
 
 #ifdef __ANDROID__
     if (!strcmp(serveraddr, "127.0.0.1"))
@@ -462,13 +464,13 @@ void *sys_send2(void *arg)
 struct variable *sys_send(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
-    int fd = param_int(arguments, 1);
-    assert_message(fd >= 0, "bad fd");
+    struct variable *fd = param_var(arguments, 1);
+    vm_assert(context, fd->type == VAR_INT && fd->integer >= 0, "bad fd");
     struct variable *v = param_var(arguments, 2);
     struct variable *listener = param_var(arguments, 3);
 
     struct byte_array *sending = variable_serialize(context, NULL, v);
-    enqueue(context, fd, THREAD_SEND, sending, listener, &sys_send2);
+    enqueue(context, fd->integer, THREAD_SEND, sending, listener, &sys_send2);
 
     return NULL;
 }

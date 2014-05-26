@@ -11,6 +11,8 @@ Mesh = [
 
     'init' : function(self, id, port, mesh_subscribers)
 
+        sys.print('mesh init port ' + port)
+
         self.id = id
         self.port = port or 1999
         self.ctx = mesh_subscribers or []
@@ -34,9 +36,10 @@ Mesh = [
     end,
 
 
-    'send_greet' : function(self, socket)
+    'send_greet' : function(self, socket, whom)
+        socket = socket or self.peers[whom] # id -> socket
         test = (socket.type == 'nil')
-        msg1 = ['event' : 'greet', 'from' : self.id, 'test' : test]
+        msg1 = ['event' : 'greet', 'from' : self.id, 'test' : (test or nil)]
         for c1 in self.ctx
             msg1 = msg1 + c1.greet()
         end
@@ -75,7 +78,7 @@ Mesh = [
 
     'handle_message' : function(self, socket, msg5)
 
-        sys.print('recv ' + msg5)
+        #sys.print('recv ' + msg5)
 
         if msg5.event == 'greet' then
             from = msg5.from
@@ -141,7 +144,7 @@ Mesh = [
     'send_to' : function(self, to, msg)
 
         msg.from = self.id
-        msg.to = to
+        msg.to = msg.to or to
         to2 = self.peers[to] # id -> socket
 
         # if no direct connection, then send via 'server'

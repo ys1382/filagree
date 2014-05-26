@@ -48,6 +48,7 @@
 		886CC6551823396B00DB6074 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 886CC6541823396B00DB6074 /* OpenGL.framework */; };
 		886CC6571823397100DB6074 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 886CC6561823397100DB6074 /* OpenAL.framework */; };
 		88B03FF1182593A600F63771 /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 88B03FF0182593A600F63771 /* MainWindow.xib */; };
+		88EC96EB193144640093681C /* im.fg in Resources */ = {isa = PBXBuildFile; fileRef = 88EC96EA193144640093681C /* im.fg */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -122,6 +123,7 @@
 		886CC6541823396B00DB6074 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		886CC6561823397100DB6074 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		88B03FF0182593A600F63771 /* MainWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = MainWindow.xib; sourceTree = "<group>"; };
+		88EC96EA193144640093681C /* im.fg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = im.fg; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -292,6 +294,7 @@
 		886CC6141823392600DB6074 /* im */ = {
 			isa = PBXGroup;
 			children = (
+				88EC96EA193144640093681C /* im.fg */,
 				886CC6151823392600DB6074 /* im_client.fg */,
 				886CC6161823392600DB6074 /* im_server.fg */,
 				886CC6171823392600DB6074 /* im_test.fg */,
@@ -399,6 +402,7 @@
 				886CC6301823392600DB6074 /* test_syntax.fg in Resources */,
 				886CC5991823389E00DB6074 /* Images.xcassets in Resources */,
 				886CC62D1823392600DB6074 /* sync_server.fg in Resources */,
+				88EC96EB193144640093681C /* im.fg in Resources */,
 				886CC6321823392600DB6074 /* ui.fg in Resources */,
 				88B03FF1182593A600F63771 /* MainWindow.xib in Resources */,
 				886CC62A1823392600DB6074 /* icon.png in Resources */,

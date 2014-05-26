@@ -1,9 +1,11 @@
 import '../ui'
 import '../mesh'
+import 'im'
 
-port = 9999
 
 ####### net
+
+id = 'client' + id
 
 client = [
 
@@ -11,6 +13,7 @@ client = [
     'roster' : [],
     'unread' : [],
     'mesh' : Mesh,
+    'port' : port,
 
     'handle_message' : function(self, socket, mc1)
         e = mc1.event
@@ -24,8 +27,20 @@ client = [
             self.handle_contacts(mc1.contacts)
         else if e == 'online' then
             self.handle_online(mc1.from, mc1.online)
+        else if e == 'test' then
+            self.handle_test(mc1)
+            return
         else
             self.sync.handle_message(socket, mc1)
+        end
+    end,
+
+    'connect' : function(self, id)
+        self.mesh = self.mesh.init(id or self.creds.id, self.port, [self])
+        if self.server # already connected
+            self.mesh.send_greet(nil, 'server')
+        else
+            self.mesh.connect()
         end
     end,
 
@@ -232,14 +247,18 @@ client = [
     end,
 
     'signin' : function(self, id, pw, entrance)
+        if id then
+            self.creds = ['id':id, 'password':pw]
+        else 
+            self.creds = sys.form_get(self.ui)
+        end
         sys.print('signin ' + self.creds)
-        self.creds = self.creds or sys.form_get(self.ui) or ['id':id, 'password':pw]
         self.entrance = entrance or 'signin'
-        self.mesh = self.mesh.init(self.creds.id, self.port, [self])
-        self.mesh.connect()
+        self.connect()
     end,
 
     'signup' : function(self, id, pw)
+        self.mesh.print('signup '+ self.creds + id +','+ pw)
         self.signin(id, pw, 'signup')
     end,
 
@@ -275,7 +294,9 @@ client = [
 
         # if not msg7.retry then self.mesh.print('test ' + msg7.seq  +': '+ msg7) end
 
-        if action == 'signin' then
+        if action == 'signup' then
+            self.signup(msg7.id, msg7.password)
+        else if action == 'signin' then
             self.signin(msg7.id, msg7.pw)
 
         else if action == 'offline' then
@@ -296,12 +317,15 @@ client = [
         #self.mesh.print('result for ' + action +': '+ status)
 
         msg8 = ['event' : 'test', 'status' : status, 'seq' : msg7.seq, 'to' : msg7.from]
-        self.mesh.send_to(msg7.from, msg8)
+        self.mesh.send_to('server', msg8)
 
     end
 ]
 
-
-client.login()
+if id then
+    client.connect(id)
+else
+    client.login()
+end
 
 sys.loop()
