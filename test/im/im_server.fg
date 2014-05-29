@@ -77,15 +77,17 @@ ImClient = [
 
         from = ms3.from
         result = (self.accounts[from].password == ms3.password)
+        result = ['event' : 'signined', 'result' : result]
+
         if result then
             roster = self.roster(from) # contacts with online status
-        else
-            roster = []
+            token = sys.rand()
+            self.sessions[token] = from
+            result = result + ['token' : token] + roster
         end
 
-        self.inform_others(from)
-
         return ['event' : 'signin', 'result' : result] + roster
+
     end,
 
     # tell everyone this guy came online

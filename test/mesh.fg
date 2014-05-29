@@ -11,8 +11,6 @@ Mesh = [
 
     'init' : function(self, id, port, mesh_subscribers)
 
-        sys.print('mesh init port ' + port)
-
         self.id = id
         self.port = port or 1999
         self.ctx = mesh_subscribers or []

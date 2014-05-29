@@ -25,8 +25,10 @@ director = [
 
         self.test_title('login')
 
-        # signup
         self.im_direct('client1', 'signup', 'a', 'a')
+        self.im_direct('a',       'signin', 'a', 'a')
+        self.im_direct('a',       'signout')
+        self.im_direct('a',       'forget', 'a', 'a')
 
     end,
 

@@ -224,7 +224,6 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
         if (n <= 0)  // disconnected
         {
             struct node_thread *ta = thread_new(ta0->context, listener, node_callback, fd);
-            printf("disconnected\n");
             ta->event = DISCONNECTED;
             start_thread(ta);
             return true;
@@ -356,7 +355,6 @@ struct variable *sys_socket_listen(struct context *context)
     struct variable *listener = param_var(arguments, 2);
     struct node_thread *ta = thread_new(context, listener, &sys_socket_listen2, 0);
     int serverport = param_int(arguments, 1);
-    printf("sys_socket_listen on port %d\n", serverport);
 
 	struct sockaddr_in servaddr;
 
@@ -423,7 +421,6 @@ struct variable *sys_connect(struct context *context)
     struct node_thread *ta = thread_new(context, listener, &sys_connect2, 0);
     char *serveraddr = param_str(arguments, 1);
     int serverport = param_int(arguments, 2);
-    printf("sys_connect to port %d\n", serverport);
 
 #ifdef __ANDROID__
     if (!strcmp(serveraddr, "127.0.0.1"))

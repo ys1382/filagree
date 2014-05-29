@@ -19,8 +19,8 @@ client = [
         e = mc1.event
         if (e == 'greet') then
             return ['event' : self.entrance] + self.creds
-        else if e == 'signin' then
-            self.handle_signin(socket, mc1)
+        else if e == 'signined' then
+            self.handle_signined(socket, mc1)
         else if e == 'chat' then
             self.handle_chat(mc1.chat, mc1.from)
         else if e == 'contacts' then
@@ -74,8 +74,9 @@ client = [
         sys.ui_set(self.ui.roster)
     end,
 
-    'handle_signin' : function(self, socket, mc3)
-        if mc3.result then
+    'handle_signined' : function(self, socket, mc3)
+        if mc3.token then
+            self.token = mc3.token
             self.contacts = mc3.contacts
             sys.save(self.creds, 'creds')
             self.main()
@@ -257,6 +258,16 @@ client = [
         self.connect()
     end,
 
+    'signout' : function(self)
+        msgso = ['event':'signout', self.token]
+        self.mesh.send_to('server', msgso)
+    end,
+
+    'forget' : function(self)
+        msgf = ['event':'forget', self.token]
+        self.mesh.send_to('server', msgf)
+    end,
+
     'signup' : function(self, id, pw)
         self.mesh.print('signup '+ self.creds + id +','+ pw)
         self.signin(id, pw, 'signup')
@@ -295,9 +306,16 @@ client = [
         # if not msg7.retry then self.mesh.print('test ' + msg7.seq  +': '+ msg7) end
 
         if action == 'signup' then
+            self.connect(msg7.id, msg7.action)
             self.signup(msg7.id, msg7.password)
         else if action == 'signin' then
-            self.signin(msg7.id, msg7.pw)
+            self.connect(msg7.id, msg7.action)
+            self.signin(msg7.id, msg7.password)
+        else if action == 'signout' then
+            self.signout()
+        else if action == 'forget' then
+            self.forget()
+        self.forget(msg7.id, msg7.password)
 
         else if action == 'offline' then
             self.offline = true
