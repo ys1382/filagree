@@ -8,6 +8,7 @@ test_director = [
 
 
     'id'    :       'test_director',
+    'score' :       0,
     'queue' :       [],
     'active':       [],
     'descriptions': [],

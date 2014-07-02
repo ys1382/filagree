@@ -9,34 +9,71 @@ import 'im' # for port
 
 director = [
 
-    'run_tests' : function(self)
-
-        self.login()
-        self.presence()
-        self.chat()
-
-    end,
 
     #
-    # test to create, rename, update, delete files
+    # tests login, presence, chat
     #
+
+    'tests' : ['login', 'presence', 'chat'],
 
     'login' : function(self)
 
-        self.test_title('login')
-
-        self.im_direct('client1', 'signup', 'a', 'a')
-        self.im_direct('a',       'signin', 'a', 'a')
-        self.im_direct('a',       'signout')
-        self.im_direct('a',       'forget', 'a', 'a')
+        # self.test_title('login')
+        self.im_direct('client1', 'signin',  'client1', 'a')
+        self.im_direct('client1', 'signout', 'client1')
+        self.im_direct('client2', 'signin',  'client2', 'b')
+        self.im_direct('client2', 'signout', 'client2')
 
     end,
 
-    'im_direct' : function(self, whom, action, id, pw)
 
+    'presence' : function(self)
+    
+        self.im_direct('client1', 'presence', 'client2', true)
+        self.im_direct('client2', 'signout')
+        self.im_direct('client1', 'presence', 'client2', false)
+    
+    end,
+
+    'chat' : function(self)
+
+        self.im_direct('client1', 'chat', 'client2', 'hi')
+        self.im_direct('client2', 'chatted', 'client1', 'hi')
+
+    end,
+
+   'im_direct' : function(self, whom, action, id, pw)
         title = action +' '+ id +','+ pw
         self.direct(title, whom, action, ['id':id, 'password':pw])
+    end,
 
+
+    #
+    # setup, cleanup
+    #
+
+    # run once before any tests at all are run
+    'before_tests' : function(self)
+        self.im_direct('client1', 'signup', 'client1', 'a')
+        self.im_direct('client2', 'signup', 'client2', 'b')
+    end,
+    
+    # run once after any tests at all are run
+    'after_tests' : function(self)
+        self.im_direct('client1', 'forget')
+        self.im_direct('client2', 'forget')
+    end,
+
+    # run before every test
+    'test_setup' : function(self)
+        self.im_direct('client1', 'signin',  'client1', 'a')
+        self.im_direct('client2', 'signin',  'client2', 'b')
+    end,
+
+    # run after every test
+    'test_cleanup' : function(self)
+        self.im_direct('client1', 'signout', 'client1')
+        self.im_direct('client2', 'signout', 'client2')
     end,
 
 
