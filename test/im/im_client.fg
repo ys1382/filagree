@@ -315,7 +315,8 @@ client = [
             self.signout()
         else if action == 'forget' then
             self.forget()
-        self.forget(msg7.id, msg7.password)
+        else if action == 'presence' then
+            status = self.roster[msg7.who] == msg7.online
 
         else if action == 'offline' then
             self.offline = true

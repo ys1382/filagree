@@ -172,6 +172,8 @@ test_director = [
     # send message to peer to exit
     'scythe' : function(self)
 
+        self.after_tests()
+
         msgdie = ['event'   : 'test',
                 'action'    : 'die',
                 'from'      : self.id]

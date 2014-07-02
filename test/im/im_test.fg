@@ -10,8 +10,13 @@ import 'im' # for port
 director = [
 
 
+    'after_tests' : function(self)
+        self.im_direct('client1', 'forget')
+        self.im_direct('client2', 'forget')
+    end,
+
     #
-    # tests login, presence, chat
+    # test login, presence, chat
     #
 
     'tests' : ['login', 'presence', 'chat'],
@@ -25,7 +30,6 @@ director = [
         self.im_direct('client2', 'signout', 'client2')
 
     end,
-
 
     'presence' : function(self)
     
