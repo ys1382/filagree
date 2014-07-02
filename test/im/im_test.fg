@@ -17,19 +17,34 @@ director = [
 
     end,
 
+    'after_tests' : function(self)
+        self.im_direct('client1', 'forget')
+        self.im_direct('client2', 'forget')
+    end,
+
     #
-    # test to create, rename, update, delete files
+    # test login, presence, chat
     #
 
     'login' : function(self)
 
         self.test_title('login')
 
-        self.im_direct('client1', 'signup', 'a', 'a')
-        self.im_direct('a',       'signin', 'a', 'a')
-        self.im_direct('a',       'signout')
-        self.im_direct('a',       'forget', 'a', 'a')
+        self.im_direct('client1', 'signup', 'client1', 'a')
+        self.im_direct('client1', 'signout', 'client1')
+        self.im_direct('client1', 'signin', 'client1', 'a')
 
+        self.im_direct('client1', 'signup', 'client2', 'z')
+        self.im_direct('client1', 'signout', 'client2')
+        self.im_direct('client1', 'signin', 'client2', 'z')
+
+    end,
+
+    'presence' : function(self)
+        self.im_direct('client1', 'presence', 'who':'client2', 'online':true)
+        self.im_direct('client1', 'signout', 'client2')
+        self.im_direct('client1', 'presence', 'who':'client2', 'online':false)
+        self.im_direct('client1', 'signin', 'client2', 'z')
     end,
 
     'im_direct' : function(self, whom, action, id, pw)
