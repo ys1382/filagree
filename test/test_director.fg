@@ -37,7 +37,7 @@ test_director = [
                 sys.sleep(original_request.retry * 1000)
                 self.queue = [original_request] + self.queue # add back to head of q
 
-            else if msg4.status != 'done'
+            else #if msg4.status != 'done'
                 self.received_result(msg4.seq, ok, true)
             end
 
