@@ -30,7 +30,7 @@ director = [
 
     'login' : function(self)
 
-        # self.test_title('login')
+        self.test_title('login')
         self.im_direct('client1', 'signin',  'client1', 'a')
         self.im_direct('client1', 'signout', 'client1')
         self.im_direct('client1', 'signin', 'client1', 'a')

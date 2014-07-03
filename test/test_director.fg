@@ -106,6 +106,8 @@ test_director = [
 
     'dequeue_title' : function(self, seq)
 
+        sys.print('dq title ' + self.current + ' , ' + self.passing)
+
         if self.current then
             self.received_result(self.current, self.passing)
         end
