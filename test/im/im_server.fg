@@ -40,7 +40,7 @@ ImClient = [
     end,
 
     'handle_contacts' : function(self, msf)
-        sys.print('handle_contacts ' + msf)
+        sys.print('handle_contacts ' + msf + ',' + self.accounts)
         self.accounts[msf.from].contacts = msf.contacts
         self.save_accounts()
         return self.roster(msf.from) + ['event':'contacts']
@@ -50,6 +50,7 @@ ImClient = [
     'roster' : function(self, to)
         contacts = self.accounts[to].contacts
         online = self.mesh.peers
+        sys.print('roster('+to+') ' + self.accounts +' ++ '+ contacts +' -- '+ online)
         online_contacts = [c for c in contacts where online[c]]
         return ['contacts':contacts, 'online':online_contacts]
     end,
@@ -58,7 +59,7 @@ ImClient = [
         if (self.accounts[ms2.from]) then
             return ['event' : 'signin', 'result' : false]
         else
-            self.accounts[ms2.from] = ['password' : ms2.password ]
+            self.accounts[ms2.from] = ['pw' : ms2.pw ]
         end
 
         self.save_accounts()
@@ -76,7 +77,7 @@ ImClient = [
     'handle_signin' : function(self, ms3)
 
         from = ms3.from
-        result = (self.accounts[from].password == ms3.password)
+        result = (self.accounts[from].pw == ms3.pw)
         result = ['event' : 'signined', 'result' : result]
 
         if result then

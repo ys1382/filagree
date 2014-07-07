@@ -1,11 +1,14 @@
-import '../ui'
+#import '../ui'
 import '../mesh'
 import 'im'
 
 
 ####### net
 
-id = 'client' + id
+#id = 'client' + id
+id = 'client' + test_init()
+pw = id
+
 
 client = [
 
@@ -18,6 +21,7 @@ client = [
     'handle_message' : function(self, socket, mc1)
         e = mc1.event
         if (e == 'greet') then
+            sys.print(self.mesh.id + ' greet ' + self.entrance + ' ' + self.creds)
             return ['event' : self.entrance] + self.creds
         else if e == 'signined' then
             self.handle_signined(socket, mc1)
@@ -37,16 +41,19 @@ client = [
 
     'connect' : function(self, id)
         self.mesh = self.mesh.init(id or self.creds.id, self.port, [self])
-        if self.server # already connected
-            self.mesh.send_greet(nil, 'server')
-        else
+#        if self.server # already connected
+#            self.mesh.send_greet(nil, 'server')
+#        else
             self.mesh.connect()
-        end
+#        end
     end,
 
     'connected' : function(self, socket)
         self.mesh.print('connected ' + socket)
         self.server = socket
+        for m in self.mq
+            self.mesh.send(self.server, m)
+        end
     end,
 
     'handle_contacts' : function(self, contacts)
@@ -184,7 +191,7 @@ client = [
 
         client.ui = sys.ui(client, ['vertical',
 
-                            ['form', 'server', 'display name', 'id', 'password'],
+                            ['form', 'server', 'display name', 'id', 'pw'],
 
                             ['button', 'text':'contacts', 'logic':client.showContacts],
 
@@ -241,20 +248,15 @@ client = [
     end,
 
     'add_contact' : function(self, friend)
-        self.contacts = self.contacts + [friend:[]]
+        self.contacts[friend] = []
         sys.print('fz ' + friend + ' -- ' + self.contacts)
-        mc4 = ['event' : 'contacts', 'contacts' : self.contacts]
+        mc4 = ['event' : 'contacts', 'contacts' : self.contacts.keys]
         self.mesh.send_to('server', mc4)
     end,
 
     'signin' : function(self, id, pw, entrance)
-        if id then
-            self.creds = ['id':id, 'password':pw]
-        else 
-            self.creds = sys.form_get(self.ui)
-        end
-        sys.print('signin ' + self.creds)
-        self.entrance = entrance or 'signin'
+        sys.print(self.mesh.id + ' signin1 ' + entrance + ' ' + id + ' ' + pw)
+        self.mq = [['event':entrance or 'signin', 'id':id, 'pw':pw]]
         self.connect()
     end,
 
@@ -269,13 +271,12 @@ client = [
     end,
 
     'signup' : function(self, id, pw)
-        self.mesh.print('signup '+ self.creds + id +','+ pw)
         self.signin(id, pw, 'signup')
     end,
 
     'ui_login' : function(self)
         self.ui = sys.ui(self, ['vertical',
-                                     ['form', 'server', 'id', 'password'],
+                                     ['form', 'server', 'id', 'pw'],
                                      ['horizontal',
                                          ['button', 'text':'signin', 'logic':self.signin],
                                          ['button', 'text':'signup', 'logic':self.signup],
@@ -306,17 +307,23 @@ client = [
         # if not msg7.retry then self.mesh.print('test ' + msg7.seq  +': '+ msg7) end
 
         if action == 'signup' then
-            self.connect(msg7.id, msg7.action)
-            self.signup(msg7.id, msg7.password)
+            self.signup(msg7.id, msg7.pw)
+
         else if action == 'signin' then
-            self.connect(msg7.id, msg7.action)
-            self.signin(msg7.id, msg7.password)
+            self.signin(msg7.id, msg7.pw)
+
         else if action == 'signout' then
             self.signout()
+
         else if action == 'forget' then
             self.forget()
+
         else if action == 'presence' then
-            status = self.roster[msg7.who] == msg7.online
+            if msg7.online == nil then
+                self.add_contact(msg7.id)
+            else
+                status = self.roster[msg7.who] == msg7.online
+        end
 
         else if action == 'offline' then
             self.offline = true
@@ -340,6 +347,8 @@ client = [
 
     end
 ]
+
+
 
 if id then
     client.connect(id)
