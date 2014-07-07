@@ -5,10 +5,6 @@ import 'im'
 
 ####### net
 
-#id = 'client' + id
-id = 'client' + test_init()
-pw = id
-
 
 client = [
 
@@ -20,10 +16,10 @@ client = [
 
     'handle_message' : function(self, socket, mc1)
         e = mc1.event
-        if (e == 'greet') then
-            sys.print(self.mesh.id + ' greet ' + self.entrance + ' ' + self.creds)
-            return ['event' : self.entrance] + self.creds
-        else if e == 'signined' then
+#        if (e == 'greet') then
+#            sys.print(self.mesh.id + ' greet ' + self.entrance + ' ' + self.creds)
+#            return ['event' : self.entrance] + self.creds
+        if e == 'signined' then
             self.handle_signined(socket, mc1)
         else if e == 'chat' then
             self.handle_chat(mc1.chat, mc1.from)
@@ -48,12 +44,14 @@ client = [
 #        end
     end,
 
+    'greet' : function(self, msgg)
+        return msgg + ['action' : self.entrance] + self.creds
+    end,
+
+
     'connected' : function(self, socket)
         self.mesh.print('connected ' + socket)
         self.server = socket
-        for m in self.mq
-            self.mesh.send(self.server, m)
-        end
     end,
 
     'handle_contacts' : function(self, contacts)
@@ -256,7 +254,7 @@ client = [
 
     'signin' : function(self, id, pw, entrance)
         sys.print(self.mesh.id + ' signin1 ' + entrance + ' ' + id + ' ' + pw)
-        self.mq = [['event':entrance or 'signin', 'id':id, 'pw':pw]]
+        self.entrance = entrance # signup or signin
         self.connect()
     end,
 
@@ -274,6 +272,7 @@ client = [
         self.signin(id, pw, 'signup')
     end,
 
+/*
     'ui_login' : function(self)
         self.ui = sys.ui(self, ['vertical',
                                      ['form', 'server', 'id', 'pw'],
@@ -295,6 +294,7 @@ client = [
             sys.loop()
         #end
     end,
+*/
 
     ####### test
 
@@ -348,12 +348,11 @@ client = [
     end
 ]
 
+####### main
 
 
-if id then
-    client.connect(id)
-else
-    client.login()
-end
-
+id, firstly = test_init()
+cid = 'client' + id
+client.creds = ['id':cid, 'pw':id]
+client[firstly]() # run init function from test_director
 sys.loop()

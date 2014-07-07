@@ -99,6 +99,5 @@ director = [
 
 ] + test_director
 
-sys.print('test port ' + port)
 mesh = Mesh.init(director.id, port, [director])
-director.launch(mesh, '../../source/filagree', 'im_server.fg', 2, 'im_client.fg', 'signup')
+director.launch(mesh, '../../source/filagree', 'im_server.fg', 2, 'im_client.fg', '\'signup\'')

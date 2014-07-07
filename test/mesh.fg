@@ -39,7 +39,7 @@ Mesh = [
         test = (socket.type == 'nil')
         msg1 = ['event' : 'greet', 'from' : self.id, 'test' : (test or nil)]
         for c1 in self.ctx
-            msg1 = msg1 + c1.greet()
+            msg1 = c1.greet(msg1) or msg1
         end
 
         #self.print('socket.type='+socket.type+' test='+test)

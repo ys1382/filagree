@@ -1,16 +1,18 @@
-import '../mesh'    # shared mesh logic
-import '../sync/sync'    # shared sync logic
+import '../mesh'        # shared mesh logic
+import '../sync/sync'   # shared sync logic
 import 'im'
 
 
 id = 'server'
 
 
-ImClient = [
+Server = [
 
     'id' : id,
 
     'init' : function(self, id, port, Mesh) # set online to false for all contacts at first
+
+        sys.print('Server.init')
 
         self.accounts = sys.load('accounts') or []
         sys.print('accounts=' + self.accounts)
@@ -30,12 +32,18 @@ ImClient = [
 
     'handle_message' : function(self, socket, ms1)
 
-        if ms1.event == 'signup' then
-            return self.handle_signup(ms1)
-        else if ms1.event == 'signin' then
-            return self.handle_signin(ms1)
+        if ms1.event = 'greet' then
+            return self.handle_greet(ms1)
         else if ms1.event == 'contacts' then
             return self.handle_contacts(ms1)
+        end
+    end,
+
+    'handle_greet' : function(self, msg)
+        if msg.action == 'signup' then
+            return self.handle_signup(msg)
+        else if msg.action == 'signin' then
+            return self.handle_signin(msg)
         end
     end,
 
@@ -56,15 +64,15 @@ ImClient = [
     end,
 
     'handle_signup' : function(self, ms2)
-        if (self.accounts[ms2.from]) then
+
+        if (self.accounts[ms2.id]) then
             return ['event' : 'signin', 'result' : false]
         else
-            self.accounts[ms2.from] = ['pw' : ms2.pw ]
+            self.accounts[ms2.id] = ['pw' : ms2.pw ]
         end
 
         self.save_accounts()
-
-        self.inform_others(ms2.from)
+        self.inform_others(ms2.id)
 
         return ['event' : 'signin', 'result' : true]
     end,
@@ -101,4 +109,4 @@ ImClient = [
 
 ]
 
-im = ImClient.init(id, port, Mesh)
+server = Server.init(id, port, Mesh)

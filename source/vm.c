@@ -70,8 +70,6 @@ void set_error(struct context *context, const char *format, va_list list)
     const char *message = make_message(format, list);
     printf("\n>%" PRIu16 " - vm_error: %s\n", current_thread_id(), message);
     context->error = variable_new_err(context, message);
-    
-    print_stack_trace(context);
 }
 
 void *vm_exit_message(struct context *context, const char *format, ...)
@@ -96,7 +94,9 @@ void vm_assert(struct context *context, bool assertion, const char *format, ...)
         va_start(list, format);
         set_error(context, format, list);
         va_end(list);
-        
+
+        print_stack_trace(context);
+
         vm_exit();
     }
 }
