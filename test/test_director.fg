@@ -159,7 +159,7 @@ test_director = [
         while i <= num_clients
             sys.print('launch client ' + i +': '+ path +' '+ client_source_file)
 
-            init = 'test_init = function() return '+ i +', '+ firstly +' end'
+            init = 'test_init = function() return '+ i +', '+ firstly +' end '
 
             sys.forkexec(false, path, client_source_file, init)
             i = i + 1

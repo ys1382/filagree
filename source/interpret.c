@@ -86,6 +86,7 @@ void interpret_file(struct byte_array *path,
         struct byte_array *source = read_file(path, 0, 0);
         if (NULL == source)            
             return;
+
         byte_array_append(args, source);
         program = build_string(args, path);
     }

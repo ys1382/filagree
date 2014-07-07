@@ -1,7 +1,5 @@
-#import '../ui'
 import '../mesh'
 import 'im'
-
 
 ####### net
 
@@ -16,10 +14,9 @@ client = [
 
     'handle_message' : function(self, socket, mc1)
         e = mc1.event
-#        if (e == 'greet') then
-#            sys.print(self.mesh.id + ' greet ' + self.entrance + ' ' + self.creds)
-#            return ['event' : self.entrance] + self.creds
-        if e == 'signined' then
+        if e == 'greet' then
+            self.login()
+        else if e == 'signined' then
             self.handle_signined(socket, mc1)
         else if e == 'chat' then
             self.handle_chat(mc1.chat, mc1.from)
@@ -36,18 +33,21 @@ client = [
     end,
 
     'connect' : function(self, id)
+        #sys.print('connect')
         self.mesh = self.mesh.init(id or self.creds.id, self.port, [self])
-#        if self.server # already connected
-#            self.mesh.send_greet(nil, 'server')
-#        else
-            self.mesh.connect()
-#        end
+        self.mesh.connect()
     end,
 
-    'greet' : function(self, msgg)
-        return msgg + ['action' : self.entrance] + self.creds
+    'login' : function(self)
+        #sys.print('login ' + self.creds)
+        if not self.mesh.id then
+            self.connect()
+        else if self.entrance then
+            msgl = ['event' : self.entrance] + self.creds
+            self.mesh.send(self.server, msgl)
+            self.entrance = nil
+        end
     end,
-
 
     'connected' : function(self, socket)
         self.mesh.print('connected ' + socket)
@@ -92,42 +92,6 @@ client = [
     end,
 
 
-####### ui
-
-    'select' : function(self)
-
-        self.transcript = ''
-        row = sys.args()[1]
-        peer = self.roster[row]
-        send = function(self)(peer)
-            text = sys.form_get(self.ui).sezme
-            msgtext = ['from':self.mesh.id, 'to':peer, 'event':'chat', 'chat':text]
-            self.update_transcript('you', text)
-            self.mesh.send(self.server, msgtext)
-        end
-
-        self.ui = sys.ui(self,
-                        ['horizontal',
-
-                            ['table', 'name':'roster', 'list':self.available_contacts(), 'logic':self.select, 'hfill':true, 'width':0.25],
-                            ['vertical',
-                                ['input', 'name':'transcript', 'multiline':true, 'readonly':true, 'hfill':true],
-                                ['input', 'name':'sezme'],
-                                ['button', 'text':'send', 'logic':send],
-                            ]
-                        ])
-        self.peer = peer
-
-    end,
-
-    'update_transcript' : function(self, from, text)
-        if self.transcript.length then
-            self.transcript = self.transcript + '\n'
-        end
-        self.transcript = self.transcript + from +':'+ text
-        sys.ui_set(self.ui.transcript, self.transcript)
-    end,
-
     'handle_chat' : function(self, chat, from)
 
         if from == self.peer then
@@ -149,33 +113,6 @@ client = [
 
     end,
 
-    'showContacts' : function(self)
-
-        self.ui = sys.ui(self, ['vertical',
-                            ['table', 'name':'contacts', 'list':self.contacts.keys, 'logic':self.selectContact],
-                            ['button', 'text':'back to settings', 'logic':self.settings],
-                            self.w, self.h
-                        ])
-    end,
-
-    'selectContact' : function(self)
-
-        row = sys.args()[1]
-        self.peer = self.contacts.keys[row]
-
-        sys.print('sp='+self.peer)
-
-        self.ui = sys.ui(self, ['vertical',
-                            ['label', 'text':self.peer],
-                            ['form', 'name'],
-                            ['button', 'text':'delete', 'logic':self.deleteContact],
-                            self.w, self.h
-                        ])
-
-        sys.form_set(['name':self.peer])
-
-    end,
-
     'deleteContact' : function(self)
 
         self.contacts = self.contacts - self.peer
@@ -185,65 +122,6 @@ client = [
 
     end,
 
-    'settings' : function(client)
-
-        client.ui = sys.ui(client, ['vertical',
-
-                            ['form', 'server', 'display name', 'id', 'pw'],
-
-                            ['button', 'text':'contacts', 'logic':client.showContacts],
-
-                            ['horizontal',
-                                ['button', 'text':'save',   'logic':sys.save(sys.form_get(client.ui), 'settings')],
-                                ['button', 'text':'cancel', 'logic':client.main],
-                                ['button', 'text':'logout', 'logic':client.main],
-                            ],
-
-                            client.w, client.h
-                        ])
-
-        f = sys.load('settings')
-        sys.form_set(f)
-    end,
-
-    'main' : function(self)
-
-        self.ui = sys.ui(self, ['vertical',
-
-                                    ['horizontal',
-                                        ['button', 'text':'add',      'logic':self.add],
-                                        ['button', 'text':'settings', 'logic':self.settings],
-                                    ],
-
-                                    ['table', 'name':'roster', 'list':self.available_contacts(), 'logic':self.select],
-
-                                    self.w, self.h
-                                ])
-
-    end,
-
-    'add' : function(self)
-
-        self.ui = sys.ui(self,
-
-                        ['vertical',
-
-                            ['form', 'id'],
-
-                            ['horizontal',
-                                ['button', 'text':'add',       'logic':self.added],
-                                ['button', 'text':'nevermind', 'logic':self.main],
-                            ],
-
-                            self.w, self.h
-                        ])
-    end,
-
-    'added' : function(self)
-        friend = sys.form_get(self.ui).id
-        self.add_contact(friend)
-        self.main()
-    end,
 
     'add_contact' : function(self, friend)
         self.contacts[friend] = []
@@ -253,9 +131,8 @@ client = [
     end,
 
     'signin' : function(self, id, pw, entrance)
-        sys.print(self.mesh.id + ' signin1 ' + entrance + ' ' + id + ' ' + pw)
         self.entrance = entrance # signup or signin
-        self.connect()
+        self.login()
     end,
 
     'signout' : function(self)
@@ -272,29 +149,6 @@ client = [
         self.signin(id, pw, 'signup')
     end,
 
-/*
-    'ui_login' : function(self)
-        self.ui = sys.ui(self, ['vertical',
-                                     ['form', 'server', 'id', 'pw'],
-                                     ['horizontal',
-                                         ['button', 'text':'signin', 'logic':self.signin],
-                                         ['button', 'text':'signup', 'logic':self.signup],
-                                     ],
-                                     self.w, self.h
-                                ])
-    end,
-
-    'login' : function(self)
-
-        # todo -- make autologin work
-        #if self.creds = sys.load('creds') then
-        #    self.signin()
-        #else
-            self.ui_login()
-            sys.loop()
-        #end
-    end,
-*/
 
     ####### test
 
@@ -356,3 +210,4 @@ cid = 'client' + id
 client.creds = ['id':cid, 'pw':id]
 client[firstly]() # run init function from test_director
 sys.loop()
+

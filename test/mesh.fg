@@ -4,7 +4,6 @@
 
 Mesh = [
 
-
     'peers' : [], # maps id : socket
     'sreep' : [], # maps socket: id
     'seq'   : 0,
@@ -39,7 +38,7 @@ Mesh = [
         test = (socket.type == 'nil')
         msg1 = ['event' : 'greet', 'from' : self.id, 'test' : (test or nil)]
         for c1 in self.ctx
-            msg1 = c1.greet(msg1) or msg1
+            msg1 = msg1 + c1.greet()
         end
 
         #self.print('socket.type='+socket.type+' test='+test)
