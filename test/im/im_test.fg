@@ -31,24 +31,28 @@ director = [
     'login' : function(self)
 
         self.test_title('login')
-        self.im_login_direct('client1', 'signin',  'client1', 'a')
-        self.im_login_direct('client1', 'signout', 'client1')
-        self.im_login_direct('client1', 'signin', 'client1', 'a')
+        self.im_login_direct('client1', 'signin',  'client1', '1')
+        self.im_login_direct('client1', 'signin', 'client1', '1')
 
-        self.im_login_direct('client2', 'signup', 'client2', 'z')
+        self.im_login_direct('client2', 'forget')
+        self.im_login_direct('client2', 'signup', 'client2', '9')
         self.im_login_direct('client2', 'signout', 'client2')
-        self.im_login_direct('client2', 'signin', 'client2', 'z')
+        self.im_login_direct('client2', 'signin', 'client2', '9')
 
     end,
 
     'presence' : function(self)
     
         self.test_title('presence')
-        self.im_presence_direct('client1', 'client2')
-        self.im_presence_direct('client1', 'client2', true)
+        self.im_presence_direct('client1', 'client2', 'add')
+        self.im_presence_direct('client1', 'client2', 'online', true)
         self.im_login_direct('client2', 'signout')
-        self.im_presence_direct('client1', 'client2', false)
-    
+        self.im_presence_direct('client1', 'client2', 'online', false)
+        self.im_login_direct('client2', 'signin')
+        self.im_presence_direct('client1', 'client2', 'online', true)
+        self.im_presence_direct('client1', 'client2', 'del')
+        self.im_presence_direct('client1', 'client2', 'online', false)
+
     end,
 
     'chat' : function(self)

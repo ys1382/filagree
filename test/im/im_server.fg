@@ -32,10 +32,13 @@ Server = [
 
     'handle_message' : function(self, socket, ms1)
 
-        if ms1.event = 'greet' then
+        e = ms1.event
+        if e = 'greet' then
             return self.handle_greet(ms1)
-        else if ms1.event == 'contacts' then
+        else if e == 'contacts' then
             return self.handle_contacts(ms1)
+        else if e == 'test' then
+            return handle_test(ms1)
         end
     end,
 
@@ -52,6 +55,25 @@ Server = [
         self.accounts[msf.from].contacts = msf.contacts
         self.save_accounts()
         return self.roster(msf.from) + ['event':'contacts']
+    end,
+
+    'handle_test' : function(self, msgt)
+
+        action = msgt.action
+        status = 'done'
+
+        if action == 'die' then
+            sys.sleep(3000) # wait for broadcast to go out
+            self.mesh.print('exciting')
+            self.mesh.disconnect()
+            sys.exit(0)
+
+        else
+            status = 'fail: unknown action ' + action
+        end
+
+        msgt = ['event' : 'test', 'status' : status, 'seq' : msg7.seq, 'to' : msgt.from]
+        self.mesh.send_to('server', msgu)
     end,
 
     # contacts plus online status

@@ -477,6 +477,7 @@ struct variable *sys_disconnect(struct context *context)
 {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     int fd = param_int(arguments, 1);
+    printf("\nclose socket fd %d\n", fd);
     if (close(fd))
         perror("close");
     return NULL;

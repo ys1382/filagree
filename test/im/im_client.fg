@@ -188,6 +188,7 @@ client = [
         else if action == 'die' then
             sys.sleep(1000) # wait for broadcast to go out
             self.mesh.print('exiting')
+            self.mesh.disconnect()
             sys.exit(0)
 
         else
