@@ -66,11 +66,9 @@ Mesh = [
         self.mesh.print('disconnect ' + socket)
 
         if socket then
-            sys.print('disconnect1 ' + socket)
             self.mesh.disconnect(socket)
         else
             for socket in self.peers.vals
-            sys.print('disconnect2 ' + socket)
                 self.mesh.disconnect(socket)
             end
         end

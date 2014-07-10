@@ -153,7 +153,7 @@ test_director = [
 
         sys.print('launch server')
         sys.forkexec(false, path, server_name)
-        sys.sleep(1000)
+        sys.sleep(2000)
 
         i = 1
         while i <= num_clients
@@ -182,7 +182,7 @@ test_director = [
                 'from'      : self.id]
 
         self.mesh.broadcast(msgdie)
-        sys.sleep(1000) # wait for 'done'
+        sys.sleep(3000) # wait for 'done'
 
     end,
 
