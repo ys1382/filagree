@@ -12,11 +12,12 @@ director = [
     'run_tests' : function(self)
 
         self.login()
-        # self.presence()
+        self.presence()
         # self.chat()
 
     end,
 
+    # the last thing clients do it delete account
     'after_tests' : function(self)
         self.im_login_direct('client1', 'forget')
         self.im_login_direct('client2', 'forget')
@@ -45,6 +46,7 @@ director = [
     
         self.test_title('presence')
         self.im_presence_direct('client1', 'client2', 'add')
+/*
         self.im_presence_direct('client1', 'client2', 'online', true)
         self.im_login_direct('client2', 'signout')
         self.im_presence_direct('client1', 'client2', 'online', false)
@@ -52,6 +54,7 @@ director = [
         self.im_presence_direct('client1', 'client2', 'online', true)
         self.im_presence_direct('client1', 'client2', 'del')
         self.im_presence_direct('client1', 'client2', 'online', false)
+*/
 
     end,
 
@@ -104,4 +107,4 @@ director = [
 ] + test_director
 
 mesh = Mesh.init(director.id, port, [director])
-director.launch(mesh, '../../source/filagree', 'im_server.fg', 2, 'im_client.fg', '\'signup\'')
+director.launch(mesh, '../../source/filagree', 'im_server.fg', 2, 'im_client.fg', '\'signup\'') # the first thing clients do is create accounts

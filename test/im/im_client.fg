@@ -173,10 +173,14 @@ client = [
             self.forget()
 
         else if action == 'presence' then
-            if msg7.online == nil then
+            p = msg7.presense
+            if p == 'add' then
                 self.add_contact(msg7.id)
-            else
+            else if p == 'del' then
+                self.del_contact(msg7.id)
+            else if p == 'online'
                 status = self.roster[msg7.who] == msg7.online
+            end
         end
 
         else if action == 'offline' then

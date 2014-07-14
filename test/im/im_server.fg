@@ -33,7 +33,6 @@ Server = [
     'handle_message' : function(self, socket, ms1)
 
         e = ms1.event
-        self.mesh.print('e = ' + e)
         if e == 'greet' then
             return self.handle_greet(ms1)
         else if e == 'contacts' then
@@ -61,12 +60,11 @@ Server = [
     'handle_test' : function(self, msgt)
 
         action = msgt.action
-        self.mesh.print('handle_test ' + action)
         status = 'done'
 
         if action == 'die' then
             sys.sleep(2000) # wait for broadcast to go out
-            self.mesh.print('exciting')
+            self.mesh.print('exiting')
             self.mesh.disconnect()
             sys.exit(0)
 
