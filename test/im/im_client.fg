@@ -93,22 +93,13 @@ client = [
 
 
     'handle_chat' : function(self, chat, from)
-
-        if from == self.peer then
-            self.update_transcript(from, chat)
-        else
-            self.unread[from] = self.unread + [chat]
-            roster = [r+ '(' + self.unread[r].length + ')' for r in self.contacts where r.online]
-            sys.ui_set(self.ui.roster, roster)
-        end
-
+        self.text = chat
+        self.ui_chat(chat, from)
     end,
 
-    'send' : function(self, other, text)
+    'send' : function(self, other, chat)
 
-        text = text or sys.form_get(self.ui).sezme
-        msgtext = ['event':'text', 'text':text]
-        other = other or peer
+        msgtext = ['event':'chat', 'chat':chat]
         self.mesh.send_to(other, msgtext)
 
     end,
@@ -181,7 +172,11 @@ client = [
             else if p == 'online'
                 status = self.roster[msg7.who] == msg7.online
             end
-        end
+            
+        else if action == 'chat' then
+            self.send(msg7.whom, msg7.chat)
+        else if action == 'chatted' then
+            status = (self.text == msg7.chat)
 
         else if action == 'offline' then
             self.offline = true

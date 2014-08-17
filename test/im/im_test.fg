@@ -1,4 +1,4 @@
-####### test_sync.fg
+####### im_test.fg
 
 # to run, launch server and two clients, 'client1' and 'client2'
 
@@ -11,9 +11,9 @@ director = [
 
     'run_tests' : function(self)
 
-        self.login()
-        self.presence()
-        # self.chat()
+#        self.login()
+#        self.presence()
+        self.chat()
 
     end,
 
@@ -60,6 +60,8 @@ director = [
 
     'chat' : function(self)
 
+        sys.print('chat test runnin')
+
         self.im_chat_direct('client1', 'chat',    'client2', 'hi')
         self.im_chat_direct('client2', 'chatted', 'client1', 'hi')
 
@@ -73,6 +75,11 @@ director = [
    'im_presence_direct' : function(self, whom, id, online)
         title = 'presence '+ id +','+ online
         self.direct(title, whom, 'presence', ['id':id, 'online':online])
+    end,
+
+   'im_chat_direct' : function(self, who, action, whom, chat)
+        title = 'chat '+ who +' => '+ whom +': '+ chat
+        self.direct(title, who, action, ['whom':whom, 'chat':chat])
     end,
 
     #

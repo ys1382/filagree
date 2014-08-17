@@ -161,8 +161,8 @@ Mesh = [
 
         # if no direct connection, then send via 'server'
         if not to2 then
-            if self.id != 'server1' then
-                to2 = self.peers['server1']
+            if self.id != 'server' then
+                to2 = self.peers['server']
             else
                 sys.print('no peer ' + to)
             end

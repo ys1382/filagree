@@ -5,19 +5,19 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>2E72EF78-D959-46DB-89E0-9CCE3266647A</string>
+	<string>BB19172D-5804-49DF-BFD1-6CC20F159217</string>
 	<key>IDESourceControlProjectName</key>
 	<string>filagree</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>936A682F-E22E-463A-A484-D74B5B2B9E51</key>
+		<key>F5AD4526-7F03-4AE9-A80F-E718791C2A8E</key>
 		<string>https://github.com/ys1382/filagree.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>platform/apple/filagree.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>936A682F-E22E-463A-A484-D74B5B2B9E51</key>
+		<key>F5AD4526-7F03-4AE9-A80F-E718791C2A8E</key>
 		<string>../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
@@ -25,14 +25,14 @@
 	<key>IDESourceControlProjectVersion</key>
 	<integer>110</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>936A682F-E22E-463A-A484-D74B5B2B9E51</string>
+	<string>F5AD4526-7F03-4AE9-A80F-E718791C2A8E</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>936A682F-E22E-463A-A484-D74B5B2B9E51</string>
+			<string>F5AD4526-7F03-4AE9-A80F-E718791C2A8E</string>
 			<key>IDESourceControlWCCName</key>
 			<string>filagree</string>
 		</dict>
