@@ -185,16 +185,6 @@ filagree source code consists of these modules:
 - sys: built-in functions, such as file and UI access
 - serial: serializes and deserializes primitives
 - struct: array, byte array, map and stack data structures
-- hal: hardware abstraction layer
 - file: file access
 - util: miscellaneous
-
-The source code includes ports to:
-- Android
-- iOS
-- OSX
-- Windows
-- Linux
-
-(Actually, it has not been compiled for Windows yet , and there is currently only a HAL implementation for OSX.)
 
