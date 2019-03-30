@@ -3,14 +3,13 @@
 
 #define VV_SIZE 10000
 
-enum VarType
-{
+enum VarType {
     VAR_NIL,    // nil
     VAR_INT,    // integer
     VAR_FLT,    // float
     VAR_STR,    // string
     VAR_FNC,    // function
-    VAR_LST,    // list/map
+    VAR_LST,    // list/dic
     VAR_KVP,    // key-value pair
     VAR_SRC,    // assignment RHS
     VAR_ERR,    // error
@@ -21,8 +20,7 @@ enum VarType
     VAR_LAST,   // end of enums
 };    
 
-enum Visited // for graph traversal
-{
+enum Visited {      // for graph traversal
     VISITED_NOT,    // we did not traverse to this variable yet
     VISITED_ONCE,   // we visited it once so far
     VISITED_MORE,   // we visited it more than once
@@ -30,18 +28,16 @@ enum Visited // for graph traversal
     VISITED_LAST    // end of enums
 };
 
-enum GCsafety // for garbage collection
-{
-    GC_NEW, // this variable was just created
-    GC_OLD, // this variable is in some structure, so safe from GC until no longer needed
-    GC_SAFE // don't GC this variable just because
+enum GCsafety { // for garbage collection
+    GC_NEW,     // this variable was just created
+    GC_OLD,     // this variable is in some structure, so safe from GC until no longer needed
+    GC_SAFE     // don't GC this variable just because
 };
 
 typedef struct context *context_p; // forward declaration
 typedef struct variable *(callback2func)(context_p context);
 
-struct variable
-{
+struct variable {
     enum VarType type;
     enum Visited visited;
     uint32_t mark;
@@ -52,11 +48,11 @@ struct variable
         struct {
             
             struct byte_array* body;
-            struct map *closure;
+            struct dic *closure;
         } fnc;
         struct {
             struct array *ordered;
-            struct map *map;
+            struct dic *dic;
         } list;
         int32_t integer;
         float floater;
@@ -109,9 +105,9 @@ struct variable *variable_concatenate(struct context *context, int n, const stru
 void variable_remove(struct variable *self, uint32_t start, int32_t length);
 struct variable *variable_part(struct context *context, struct variable *self,
                                uint32_t start, int32_t length);
-void variable_map_insert(struct context *context, struct variable* v,
+void variable_dic_insert(struct context *context, struct variable* v,
                          struct variable *key, struct variable *data);
-struct variable *variable_map_get(struct context *context, struct variable* v, struct variable *key);
+struct variable *variable_dic_get(struct context *context, struct variable* v, struct variable *key);
 bool variable_compare(struct context *context, const struct variable *u, const struct variable *v);
 struct variable *variable_copy_value(struct context *context, struct variable *value);
 void variable_mark(struct variable *v);

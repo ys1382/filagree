@@ -15,19 +15,17 @@
 #include "vm.h"
 #include "serial.h"
 #include "sys.h"
-#include "hal.h"
+#include "node.h"
 
 #define MAXLINE 1024
 
-enum THREAD_USE
-{
+enum THREAD_USE {
     THREAD_SEND,
     THREAD_RECV,
     THREAD_NUM_USES
 };
 
-struct node_thread
-{
+struct node_thread {
     struct context *context;
     struct variable *listener;
 	struct sockaddr_in servaddr;
@@ -45,8 +43,7 @@ uint16_t current_thread_id() {
 struct node_thread *thread_new(struct context *context,
                                struct variable *listener,
                                void *(*start_routine)(void *),
-                               int fd)
-{
+                               int fd) {
     struct node_thread *ta = (struct node_thread *)malloc(sizeof(struct node_thread));
     ta->context = context_new(context, true, true);
     ta->listener = listener;
@@ -60,16 +57,28 @@ struct node_thread *thread_new(struct context *context,
     return ta;
 }
 
+static struct number_string hal_events[] = {
+    {FILED,         "filed"},
+    {CONNECTED,     "connected"},
+    {DISCONNECTED,  "disconnected"},
+    {MESSAGED,      "messaged"},
+    {SENT,          "sent"},
+    {ERROR,         "error"},
+};
 
-void *node_callback(void *arg)
-{
+struct variable *event_string(struct context *context, enum HAL_Event event) {
+    const char *str = NUM_TO_STRING(hal_events, event);
+    return variable_new_str_chars(context, str);
+}
+
+void *node_callback(void *arg) {
     struct node_thread *ta = (struct node_thread *)arg;
     if (NULL == ta->listener)
         return NULL;
     gil_lock(ta->context, "node_callback");
 
     struct variable *key = event_string(ta->context, ta->event);
-    struct variable *callback = variable_map_get(ta->context, ta->listener, key);
+    struct variable *callback = variable_dic_get(ta->context, ta->listener, key);
     struct variable *id = variable_new_int(ta->context, ta->fd);
     if (NULL != callback)
         vm_call(ta->context, callback, ta->listener, id, ta->message, NULL);
@@ -78,16 +87,13 @@ void *node_callback(void *arg)
     return NULL;
 }
 
-
 // each thread has an array of byte_array messages, to be sent/received in order
 static inline struct array *socket_buf(struct node_thread *thread, enum THREAD_USE use) {
     return array_get(thread->bufs, use);
 }
 
-
 // runs the start_routine function in the new thread
-void *thread_wrapper(void *param)
-{
+void *thread_wrapper(void *param) {
     struct node_thread *ta = (struct node_thread *)param;
     struct context_shared *s = ta->context->singleton;
     
@@ -101,13 +107,10 @@ void *thread_wrapper(void *param)
     return NULL;
 }
 
-
 // creates a thread to run the handler function in the thread_wrapper
-void start_thread(struct node_thread *ta)
-{
+void start_thread(struct node_thread *ta) {
     pthread_t *tid = malloc(sizeof(pthread_t));
-    if (NULL == tid)
-    {
+    if (NULL == tid) {
         perror("malloc");
         return;
     }
@@ -115,26 +118,22 @@ void start_thread(struct node_thread *ta)
     struct context_shared *s = ta->context->singleton;
     s->num_threads++;
     
-    if (pthread_create(tid, NULL, &thread_wrapper, (void*)ta))
-    {
+    if (pthread_create(tid, NULL, &thread_wrapper, (void*)ta)) {
         perror("pthread_create");
         s->num_threads--;
         pthread_cond_signal(&s->thread_cond);
     }
 }
 
-
 // store message that arrived on socket sockfd
 // one should lock gil before queue fiddling
 void enqueue(struct context *context, int sockfd, enum THREAD_USE use,
-             struct byte_array *bytes, struct variable *listener, void *(*start_routine)(void *))
-{
+             struct byte_array *bytes, struct variable *listener, void *(*start_routine)(void *)) {
     struct array *threads = context->singleton->threads;
     
     // get thread_list
     struct array *thread_list;
-    if ((threads->length <= sockfd) || (NULL == (thread_list = array_get(threads, sockfd))))
-    {
+    if ((threads->length <= sockfd) || (NULL == (thread_list = array_get(threads, sockfd)))) {
         thread_list = array_new_size(THREAD_NUM_USES);
         array_set(threads, sockfd, thread_list);
     }
@@ -142,8 +141,7 @@ void enqueue(struct context *context, int sockfd, enum THREAD_USE use,
     // get thread
     struct node_thread *thread = NULL;
     bool created = false;
-    if ((thread_list->length <= use) || (NULL == (thread = array_get(thread_list, use))))
-    {
+    if ((thread_list->length <= use) || (NULL == (thread = array_get(thread_list, use)))) {
         thread = thread_new(context, listener, start_routine, sockfd);
         thread->bufs = array_new_size(THREAD_NUM_USES);
         for (int i=0; i<THREAD_NUM_USES; i++)
@@ -162,10 +160,8 @@ void enqueue(struct context *context, int sockfd, enum THREAD_USE use,
         start_thread(thread);
 }
 
-
 // get next message that arrived on socket sockfd, or NULL if there are none
-struct byte_array *dequeue(struct node_thread *ta, enum THREAD_USE use)
-{
+struct byte_array *dequeue(struct node_thread *ta, enum THREAD_USE use) {
     struct array *bufs = socket_buf(ta, use);
     if (0 == bufs->length)
         return NULL;
@@ -176,25 +172,21 @@ struct byte_array *dequeue(struct node_thread *ta, enum THREAD_USE use)
 }
 
 // remove thread from list of threads
-void thread_del(struct node_thread *thread, enum THREAD_USE use)
-{
+void thread_del(struct node_thread *thread, enum THREAD_USE use) {
     struct array *thread_list = array_get(thread->context->singleton->threads, thread->fd);
     array_set(thread_list, use, NULL);
 }
 
 // callback to client or server when message arrives on socket
-void *incoming(void *arg)
-{
+void *incoming(void *arg) {
     struct node_thread *ta = (struct node_thread *)arg;
     ta->event = MESSAGED;
     struct context *context = ta->context;
     gil_lock(context, "ncoming");
 
     struct byte_array *buf;
-    while ((buf = dequeue(ta, THREAD_RECV))) // service all incoming messages
-    {
-        while (buf->current - buf->data < buf->length)
-        {
+    while ((buf = dequeue(ta, THREAD_RECV))) { // service all incoming messages
+        while (buf->current - buf->data < buf->length) {
             ta->message = variable_deserialize(context, buf);
             DEBUGPRINT("received %s\n", variable_value_str(context, ta->message));
             gil_unlock(context, "ncoming");
@@ -208,29 +200,24 @@ void *incoming(void *arg)
     return NULL;
 }
 
-
 // handles socket recv and disconnect
 // returns true iff disconnect
-bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
-{
+bool socket_event(struct node_thread *ta0, struct variable *listener, int fd) {
     ssize_t n;
     uint8_t buf[MAXLINE];
     struct byte_array *received = byte_array_new();
 
-    do
-    {
+    do {
         n = read(fd, buf, MAXLINE); // read bytes from socket (blocking)
 
-        if (n <= 0)  // disconnected
-        {
+        if (n <= 0) { // disconnected
             struct node_thread *ta = thread_new(ta0->context, listener, node_callback, fd);
             ta->event = DISCONNECTED;
             start_thread(ta);
             return true;
         }
 
-        if (received->length + n > BYTE_ARRAY_MAX_LEN)  // too long
-        {
+        if (received->length + n > BYTE_ARRAY_MAX_LEN) { // too long
             printf("socket message too long (%d), dropping\n", received->length);
             break;
         }
@@ -244,8 +231,7 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
 
     //printf("received %d bytes\n", received->length);
 
-    if (!received->length)
-    {
+    if (!received->length) {
         byte_array_del(received);
         return true;
     }
@@ -261,8 +247,7 @@ bool socket_event(struct node_thread *ta0, struct variable *listener, int fd)
 }
 
 // listens for inbound connections
-void *sys_socket_listen2(void *arg)
-{
+void *sys_socket_listen2(void *arg) {
     struct node_thread *ta0 = (struct node_thread*)arg;
     struct variable *listener = ta0->listener;
     listener->gc_state = GC_SAFE;
@@ -275,13 +260,13 @@ void *sys_socket_listen2(void *arg)
 
 	maxfd = ta0->fd;			// initialize
 	maxi = -1;					// index into client[] array
-	for (i = 0; i < FD_SETSIZE; i++)
+    for (i = 0; i < FD_SETSIZE; i++) {
 		client[i] = -1;			// -1 indicates available entry
+    }
 	FD_ZERO(&allset);
 	FD_SET(ta0->fd, &allset);
 
-	for (;;)
-    {
+	for (;;) {
         DEBUGPRINT("server listen on socket\n");
 
 		rset = allset;
@@ -289,59 +274,58 @@ void *sys_socket_listen2(void *arg)
 
         DEBUGPRINT("client connected\n");
 
-		if (FD_ISSET(ta0->fd, &rset))   // new client connection
-        {
+        if (FD_ISSET(ta0->fd, &rset)) { // new client connection
 			clilen = sizeof(cliaddr);
 			connfd = accept(ta0->fd, (struct sockaddr*) &cliaddr, &clilen);
-            if (connfd == -1)
-            {
+            if (connfd == -1) {
                 perror("accept");
                 continue;
             }
 
-			for (i = 0; i < FD_SETSIZE; i++)
-            {
-				if (client[i] < 0)
-                {
+			for (i = 0; i < FD_SETSIZE; i++) {
+				if (client[i] < 0) {
 					client[i] = connfd;	// save descriptor
 					break;
 				}
             }
 
-			if (i == FD_SETSIZE)
-				exit_message("too many clients");
+            if (i == FD_SETSIZE) {
+                exit_message("too many clients");
+            }
 
 			FD_SET(connfd, &allset);	// add new descriptor to set
-			if (connfd > maxfd)
-				maxfd = connfd;			// for select
-			if (i > maxi)
-				maxi = i;				// max index in client[] array
+            if (connfd > maxfd) {
+                maxfd = connfd;			// for select
+            }
+            if (i > maxi) {
+                maxi = i;				// max index in client[] array
+            }
 
             struct node_thread *ta = thread_new(ta0->context, listener, node_callback, connfd);
             ta->event = CONNECTED;
             start_thread(ta);
 
-			if (--nready <= 0)
+            if (--nready <= 0) {
 				continue;				// no more readable descriptors
+            }
 		}
 
         // check all clients for data
-		for (i = 0; i <= maxi; i++)
-        {
-            if ( (sockfd = client[i]) < 0)
+		for (i = 0; i <= maxi; i++) {
+            if ( (sockfd = client[i]) < 0) {
 				continue;
+            }
 
-			if (FD_ISSET(sockfd, &rset))
-            {
+			if (FD_ISSET(sockfd, &rset)) {
                 //printf("\nsocket %d:%d closed by client\n", i, sockfd);
-                if (socket_event(ta0, listener, sockfd)) // connection closed by client
-                {
+                if (socket_event(ta0, listener, sockfd)) { // connection closed by client
 					FD_CLR(sockfd, &allset);
 					client[i] = -1;
                 }
 
-                if (--nready <= 0) // no more readable descriptors
+                if (--nready <= 0) { // no more readable descriptors
 					break;
+                }
 			}
 		}
 	}
@@ -349,8 +333,7 @@ void *sys_socket_listen2(void *arg)
 }
 
 // server listens for clients opening connections
-struct variable *sys_socket_listen(struct context *context)
-{
+struct variable *sys_socket_listen(struct context *context) {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     struct variable *listener = param_var(arguments, 2);
     struct node_thread *ta = thread_new(context, listener, &sys_socket_listen2, 0);
@@ -358,8 +341,7 @@ struct variable *sys_socket_listen(struct context *context)
 
 	struct sockaddr_in servaddr;
 
-	if ((ta->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-    {
+	if ((ta->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket");
         return NULL;
     }
@@ -370,19 +352,16 @@ struct variable *sys_socket_listen(struct context *context)
 	servaddr.sin_port        = htons(serverport);
 
     int reuse = 1;
-    if (setsockopt(ta->fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)))
-    {
+    if (setsockopt(ta->fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse))) {
         printf("error on socket %d\n", ta->fd);
         perror("setsockopt");
         return NULL;
     }
-	if (bind(ta->fd, (struct sockaddr*)&servaddr, sizeof(servaddr)))
-    {
+	if (bind(ta->fd, (struct sockaddr*)&servaddr, sizeof(servaddr))) {
         perror("bind");
         return NULL;
     }
-	if (listen(ta->fd, SOMAXCONN))
-    {
+	if (listen(ta->fd, SOMAXCONN)) {
         perror("listen");
         return NULL;
     }
@@ -392,40 +371,29 @@ struct variable *sys_socket_listen(struct context *context)
     return NULL;
 }
 
-void *sys_connect2(void *arg)
-{
+void *sys_connect2(void *arg) {
     struct node_thread *ta = (struct node_thread *)arg;
 
     // Blocking connect to socket file descriptor
-	if (connect(ta->fd, (struct sockaddr *)&ta->servaddr, sizeof(ta->servaddr)))
-    {
+	if (connect(ta->fd, (struct sockaddr *)&ta->servaddr, sizeof(ta->servaddr))) {
         perror("connect");
         return NULL;
-    }
-    else
-    {
+    } else {
         ta->event = CONNECTED;
         node_callback(ta);
         for (;!socket_event(ta, ta->listener, ta->fd););
     }
-
     return NULL;
 }
 
 // client opens a socket with server
-struct variable *sys_connect(struct context *context)
-{
+struct variable *sys_connect(struct context *context) {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     struct variable *listener = param_var(arguments, 3);
     listener->gc_state = GC_SAFE;
     struct node_thread *ta = thread_new(context, listener, &sys_connect2, 0);
     char *serveraddr = param_str(arguments, 1);
     int serverport = param_int(arguments, 2);
-
-#ifdef __ANDROID__
-    if (!strcmp(serveraddr, "127.0.0.1"))
-        serveraddr = "10.0.2.2"; // emulator's host IP
-#endif
 
 	// create socket file descriptor
 	ta->fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -441,25 +409,23 @@ struct variable *sys_connect(struct context *context)
     return NULL;
 }
 
-void *sys_send2(void *arg)
-{
+void *sys_send2(void *arg) {
     struct node_thread *ta = (struct node_thread *)arg;
 
     struct byte_array *buf;
-    while ((buf = dequeue(ta, THREAD_SEND))) // send all outgoing messages for this socket
-    {
-        if (write(ta->fd, buf->data, buf->length) != buf->length)
+    while ((buf = dequeue(ta, THREAD_SEND))) { // send all outgoing messages for this socket
+        if (write(ta->fd, buf->data, buf->length) != buf->length) {
             perror("write");
-        else
+        } else {
             DEBUGPRINT(">%" PRIu16 " - sent %d bytes to fd %d\n", current_thread_id(), buf->length, ta->fd);
+        }
     }
     thread_del(ta, THREAD_SEND);
     return NULL;
 }
 
 // client or server send a message on a socket
-struct variable *sys_send(struct context *context)
-{
+struct variable *sys_send(struct context *context) {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     struct variable *fd = param_var(arguments, 1);
     vm_assert(context, fd->type == VAR_INT && fd->integer >= 0, "bad fd");
@@ -473,12 +439,12 @@ struct variable *sys_send(struct context *context)
 }
 
 // close socket
-struct variable *sys_disconnect(struct context *context)
-{
+struct variable *sys_disconnect(struct context *context) {
     struct variable *arguments = (struct variable*)stack_pop(context->operand_stack);
     int fd = param_int(arguments, 1);
     printf("\nclose socket fd %d\n", fd);
-    if (close(fd))
+    if (close(fd)) {
         perror("close");
+    }
     return NULL;
 }

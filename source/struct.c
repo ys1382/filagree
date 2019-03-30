@@ -1,6 +1,6 @@
 /* struct.c
  *
- * implements array, byte_array, lifo and map
+ * implements array, byte_array, lifo and dic
  */
 
 #include <stdio.h>
@@ -41,8 +41,7 @@ void array_del(struct array *a) {
     free(a);
 }
 
-uint32_t list_resize(uint32_t size, uint32_t length)
-{
+uint32_t list_resize(uint32_t size, uint32_t length) {
     uint32_t oldsize = size;
     if (length > size)
         size = length * GROWTH_FACTOR;
@@ -51,8 +50,7 @@ uint32_t list_resize(uint32_t size, uint32_t length)
     return size != oldsize ? size : 0;
 }
 
-void array_resize(struct array *a, uint32_t size)
-{
+void array_resize(struct array *a, uint32_t size) {
     if (!(size = list_resize(a->size, size))) // didn't resize
         return;
     uint32_t delta = (uint32_t)(a->current - a->data);
@@ -68,15 +66,13 @@ void array_resize(struct array *a, uint32_t size)
     return;
 }
 
-uint32_t array_add(struct array *a, void *datum)
-{
+uint32_t array_add(struct array *a, void *datum) {
     array_resize(a, a->length + 1);
     a->data[a->length++] = datum;
     return a->length-1;
 }
 
-void array_insert(struct array *a, uint32_t index, void *datum)
-{
+void array_insert(struct array *a, uint32_t index, void *datum) {
     array_resize(a, a->length + 1);
     uint32_t i;
     for (i=a->length; i>index; i--)
@@ -85,15 +81,13 @@ void array_insert(struct array *a, uint32_t index, void *datum)
     a->length++;
 }
 
-void* array_get(const struct array *a, uint32_t index)
-{
+void* array_get(const struct array *a, uint32_t index) {
     assert_message(a && index < a->length, ERROR_INDEX);
     //DEBUGPRINT("array_get %d = %x\n", index, a->data[index]);
     return a->data[index];
 }
 
-void array_set(struct array *a, uint32_t index, void* datum)
-{
+void array_set(struct array *a, uint32_t index, void* datum) {
     null_check(a);
     uint32_t minlen = index + 1;
     array_resize(a, minlen);
@@ -103,8 +97,7 @@ void array_set(struct array *a, uint32_t index, void* datum)
         a->length = minlen;
 }
 
-void list_remove(void *data, uint32_t *end, uint32_t start, int32_t length, size_t width)
-{
+void list_remove(void *data, uint32_t *end, uint32_t start, int32_t length, size_t width) {
     assert_message(data || !length, "list can't remove");
     null_check(end);
     length = length < 0 ? *end - start : length;
@@ -114,17 +107,16 @@ void list_remove(void *data, uint32_t *end, uint32_t start, int32_t length, size
     *end -= (uint32_t)length;
 }
 
-void array_remove(struct array *a, uint32_t start, int32_t length)
-{
+void array_remove(struct array *a, uint32_t start, int32_t length) {
     list_remove(a->data, &a->length, start, length, sizeof(void*));
     array_resize(a, a->length);
     //DEBUGPRINT("array_remove %p->%p\n", a, a->data);
 }
 
-struct array *array_copy(const struct array* original)
-{
-    if (original == NULL)
+struct array *array_copy(const struct array* original) {
+    if (original == NULL) {
         return NULL;
+    }
     struct array* copy = array_new_size(original->size); // (struct array*)malloc(sizeof(struct array));
     //copy->data = (void**)malloc(original->length * sizeof(void**));
     memcpy(copy->data, original->data, original->length * sizeof(void*));
@@ -135,8 +127,7 @@ struct array *array_copy(const struct array* original)
     return copy;
 }
 
-struct array *array_part(struct array *within, uint32_t start, uint32_t length)
-{
+struct array *array_part(struct array *within, uint32_t start, uint32_t length) {
     struct array *p = array_copy(within);
     array_remove(p, start+length, within->length-start-length);
     array_remove(p, 0, start);
@@ -144,8 +135,7 @@ struct array *array_part(struct array *within, uint32_t start, uint32_t length)
     return p;
 }
 
-void array_append(struct array *a, const struct array* b)
-{
+void array_append(struct array *a, const struct array* b) {
     null_check(a);
     null_check(b);
     uint32_t alen = a->length;
@@ -162,16 +152,15 @@ struct byte_array *byte_array_new() {
     return byte_array_new_size(0);
 }
 
-void byte_array_del(struct byte_array* ba)
-{
+void byte_array_del(struct byte_array* ba) {
     //DEBUGPRINT("byte_array_del %p->%p\n", ba, ba->data);
-    if (NULL != ba->data)
+    if (NULL != ba->data) {
         free(ba->data);
+    }
     free(ba);
 }
 
-struct byte_array *byte_array_new_size(uint32_t size)
-{
+struct byte_array *byte_array_new_size(uint32_t size) {
     struct byte_array* ba = (struct byte_array*)malloc(sizeof(struct byte_array));
     ba->data = ba->current = (uint8_t*)malloc(size);
     ba->length = 0;
@@ -180,18 +169,17 @@ struct byte_array *byte_array_new_size(uint32_t size)
     return ba;
 }
 
-struct byte_array *byte_array_new_data(uint32_t size, uint8_t *data)
-{
+struct byte_array *byte_array_new_data(uint32_t size, uint8_t *data) {
     struct byte_array *ba = byte_array_new();
     ba->size = ba->length = size;
     ba->data = ba->current = data;
     return ba;
 }
 
-void byte_array_resize(struct byte_array* ba, uint32_t size)
-{
-    if (!(size = list_resize(ba->size, size))) // didn't resize
+void byte_array_resize(struct byte_array* ba, uint32_t size) {
+    if (!(size = list_resize(ba->size, size))) { // didn't resize
         return;
+    }
     assert_message(ba->current >= ba->data, "byte_array corrupt");
     uint32_t delta = (uint32_t)(ba->current - ba->data);
     ba->data = (uint8_t*)realloc(ba->data, size);
@@ -201,20 +189,21 @@ void byte_array_resize(struct byte_array* ba, uint32_t size)
     //DEBUGPRINT("byte_array_resize %p->%p\n", ba, ba->data);
 }
 
-bool byte_array_equals(const struct byte_array *a, const struct byte_array* b)
-{
-    if (a==b)
+bool byte_array_equals(const struct byte_array *a, const struct byte_array* b) {
+    if (a==b) {
         return true;
-    if ((a == NULL) != (b == NULL)) // one is null and the other is not
+    } else if ((a == NULL) != (b == NULL)) { // one is null and the other is not
         return false;
-    if (a->length != b->length)
+    } else if (a->length != b->length) {
         return false;
+    }
     return !memcmp(a->data, b->data, a->length * sizeof(uint8_t));
 }
 
 struct byte_array *byte_array_copy(const struct byte_array* original) {
-    if (original == NULL)
+    if (original == NULL) {
         return NULL;
+    }
     struct byte_array* copy = byte_array_new_size(original->size);
     memcpy(copy->data, original->data, original->length);
     copy->length = original->length;
@@ -222,15 +211,13 @@ struct byte_array *byte_array_copy(const struct byte_array* original) {
     return copy;
 }
 
-void byte_array_set(struct byte_array *within, uint32_t index, uint8_t byte)
-{
+void byte_array_set(struct byte_array *within, uint32_t index, uint8_t byte) {
     null_check(within);
     assert_message(index < within->length, "out of bounds");
     within->data[index] = byte;
 }
 
-uint8_t byte_array_get(const struct byte_array *within, uint32_t index)
-{
+uint8_t byte_array_get(const struct byte_array *within, uint32_t index) {
     null_check(within);
     assert_message(index < within->length, "out of bounds");
     return within->data[index];
@@ -253,8 +240,7 @@ void byte_array_remove(struct byte_array *self, uint32_t start, int32_t length) 
     //DEBUGPRINT("byte_array_remove %p->%p\n", self, self->data);
 }
 
-struct byte_array *byte_array_part(struct byte_array *within, uint32_t start, uint32_t length)
-{
+struct byte_array *byte_array_part(struct byte_array *within, uint32_t start, uint32_t length) {
     struct byte_array *p = byte_array_copy(within);
     byte_array_remove(p, start+length, within->length-start-length);
     byte_array_remove(p, 0, start);
@@ -262,8 +248,7 @@ struct byte_array *byte_array_part(struct byte_array *within, uint32_t start, ui
     return p;
 }
 
-struct byte_array *byte_array_from_string(const char* str)
-{
+struct byte_array *byte_array_from_string(const char* str) {
     int len = (int)strlen(str);
     struct byte_array* ba = byte_array_new_size(len);
     memcpy(ba->data, str, len);
@@ -272,8 +257,7 @@ struct byte_array *byte_array_from_string(const char* str)
     return ba;
 }
 
-char* byte_array_to_string(const struct byte_array* ba)
-{
+char* byte_array_to_string(const struct byte_array* ba) {
     int len = ba->length;
     char* s = (char*)malloc(len+1);
     memcpy(s, ba->data, len);
@@ -286,12 +270,11 @@ inline void byte_array_reset(struct byte_array* ba) {
     ba->current = ba->data;
 }
 
-struct byte_array *byte_array_concatenate(int n, const struct byte_array* ba, ...)
-{
+struct byte_array *byte_array_concatenate(int n, const struct byte_array* ba, ...) {
     struct byte_array* result = byte_array_copy(ba);
 
     va_list argp;
-    for(va_start(argp, ba); --n;) {
+    for (va_start(argp, ba); --n;) {
         struct byte_array* parameter = va_arg(argp, struct byte_array* );
         if (parameter == NULL)
             continue;
@@ -301,8 +284,9 @@ struct byte_array *byte_array_concatenate(int n, const struct byte_array* ba, ..
 
     va_end(argp);
 
-    if (result)
+    if (result) {
         result->current = result->data + result->length;
+    }
     return result;
 }
 
@@ -315,15 +299,16 @@ struct byte_array *byte_array_add_byte(struct byte_array *a, uint8_t b) {
 }
 
 void byte_array_print(char* into, size_t size, const struct byte_array* ba) {
-    if (size < 2)
+    if (size < 2) {
         return;
+    }
     sprintf(into, "0x");
-    for (int i=0; i<ba->length && i < size-1; i++)
+    for (int i=0; i<ba->length && i < size-1; i++) {
         sprintf(into+(i+1)*2, "%02X", ba->data[i]);
+    }
 }
 
-int32_t byte_array_find(struct byte_array *within, struct byte_array *sought, int32_t start)
-{
+int32_t byte_array_find(struct byte_array *within, struct byte_array *sought, int32_t start) {
     null_check(within);
     null_check(sought);
 
@@ -333,29 +318,29 @@ int32_t byte_array_find(struct byte_array *within, struct byte_array *sought, in
     bool reverse = (start < 0);
     int32_t not_found = reverse ? (start + ws + 1) : -1;
 
-    if ((start + ss) >= (int32_t)within->length)
+    if ((start + ss) >= (int32_t)within->length) {
         return not_found;
+    }
 
     uint8_t *wd = within->data;
     uint8_t *sd = sought->data;
 
-    if (!reverse) // forward search
-    {
+    if (!reverse) { // forward search
         for (int32_t i=start; i<=ws-ss; i++)
             if (!memcmp(wd + i, sd, ss))
                 return i;
 
     } else { // reverse search
-
-        for (int32_t i=ws-ss+start+2; i>=0; i--)
-            if (!memcmp(wd + i, sd, ss))
+        for (int32_t i=ws-ss+start+2; i>=0; i--) {
+            if (!memcmp(wd + i, sd, ss)) {
                 return i;
+            }
+        }
     }
     return not_found;
 }
 
-struct byte_array *byte_array_replace_all(struct byte_array *original, struct byte_array *a, struct byte_array *b)
-{
+struct byte_array *byte_array_replace_all(struct byte_array *original, struct byte_array *a, struct byte_array *b) {
     /*DEBUGPRINT("replace in %s: %s -> %s\n",
                byte_array_to_string(original),
                byte_array_to_string(a),
@@ -364,10 +349,11 @@ struct byte_array *byte_array_replace_all(struct byte_array *original, struct by
     struct byte_array *replaced = byte_array_copy(original);
     int32_t where = 0;
 
-    for(;;) { // replace all
+    for (;;) { // replace all
 
-        if ((where = byte_array_find(replaced, a, where)) < 0)
+        if ((where = byte_array_find(replaced, a, where)) < 0) {
             break;
+        }
         struct byte_array *replaced2 = byte_array_replace(replaced, b, where++, a->length);
         byte_array_del(replaced);
         replaced = replaced2;
@@ -375,14 +361,14 @@ struct byte_array *byte_array_replace_all(struct byte_array *original, struct by
     return replaced;
 }
 
-struct byte_array *byte_array_replace(struct byte_array *within, struct byte_array *replacement, uint32_t start, int32_t length)
-{
+struct byte_array *byte_array_replace(struct byte_array *within, struct byte_array *replacement, uint32_t start, int32_t length) {
     null_check(within);
     null_check(replacement);
     uint32_t ws = within->length;
     assert_message(start < ws, "index out of bounds");
-    if (length < 0)
+    if (length < 0) {
         length = ws - start;
+    }
 
     int32_t new_length = within->length - length + replacement->length;
     struct byte_array *replaced = byte_array_new_size(new_length);
@@ -399,15 +385,13 @@ struct byte_array *byte_array_replace(struct byte_array *within, struct byte_arr
 }
 
 // adds formatted string to end of byte_array, so sprintf + strcat
-void byte_array_format(struct byte_array *ba, bool append, const char *format, ...)
-{
+void byte_array_format(struct byte_array *ba, bool append, const char *format, ...) {
     bool resize;
 
     do {
         size_t capacity = ba->size;
         uint8_t *at = ba->data;
-        if (append)
-        {
+        if (append) {
             capacity -= ba->length;
             at = ba->current;
         }
@@ -416,9 +400,9 @@ void byte_array_format(struct byte_array *ba, bool append, const char *format, .
         va_start(args, format);
 
         int written = vsnprintf((char*)at, capacity, format, args) + 1;
-        if ((resize = (written > capacity) && (ba->size < VV_SIZE)))
+        if ((resize = (written > capacity) && (ba->size < VV_SIZE))) {
             byte_array_resize(ba, (uint32_t)(ba->size + written - capacity));
-        else {
+        } else {
             ba->length = (uint32_t)(ba->length + MIN(written-1, capacity));
             ba->current = ba->data + ba->length;
         }
@@ -434,8 +418,7 @@ struct stack *stack_new() {
     return (struct stack*)calloc(sizeof(struct stack), 1);
 }
 
-void stack_del(struct stack *s)
-{
+void stack_del(struct stack *s) {
     struct stack_node *sn = s->head;
     while (sn) {
         struct stack_node *oldnode = sn;
@@ -449,20 +432,18 @@ struct stack_node* stack_node_new() {
     return (struct stack_node*)calloc(sizeof(struct stack_node), 1);
 }
 
-uint32_t stack_depth(struct stack *stack)
-{
+uint32_t stack_depth(struct stack *stack) {
     uint32_t i;
     struct stack_node *sn = stack->head;
     for (i=0; sn; i++, sn=sn->next);
     return i;
 }
 
-void stack_push(struct stack *stack, void* data)
-{
+void stack_push(struct stack *stack, void* data) {
     null_check(data);
-    if (stack->head == NULL)
+    if (stack->head == NULL) {
         stack->head = stack->tail = stack_node_new();
-    else {
+    } else {
         struct stack_node* old_head = stack->head;
         stack->head = stack_node_new();
         null_check(stack->head);
@@ -472,40 +453,39 @@ void stack_push(struct stack *stack, void* data)
     //DEBUGPRINT("stack_push %x to %x:%d\n", data, stack, stack_depth(stack));
 }
 
-void* stack_pop(struct stack *stack)
-{
-    if (stack->head == NULL)
+void* stack_pop(struct stack *stack) {
+    if (stack->head == NULL) {
         return NULL;
+    }
     void* data = stack->head->data;
     struct stack_node *oldnode = stack->head;
     stack->head = stack->head->next;
-    if (stack->head == NULL)
+    if (stack->head == NULL) {
         stack->tail = NULL;
-    if (NULL != oldnode)
+    }
+    if (NULL != oldnode) {
         free(oldnode);
+    }
     null_check(data);
     //DEBUGPRINT("stack_pop %x from %x:%d\n", data, stack, stack_depth(stack));
     return data;
 }
 
-void* stack_peek(const struct stack *stack, uint8_t index)
-{
+void* stack_peek(const struct stack *stack, uint8_t index) {
     null_check(stack);
     struct stack_node *p = stack->head;
     for (; index && p; index--, p=p->next);
     return p ? p->data : NULL;
 }
 
-bool stack_empty(const struct stack *stack)
-{
+bool stack_empty(const struct stack *stack) {
     null_check(stack);
     return stack->head == NULL;
 }
 
-// map /////////////////////////////////////////////////////////////////////
+// dic /////////////////////////////////////////////////////////////////////
 
-static int32_t default_hashor(const void *x, void *context)
-{
+static int32_t default_hashor(const void *x, void *context) {
     const struct variable *key = (const struct variable*)x;
     switch (key->type) {
         case VAR_INT:
@@ -533,8 +513,7 @@ static bool default_comparator(const void *a, const void *b, void *context) {
     return variable_compare((struct context *)context, (struct variable *)a, (struct variable *)b);
 }
 
-static void *default_copyor(const void *key, void *context)
-{
+static void *default_copyor(const void *key, void *context) {
     struct variable *v = (struct variable *)key;
     struct variable *u = variable_copy((struct context *)context, v);
     variable_old(u);
@@ -543,11 +522,11 @@ static void *default_copyor(const void *key, void *context)
 
 static void default_rm(const void *key, void *context) {}
 
-struct map* map_new_ex(void *context, map_compare *mc, map_hash *mh, map_copyor *my, map_rm *md)
-{
-    struct map *m;
-    if ((m =(struct map*)malloc(sizeof(struct map))) == NULL)
+struct dic* dic_new_ex(void *context, dic_compare *mc, dic_hash *mh, dic_copyor *my, dic_rm *md) {
+    struct dic *m;
+    if ((m =(struct dic*)malloc(sizeof(struct dic))) == NULL) {
         return NULL;
+    }
     m->context = context;
     m->size = 16;
     m->hash_func = mh ? mh : &default_hashor;
@@ -560,17 +539,16 @@ struct map* map_new_ex(void *context, map_compare *mc, map_hash *mh, map_copyor 
         return NULL;
     }
 
-    //DEBUGPRINT("map_new %p\n", m);
+    //DEBUGPRINT("dic_new %p\n", m);
     return m;
 }
 
-struct map* map_new(void *context) {
-    return map_new_ex(context, NULL, NULL, NULL, NULL);
+struct dic* dic_new(void *context) {
+    return dic_new_ex(context, NULL, NULL, NULL, NULL);
 }
 
-void map_del(struct map *m)
-{
-    //DEBUGPRINT("map_del %p\n", m);
+void dic_del(struct dic *m) {
+    //DEBUGPRINT("dic_del %p\n", m);
     struct hash_node *node, *oldnode;
 
     for (size_t n = 0; n<m->size; ++n) {
@@ -586,29 +564,27 @@ void map_del(struct map *m)
     free(m);
 }
 
-bool map_key_equals(const struct map *m1, const void *key1, const void *key2)
-{
+bool dic_key_equals(const struct dic *m1, const void *key1, const void *key2) {
     return m1->comparator(key1, key2, m1->context);
 }
 
-int map_insert(struct map *m, const void *key, void *data)
-{
+int dic_insert(struct dic *m, const void *key, void *data) {
     struct hash_node *node;
     int32_t hash = m->hash_func(key, m->context) % m->size;
 
     node = m->nodes[hash];
     while (node) {
-        if (map_key_equals(m, node->key, key)) {
+        if (dic_key_equals(m, node->key, key)) {
             node->data = data;
             return 0;
         }
         node = node->next;
     }
 
-    if ((node = (struct hash_node*)malloc(sizeof(struct hash_node))) == NULL)
+    if ((node = (struct hash_node*)malloc(sizeof(struct hash_node))) == NULL) {
         return -1;
-    if ((node->key = m->copyor(key, m->context)) == NULL)
-    {
+    }
+    if ((node->key = m->copyor(key, m->context)) == NULL) {
         free(node);
         return -1;
     }
@@ -619,20 +595,18 @@ int map_insert(struct map *m, const void *key, void *data)
     return 0;
 }
 
-struct array* map_keys(const struct map *m)
-{
+struct array* dic_keys(const struct dic *m) {
     null_check(m);
     struct array *a = array_new();
     for (int i=0; i<m->size; i++)
         for (const struct hash_node* n = m->nodes[i]; n; n=n->next)
             if (n->data)
                 array_add(a, n->key);
-    //DEBUGPRINT("map_keys %p\n", a);
+    //DEBUGPRINT("dic_keys %p\n", a);
     return a;
 }
 
-struct array* map_vals(const struct map *m)
-{
+struct array* dic_vals(const struct dic *m) {
     struct array *a = array_new();
     for (int i=0; i<m->size; i++)
         for (const struct hash_node* n = m->nodes[i]; n; n=n->next)
@@ -641,18 +615,19 @@ struct array* map_vals(const struct map *m)
     return a;
 }
 
-int map_remove(struct map *m, const void *key)
-{
+int dic_remove(struct dic *m, const void *key) {
     struct hash_node *node, *prevnode = NULL;
     size_t hash = m->hash_func(key, m->context)%m->size;
 
     node = m->nodes[hash];
     while(node) {
-        if (map_key_equals(m, node->key, key))
-        {
+        if (dic_key_equals(m, node->key, key)) {
             m->deletor(node->key, m->context);
-            if (prevnode) prevnode->next = node->next;
-            else m->nodes[hash] = node->next;
+            if (prevnode) {
+                prevnode->next = node->next;
+            } else {
+                m->nodes[hash] = node->next;
+            }
             free(node);
             return 0;
         }
@@ -662,52 +637,51 @@ int map_remove(struct map *m, const void *key)
     return -1;
 }
 
-bool map_has(const struct map *m, const void *key)
-{
+bool dic_has(const struct dic *m, const void *key) {
     struct hash_node *node;
     size_t hash = m->hash_func(key, m->context) % m->size;
     node = m->nodes[hash];
     while (node) {
-        if (map_key_equals(m, node->key, key))
+        if (dic_key_equals(m, node->key, key))
             return true;
         node = node->next;
     }
     return false;
 }
 
-void *map_get(const struct map *m, const void *key)
-{
-    if (NULL == m)
+void *dic_get(const struct dic *m, const void *key) {
+    if (NULL == m) {
         return NULL;
+    }
     struct hash_node *node;
     size_t hash = m->hash_func(key, m->context) % m->size;
     node = m->nodes[hash];
     while (node) {
-        if (map_key_equals(m, node->key, key))
+        if (dic_key_equals(m, node->key, key))
             return node->data;
         node = node->next;
     }
     return NULL;
 }
 
-int map_resize(struct map *m, size_t size)
-{
-    //DEBUGPRINT("map_resize\n");
-    struct map newtbl;
+int dic_resize(struct dic *m, size_t size) {
+    //DEBUGPRINT("dic_resize\n");
+    struct dic newtbl;
     size_t n;
     struct hash_node *node,*next;
 
     newtbl.size = size;
     newtbl.hash_func = m->hash_func;
 
-    if ((newtbl.nodes = (struct hash_node**)calloc(size, sizeof(struct hash_node*))) == NULL)
+    if ((newtbl.nodes = (struct hash_node**)calloc(size, sizeof(struct hash_node*))) == NULL) {
         return -1;
+    }
 
     for (n = 0; n<m->size; ++n) {
-        for(node = m->nodes[n]; node; node = next) {
+        for (node = m->nodes[n]; node; node = next) {
             next = node->next;
-            map_insert(&newtbl, node->key, node->data);
-            map_remove(m, node->key);
+            dic_insert(&newtbl, node->key, node->data);
+            dic_remove(m, node->key);
         }
     }
 
@@ -719,15 +693,15 @@ int map_resize(struct map *m, size_t size)
 }
 
 // a - b
-struct map *map_minus(struct map *a, const struct map *b)
-{
-    if ((a == NULL) || (b == NULL))
+struct dic *dic_minus(struct dic *a, const struct dic *b) {
+    if ((a == NULL) || (b == NULL)) {
         return a;
-    struct array *keys = map_keys(b);
+    }
+    struct array *keys = dic_keys(b);
     for (int i=0; i<keys->length; i++) {
         const void *key = array_get(keys, i);
-        if (map_has(a, key)) {
-            map_remove(a, key);
+        if (dic_has(a, key)) {
+            dic_remove(a, key);
         }
     }
     array_del(keys);
@@ -735,31 +709,36 @@ struct map *map_minus(struct map *a, const struct map *b)
 }
 
 // a + b; in case of intersection, a wins
-struct map *map_union(struct map *a, const struct map *b)
-{
-    if (b == NULL)
+struct dic *dic_union(struct dic *a, const struct dic *b) {
+    if (b == NULL) {
         return a;
-    if (a == NULL)
-        return map_copy(b->context, b);
-    struct array *keys = map_keys(b);
+    }
+    if (a == NULL) {
+        return dic_copy(b->context, b);
+    }
+    struct array *keys = dic_keys(b);
     for (int i=0; i<keys->length; i++) {
         const void *key = array_get(keys, i);
-        if (!map_has(a, key)) {
+        if (!dic_has(a, key)) {
             void *key2 = b->copyor(key, a->context);
-            void *value = map_get(b, key);
+            void *value = dic_get(b, key);
             void *value2 = b->copyor(value, a->context);
-            map_insert(a, key2, value2);
+            dic_insert(a, key2, value2);
         }
     }
     array_del(keys);
     return a;
 }
 
-struct map *map_copy(void *context, const struct map *original)
-{
-    if (original == NULL)
+struct dic *dic_copy(void *context, const struct dic *original) {
+    if (original == NULL) {
         return NULL;
-    struct map *copy;
-    copy = map_new_ex(context, original->comparator, original->hash_func, original->copyor, original->deletor);
-    return map_union(copy, original);
+    }
+    struct dic *copy;
+    copy = dic_new_ex(context,
+                      original->comparator,
+                      original->hash_func,
+                      original->copyor,
+                      original->deletor);
+    return dic_union(copy, original);
 }

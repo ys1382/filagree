@@ -8,10 +8,8 @@
 #include "util.h"
 #include "variable.h"
 
-
 // shared among all contexts
-struct context_shared
-{
+struct context_shared {
     struct array *all_variables;        // list of all variables
     uint32_t tick;                      // VM clock tick
     pthread_mutex_t gil;                // global interpreter lock
@@ -25,8 +23,7 @@ struct context_shared
 };
 
 // thread context
-struct context
-{
+struct context {
     struct variable* error;             // for reporting exception
     struct stack *program_stack;        // call stack
     struct stack *operand_stack;        // operand stack
@@ -40,10 +37,9 @@ struct context
 };
 
 // program state
-struct program_state
-{
+struct program_state {
     struct variable *args;              // function arguments
-    struct map *named_variables;        // variables in scope
+    struct dic *named_variables;        // variables in scope
     uint32_t pc;                        // program counter
     struct byte_array *current_path;
     int32_t current_line;               // for stack trace;
@@ -63,8 +59,8 @@ enum Opcode {
     VM_SRC, // push a set of values
     VM_LST, // push a list
     VM_KVP, // push a key-value-pair
-    VM_GET, // get an item from a list or map
-    VM_PUT, // put an item in a list or map
+    VM_GET, // get an item from a list or dic
+    VM_PUT, // put an item in a list or dic
     VM_SUB, // subtract two values
     VM_MUL, // multiply two values
     VM_DIV, // divide two values
@@ -90,10 +86,10 @@ enum Opcode {
     VM_JMP, // jump the program counter
     VM_CAL, // call a function for result
     VM_MET, // call an object method
-    VM_RET, // return from a function,
+    VM_RET, // return from a function
     VM_ITR, // iteration loop
     VM_COM, // comprehension
-    VM_TRY, // try.catch
+    VM_TRY, // try/catch
     VM_TRO, // throw
     VM_STX, // assignment in expression
     VM_PTX, // put in expression
@@ -110,7 +106,7 @@ void display_program(struct byte_array* program);
 struct context *context_new(struct context *parent,
                             bool runtime,
                             bool sys_funcs);
-void context_del();
+void context_del(struct context *context);
 void garbage_collect(struct context *context);
 void vm_call(struct context *context, struct variable *func, struct variable *arg,...);
 void *vm_exit_message(struct context *context, const char *format, ...);

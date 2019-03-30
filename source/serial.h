@@ -19,9 +19,7 @@ enum serial_type {
     SERIAL_ARRAY,
 };
 
-
-struct key_value_pair
-{
+struct key_value_pair {
     int32_t key;
 
     enum serial_type wire_type;

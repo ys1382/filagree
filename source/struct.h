@@ -1,22 +1,19 @@
 /* struct.h
  *
- * APIs for array, byte_array, [f|l]ifo and map
+ * APIs for array, byte_array, [f|l]ifo and dic
  */
 
 #ifndef STRUCT_H
 #define STRUCT_H
-
 
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
-
 #define ERROR_INDEX	"index out of bounds"
 #define ERROR_NULL "null pointer"
 #define BYTE_ARRAY_MAX_LEN (1024*1024)
-
 
 // array ///////////////////////////////////////////////////////////////////
 
@@ -27,7 +24,7 @@ struct array {
     uint32_t size;
 };
 
-struct array *array_new();
+struct array *array_new(void);
 void array_del(struct array *a);
 struct array *array_new_size(uint32_t size);
 uint32_t array_add(struct array *a , void *datum);
@@ -47,7 +44,7 @@ struct byte_array {
     uint32_t size;
 };
 
-struct byte_array *byte_array_new();
+struct byte_array *byte_array_new(void);
 struct byte_array *byte_array_new_size(uint32_t size);
 struct byte_array *byte_array_new_data(uint32_t size, uint8_t *data);
 struct byte_array *byte_array_from_string(const char* str);
@@ -83,9 +80,9 @@ struct stack {
 	struct stack_node* tail;
 };
 
-struct stack* stack_new();
+struct stack* stack_new(void);
 void stack_del(struct stack *s);
-struct stack_node* stack_node_new();
+struct stack_node* stack_node_new(void);
 void fifo_push(struct stack* fifo, void* data);
 void stack_push(struct stack* stack, void* data);
 void* stack_pop(struct stack* stack);
@@ -93,7 +90,7 @@ void* stack_peek(const struct stack* stack, uint8_t index);
 bool stack_empty(const struct stack* stack);
 uint32_t stack_depth(struct stack *stack);
 
-// map /////////////////////////////////////////////////////////////////////
+// dic /////////////////////////////////////////////////////////////////////
 
 struct hash_node {
 	void *key;
@@ -101,32 +98,32 @@ struct hash_node {
 	struct hash_node *next;
 };
 
-typedef bool (map_compare)(const void *a, const void *b, void *context);
-typedef int32_t (map_hash)(const void *x, void *context);
-typedef void *(map_copyor)(const void *x, void *context);
-typedef void (map_rm)(const void *x, void *context);
+typedef bool (dic_compare)(const void *a, const void *b, void *context);
+typedef int32_t (dic_hash)(const void *x, void *context);
+typedef void *(dic_copyor)(const void *x, void *context);
+typedef void (dic_rm)(const void *x, void *context);
 
-struct map {
-    map_compare *comparator;
+struct dic {
+    dic_compare *comparator;
 	size_t size;
 	struct hash_node **nodes;
-    map_hash *hash_func;
-    map_rm *deletor;
-    map_copyor *copyor;
+    dic_hash *hash_func;
+    dic_rm *deletor;
+    dic_copyor *copyor;
     void *context;
 };
 
-struct map* map_new();
-struct map* map_new_ex(void *context, map_compare *mc, map_hash *mh, map_copyor *my, map_rm *md);
-void map_del(struct map* map);
-int map_insert(struct map* map, const void *key, void *data);
-int map_remove(struct map* map, const void *key);
-void *map_get(const struct map* map, const void *key);
-bool map_has(const struct map* map, const void *key);
-struct array* map_keys(const struct map* m);
-struct array* map_vals(const struct map* m);
-struct map *map_union(struct map *a, const struct map *b);
-struct map *map_minus(struct map *a, const struct map *b);
-struct map *map_copy(void *context, const struct map *map);
+struct dic* dic_new(void *context);
+struct dic* dic_new_ex(void *context, dic_compare *mc, dic_hash *mh, dic_copyor *my, dic_rm *md);
+void dic_del(struct dic* dic);
+int dic_insert(struct dic* dic, const void *key, void *data);
+int dic_remove(struct dic* dic, const void *key);
+void *dic_get(const struct dic* dic, const void *key);
+bool dic_has(const struct dic* dic, const void *key);
+struct array* dic_keys(const struct dic* m);
+struct array* dic_vals(const struct dic* m);
+struct dic *dic_union(struct dic *a, const struct dic *b);
+struct dic *dic_minus(struct dic *a, const struct dic *b);
+struct dic *dic_copy(void *context, const struct dic *dic);
 
 #endif // STRUCT_H
